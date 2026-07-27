@@ -597,15 +597,16 @@ export default function Page() {
         <div
           className="
             relative flex flex-col items-start justify-between rounded-lg
-            bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
-            group-hover:bg-gray-800/95
+            border border-[#1d283a] bg-[#061c37] p-4 text-white shadow-lg
+            transition-all duration-300
+            group-hover:bg-[#061c37]/95
             sm:flex-row sm:items-center sm:p-6
           "
         >
           <h1
             className="
               flex items-center gap-3 text-xl font-extrabold tracking-tight
-              text-primary
+              text-[#22C4D3]
               sm:text-2xl
               lg:text-3xl
             "
@@ -625,13 +626,13 @@ export default function Page() {
       >
         <div
           className="
-            rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            rounded-lg border border-[#1d283a] bg-[#061c37] p-4 shadow-lg
             sm:p-6
           "
         >
           <h2
             className="
-              text-base font-semibold text-gray-400
+              text-base font-semibold text-[#94A3B8]
               sm:text-lg
             "
           >
@@ -648,13 +649,13 @@ export default function Page() {
         </div>
         <div
           className="
-            rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            rounded-lg border border-[#1d283a] bg-[#061c37] p-4 shadow-lg
             sm:p-6
           "
         >
           <h2
             className="
-              text-base font-semibold text-gray-400
+              text-base font-semibold text-[#94A3B8]
               sm:text-lg
             "
           >
@@ -671,13 +672,13 @@ export default function Page() {
         </div>
         <div
           className="
-            rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            rounded-lg border border-[#1d283a] bg-[#061c37] p-4 shadow-lg
             sm:p-6
           "
         >
           <h2
             className="
-              text-base font-semibold text-gray-400
+              text-base font-semibold text-[#94A3B8]
               sm:text-lg
             "
           >
@@ -685,8 +686,9 @@ export default function Page() {
           </h2>
           <select
             className="
-              mt-2 w-full rounded-md border border-gray-700 bg-gray-900/50 px-3
-              py-1.5 text-white
+              mt-2 w-full rounded-md border border-[#22C4D3]/30 bg-[#0d2a4d]
+              px-3 py-1.5 text-white outline-none
+              focus:border-[#22C4D3]
               sm:px-4 sm:py-2
             "
             value={categoryFilter}
@@ -712,7 +714,8 @@ export default function Page() {
       >
         <div
           className="
-            col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            col-span-1 rounded-lg border border-[#1d283a] bg-[#061c37] p-4
+            shadow-lg
             lg:col-span-3
           "
         >
@@ -722,9 +725,10 @@ export default function Page() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="
-              w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2
-              text-white
-              placeholder:text-gray-400
+              w-full rounded-md border border-[#22C4D3]/30 bg-[#0d2a4d] px-4
+              py-2 text-white outline-none
+              placeholder:text-[#94A3B8]
+              focus:border-[#22C4D3]
             "
           />
         </div>
@@ -734,9 +738,9 @@ export default function Page() {
             className="
               group/button relative inline-flex size-full items-center
               justify-center gap-1 overflow-hidden rounded-md border
-              border-white/20 bg-background px-2 py-1.5 text-xs text-primary
-              transition-all
-              hover:bg-primary/10
+              border-[#22C4D3]/40 bg-[#22C4D3]/10 px-2 py-1.5 text-xs
+              text-[#22C4D3] transition-all
+              hover:bg-[#22C4D3]/20
               sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
             "
           >
@@ -768,11 +772,11 @@ export default function Page() {
             setCurrentPage(1);
           }}
           className={`
-            rounded-md px-4 py-2
+            rounded-md border px-4 py-2 transition-colors
             ${
               !showProgramCourses
-                ? 'bg-primary text-white'
-                : 'bg-gray-800 text-gray-300'
+                ? 'border-[#22C4D3] bg-[#22C4D3]/10 text-[#22C4D3]'
+                : 'border-[#1d283a] bg-[#061c37] text-[#94A3B8] hover:text-white'
             }
           `}
         >
@@ -784,11 +788,11 @@ export default function Page() {
             setCurrentPage(1);
           }}
           className={`
-            rounded-md px-4 py-2
+            rounded-md border px-4 py-2 transition-colors
             ${
               showProgramCourses
-                ? 'bg-primary text-background'
-                : 'bg-gray-800 text-gray-300'
+                ? 'border-[#22C4D3] bg-[#22C4D3]/10 text-[#22C4D3]'
+                : 'border-[#1d283a] bg-[#061c37] text-[#94A3B8] hover:text-white'
             }
           `}
         >
@@ -869,7 +873,9 @@ export default function Page() {
           onClick={handlePrevPage}
           disabled={currentPage === 1 || isLoadingMore}
           className="
-            rounded-md bg-gray-800 px-4 py-2 text-white
+            rounded-md border border-[#1d283a] bg-[#061c37] px-4 py-2
+            text-white transition-colors
+            hover:bg-[#0d2a4d]
             disabled:opacity-50
           "
         >
@@ -883,7 +889,9 @@ export default function Page() {
           onClick={handleNextPage}
           disabled={currentPage === totalPages || isLoadingMore}
           className="
-            rounded-md bg-gray-800 px-4 py-2 text-white
+            rounded-md border border-[#1d283a] bg-[#061c37] px-4 py-2
+            text-white transition-colors
+            hover:bg-[#0d2a4d]
             disabled:opacity-50
           "
         >

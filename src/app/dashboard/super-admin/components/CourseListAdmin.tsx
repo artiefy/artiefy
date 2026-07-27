@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
 
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
-import { Badge } from '~/components/educators/ui/badge';
 import {
   Card,
   CardContent,
@@ -59,88 +58,60 @@ export default function CourseListAdmin({
     "
     >
       {courses.map((course) => {
-        console.log('Rendering course:', course);
         return (
           <div key={course.id} className="group relative">
-            <div
-              className="
-              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            "
-            />
-            <Card
-              className="
-              zoom-in relative flex h-full flex-col justify-between
-              overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
-              transition-transform duration-300 ease-in-out
-              hover:scale-[1.02]
-            "
-            >
-              <CardHeader>
+            <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+            <Card className="zoom-in relative flex h-full flex-col justify-between gap-0 overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37] p-0 py-0 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+              <CardHeader className="p-0">
                 <AspectRatio ratio={16 / 9}>
-                  <div className="relative size-full">
-                    <Image
-                      src={
-                        course.coverImageKey
-                          ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
-                          : '/placeholder.svg'
-                      }
-                      alt={course.title || 'Imagen del curso'}
-                      className="
-                        object-cover px-2 pt-2 transition-transform duration-300
-                        hover:scale-105
-                      "
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      quality={75}
-                    />
+                  <div className="relative size-full bg-[#04101f]">
+                    {course.coverImageKey ? (
+                      <Image
+                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`}
+                        alt={course.title || 'Imagen del curso'}
+                        fill
+                        className="object-cover transition-transform duration-300 hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        quality={75}
+                      />
+                    ) : (
+                      <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#22C4D3]/20 to-[#061c37]">
+                        <span className="text-4xl">📚</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#061c37] to-transparent" />
                   </div>
                 </AspectRatio>
               </CardHeader>
 
-              <CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-                <CardTitle className="rounded-lg text-lg text-background">
-                  <div className="font-bold text-primary">{course.title}</div>
-                </CardTitle>
-                <div className="flex flex-wrap items-start gap-2">
-                  <Badge
-                    variant="outline"
-                    className="
-                      border-primary bg-background text-primary
-                      hover:bg-black/70
-                    "
-                  >
-                    {course.categoryName ?? 'Unknown Category'}
-                  </Badge>
+              <CardContent className="flex grow flex-col justify-between gap-3 px-4 pt-4">
+                <div className="flex flex-wrap gap-2">
+                  <span className="rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-2.5 py-1 text-xs font-medium text-[#22C4D3]">
+                    {course.categoryName ?? 'Sin categoría'}
+                  </span>
                   {course.programas?.map((programa) => (
-                    <Badge
+                    <span
                       key={programa.id}
-                      variant="outline"
-                      title={programa.title} // Añadido title para mostrar el tooltip
-                      className="
-                        inline-block max-w-[200px] border-green-500
-                        bg-background text-xs text-green-500
-                        hover:bg-green-500/10
-                      "
+                      title={programa.title}
+                      className="inline-block max-w-[200px] rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-xs font-medium text-green-400"
                     >
                       <span className="line-clamp-1">{programa.title}</span>
-                    </Badge>
+                    </span>
                   ))}
                 </div>
-                <p className="line-clamp-2 text-sm text-gray-300">
-                  Descripcion: {course.description}
+                <CardTitle className="text-base sm:text-lg">
+                  <div className="line-clamp-2 font-bold text-white">
+                    {course.title}
+                  </div>
+                </CardTitle>
+                <p className="line-clamp-2 text-sm text-[#94A3B8]">
+                  {course.description ?? 'Sin descripción'}
                 </p>
               </CardContent>
-              <CardFooter
-                className="
-                flex flex-col items-start justify-between space-y-2 px-2
-              "
-              >
-                <div className="flex w-full items-center justify-between">
+              <CardFooter className="flex flex-col items-start justify-between gap-3 px-4 pt-3 pb-4">
+                <div className="flex w-full items-center justify-between text-xs">
                   <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-sm font-bold text-gray-300 italic">
+                    <span className="text-xs font-semibold text-[#94A3B8] italic">
                       Educadores:
                     </span>
                     {course.instructorName &&
@@ -148,23 +119,26 @@ export default function CourseListAdmin({
                       course.instructorName.split(', ').map((name, i) => (
                         <span
                           key={i}
-                          className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-bold text-primary"
+                          className="rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-2 py-0.5 text-xs font-medium text-[#22C4D3]"
                         >
                           {name}
                         </span>
                       ))
                     ) : (
-                      <span className="text-sm text-gray-400 italic">
+                      <span className="text-xs text-[#94A3B8] italic">
                         Sin instructor asignado
                       </span>
                     )}
                   </div>
-                  <p className="text-sm font-bold text-red-500">
-                    {course.modalidadesid}
-                  </p>
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    <StarIcon className="size-4" />
+                    <span className="text-xs font-bold sm:text-sm">
+                      {(course.rating ?? 0).toFixed(1)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex w-full items-center justify-between gap-2">
-                  <button
+                <div className="flex w-full gap-2">
+                  <Button
                     onClick={() =>
                       onEditCourse({
                         ...course,
@@ -173,81 +147,24 @@ export default function CourseListAdmin({
                           (course.instructor ? [course.instructor] : []),
                       } as unknown as CourseData)
                     }
-                    className="
-                      group/button relative inline-flex items-center
-                      justify-center overflow-hidden rounded-md border
-                      border-white/20 bg-primary px-2 py-1 text-xs
-                      text-background transition-all
-                      hover:bg-primary/90
-                      active:scale-95
-                      sm:px-3 sm:py-2 sm:text-sm
-                    "
+                    className="flex w-full flex-1 items-center justify-center gap-1.5 border border-[#22C4D3]/40 bg-[#22C4D3]/10 p-2 text-[#22C4D3] hover:bg-[#22C4D3]/20"
                   >
-                    <span className="relative z-10 font-bold">Editar</span>
-                    <div
-                      className="
-                      absolute inset-0 flex w-full
-                      [transform:skew(-13deg)_translateX(-100%)] justify-center
-                      group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                      group-hover/button:duration-1000
-                    "
-                    >
-                      <div className="relative h-full w-10 bg-white/30" />
-                    </div>
-                  </button>
-                  <Button asChild>
-                    <Link
-                      data-tour-id={
-                        course.id === courses[0]?.id
-                          ? 'tutorial-course-list'
-                          : undefined
-                      }
-                      href={`/dashboard/super-admin/cursos/${course.id}`}
-                      className="
-                        group/button relative inline-flex items-center
-                        justify-center overflow-hidden rounded-md border
-                        border-white/20 bg-background p-2 text-primary
-                        active:scale-95
-                      "
-                    >
-                      <p
-                        className="
-                        text-xs font-bold
-                        sm:text-sm
-                      "
-                      >
-                        Ver
-                      </p>
-                      <ArrowRightIcon className="size-4 animate-bounce-right sm:size-5" />
-                      <div
-                        className="
-                        absolute inset-0 flex w-full
-                        [transform:skew(-13deg)_translateX(-100%)]
-                        justify-center
-                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                        group-hover/button:duration-1000
-                      "
-                      >
-                        <div className="relative h-full w-10 bg-white/30" />
-                      </div>
-                    </Link>
+                    <p className="text-sm font-bold">Editar</p>
                   </Button>
-                  <div className="flex items-center">
-                    <StarIcon
-                      className="
-                      size-4 text-yellow-500
-                      sm:size-5
-                    "
-                    />
-                    <span
-                      className="
-                      ml-1 text-xs font-bold text-yellow-500
-                      sm:text-sm
-                    "
-                    >
-                      {(course.rating ?? 0).toFixed(1)}
-                    </span>
-                  </div>
+                  <Link
+                    data-tour-id={
+                      course.id === courses[0]?.id
+                        ? 'tutorial-course-list'
+                        : undefined
+                    }
+                    href={`/dashboard/super-admin/cursos/${course.id}`}
+                    className="flex-1"
+                  >
+                    <Button className="flex w-full items-center justify-center gap-1.5 border border-[#1d283a] bg-[#0d2a4d] p-2 text-white hover:bg-[#0d2a4d]/70">
+                      <p className="text-sm font-bold">Ver</p>
+                      <ArrowRightIcon className="size-4 animate-bounce-right" />
+                    </Button>
+                  </Link>
                 </div>
               </CardFooter>
             </Card>

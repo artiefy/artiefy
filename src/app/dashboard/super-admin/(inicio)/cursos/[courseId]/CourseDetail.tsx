@@ -10,10 +10,12 @@ import { Portal } from '@radix-ui/react-portal';
 import {
   Brain,
   CornerDownLeft,
+  FileText,
   ImageIcon,
   Mic,
   Music,
   ThumbsUp,
+  Users,
   Video,
   X,
 } from 'lucide-react';
@@ -32,9 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/educators/ui/alert-dialog';
-import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import { CourseSearchModal } from '~/components/embeddings/CourseSearchModal';
 import { EmbeddingsGenerator } from '~/components/embeddings/EmbeddingsGenerator';
@@ -358,7 +358,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     'from-pink-300 via-purple-300 to-indigo-400',
     'from-yellow-400 via-pink-500 to-red-500',
     'from-blue-400 via-indigo-500 to-purple-600',
-    'from-green-400 via-cyan-500 to-blue-500',
+    'from-green-400 via-[#22C4D3] to-teal-400',
     'from-orange-400 via-pink-500 to-red-500',
   ];
 
@@ -1783,7 +1783,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         {!isOpen && (
           <div
             className="
-              rounded border border-cyan-500/25 bg-cyan-500/5 px-2 py-1.5
+              rounded border border-[#22C4D3]/25 bg-[#22C4D3]/5 px-2 py-1.5
               sm:px-3 sm:py-2
             "
           >
@@ -1795,7 +1795,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             >
               <p
                 className="
-                  text-xs font-semibold tracking-tight text-cyan-400/70
+                  text-xs font-semibold tracking-tight text-[#22C4D3]/70
                   uppercase
                   sm:tracking-wide
                 "
@@ -1804,7 +1804,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 {displayEducator?.name ?? course.instructorName ?? 'Sin nombre'}
               </p>
               {displayEducator?.email && (
-                <p className="truncate text-xs text-cyan-400/60">
+                <p className="truncate text-xs text-[#22C4D3]/60">
                   {displayEducator.email}
                 </p>
               )}
@@ -1818,10 +1818,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             className="
-              w-full rounded-md border border-cyan-500/50 bg-slate-800 p-3
-              text-left text-sm text-cyan-400 transition-colors
-              hover:border-cyan-400
-              focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20
+              w-full rounded-md border border-[#22C4D3]/50 bg-[#061c37] p-3
+              text-left text-sm text-[#22C4D3] transition-colors
+              hover:border-[#22C4D3]
+              focus:border-[#22C4D3] focus:ring-2 focus:ring-[#22C4D3]/20
               focus:outline-none
             "
           >
@@ -1829,7 +1829,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="flex-1">
                 <p
                   className="
-                    text-xs font-semibold tracking-wide text-cyan-400/70
+                    text-xs font-semibold tracking-wide text-[#22C4D3]/70
                     uppercase
                   "
                 >
@@ -1843,7 +1843,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 {displayEducator?.email && (
                   <p
                     className="
-                      mt-1 flex items-center gap-1 text-xs text-cyan-400/70
+                      mt-1 flex items-center gap-1 text-xs text-[#22C4D3]/70
                     "
                   >
                     <span>✉️</span>
@@ -1851,14 +1851,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </p>
                 )}
                 {!displayEducator?.email && (
-                  <p className="mt-1 text-xs text-cyan-400/50 italic">
+                  <p className="mt-1 text-xs text-[#22C4D3]/50 italic">
                     Sin correo disponible
                   </p>
                 )}
               </div>
               <svg
                 className={`
-                  size-5 flex-shrink-0 text-cyan-400 transition-transform
+                  size-5 flex-shrink-0 text-[#22C4D3] transition-transform
                   ${isOpen ? 'rotate-180' : ''}
                 `}
                 fill="none"
@@ -1887,7 +1887,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div
                 className="
                   fixed z-[9999] overflow-hidden rounded-md border
-                  border-cyan-500/50 bg-slate-800 shadow-2xl
+                  border-[#22C4D3]/50 bg-[#061c37] shadow-2xl
                 "
                 style={{
                   top: '300px',
@@ -1898,17 +1898,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 }}
               >
                 {/* Campo de búsqueda */}
-                <div className="border-b border-cyan-500/30 p-2">
+                <div className="border-b border-[#22C4D3]/30 p-2">
                   <input
                     type="text"
                     placeholder="Buscar por nombre o correo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="
-                      w-full rounded border border-cyan-500/40 bg-slate-800 px-3
-                      py-2 text-sm text-cyan-400
-                      placeholder:text-cyan-400/50
-                      focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20
+                      w-full rounded border border-[#22C4D3]/40 bg-[#061c37] px-3
+                      py-2 text-sm text-[#22C4D3]
+                      placeholder:text-[#22C4D3]/50
+                      focus:border-[#22C4D3] focus:ring-1 focus:ring-[#22C4D3]/20
                       focus:outline-none
                     "
                     onClick={(e) => e.stopPropagation()}
@@ -1922,14 +1922,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <div
                         key={educator.id}
                         className={`
-                          group border-b border-cyan-500/20 p-3
+                          group border-b border-[#22C4D3]/20 p-3
                           transition-colors
                           last:border-b-0
-                          hover:bg-cyan-500/10
+                          hover:bg-[#22C4D3]/10
                           ${
                             educator.id ===
                             (selectedInstructor ?? course.instructor)
-                              ? 'bg-cyan-500/20'
+                              ? 'bg-[#22C4D3]/20'
                               : ''
                           }
                         `}
@@ -1942,7 +1942,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               setIsOpen(false);
                               setSearchTerm('');
                             }}
-                            className="flex-1 text-left text-cyan-400"
+                            className="flex-1 text-left text-[#22C4D3]"
                           >
                             <p className="text-sm font-medium">
                               {educator.name}
@@ -1951,14 +1951,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               <p
                                 className="
                                   mt-1 flex items-center gap-1 text-xs
-                                  text-cyan-400/70
+                                  text-[#22C4D3]/70
                                 "
                               >
                                 <span>✉️</span>
                                 <span>{educator.email}</span>
                               </p>
                             ) : (
-                              <p className="mt-1 text-xs text-cyan-400/50 italic">
+                              <p className="mt-1 text-xs text-[#22C4D3]/50 italic">
                                 Sin correo
                               </p>
                             )}
@@ -1978,8 +1978,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 copyToClipboard(educator.name ?? '', 'Nombre');
                               }}
                               className="
-                                rounded p-1 text-cyan-400/60
-                                hover:bg-cyan-400/10 hover:text-cyan-400
+                                rounded p-1 text-[#22C4D3]/60
+                                hover:bg-[#22C4D3]/10 hover:text-[#22C4D3]
                               "
                               title="Copiar nombre"
                             >
@@ -2008,8 +2008,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                   );
                                 }}
                                 className="
-                                  rounded p-1 text-cyan-400/60
-                                  hover:bg-cyan-400/10 hover:text-cyan-400
+                                  rounded p-1 text-[#22C4D3]/60
+                                  hover:bg-[#22C4D3]/10 hover:text-[#22C4D3]
                                 "
                                 title="Copiar correo"
                               >
@@ -2033,7 +2033,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       </div>
                     ))
                   ) : (
-                    <div className="p-4 text-center text-sm text-cyan-400/50">
+                    <div className="p-4 text-center text-sm text-[#22C4D3]/50">
                       No se encontraron educadores
                     </div>
                   )}
@@ -2049,9 +2049,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             size="sm"
             onClick={onSaveChange}
             className="
-              relative w-full border-cyan-500 bg-cyan-500/20 text-cyan-400
+              relative w-full border-[#22C4D3] bg-[#22C4D3]/20 text-[#22C4D3]
               transition-colors
-              hover:bg-cyan-500/40
+              hover:bg-[#22C4D3]/40
             "
             disabled={isUpdating}
           >
@@ -2220,6 +2220,139 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return (aMs || 0) - (bMs || 0);
   });
 
+  const sectionClass =
+    'rounded-2xl border border-[#1d283a] bg-[#061c37] p-6 md:p-8';
+  const sectionIconClass =
+    'flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]';
+
+  // Portada + acciones — reutilizado en móvil (bajo el hero) y en desktop
+  // (columna lateral sticky), igual que en GuidedProjectAdminTabs.
+  const renderCoverAndActions = () =>
+    course && (
+      <div className="relative overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37]">
+        <div className="card-premium group relative aspect-video w-full overflow-hidden">
+          <div
+            className="
+              absolute inset-0 z-10 bg-gradient-to-t from-black/50
+              via-transparent to-transparent opacity-40 transition-opacity
+              duration-300
+              group-hover:opacity-20
+            "
+          />
+          <Image
+            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
+            alt={course.title}
+            width={400}
+            height={225}
+            className="
+              size-full object-cover transition-transform duration-500
+              group-hover:scale-110
+            "
+            priority
+            quality={85}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 p-5">
+          <Button
+            onClick={handleEnrollAndRedirect}
+            className="btn-primary w-full"
+          >
+            Ver
+          </Button>
+          <Button
+            onClick={() => setIsSearchModalOpen(true)}
+            className="btn-secondary flex w-full items-center justify-center gap-1"
+            title="Buscar información del curso con IA"
+          >
+            <Brain className="size-4" />
+            <span>IA</span>
+          </Button>
+          <Button
+            onClick={handleGenerateEmbeddings}
+            disabled={isGeneratingEmbeddings}
+            className="
+              flex w-full items-center justify-center gap-1 rounded-lg
+              border border-[#22C4D3]/30 bg-[#22C4D3]/15 px-3 py-2
+              text-xs font-semibold text-[#22C4D3] transition-all
+              duration-300
+              hover:bg-[#22C4D3]/25
+              disabled:cursor-not-allowed disabled:opacity-50
+            "
+            title="Regenerar embeddings del curso para búsqueda"
+          >
+            {isGeneratingEmbeddings ? (
+              <>
+                <div
+                  className="
+                    size-3 animate-spin rounded-full border-2 border-white
+                    border-t-transparent
+                  "
+                />
+                <span>Indexando...</span>
+              </>
+            ) : (
+              <>
+                <span className="text-lg">⚡</span>
+                <span>Indexar</span>
+              </>
+            )}
+          </Button>
+          <Button
+            onClick={handleEditCourse}
+            className="
+              w-full rounded-lg border border-[#22C4D3]/40 bg-[#22C4D3]/10
+              px-3 py-2 text-xs font-semibold text-[#22C4D3]
+              transition-all duration-300
+              hover:bg-[#22C4D3]/20
+            "
+          >
+            ✏️ Editar
+          </Button>
+          <Button
+            className="
+              col-span-2 w-full rounded-lg border border-[#1d283a]
+              bg-[#0d2a4d] px-3 py-2 text-xs font-semibold text-white
+              transition-all duration-300
+              hover:bg-[#0d2a4d]/70
+            "
+          >
+            <Link
+              href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
+              className="block w-full"
+            >
+              Stats
+            </Link>
+          </Button>
+          <AlertDialog>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Se eliminará permanentemente
+                  el curso
+                  <span className="font-bold"> {course.title}</span> y todos los
+                  datos asociados a este.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDelete()}
+                  className="
+                    border border-red-500/30 bg-red-500/10 text-red-400
+                    hover:bg-red-500/20
+                  "
+                >
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      </div>
+    );
+
   // Renderizar el componente
   return (
     <div
@@ -2342,8 +2475,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="
-                text-cyan-400 transition-colors duration-300
-                hover:text-cyan-300
+                text-[#22C4D3] transition-colors duration-300
+                hover:text-[#22C4D3]
               "
               href="/dashboard/super-admin"
             >
@@ -2354,8 +2487,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="
-                text-cyan-400 transition-colors duration-300
-                hover:text-cyan-300
+                text-[#22C4D3] transition-colors duration-300
+                hover:text-[#22C4D3]
               "
               href="/dashboard/super-admin/cursos"
             >
@@ -2368,687 +2501,364 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="relative w-full">
-        <div
-          className="
-            absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400
-            via-cyan-300 to-teal-400 opacity-0 blur-3xl transition-all
-            duration-700
-            group-hover:opacity-100
-          "
-        />
-        <Card
-          className="
-            zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2
-            border-cyan-500/30 bg-slate-800 p-4 shadow-2xl transition-all
-            duration-500 ease-out
-            hover:border-cyan-500/60 hover:shadow-cyan-500/30
-            sm:p-8
-          "
-        >
-          <CardHeader
-            className="
-              grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8
-              md:grid-cols-2 md:gap-12
-            "
-          >
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+        <div className="lg:col-span-2">
+          <div className="relative w-full">
             <div
               className="
-                animate-in fade-in slide-in-from-left-4 space-y-3 duration-500
+                relative overflow-hidden rounded-2xl border
+                border-[#1d283a] bg-[#061c37] p-4 shadow-2xl
+                sm:p-8
               "
             >
-              <p
-                className="
-                  text-sm font-semibold tracking-widest text-cyan-400 uppercase
-                "
-              >
-                Detalles del Curso
-              </p>
-              <CardTitle
-                className="
-                  text-3xl font-bold text-white
-                  md:text-4xl
-                  lg:text-5xl
-                "
-              >
-                {course.title}
-              </CardTitle>
-            </div>
-            <div
-              className="
-                animate-in fade-in slide-in-from-right-4 flex flex-col
-                justify-start gap-4 duration-500
-              "
-            >
-              <Label
-                className="
-                  flex items-center gap-2 text-sm font-bold tracking-wider
-                  text-cyan-400 uppercase
-                "
-              >
-                Tema Visual
-              </Label>
-              <div className="flex flex-wrap gap-3">
-                {predefinedColors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => handlePredefinedColorChange(color)}
-                    style={{ backgroundColor: color }}
-                    className={`
-                      size-12 rounded-xl border-2 transition-all duration-300
-                      hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50
-                      ${
-                        selectedColor === color
-                          ? `
-                            scale-110 border-white shadow-lg ring-2
-                            ring-cyan-400 ring-offset-2
-                          `
-                          : `
-                            border-white/20
-                            hover:border-cyan-400
-                          `
-                      }
-                    `}
-                    title={`Cambiar tema a ${color}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </CardHeader>
-          <div
-            className="
-              mt-8 grid gap-8
-              md:grid-cols-2
-            "
-          >
-            {/* Left Column - Cover Image */}
-            <div
-              className="
-                animate-slideInLeft order-2 flex w-full flex-col space-y-6
-                md:order-1
-              "
-            >
-              {/* Image Container - Premium Glass */}
-              <div
-                className="
-                  card-premium group relative aspect-video w-full
-                  overflow-hidden
-                "
-              >
-                <div
-                  className="
-                    absolute inset-0 z-10 bg-gradient-to-t from-black/50
-                    via-transparent to-transparent opacity-40 transition-opacity
-                    duration-300
-                    group-hover:opacity-20
-                  "
-                />
-                <Image
-                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
-                  alt={course.title}
-                  width={400}
-                  height={225}
-                  className="
-                    size-full object-cover transition-transform duration-500
-                    group-hover:scale-110
-                  "
-                  priority
-                  quality={85}
-                />
-              </div>
-
-              {/* Action Buttons Grid */}
-              <div
-                className="
-                  grid w-full grid-cols-2 gap-2
-                  sm:grid-cols-3
-                  md:grid-cols-5 md:gap-3
-                  lg:gap-4
-                "
-              >
-                <Button
-                  onClick={handleEnrollAndRedirect}
-                  className="btn-primary w-full"
-                >
-                  Ver
-                </Button>
-                <Button
-                  onClick={() => setIsSearchModalOpen(true)}
-                  className="
-                    btn-secondary flex w-full items-center justify-center gap-1
-                  "
-                  title="Buscar información del curso con IA"
-                >
-                  <Brain
-                    className="
-                      size-3
-                      md:size-4
-                    "
-                  />
-                  <span
-                    className="
-                      hidden
-                      sm:inline
-                    "
-                  >
-                    IA
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#22C4D3]/40 bg-[#22C4D3]/15 px-3 py-1.5 text-[#22C4D3]">
+                  <span className="text-sm">📚</span>
+                  <span className="text-xs font-semibold tracking-wide uppercase">
+                    Curso
                   </span>
-                </Button>
-                <Button
-                  onClick={handleGenerateEmbeddings}
-                  disabled={isGeneratingEmbeddings}
-                  className="
-                    flex w-full items-center justify-center gap-1 bg-indigo-600
-                    px-3 py-2 text-xs font-semibold text-white transition-all
-                    duration-300
-                    hover:bg-indigo-700
-                    disabled:cursor-not-allowed disabled:opacity-50
-                    md:px-4 md:py-3 md:text-sm
-                  "
-                  title="Regenerar embeddings del curso para búsqueda"
-                >
-                  {isGeneratingEmbeddings ? (
-                    <>
-                      <div
-                        className="
-                          size-3 animate-spin rounded-full border-2 border-white
-                          border-t-transparent
-                          md:size-4
-                        "
-                      />
-                      <span
-                        className="
-                          hidden
-                          sm:inline
-                        "
-                      >
-                        Indexando...
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-lg">⚡</span>
-                      <span
-                        className="
-                          hidden
-                          sm:inline
-                        "
-                      >
-                        Indexar
-                      </span>
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleEditCourse}
-                  className="
-                    w-full bg-yellow-500 px-3 py-2 text-xs font-semibold
-                    text-white transition-all duration-300
-                    hover:bg-yellow-600
-                    md:px-4 md:py-3 md:text-sm
-                  "
-                >
-                  ✏️ Editar
-                </Button>
-                <Button
-                  className="
-                    w-full bg-blue-500 px-3 py-2 text-xs font-semibold
-                    text-white transition-all duration-300
-                    hover:bg-blue-600
-                    md:px-4 md:py-3 md:text-sm
-                  "
-                >
-                  <Link
-                    href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
-                  >
-                    Stats
-                  </Link>
-                </Button>
-                <AlertDialog>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Esta acción no se puede deshacer. Se eliminará
-                        permanentemente el curso
-                        <span className="font-bold"> {course.title}</span> y
-                        todos los datos asociados a este.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete()}
-                        className="
-                          border-red-600 bg-red-600 text-white
-                          hover:border-red-700 hover:bg-transparent
-                          hover:text-red-700
-                        "
-                      >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-            {/* Right Column - Information */}
-            <div
-              className="
-                animate-in fade-in slide-in-from-right-8 space-y-6 duration-700
-              "
-            >
-              <h2
-                className="
-                  text-2xl font-bold text-white
-                  md:text-3xl
-                "
-              >
-                Información del Curso
-              </h2>
+                </div>
 
-              {/* Grid de información rápida */}
-              <div
-                className="
-                  grid grid-cols-1 gap-4
-                  md:grid-cols-2
-                "
-              >
-                <div
-                  className="
-                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
-                    backdrop-blur-sm transition-all duration-300
-                    hover:border-cyan-500/60 hover:bg-white/10
-                  "
-                >
-                  <p
-                    className="
-                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
-                      uppercase
-                    "
-                  >
-                    Categoría
+                <h1 className="font-display text-3xl leading-tight font-bold text-white md:text-4xl lg:text-5xl">
+                  {course.title}
+                </h1>
+
+                {course.description && (
+                  <p className="max-w-2xl text-base text-[#94A3B8]">
+                    {course.description}
                   </p>
-                  <Badge
-                    className="
-                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
-                    "
-                  >
+                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
                     {course.categoryName ?? course.categoryid}
-                  </Badge>
-                </div>
-
-                <div
-                  className="
-                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
-                    backdrop-blur-sm transition-all duration-300
-                    hover:border-cyan-500/60 hover:bg-white/10
-                  "
-                >
-                  <p
-                    className="
-                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
-                      uppercase
-                    "
-                  >
-                    Nivel
-                  </p>
-                  <Badge
-                    className="
-                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
-                    "
-                  >
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
                     {course.nivelName ?? course.nivelid}
-                  </Badge>
-                </div>
-
-                <div
-                  className="
-                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
-                    backdrop-blur-sm transition-all duration-300
-                    hover:border-cyan-500/60 hover:bg-white/10
-                  "
-                >
-                  <p
-                    className="
-                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
-                      uppercase
-                    "
-                  >
-                    Modalidad
-                  </p>
-                  <Badge
-                    className="
-                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
-                    "
-                  >
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
                     {course.modalidadesName ?? course.modalidadesid}
-                  </Badge>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
+                    {certificationTypeName ?? 'Sin certificación'}
+                  </span>
                 </div>
 
-                <div
-                  className="
-                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
-                    backdrop-blur-sm transition-all duration-300
-                    hover:border-cyan-500/60 hover:bg-white/10
-                  "
-                >
-                  <p
-                    className="
-                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
-                      uppercase
-                    "
-                  >
-                    Certificación
-                  </p>
-                  <Badge
-                    className="
-                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
-                    "
-                  >
-                    {certificationTypeName ?? 'No asignado'}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Descripción */}
-              <div
-                className="
-                  rounded-xl border border-cyan-500/30 bg-white/5 p-5
-                  backdrop-blur-sm transition-all duration-300
-                  hover:border-cyan-500/60 hover:bg-white/10
-                "
-              >
-                <h3
-                  className="
-                    mb-3 text-sm font-bold tracking-wide text-cyan-400 uppercase
-                  "
-                >
-                  Descripción
-                </h3>
-                <p className="text-sm leading-relaxed text-white/80">
-                  {course.description}
-                </p>
-              </div>
-
-              {/* Educadores */}
-              <div
-                className="
-                  rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6
-                  backdrop-blur-sm transition-all duration-300
-                  hover:border-cyan-500/70
-                "
-              >
-                <h2
-                  className="
-                    mb-4 flex items-center gap-2 text-sm font-bold
-                    tracking-wider text-cyan-400 uppercase
-                  "
-                >
-                  Instructores Asignados
-                </h2>
-
-                {/* Instructores actuales mostrados como burbujas */}
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {currentInstructors.length > 0 ? (
-                    currentInstructors.map((instructorId) => {
-                      const educator = educators.find(
-                        (e) => e.id === instructorId
-                      );
-                      return (
-                        <div
-                          key={instructorId}
-                          className="
-                            text-primary-300 flex items-center gap-2
-                            rounded-full border border-primary bg-primary/20
-                            px-4 py-2 text-sm text-white
-                          "
-                        >
-                          <span className="font-semibold text-white">
-                            {educator?.name || instructorId}
-                          </span>
-                          <button
-                            onClick={async () => {
-                              // Remover instructor
-                              const newInstructors = currentInstructors.filter(
-                                (id) => id !== instructorId
-                              );
-                              if (newInstructors.length === 0) {
-                                toast.error(
-                                  'Debe haber al menos un instructor'
-                                );
-                                return;
-                              }
-
-                              try {
-                                setIsUpdating(true);
-                                const response = await fetch(
-                                  '/api/super-admin/courses/instructors',
-                                  {
-                                    method: 'PUT',
-                                    headers: {
-                                      'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                      courseId: course.id,
-                                      instructors: newInstructors,
-                                    }),
-                                  }
-                                );
-
-                                if (!response.ok) {
-                                  throw new Error(
-                                    'Error al actualizar instructores'
-                                  );
-                                }
-
-                                setCurrentInstructors(newInstructors);
-                                toast.success('Instructor removido');
-                                await fetchCourse();
-                              } catch (error) {
-                                console.error(error);
-                                toast.error('Error al remover instructor');
-                              } finally {
-                                setIsUpdating(false);
-                              }
-                            }}
-                            disabled={isUpdating}
-                            className="
-                              rounded-full text-purple-300 transition-colors
-                              hover:text-red-400
-                              disabled:opacity-50
-                            "
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p className="text-sm text-white/50">
-                      No hay instructores asignados
-                    </p>
-                  )}
-                </div>
-
-                {/* Dropdown para agregar instructor */}
-                <div className="flex gap-2">
-                  <select
-                    value={selectedInstructor}
-                    onChange={(e) => setSelectedInstructor(e.target.value)}
-                    className="
-                      flex-1 rounded-lg border border-cyan-500/30 bg-slate-800
-                      px-3 py-2 text-sm text-white
-                      focus:border-cyan-500 focus:outline-none
-                    "
-                    disabled={isUpdating}
-                  >
-                    <option value="">Seleccionar instructor...</option>
-                    {educators
-                      .filter(
-                        (educator) => !currentInstructors.includes(educator.id)
-                      )
-                      .map((educator) => (
-                        <option key={educator.id} value={educator.id}>
-                          {educator.name}
-                        </option>
-                      ))}
-                  </select>
-                  <button
-                    onClick={async () => {
-                      if (!selectedInstructor) {
-                        toast.error('Selecciona un instructor');
-                        return;
-                      }
-
-                      try {
-                        setIsUpdating(true);
-                        const newInstructors = [
-                          ...currentInstructors,
-                          selectedInstructor,
-                        ];
-
-                        const response = await fetch(
-                          '/api/super-admin/courses/instructors',
-                          {
-                            method: 'PUT',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              courseId: course.id,
-                              instructors: newInstructors,
-                            }),
+                <div className="flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
+                  <Label className="text-xs font-bold tracking-wider text-[#22C4D3] uppercase">
+                    Tema Visual
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {predefinedColors.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => handlePredefinedColorChange(color)}
+                        style={{ backgroundColor: color }}
+                        className={`
+                          size-8 rounded-lg border-2 transition-all duration-300
+                          hover:scale-125 hover:shadow-lg hover:shadow-[#22C4D3]/50
+                          ${
+                            selectedColor === color
+                              ? `
+                                scale-110 border-white shadow-lg ring-2
+                                ring-[#22C4D3] ring-offset-2
+                              `
+                              : `
+                                border-white/20
+                                hover:border-[#22C4D3]
+                              `
                           }
-                        );
-
-                        if (!response.ok) {
-                          throw new Error('Error al agregar instructor');
-                        }
-
-                        setCurrentInstructors(newInstructors);
-                        setSelectedInstructor('');
-                        toast.success('Instructor agregado');
-                        await fetchCourse();
-                      } catch (error) {
-                        console.error(error);
-                        toast.error('Error al agregar instructor');
-                      } finally {
-                        setIsUpdating(false);
-                      }
-                    }}
-                    disabled={isUpdating || !selectedInstructor}
-                    className="
-                      rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold
-                      text-white transition-colors
-                      hover:bg-cyan-600
-                      disabled:opacity-50
-                    "
-                  >
-                    {isUpdating ? '...' : '+ Agregar'}
-                  </button>
+                        `}
+                        title={`Cambiar tema a ${color}`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              <div className="mt-6 lg:hidden">{renderCoverAndActions()}</div>
             </div>
           </div>
-        </Card>
-      </div>
-      {loading ? (
-        <LoadingCourses />
-      ) : (
-        courseIdNumber !== null && (
-          <div
-            className="
+
+          <div className="mt-6 space-y-6">
+            <section className={sectionClass}>
+              <div className="mb-3 flex items-center gap-2">
+                <div className={sectionIconClass}>
+                  <FileText className="size-4" />
+                </div>
+                <h2 className="text-xl font-bold text-white">Descripción</h2>
+              </div>
+              <p className="text-sm leading-relaxed text-[#94A3B8]">
+                {course.description || 'Sin descripción'}
+              </p>
+            </section>
+
+            <section className={sectionClass}>
+              <div className="mb-4 flex items-center gap-2">
+                <div className={sectionIconClass}>
+                  <Users className="size-4" />
+                </div>
+                <h2 className="text-xl font-bold text-white">
+                  Instructores Asignados
+                </h2>
+              </div>
+
+              {/* Instructores actuales mostrados como burbujas */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {currentInstructors.length > 0 ? (
+                  currentInstructors.map((instructorId) => {
+                    const educator = educators.find(
+                      (e) => e.id === instructorId
+                    );
+                    return (
+                      <div
+                        key={instructorId}
+                        className="
+                          flex items-center gap-2 rounded-full border
+                          border-[#22C4D3]/30 bg-[#22C4D3]/10 px-4 py-2
+                          text-sm text-white
+                        "
+                      >
+                        <span className="font-semibold text-white">
+                          {educator?.name || instructorId}
+                        </span>
+                        <button
+                          onClick={async () => {
+                            // Remover instructor
+                            const newInstructors = currentInstructors.filter(
+                              (id) => id !== instructorId
+                            );
+                            if (newInstructors.length === 0) {
+                              toast.error('Debe haber al menos un instructor');
+                              return;
+                            }
+
+                            try {
+                              setIsUpdating(true);
+                              const response = await fetch(
+                                '/api/super-admin/courses/instructors',
+                                {
+                                  method: 'PUT',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    courseId: course.id,
+                                    instructors: newInstructors,
+                                  }),
+                                }
+                              );
+
+                              if (!response.ok) {
+                                throw new Error(
+                                  'Error al actualizar instructores'
+                                );
+                              }
+
+                              setCurrentInstructors(newInstructors);
+                              toast.success('Instructor removido');
+                              await fetchCourse();
+                            } catch (error) {
+                              console.error(error);
+                              toast.error('Error al remover instructor');
+                            } finally {
+                              setIsUpdating(false);
+                            }
+                          }}
+                          disabled={isUpdating}
+                          className="
+                            rounded-full text-white/40 transition-colors
+                            hover:text-red-400
+                            disabled:opacity-50
+                          "
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm text-white/50">
+                    No hay instructores asignados
+                  </p>
+                )}
+              </div>
+
+              {/* Dropdown para agregar instructor */}
+              <div className="flex gap-2">
+                <select
+                  value={selectedInstructor}
+                  onChange={(e) => setSelectedInstructor(e.target.value)}
+                  className="
+                    flex-1 rounded-lg border border-[#22C4D3]/30 bg-[#061c37]
+                    px-3 py-2 text-sm text-white
+                    focus:border-[#22C4D3] focus:outline-none
+                  "
+                  disabled={isUpdating}
+                >
+                  <option value="">Seleccionar instructor...</option>
+                  {educators
+                    .filter(
+                      (educator) => !currentInstructors.includes(educator.id)
+                    )
+                    .map((educator) => (
+                      <option key={educator.id} value={educator.id}>
+                        {educator.name}
+                      </option>
+                    ))}
+                </select>
+                <button
+                  onClick={async () => {
+                    if (!selectedInstructor) {
+                      toast.error('Selecciona un instructor');
+                      return;
+                    }
+
+                    try {
+                      setIsUpdating(true);
+                      const newInstructors = [
+                        ...currentInstructors,
+                        selectedInstructor,
+                      ];
+
+                      const response = await fetch(
+                        '/api/super-admin/courses/instructors',
+                        {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({
+                            courseId: course.id,
+                            instructors: newInstructors,
+                          }),
+                        }
+                      );
+
+                      if (!response.ok) {
+                        throw new Error('Error al agregar instructor');
+                      }
+
+                      setCurrentInstructors(newInstructors);
+                      setSelectedInstructor('');
+                      toast.success('Instructor agregado');
+                      await fetchCourse();
+                    } catch (error) {
+                      console.error(error);
+                      toast.error('Error al agregar instructor');
+                    } finally {
+                      setIsUpdating(false);
+                    }
+                  }}
+                  disabled={isUpdating || !selectedInstructor}
+                  className="
+                    rounded-lg bg-[#22C4D3] px-4 py-2 text-sm font-semibold
+                    text-white transition-colors
+                    hover:bg-cyan-600
+                    disabled:opacity-50
+                  "
+                >
+                  {isUpdating ? '...' : '+ Agregar'}
+                </button>
+              </div>
+            </section>
+          </div>
+          {loading ? (
+            <LoadingCourses />
+          ) : (
+            courseIdNumber !== null && (
+              <div
+                className="
               relative z-10 -mx-1 mt-16 space-y-8 px-1
               md:-mx-3 md:px-3
             "
-          >
-            {/* TABS MENU HORIZONTAL */}
-            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-              {/* Tabs Navigation */}
-              <div
-                className="
+              >
+                {/* TABS MENU HORIZONTAL */}
+                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+                  {/* Tabs Navigation */}
+                  <div
+                    className="
                   relative -mx-1 mb-8 px-1
                   md:-mx-3 md:px-3
                 "
-              >
-                {/* Flecha izquierda */}
-                <button
-                  onClick={() => {
-                    tabsRef.current?.scrollBy({
-                      left: -200,
-                      behavior: 'smooth',
-                    });
-                  }}
-                  className="
+                  >
+                    {/* Flecha izquierda */}
+                    <button
+                      onClick={() => {
+                        tabsRef.current?.scrollBy({
+                          left: -200,
+                          behavior: 'smooth',
+                        });
+                      }}
+                      className="
                     absolute top-1/2 left-0 z-10 -translate-y-1/2
                     animate-[pulse-arrow_2s_ease-in-out_infinite]
-                    bg-gradient-to-r from-slate-900/90 to-transparent py-4 pr-3
-                    pl-1 text-cyan-400
+                    bg-gradient-to-r from-[#192d50]/90 to-transparent py-4 pr-3
+                    pl-1 text-[#22C4D3]
                   "
-                  aria-label="Desplazar tabs a la izquierda"
-                >
-                  <span
-                    className="
+                      aria-label="Desplazar tabs a la izquierda"
+                    >
+                      <span
+                        className="
                       inline-block animate-[bounce-left_2s_ease-in-out_infinite]
                       text-lg font-bold
                     "
-                  >
-                    ‹
-                  </span>
-                </button>
+                      >
+                        ‹
+                      </span>
+                    </button>
 
-                {/* Flecha derecha */}
-                <button
-                  onClick={() => {
-                    tabsRef.current?.scrollBy({
-                      left: 200,
-                      behavior: 'smooth',
-                    });
-                  }}
-                  className="
+                    {/* Flecha derecha */}
+                    <button
+                      onClick={() => {
+                        tabsRef.current?.scrollBy({
+                          left: 200,
+                          behavior: 'smooth',
+                        });
+                      }}
+                      className="
                     absolute top-1/2 right-0 z-10 -translate-y-1/2
                     animate-[pulse-arrow_2s_ease-in-out_infinite]
-                    bg-gradient-to-l from-slate-900/90 to-transparent py-4 pr-1
-                    pl-3 text-cyan-400
+                    bg-gradient-to-l from-[#192d50]/90 to-transparent py-4 pr-1
+                    pl-3 text-[#22C4D3]
                   "
-                  aria-label="Desplazar tabs a la derecha"
-                >
-                  <span
-                    className="
+                      aria-label="Desplazar tabs a la derecha"
+                    >
+                      <span
+                        className="
                       inline-block
                       animate-[bounce-right_2s_ease-in-out_infinite] text-lg
                       font-bold
                     "
-                  >
-                    ›
-                  </span>
-                </button>
+                      >
+                        ›
+                      </span>
+                    </button>
 
-                <div
-                  ref={tabsRef}
-                  className="
+                    <div
+                      ref={tabsRef}
+                      className="
                     flex scrollbar-none gap-2 overflow-x-auto scroll-smooth px-8
                     py-2
                     md:gap-3
                     lg:gap-4
                   "
-                  style={{
-                    scrollbarWidth: 'none',
-                    msOverflowStyle: 'none',
-                  }}
-                >
-                  <button
-                    onClick={() => setActiveTab('lecciones')}
-                    className={`
+                      style={{
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                      }}
+                    >
+                      <button
+                        onClick={() => setActiveTab('lecciones')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'lecciones'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3056,20 +2866,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Lista de Clases
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('en-vivo')}
-                    className={`
+                      >
+                        Lista de Clases
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('en-vivo')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'en-vivo'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3077,22 +2887,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Clases en Vivo
-                  </button>
-                  <button
-                    type="button"
-                    data-tour-id="tutorial-estudiantes-tab"
-                    onClick={() => setActiveTab('estudiantes')}
-                    className={`
+                      >
+                        Clases en Vivo
+                      </button>
+                      <button
+                        type="button"
+                        data-tour-id="tutorial-estudiantes-tab"
+                        onClick={() => setActiveTab('estudiantes')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'estudiantes'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3100,19 +2910,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Estudiantes
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('actividades')}
-                    className={`
+                      >
+                        Estudiantes
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('actividades')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'actividades'
                           ? `
-          bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]
-          ring-1 ring-cyan-400/40
+          bg-[#22C4D3]/15 text-[#22C4D3] shadow-[0_0_12px_rgba(34,211,238,0.25)]
+          ring-1 ring-[#22C4D3]/40
         `
                           : `
           text-white/80
@@ -3120,28 +2930,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         `
                       }
                     `}
-                  >
-                    Actividades{' '}
-                    <span
-                      className="
-                      ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                      text-xs font-bold text-slate-950
+                      >
+                        Actividades{' '}
+                        <span
+                          className="
+                      ml-2 inline-block rounded-full bg-[#22C4D3] px-2 py-0.5
+                      text-xs font-bold text-[#04101f]
                     "
-                    >
-                      {courseActivities.length}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('recursos')}
-                    className={`
+                        >
+                          {courseActivities.length}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('recursos')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'recursos'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3149,28 +2959,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Recursos{' '}
-                    <span
-                      className="
-                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                        text-xs font-bold text-slate-950
+                      >
+                        Recursos{' '}
+                        <span
+                          className="
+                        ml-2 inline-block rounded-full bg-[#22C4D3] px-2 py-0.5
+                        text-xs font-bold text-[#04101f]
                       "
-                    >
-                      3
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('grabadas')}
-                    className={`
+                        >
+                          3
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('grabadas')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'grabadas'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3178,28 +2988,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Clases grabadas{' '}
-                    <span
-                      className="
-                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                        text-xs font-bold text-slate-950
+                      >
+                        Clases grabadas{' '}
+                        <span
+                          className="
+                        ml-2 inline-block rounded-full bg-[#22C4D3] px-2 py-0.5
+                        text-xs font-bold text-[#04101f]
                       "
-                    >
-                      {meetingsForList.length}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('foros')}
-                    className={`
+                        >
+                          {meetingsForList.length}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('foros')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'foros'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3207,28 +3017,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Foros{' '}
-                    <span
-                      className="
-                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                        text-xs font-bold text-slate-950
+                      >
+                        Foros{' '}
+                        <span
+                          className="
+                        ml-2 inline-block rounded-full bg-[#22C4D3] px-2 py-0.5
+                        text-xs font-bold text-[#04101f]
                       "
-                    >
-                      {forums.length}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('proyectos')}
-                    className={`
+                        >
+                          {forums.length}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('proyectos')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'proyectos'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3236,31 +3046,31 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    Proyectos{' '}
-                    <span
-                      className="
-                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                        text-xs font-bold text-slate-950
+                      >
+                        Proyectos{' '}
+                        <span
+                          className="
+                        ml-2 inline-block rounded-full bg-[#22C4D3] px-2 py-0.5
+                        text-xs font-bold text-[#04101f]
                       "
-                    >
-                      {Array.isArray(studentProjects)
-                        ? studentProjects.length
-                        : 0}
-                    </span>
-                  </button>
+                        >
+                          {Array.isArray(studentProjects)
+                            ? studentProjects.length
+                            : 0}
+                        </span>
+                      </button>
 
-                  <button
-                    onClick={() => setActiveTab('embeddings')}
-                    className={`
+                      <button
+                        onClick={() => setActiveTab('embeddings')}
+                        className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
                       transition-all duration-300
                       ${
                         activeTab === 'embeddings'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
+                            bg-[#22C4D3]/15 text-[#22C4D3]
                             shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
+                            ring-[#22C4D3]/40
                           `
                           : `
                             text-white/80
@@ -3268,1116 +3078,1130 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           `
                       }
                     `}
-                  >
-                    🧠 Embeddings
-                  </button>
-                </div>
-              </div>
+                      >
+                        🧠 Embeddings
+                      </button>
+                    </div>
+                  </div>
 
-              {/* TAB CONTENT */}
-              <div
-                className="
+                  {/* TAB CONTENT */}
+                  <div
+                    className="
                   -mx-1 space-y-6 px-1
                   md:-mx-3 md:px-3
                 "
-              >
-                {/* Curso Tab - Solo Clase en Vivo */}
-                {activeTab === 'curso' && (
-                  <div className="animate-in fade-in space-y-8 duration-500">
-                    {/* Sobre el educador */}
-                    {course.instructorProfileImageKey && (
-                      <div
-                        className="
+                  >
+                    {/* Curso Tab - Solo Clase en Vivo */}
+                    {activeTab === 'curso' && (
+                      <div className="animate-in fade-in space-y-8 duration-500">
+                        {/* Sobre el educador */}
+                        {course.instructorProfileImageKey && (
+                          <div
+                            className="
                           group relative overflow-hidden rounded-2xl border-2
-                          border-cyan-500/30 bg-gradient-to-br from-slate-800
-                          via-slate-800 to-cyan-950/30 p-8 shadow-xl
+                          border-[#22C4D3]/30 bg-gradient-to-br from-[#061c37]
+                          via-[#061c37] to-[#04101f]/30 p-8 shadow-xl
                           transition-all duration-300
-                          hover:border-cyan-500/60 hover:shadow-2xl
-                          hover:shadow-cyan-500/20
+                          hover:border-[#22C4D3]/60 hover:shadow-2xl
+                          hover:shadow-[#22C4D3]/20
                         "
-                      >
-                        {/* Efecto de brillo en hover */}
-                        <div
-                          className="
+                          >
+                            {/* Efecto de brillo en hover */}
+                            <div
+                              className="
                             absolute inset-0 -translate-x-full bg-gradient-to-r
-                            from-transparent via-cyan-500/10 to-transparent
+                            from-transparent via-[#22C4D3]/10 to-transparent
                             transition-transform duration-700
                             group-hover:translate-x-full
                           "
-                        />
+                            />
 
-                        <h2
-                          className="
-                            mb-6 bg-gradient-to-r from-cyan-400 to-blue-400
+                            <h2
+                              className="
+                            mb-6 bg-gradient-to-r from-[#22C4D3] to-teal-300
                             bg-clip-text text-3xl font-bold text-transparent
                           "
-                        >
-                          Sobre el educador
-                        </h2>
+                            >
+                              Sobre el educador
+                            </h2>
 
-                        <div
-                          className="
+                            <div
+                              className="
                             relative flex flex-col items-start gap-6
                             md:flex-row md:items-center
                           "
-                        >
-                          {/* Foto del educador con efecto */}
-                          <div className="relative">
-                            <div
-                              className="
+                            >
+                              {/* Foto del educador con efecto */}
+                              <div className="relative">
+                                <div
+                                  className="
                                 absolute -inset-1 rounded-full bg-gradient-to-r
-                                from-cyan-500 to-blue-500 opacity-75 blur-lg
+                                from-[#22C4D3] to-teal-400 opacity-75 blur-lg
                                 transition-opacity duration-300
                                 group-hover:opacity-100
                               "
-                            />
-                            <Image
-                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
-                              alt={course.instructorName}
-                              width={128}
-                              height={128}
-                              className="
+                                />
+                                <Image
+                                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
+                                  alt={course.instructorName}
+                                  width={128}
+                                  height={128}
+                                  className="
                                 relative size-32 rounded-full object-cover
-                                ring-4 ring-cyan-500/50 transition-transform
+                                ring-4 ring-[#22C4D3]/50 transition-transform
                                 duration-300
                                 group-hover:scale-105
                               "
-                              quality={70}
-                            />
-                          </div>
+                                  quality={70}
+                                />
+                              </div>
 
-                          {/* Información del educador */}
-                          <div className="relative flex-1">
-                            <h3 className="text-2xl font-bold text-white">
-                              {course.instructorName}
-                            </h3>
-                            {course.instructorProfesion && (
-                              <p
-                                className="
-                                  mt-2 text-base font-semibold text-cyan-400
+                              {/* Información del educador */}
+                              <div className="relative flex-1">
+                                <h3 className="text-2xl font-bold text-white">
+                                  {course.instructorName}
+                                </h3>
+                                {course.instructorProfesion && (
+                                  <p
+                                    className="
+                                  mt-2 text-base font-semibold text-[#22C4D3]
                                 "
-                              >
-                                {course.instructorProfesion}
-                              </p>
-                            )}
-                            {course.instructorDescripcion && (
-                              <p className="mt-4 leading-relaxed text-white/80">
-                                {course.instructorDescripcion}
-                              </p>
-                            )}
+                                  >
+                                    {course.instructorProfesion}
+                                  </p>
+                                )}
+                                {course.instructorDescripcion && (
+                                  <p className="mt-4 leading-relaxed text-white/80">
+                                    {course.instructorDescripcion}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
+                        )}
+
+                        <h2 className="text-2xl font-bold text-white">
+                          Clase en Vivo
+                        </h2>
+
+                        {/* Clases agendadas */}
+                        <div className="space-y-4">
+                          <ScheduledMeetingsList
+                            meetings={meetingsForList}
+                            color={selectedColor}
+                          />
                         </div>
-                      </div>
-                    )}
 
-                    <h2 className="text-2xl font-bold text-white">
-                      Clase en Vivo
-                    </h2>
-
-                    {/* Clases agendadas */}
-                    <div className="space-y-4">
-                      <ScheduledMeetingsList
-                        meetings={meetingsForList}
-                        color={selectedColor}
-                      />
-                    </div>
-
-                    {/* Botones de acción */}
-                    <div
-                      className="
+                        {/* Botones de acción */}
+                        <div
+                          className="
                         flex w-full flex-col gap-3
                         sm:flex-row
                       "
-                    >
-                      <Button
-                        onClick={() => void handleSyncVideos()}
-                        disabled={isSyncingVideos}
-                        className="
-                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                        >
+                          <Button
+                            onClick={() => void handleSyncVideos()}
+                            disabled={isSyncingVideos}
+                            className="
+                          w-full bg-[#22C4D3] px-5 py-3 text-sm font-semibold
                           text-white transition-all duration-300
                           hover:bg-cyan-600
                           disabled:opacity-50
                           sm:w-auto
                           md:px-6 md:py-3 md:text-base
                         "
-                      >
-                        {isSyncingVideos
-                          ? 'Sincronizando...'
-                          : 'Sincronizar Videos'}
-                      </Button>
+                          >
+                            {isSyncingVideos
+                              ? 'Sincronizando...'
+                              : 'Sincronizar Videos'}
+                          </Button>
 
-                      <Button
-                        onClick={() => setIsMeetingModalOpen(true)}
-                        className="
-                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                          <Button
+                            onClick={() => setIsMeetingModalOpen(true)}
+                            className="
+                          w-full bg-[#22C4D3] px-5 py-3 text-sm font-semibold
                           text-white transition-all duration-300
                           hover:bg-cyan-600
                           sm:w-auto
                           md:px-6 md:py-3 md:text-base
                         "
-                      >
-                        Agendar Clase
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                {/* Lista de Clases Tab */}
-                {activeTab === 'lecciones' && (
-                  <div
-                    className="
+                          >
+                            Agendar Clase
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {/* Lista de Clases Tab */}
+                    {activeTab === 'lecciones' && (
+                      <div
+                        className="
                       animate-in fade-in -mx-1 px-1 duration-500
                       md:-mx-3 md:px-3
                     "
-                  >
-                    <LessonsListEducator
-                      courseId={courseIdNumber}
-                      selectedColor={selectedColor}
-                    />
-                  </div>
-                )}
-                {/* Clases en Vivo Tab */}
-                {activeTab === 'en-vivo' && (
-                  <div
-                    className="
+                      >
+                        <LessonsListEducator
+                          courseId={courseIdNumber}
+                          selectedColor={selectedColor}
+                        />
+                      </div>
+                    )}
+                    {/* Clases en Vivo Tab */}
+                    {activeTab === 'en-vivo' && (
+                      <div
+                        className="
                       animate-in fade-in -mx-1 space-y-8 px-1 duration-500
                       md:-mx-3 md:px-3
                     "
-                  >
-                    {/* Sobre el educador */}
-                    {course.instructorProfileImageKey && (
-                      <div
-                        className="
-                          group relative overflow-hidden rounded-2xl border-2
-                          border-cyan-500/30 bg-gradient-to-br from-slate-800
-                          via-slate-800 to-cyan-950/30 p-8 shadow-xl
-                          transition-all duration-300
-                          hover:border-cyan-500/60 hover:shadow-2xl
-                          hover:shadow-cyan-500/20
-                        "
                       >
-                        {/* Efecto de brillo en hover */}
-                        <div
-                          className="
+                        {/* Sobre el educador */}
+                        {course.instructorProfileImageKey && (
+                          <div
+                            className="
+                          group relative overflow-hidden rounded-2xl border-2
+                          border-[#22C4D3]/30 bg-gradient-to-br from-[#061c37]
+                          via-[#061c37] to-[#04101f]/30 p-8 shadow-xl
+                          transition-all duration-300
+                          hover:border-[#22C4D3]/60 hover:shadow-2xl
+                          hover:shadow-[#22C4D3]/20
+                        "
+                          >
+                            {/* Efecto de brillo en hover */}
+                            <div
+                              className="
                             absolute inset-0 -translate-x-full bg-gradient-to-r
-                            from-transparent via-cyan-500/10 to-transparent
+                            from-transparent via-[#22C4D3]/10 to-transparent
                             transition-transform duration-700
                             group-hover:translate-x-full
                           "
-                        />
+                            />
 
-                        <h2
-                          className="
-                            mb-6 bg-gradient-to-r from-cyan-400 to-blue-400
+                            <h2
+                              className="
+                            mb-6 bg-gradient-to-r from-[#22C4D3] to-teal-300
                             bg-clip-text text-3xl font-bold text-transparent
                           "
-                        >
-                          Sobre el educador
-                        </h2>
+                            >
+                              Sobre el educador
+                            </h2>
 
-                        <div
-                          className="
+                            <div
+                              className="
                             relative flex flex-col items-start gap-6
                             md:flex-row md:items-center
                           "
-                        >
-                          {/* Foto del educador con efecto */}
-                          <div className="relative">
-                            <div
-                              className="
+                            >
+                              {/* Foto del educador con efecto */}
+                              <div className="relative">
+                                <div
+                                  className="
                                 absolute -inset-1 rounded-full bg-gradient-to-r
-                                from-cyan-500 to-blue-500 opacity-75 blur-lg
+                                from-[#22C4D3] to-teal-400 opacity-75 blur-lg
                                 transition-opacity duration-300
                                 group-hover:opacity-100
                               "
-                            />
-                            <Image
-                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
-                              alt={course.instructorName}
-                              width={128}
-                              height={128}
-                              className="
+                                />
+                                <Image
+                                  src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
+                                  alt={course.instructorName}
+                                  width={128}
+                                  height={128}
+                                  className="
                                 relative size-32 rounded-full object-cover
-                                ring-4 ring-cyan-500/50 transition-transform
+                                ring-4 ring-[#22C4D3]/50 transition-transform
                                 duration-300
                                 group-hover:scale-105
                               "
-                              quality={70}
-                            />
-                          </div>
+                                  quality={70}
+                                />
+                              </div>
 
-                          {/* Información del educador */}
-                          <div className="relative flex-1">
-                            <h3 className="text-2xl font-bold text-white">
-                              {course.instructorName}
-                            </h3>
-                            {course.instructorProfesion && (
-                              <p
-                                className="
-                                  mt-2 text-base font-semibold text-cyan-400
+                              {/* Información del educador */}
+                              <div className="relative flex-1">
+                                <h3 className="text-2xl font-bold text-white">
+                                  {course.instructorName}
+                                </h3>
+                                {course.instructorProfesion && (
+                                  <p
+                                    className="
+                                  mt-2 text-base font-semibold text-[#22C4D3]
                                 "
-                              >
-                                {course.instructorProfesion}
-                              </p>
-                            )}
-                            {course.instructorDescripcion && (
-                              <p className="mt-4 leading-relaxed text-white/80">
-                                {course.instructorDescripcion}
-                              </p>
-                            )}
+                                  >
+                                    {course.instructorProfesion}
+                                  </p>
+                                )}
+                                {course.instructorDescripcion && (
+                                  <p className="mt-4 leading-relaxed text-white/80">
+                                    {course.instructorDescripcion}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        )}
 
-                    <h2 className="text-2xl font-bold text-white">
-                      Clases Agendadas
-                    </h2>
+                        <h2 className="text-2xl font-bold text-white">
+                          Clases Agendadas
+                        </h2>
 
-                    {/* Botones de acción */}
-                    <div
-                      className="
+                        {/* Botones de acción */}
+                        <div
+                          className="
                         flex w-full flex-col gap-3
                         sm:flex-row
                       "
-                    >
-                      <Button
-                        onClick={() => void handleSyncVideos()}
-                        disabled={isSyncingVideos}
-                        className="
-                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                        >
+                          <Button
+                            onClick={() => void handleSyncVideos()}
+                            disabled={isSyncingVideos}
+                            className="
+                          w-full bg-[#22C4D3] px-5 py-3 text-sm font-semibold
                           text-white transition-all duration-300
                           hover:bg-cyan-600
                           disabled:opacity-50
                           sm:w-auto
                           md:px-6 md:py-3 md:text-base
                         "
-                      >
-                        {isSyncingVideos
-                          ? 'Sincronizando...'
-                          : 'Sincronizar Videos'}
-                      </Button>
+                          >
+                            {isSyncingVideos
+                              ? 'Sincronizando...'
+                              : 'Sincronizar Videos'}
+                          </Button>
 
-                      <Button
-                        onClick={() => setIsMeetingModalOpen(true)}
-                        className="
-                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                          <Button
+                            onClick={() => setIsMeetingModalOpen(true)}
+                            className="
+                          w-full bg-[#22C4D3] px-5 py-3 text-sm font-semibold
                           text-white transition-all duration-300
                           hover:bg-cyan-600
                           sm:w-auto
                           md:px-6 md:py-3 md:text-base
                         "
-                      >
-                        Agendar Clase
-                      </Button>
-                    </div>
-
-                    {/* Clases agendadas */}
-                    <div className="space-y-4">
-                      <ScheduledMeetingsList
-                        meetings={meetingsForList}
-                        color={selectedColor}
-                      />
-                    </div>
-                  </div>
-                )}
-                {/* Estudiantes Tab */}
-                {activeTab === 'estudiantes' && (
-                  <div
-                    className="
-                      animate-in fade-in -mx-1 px-1 duration-500
-                      md:-mx-3 md:px-3
-                    "
-                  >
-                    <DashboardEstudiantes
-                      courseId={courseIdNumber}
-                      selectedColor={selectedColor}
-                    />
-                  </div>
-                )}
-                {/* Clases Grabadas Tab */}
-                {activeTab === 'grabadas' && (
-                  <div
-                    className="
-                      animate-in fade-in -mx-1 px-1 duration-500
-                      md:-mx-3 md:px-3
-                    "
-                  >
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      Clases Grabadas ({meetingsForList.length})
-                    </h2>
-                    <div className="space-y-4">
-                      <ScheduledMeetingsList
-                        meetings={meetingsForList}
-                        color={selectedColor}
-                      />
-                    </div>
-                  </div>
-                )}
-                {/* Foros Tab */}
-                {activeTab === 'foros' && (
-                  <div className="animate-in fade-in duration-500">
-                    {/* Formulario de creación de foro siempre visible */}
-                    <div
-                      className="
-                        mb-6 rounded-2xl border border-cyan-700/30 bg-[#1a2f3f]
-                        p-6 shadow
-                      "
-                    >
-                      <h2 className="mb-1 text-xl font-bold text-cyan-300">
-                        Foro del curso
-                      </h2>
-                      <p className="mb-4 text-sm text-white/60">
-                        {forums.length} foros · Crea nuevas conversaciones
-                      </p>
-                      <div className="relative space-y-3">
-                        <textarea
-                          placeholder="Título del nuevo foro..."
-                          value={newForumTitle}
-                          onChange={(e) => setNewForumTitle(e.target.value)}
-                          rows={2}
-                          className="
-                            w-full resize-none rounded-xl border
-                            border-cyan-700/20 bg-[#142030] px-4 py-3 text-base
-                            text-white
-                            placeholder:text-white/30
-                            focus:border-cyan-500 focus:outline-none
-                          "
-                          style={{ minHeight: '60px' }}
-                        />
-
-                        <textarea
-                          placeholder="Descripción del foro (opcional)..."
-                          value={newForumDescription}
-                          onChange={(e) =>
-                            setNewForumDescription(e.target.value)
-                          }
-                          rows={2}
-                          className="
-                            w-full resize-none rounded-xl border
-                            border-cyan-700/20 bg-[#142030] px-4 py-3 text-sm
-                            text-white
-                            placeholder:text-white/30
-                            focus:border-cyan-500 focus:outline-none
-                          "
-                          style={{ minHeight: '50px' }}
-                        />
-
-                        {/* Inputs de media para foro */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) =>
-                                setForumImage(e.target.files?.[0] || null)
-                              }
-                              className="hidden"
-                            />
-                            <div
-                              className="
-                                rounded-lg border border-dashed
-                                border-cyan-700/30 bg-slate-800/50 p-3
-                                text-center transition
-                                hover:border-cyan-500 hover:bg-slate-800
-                              "
-                            >
-                              <div className="text-lg">□</div>
-                              <div className="text-xs text-white/70">
-                                {forumImage
-                                  ? forumImage.name.slice(0, 15) + '...'
-                                  : 'Portada'}
-                              </div>
-                            </div>
-                          </label>
-
-                          <label className="cursor-pointer">
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx,.txt"
-                              onChange={(e) =>
-                                setForumDocument(e.target.files?.[0] || null)
-                              }
-                              className="hidden"
-                            />
-                            <div
-                              className="
-                                rounded-lg border border-dashed
-                                border-cyan-700/30 bg-slate-800/50 p-3
-                                text-center transition
-                                hover:border-cyan-500 hover:bg-slate-800
-                              "
-                            >
-                              <div className="text-lg">📄</div>
-                              <div className="text-xs text-white/70">
-                                {forumDocument
-                                  ? forumDocument.name.slice(0, 15) + '...'
-                                  : 'Documento'}
-                              </div>
-                            </div>
-                          </label>
+                          >
+                            Agendar Clase
+                          </Button>
                         </div>
 
-                        <div className="mt-4 flex items-center justify-end gap-2">
-                          {(forumImage || forumDocument) && (
-                            <button
-                              onClick={() => {
-                                setForumImage(null);
-                                setForumDocument(null);
-                              }}
+                        {/* Clases agendadas */}
+                        <div className="space-y-4">
+                          <ScheduledMeetingsList
+                            meetings={meetingsForList}
+                            color={selectedColor}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {/* Estudiantes Tab */}
+                    {activeTab === 'estudiantes' && (
+                      <div
+                        className="
+                      animate-in fade-in -mx-1 px-1 duration-500
+                      md:-mx-3 md:px-3
+                    "
+                      >
+                        <DashboardEstudiantes
+                          courseId={courseIdNumber}
+                          selectedColor={selectedColor}
+                        />
+                      </div>
+                    )}
+                    {/* Clases Grabadas Tab */}
+                    {activeTab === 'grabadas' && (
+                      <div
+                        className="
+                      animate-in fade-in -mx-1 px-1 duration-500
+                      md:-mx-3 md:px-3
+                    "
+                      >
+                        <h2 className="mb-6 text-2xl font-bold text-white">
+                          Clases Grabadas ({meetingsForList.length})
+                        </h2>
+                        <div className="space-y-4">
+                          <ScheduledMeetingsList
+                            meetings={meetingsForList}
+                            color={selectedColor}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {/* Foros Tab */}
+                    {activeTab === 'foros' && (
+                      <div className="animate-in fade-in duration-500">
+                        {/* Formulario de creación de foro siempre visible */}
+                        <div
+                          className="
+                        mb-6 rounded-2xl border border-[#22C4D3]/30 bg-[#1a2f3f]
+                        p-6 shadow
+                      "
+                        >
+                          <h2 className="mb-1 text-xl font-bold text-[#22C4D3]">
+                            Foro del curso
+                          </h2>
+                          <p className="mb-4 text-sm text-white/60">
+                            {forums.length} foros · Crea nuevas conversaciones
+                          </p>
+                          <div className="relative space-y-3">
+                            <textarea
+                              placeholder="Título del nuevo foro..."
+                              value={newForumTitle}
+                              onChange={(e) => setNewForumTitle(e.target.value)}
+                              rows={2}
                               className="
+                            w-full resize-none rounded-xl border
+                            border-[#22C4D3]/20 bg-[#142030] px-4 py-3 text-base
+                            text-white
+                            placeholder:text-white/30
+                            focus:border-[#22C4D3] focus:outline-none
+                          "
+                              style={{ minHeight: '60px' }}
+                            />
+
+                            <textarea
+                              placeholder="Descripción del foro (opcional)..."
+                              value={newForumDescription}
+                              onChange={(e) =>
+                                setNewForumDescription(e.target.value)
+                              }
+                              rows={2}
+                              className="
+                            w-full resize-none rounded-xl border
+                            border-[#22C4D3]/20 bg-[#142030] px-4 py-3 text-sm
+                            text-white
+                            placeholder:text-white/30
+                            focus:border-[#22C4D3] focus:outline-none
+                          "
+                              style={{ minHeight: '50px' }}
+                            />
+
+                            {/* Inputs de media para foro */}
+                            <div className="grid grid-cols-2 gap-3">
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) =>
+                                    setForumImage(e.target.files?.[0] || null)
+                                  }
+                                  className="hidden"
+                                />
+                                <div
+                                  className="
+                                rounded-lg border border-dashed
+                                border-[#22C4D3]/30 bg-[#061c37]/50 p-3
+                                text-center transition
+                                hover:border-[#22C4D3] hover:bg-[#061c37]
+                              "
+                                >
+                                  <div className="text-lg">□</div>
+                                  <div className="text-xs text-white/70">
+                                    {forumImage
+                                      ? forumImage.name.slice(0, 15) + '...'
+                                      : 'Portada'}
+                                  </div>
+                                </div>
+                              </label>
+
+                              <label className="cursor-pointer">
+                                <input
+                                  type="file"
+                                  accept=".pdf,.doc,.docx,.txt"
+                                  onChange={(e) =>
+                                    setForumDocument(
+                                      e.target.files?.[0] || null
+                                    )
+                                  }
+                                  className="hidden"
+                                />
+                                <div
+                                  className="
+                                rounded-lg border border-dashed
+                                border-[#22C4D3]/30 bg-[#061c37]/50 p-3
+                                text-center transition
+                                hover:border-[#22C4D3] hover:bg-[#061c37]
+                              "
+                                >
+                                  <div className="text-lg">📄</div>
+                                  <div className="text-xs text-white/70">
+                                    {forumDocument
+                                      ? forumDocument.name.slice(0, 15) + '...'
+                                      : 'Documento'}
+                                  </div>
+                                </div>
+                              </label>
+                            </div>
+
+                            <div className="mt-4 flex items-center justify-end gap-2">
+                              {(forumImage || forumDocument) && (
+                                <button
+                                  onClick={() => {
+                                    setForumImage(null);
+                                    setForumDocument(null);
+                                  }}
+                                  className="
                                 px-3 py-2 text-xs text-white/60
                                 transition-colors
                                 hover:text-white
                               "
-                            >
-                              Limpiar archivos
-                            </button>
-                          )}
-                          <Button
-                            onClick={async () => {
-                              if (!newForumTitle.trim()) return;
-                              await handleCreateForum();
-                              setNewForumTitle('');
-                              setNewForumDescription('');
-                            }}
-                            disabled={isCreatingForum || !newForumTitle.trim()}
-                            className="
-                              flex items-center gap-2 rounded-xl bg-cyan-500
+                                >
+                                  Limpiar archivos
+                                </button>
+                              )}
+                              <Button
+                                onClick={async () => {
+                                  if (!newForumTitle.trim()) return;
+                                  await handleCreateForum();
+                                  setNewForumTitle('');
+                                  setNewForumDescription('');
+                                }}
+                                disabled={
+                                  isCreatingForum || !newForumTitle.trim()
+                                }
+                                className="
+                              flex items-center gap-2 rounded-xl bg-[#22C4D3]
                               px-6 py-2 text-base font-semibold
                               hover:bg-cyan-600
                             "
-                          >
-                            {isCreatingForum ? 'Creando...' : '+ Nuevo Foro'}
-                          </Button>
+                              >
+                                {isCreatingForum
+                                  ? 'Creando...'
+                                  : '+ Nuevo Foro'}
+                              </Button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    {/* Layout de dos columnas */}
-                    <div
-                      className="
+                        {/* Layout de dos columnas */}
+                        <div
+                          className="
                         grid gap-6
                         lg:grid-cols-[380px_1fr]
                       "
-                    >
-                      {/* Columna izquierda - Lista de foros */}
-                      <div className="space-y-4">
-                        {/* Lista de foros */}
-                        <div className="space-y-2">
-                          {forums.length === 0 ? (
-                            <div
-                              className="
+                        >
+                          {/* Columna izquierda - Lista de foros */}
+                          <div className="space-y-4">
+                            {/* Lista de foros */}
+                            <div className="space-y-2">
+                              {forums.length === 0 ? (
+                                <div
+                                  className="
                                 rounded-xl border border-dashed border-white/20
-                                bg-slate-800/30 p-8 text-center
+                                bg-[#061c37]/30 p-8 text-center
                               "
-                            >
-                              <p className="text-sm text-white/60">
-                                No hay foros aún
-                              </p>
-                            </div>
-                          ) : (
-                            forums.map((forum) => (
-                              <button
-                                key={forum.id}
-                                onClick={() => handleSelectForum(forum.id)}
-                                className={`
-                                  w-full rounded-2xl border border-cyan-700/30
+                                >
+                                  <p className="text-sm text-white/60">
+                                    No hay foros aún
+                                  </p>
+                                </div>
+                              ) : (
+                                forums.map((forum) => (
+                                  <button
+                                    key={forum.id}
+                                    onClick={() => handleSelectForum(forum.id)}
+                                    className={`
+                                  w-full rounded-2xl border border-[#22C4D3]/30
                                   bg-[#1a2f3f] p-5 text-left shadow
                                   transition-all duration-200
-                                  hover:border-cyan-400/60 hover:bg-[#1d3449]
+                                  hover:border-[#22C4D3]/60 hover:bg-[#1d3449]
                                   ${
                                     selectedForum === forum.id
                                       ? `
-                                        border-cyan-400 bg-[#1d3449]
-                                        shadow-cyan-500/10
+                                        border-[#22C4D3] bg-[#1d3449]
+                                        shadow-[#22C4D3]/10
                                       `
                                       : ''
                                   }
                                 `}
-                                style={{ marginBottom: '18px' }}
-                              >
-                                <div className="mb-2 flex items-center gap-4">
-                                  <div
-                                    className="
+                                    style={{ marginBottom: '18px' }}
+                                  >
+                                    <div className="mb-2 flex items-center gap-4">
+                                      <div
+                                        className="
                                       flex size-10 flex-shrink-0 items-center
                                       justify-center rounded-full
-                                      bg-gradient-to-br from-cyan-700
-                                      to-cyan-400 text-lg font-bold text-white
+                                      bg-gradient-to-br from-[#22C4D3]
+                                      to-[#22C4D3] text-lg font-bold text-white
                                     "
-                                  >
-                                    {forum.title?.[0]?.toUpperCase() || '?'}
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <span
-                                      className="
+                                      >
+                                        {forum.title?.[0]?.toUpperCase() || '?'}
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <span
+                                          className="
                                         block truncate text-base font-semibold
-                                        text-cyan-300
+                                        text-[#22C4D3]
                                       "
-                                    >
-                                      {forum.title}
-                                    </span>
-                                    {forum.description && (
-                                      <span
-                                        className="
+                                        >
+                                          {forum.title}
+                                        </span>
+                                        {forum.description && (
+                                          <span
+                                            className="
                                           block truncate text-xs text-white/50
                                         "
-                                      >
-                                        {forum.description}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <span
-                                    className="
+                                          >
+                                            {forum.description}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span
+                                        className="
                                       ml-auto text-xs whitespace-nowrap
                                       text-white/40
                                     "
-                                  >
-                                    {forum.createdAt
-                                      ? new Date(
-                                          forum.createdAt
-                                        ).toLocaleDateString('es-ES', {
-                                          day: '2-digit',
-                                          month: 'short',
-                                          year: 'numeric',
-                                        })
-                                      : ''}
-                                  </span>
-                                </div>
-                                <div
-                                  className="
+                                      >
+                                        {forum.createdAt
+                                          ? new Date(
+                                              forum.createdAt
+                                            ).toLocaleDateString('es-ES', {
+                                              day: '2-digit',
+                                              month: 'short',
+                                              year: 'numeric',
+                                            })
+                                          : ''}
+                                      </span>
+                                    </div>
+                                    <div
+                                      className="
                                     mt-1 flex items-center gap-4 text-xs
-                                    text-cyan-400
+                                    text-[#22C4D3]
                                   "
-                                >
-                                  <span>
-                                    {forum._count?.posts || 0} comentarios
-                                  </span>
-                                </div>
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      </div>
+                                    >
+                                      <span>
+                                        {forum._count?.posts || 0} comentarios
+                                      </span>
+                                    </div>
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </div>
 
-                      {/* Columna derecha - Contenido del foro */}
-                      <div
-                        className="
-                          rounded-xl border border-white/10 bg-slate-800/50 p-6
-                        "
-                      >
-                        {!selectedForum ? (
+                          {/* Columna derecha - Contenido del foro */}
                           <div
                             className="
+                          rounded-xl border border-white/10 bg-[#061c37]/50 p-6
+                        "
+                          >
+                            {!selectedForum ? (
+                              <div
+                                className="
                               flex h-full min-h-[500px] flex-col items-center
                               justify-center text-center
                             "
-                          >
-                            <div className="mb-4 size-20 rounded-full bg-white/5" />
-                            <h3 className="mb-2 text-xl font-bold text-white">
-                              Selecciona un foro
-                            </h3>
-                            <p className="text-sm text-white/50">
-                              Elige un foro de la lista para ver las
-                              conversaciones
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-6">
-                            {/* Header del foro */}
-                            <div className="border-b border-white/10 pb-4">
-                              <div
-                                className="
+                              >
+                                <div className="mb-4 size-20 rounded-full bg-white/5" />
+                                <h3 className="mb-2 text-xl font-bold text-white">
+                                  Selecciona un foro
+                                </h3>
+                                <p className="text-sm text-white/50">
+                                  Elige un foro de la lista para ver las
+                                  conversaciones
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="space-y-6">
+                                {/* Header del foro */}
+                                <div className="border-b border-white/10 pb-4">
+                                  <div
+                                    className="
                                   flex items-start justify-between gap-4
                                 "
-                              >
-                                <div>
-                                  <h2
-                                    className="
+                                  >
+                                    <div>
+                                      <h2
+                                        className="
                                       mb-1 text-2xl font-bold text-white
                                     "
-                                  >
-                                    {
-                                      forums.find((f) => f.id === selectedForum)
-                                        ?.title
-                                    }
-                                  </h2>
-                                  <p className="text-sm text-white/50">
-                                    {posts.length}{' '}
-                                    {posts.length === 1 ? 'post' : 'posts'}
-                                  </p>
-                                </div>
-                                {forums.find((f) => f.id === selectedForum)
-                                  ?.coverImageKey && (
-                                  <button
-                                    onClick={() =>
-                                      setLightboxImage(
-                                        `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
+                                      >
+                                        {
                                           forums.find(
                                             (f) => f.id === selectedForum
-                                          )?.coverImageKey
-                                        }`
-                                      )
-                                    }
-                                    className="
+                                          )?.title
+                                        }
+                                      </h2>
+                                      <p className="text-sm text-white/50">
+                                        {posts.length}{' '}
+                                        {posts.length === 1 ? 'post' : 'posts'}
+                                      </p>
+                                    </div>
+                                    {forums.find((f) => f.id === selectedForum)
+                                      ?.coverImageKey && (
+                                      <button
+                                        onClick={() =>
+                                          setLightboxImage(
+                                            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
+                                              forums.find(
+                                                (f) => f.id === selectedForum
+                                              )?.coverImageKey
+                                            }`
+                                          )
+                                        }
+                                        className="
                                       group relative flex-shrink-0
                                       overflow-hidden rounded-lg border
-                                      border-cyan-700/30 transition-colors
-                                      hover:border-cyan-500/60
+                                      border-[#22C4D3]/30 transition-colors
+                                      hover:border-[#22C4D3]/60
                                     "
-                                  >
-                                    <Image
-                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
-                                        forums.find(
-                                          (f) => f.id === selectedForum
-                                        )?.coverImageKey
-                                      }`}
-                                      alt="Imagen del foro"
-                                      className="
+                                      >
+                                        <Image
+                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
+                                            forums.find(
+                                              (f) => f.id === selectedForum
+                                            )?.coverImageKey
+                                          }`}
+                                          alt="Imagen del foro"
+                                          className="
                                         size-24 object-cover transition-opacity
                                         group-hover:opacity-80
                                       "
-                                      width={96}
-                                      height={96}
-                                      loading="lazy"
-                                      onError={(e) => {
-                                        console.error(
-                                          'Error cargando imagen del foro'
-                                        );
-                                        e.currentTarget.style.display = 'none';
-                                      }}
-                                    />
-                                    <div
-                                      className="
+                                          width={96}
+                                          height={96}
+                                          loading="lazy"
+                                          onError={(e) => {
+                                            console.error(
+                                              'Error cargando imagen del foro'
+                                            );
+                                            e.currentTarget.style.display =
+                                              'none';
+                                          }}
+                                        />
+                                        <div
+                                          className="
                                         absolute inset-0 flex items-center
                                         justify-center bg-black/0
                                         transition-colors
                                         group-hover:bg-black/40
                                       "
-                                    >
-                                      <ImageIcon
-                                        className="
+                                        >
+                                          <ImageIcon
+                                            className="
                                           size-6 text-white opacity-0
                                           transition-opacity
                                           group-hover:opacity-100
                                         "
-                                      />
-                                    </div>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+                                          />
+                                        </div>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
 
-                            {/* Formulario de crear post con media */}
-                            <div
-                              className="
-                                rounded-lg border border-cyan-700/30
+                                {/* Formulario de crear post con media */}
+                                <div
+                                  className="
+                                rounded-lg border border-[#22C4D3]/30
                                 bg-[#142030] p-4
                               "
-                            >
-                              <textarea
-                                placeholder="Comparte tu pensamiento, pregunta o avance..."
-                                value={newPostContent}
-                                onChange={(e) =>
-                                  setNewPostContent(e.target.value)
-                                }
-                                rows={3}
-                                className="
+                                >
+                                  <textarea
+                                    placeholder="Comparte tu pensamiento, pregunta o avance..."
+                                    value={newPostContent}
+                                    onChange={(e) =>
+                                      setNewPostContent(e.target.value)
+                                    }
+                                    rows={3}
+                                    className="
                                   mb-3 w-full resize-none rounded-lg border
-                                  border-cyan-700/20 bg-slate-800 px-3 py-2
+                                  border-[#22C4D3]/20 bg-[#061c37] px-3 py-2
                                   text-sm text-white
                                   placeholder:text-white/30
-                                  focus:border-cyan-500 focus:outline-none
+                                  focus:border-[#22C4D3] focus:outline-none
                                 "
-                              />
-
-                              {/* Inputs de media */}
-                              <div className="mb-4 grid grid-cols-3 gap-2">
-                                {/* Imagen */}
-                                <label className="group cursor-pointer">
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) =>
-                                      setSelectedImage(
-                                        e.target.files?.[0] || null
-                                      )
-                                    }
-                                    className="hidden"
                                   />
-                                  <div
-                                    className="
+
+                                  {/* Inputs de media */}
+                                  <div className="mb-4 grid grid-cols-3 gap-2">
+                                    {/* Imagen */}
+                                    <label className="group cursor-pointer">
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) =>
+                                          setSelectedImage(
+                                            e.target.files?.[0] || null
+                                          )
+                                        }
+                                        className="hidden"
+                                      />
+                                      <div
+                                        className="
                                       rounded-lg border border-dashed
-                                      border-cyan-700/30 bg-slate-800/50 p-3
+                                      border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                       text-center transition
-                                      hover:border-cyan-500 hover:bg-slate-800
+                                      hover:border-[#22C4D3] hover:bg-[#061c37]
                                     "
-                                  >
-                                    <div className="text-lg">□</div>
-                                    <div className="text-xs text-white/70">
-                                      {selectedImage
-                                        ? selectedImage.name.slice(0, 15) +
-                                          '...'
-                                        : 'Imagen'}
-                                    </div>
-                                    <div className="text-xs text-white/40">
-                                      Máx 5MB
-                                    </div>
-                                  </div>
-                                </label>
+                                      >
+                                        <div className="text-lg">□</div>
+                                        <div className="text-xs text-white/70">
+                                          {selectedImage
+                                            ? selectedImage.name.slice(0, 15) +
+                                              '...'
+                                            : 'Imagen'}
+                                        </div>
+                                        <div className="text-xs text-white/40">
+                                          Máx 5MB
+                                        </div>
+                                      </div>
+                                    </label>
 
-                                {/* Audio */}
-                                <div className="relative">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setShowAudioRecorder(!showAudioRecorder)
-                                    }
-                                    className="group w-full cursor-pointer"
-                                  >
-                                    <div
-                                      className="
+                                    {/* Audio */}
+                                    <div className="relative">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setShowAudioRecorder(
+                                            !showAudioRecorder
+                                          )
+                                        }
+                                        className="group w-full cursor-pointer"
+                                      >
+                                        <div
+                                          className="
                                         rounded-lg border border-dashed
-                                        border-cyan-700/30 bg-slate-800/50 p-3
+                                        border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                         text-center transition
-                                        hover:border-cyan-500 hover:bg-slate-800
+                                        hover:border-[#22C4D3] hover:bg-[#061c37]
                                       "
-                                    >
-                                      <div className="text-lg">♪</div>
-                                      <div className="text-xs text-white/70">
-                                        {selectedAudio
-                                          ? selectedAudio.name.slice(0, 15) +
-                                            '...'
-                                          : 'Audio'}
-                                      </div>
-                                      <div className="text-xs text-white/40">
-                                        Máx 50MB
-                                      </div>
-                                    </div>
-                                  </button>
+                                        >
+                                          <div className="text-lg">♪</div>
+                                          <div className="text-xs text-white/70">
+                                            {selectedAudio
+                                              ? selectedAudio.name.slice(
+                                                  0,
+                                                  15
+                                                ) + '...'
+                                              : 'Audio'}
+                                          </div>
+                                          <div className="text-xs text-white/40">
+                                            Máx 50MB
+                                          </div>
+                                        </div>
+                                      </button>
 
-                                  {/* Input de archivo oculto */}
-                                  <input
-                                    type="file"
-                                    accept="audio/*"
-                                    onChange={(e) =>
-                                      setSelectedAudio(
-                                        e.target.files?.[0] || null
-                                      )
-                                    }
-                                    className="hidden"
-                                    id="audio-upload-input"
-                                  />
+                                      {/* Input de archivo oculto */}
+                                      <input
+                                        type="file"
+                                        accept="audio/*"
+                                        onChange={(e) =>
+                                          setSelectedAudio(
+                                            e.target.files?.[0] || null
+                                          )
+                                        }
+                                        className="hidden"
+                                        id="audio-upload-input"
+                                      />
 
-                                  {/* Menú desplegable con grabador */}
-                                  {showAudioRecorder && (
-                                    <div
-                                      className="
+                                      {/* Menú desplegable con grabador */}
+                                      {showAudioRecorder && (
+                                        <div
+                                          className="
                                         absolute right-0 bottom-full z-50 mb-2
                                         w-80 rounded-lg border
-                                        border-cyan-700/30 bg-slate-800 p-4
+                                        border-[#22C4D3]/30 bg-[#061c37] p-4
                                         shadow-lg
                                       "
-                                    >
-                                      <div className="space-y-3">
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            document
-                                              .getElementById(
-                                                'audio-upload-input'
-                                              )
-                                              ?.click();
-                                            setShowAudioRecorder(false);
-                                          }}
-                                          className="
-                                            w-full rounded-lg bg-blue-600 px-3
+                                        >
+                                          <div className="space-y-3">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                document
+                                                  .getElementById(
+                                                    'audio-upload-input'
+                                                  )
+                                                  ?.click();
+                                                setShowAudioRecorder(false);
+                                              }}
+                                              className="
+                                            w-full rounded-lg bg-[#22C4D3] px-3
                                             py-2 text-sm font-medium text-white
                                             transition-colors
-                                            hover:bg-blue-700
+                                            hover:bg-cyan-600
                                           "
-                                        >
-                                          📁 Subir archivo
-                                        </button>
+                                            >
+                                              📁 Subir archivo
+                                            </button>
 
-                                        <AudioRecorder
-                                          onAudioSelect={(file) => {
-                                            setSelectedAudio(file);
-                                            setShowAudioRecorder(false);
-                                          }}
-                                          onClose={() =>
-                                            setShowAudioRecorder(false)
-                                          }
-                                        />
+                                            <AudioRecorder
+                                              onAudioSelect={(file) => {
+                                                setSelectedAudio(file);
+                                                setShowAudioRecorder(false);
+                                              }}
+                                              onClose={() =>
+                                                setShowAudioRecorder(false)
+                                              }
+                                            />
 
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setShowAudioRecorder(false)
-                                          }
-                                          className="
-                                            w-full rounded-lg bg-gray-700 px-3
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setShowAudioRecorder(false)
+                                              }
+                                              className="
+                                            w-full rounded-lg bg-[#0d2a4d] px-3
                                             py-2 text-sm font-medium text-white
                                             transition-colors
-                                            hover:bg-gray-600
+                                            hover:bg-[#0d2a4d]
                                           "
-                                        >
-                                          Cerrar
-                                        </button>
-                                      </div>
+                                            >
+                                              Cerrar
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
-                                </div>
 
-                                {/* Video */}
-                                <label className="group cursor-pointer">
-                                  <input
-                                    type="file"
-                                    accept="video/*"
-                                    onChange={(e) =>
-                                      setSelectedVideo(
-                                        e.target.files?.[0] || null
-                                      )
-                                    }
-                                    className="hidden"
-                                  />
-                                  <div
-                                    className="
+                                    {/* Video */}
+                                    <label className="group cursor-pointer">
+                                      <input
+                                        type="file"
+                                        accept="video/*"
+                                        onChange={(e) =>
+                                          setSelectedVideo(
+                                            e.target.files?.[0] || null
+                                          )
+                                        }
+                                        className="hidden"
+                                      />
+                                      <div
+                                        className="
                                       rounded-lg border border-dashed
-                                      border-cyan-700/30 bg-slate-800/50 p-3
+                                      border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                       text-center transition
-                                      hover:border-cyan-500 hover:bg-slate-800
+                                      hover:border-[#22C4D3] hover:bg-[#061c37]
                                     "
-                                  >
-                                    <div className="text-lg">▶</div>
-                                    <div className="text-xs text-white/70">
-                                      {selectedVideo
-                                        ? selectedVideo.name.slice(0, 15) +
-                                          '...'
-                                        : 'Video'}
-                                    </div>
-                                    <div className="text-xs text-white/40">
-                                      Máx 200MB
-                                    </div>
+                                      >
+                                        <div className="text-lg">▶</div>
+                                        <div className="text-xs text-white/70">
+                                          {selectedVideo
+                                            ? selectedVideo.name.slice(0, 15) +
+                                              '...'
+                                            : 'Video'}
+                                        </div>
+                                        <div className="text-xs text-white/40">
+                                          Máx 200MB
+                                        </div>
+                                      </div>
+                                    </label>
                                   </div>
-                                </label>
-                              </div>
 
-                              {/* Resumen de archivos seleccionados */}
-                              {(selectedImage ||
-                                selectedAudio ||
-                                selectedVideo) && (
-                                <div
-                                  className="
-                                    mb-3 rounded-lg bg-cyan-700/10 p-2 text-xs
-                                    text-cyan-300
+                                  {/* Resumen de archivos seleccionados */}
+                                  {(selectedImage ||
+                                    selectedAudio ||
+                                    selectedVideo) && (
+                                    <div
+                                      className="
+                                    mb-3 rounded-lg bg-[#22C4D3]/10 p-2 text-xs
+                                    text-[#22C4D3]
                                   "
-                                >
-                                  <div className="font-semibold">
-                                    Archivos seleccionados:
-                                  </div>
-                                  {selectedImage && (
-                                    <div>🖼️ {selectedImage.name}</div>
+                                    >
+                                      <div className="font-semibold">
+                                        Archivos seleccionados:
+                                      </div>
+                                      {selectedImage && (
+                                        <div>🖼️ {selectedImage.name}</div>
+                                      )}
+                                      {selectedAudio && (
+                                        <div>🎙️ {selectedAudio.name}</div>
+                                      )}
+                                      {selectedVideo && (
+                                        <div>🎬 {selectedVideo.name}</div>
+                                      )}
+                                    </div>
                                   )}
-                                  {selectedAudio && (
-                                    <div>🎙️ {selectedAudio.name}</div>
-                                  )}
-                                  {selectedVideo && (
-                                    <div>🎬 {selectedVideo.name}</div>
-                                  )}
-                                </div>
-                              )}
 
-                              <div className="flex items-center justify-end gap-2">
-                                <span className="text-xs text-white/40">
-                                  {newPostContent.length}
-                                </span>
-                                <Button
-                                  onClick={() =>
-                                    handleCreatePost(selectedForum!)
-                                  }
-                                  disabled={
-                                    !newPostContent.trim() || isUploadingPost
-                                  }
-                                  size="sm"
-                                  className="
-                                    bg-cyan-500
+                                  <div className="flex items-center justify-end gap-2">
+                                    <span className="text-xs text-white/40">
+                                      {newPostContent.length}
+                                    </span>
+                                    <Button
+                                      onClick={() =>
+                                        handleCreatePost(selectedForum!)
+                                      }
+                                      disabled={
+                                        !newPostContent.trim() ||
+                                        isUploadingPost
+                                      }
+                                      size="sm"
+                                      className="
+                                    bg-[#22C4D3]
                                     hover:bg-cyan-600
                                   "
-                                >
-                                  {isUploadingPost
-                                    ? 'Subiendo...'
-                                    : 'Publicar Post'}
-                                </Button>
-                              </div>
-                            </div>
+                                    >
+                                      {isUploadingPost
+                                        ? 'Subiendo...'
+                                        : 'Publicar Post'}
+                                    </Button>
+                                  </div>
+                                </div>
 
-                            {/* Lista de posts */}
-                            <div className="space-y-4">
-                              {isLoadingPosts ? (
-                                <div
-                                  className="
+                                {/* Lista de posts */}
+                                <div className="space-y-4">
+                                  {isLoadingPosts ? (
+                                    <div
+                                      className="
                                     flex items-center justify-center py-12
                                   "
-                                >
-                                  <div
-                                    className="
+                                    >
+                                      <div
+                                        className="
                                       size-6 animate-spin rounded-full border-2
-                                      border-cyan-500 border-t-transparent
+                                      border-[#22C4D3] border-t-transparent
                                     "
-                                  />
-                                </div>
-                              ) : posts.length === 0 ? (
-                                <div
-                                  className="
+                                      />
+                                    </div>
+                                  ) : posts.length === 0 ? (
+                                    <div
+                                      className="
                                     rounded-2xl border border-dashed
-                                    border-white/10 bg-slate-800/30 p-8
+                                    border-white/10 bg-[#061c37]/30 p-8
                                     text-center
                                   "
-                                >
-                                  <p className="text-sm text-white/60">
-                                    No hay posts aún. ¡Sé el primero en
-                                    compartir!
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="space-y-4">
-                                  {posts.map((post) => {
-                                    const userName =
-                                      typeof post.userId === 'object'
-                                        ? post.userId?.name
-                                        : post.user?.name;
-                                    const userInitial =
-                                      userName?.[0]?.toUpperCase() || '?';
+                                    >
+                                      <p className="text-sm text-white/60">
+                                        No hay posts aún. ¡Sé el primero en
+                                        compartir!
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-4">
+                                      {posts.map((post) => {
+                                        const userName =
+                                          typeof post.userId === 'object'
+                                            ? post.userId?.name
+                                            : post.user?.name;
+                                        const userInitial =
+                                          userName?.[0]?.toUpperCase() || '?';
 
-                                    return (
-                                      <div
-                                        key={post.id}
-                                        className="
-                                          mb-6 rounded-2xl border
-                                          border-cyan-700/30 bg-[#101c2b] p-6
-                                          shadow transition-all
-                                          hover:border-cyan-700/60
-                                        "
-                                      >
-                                        <div className="flex gap-4">
-                                          {/* Avatar */}
+                                        return (
                                           <div
+                                            key={post.id}
                                             className="
+                                          mb-6 rounded-2xl border
+                                          border-[#22C4D3]/30 bg-[#101c2b] p-6
+                                          shadow transition-all
+                                          hover:border-[#22C4D3]/60
+                                        "
+                                          >
+                                            <div className="flex gap-4">
+                                              {/* Avatar */}
+                                              <div
+                                                className="
                                               flex size-10 flex-shrink-0
                                               items-center justify-center
                                               rounded-full bg-gradient-to-br
-                                              from-cyan-700 to-cyan-400 text-sm
+                                              from-[#22C4D3] to-[#22C4D3] text-sm
                                               font-bold text-white
                                             "
-                                          >
-                                            {userInitial}
-                                          </div>
+                                              >
+                                                {userInitial}
+                                              </div>
 
-                                          {/* Content */}
-                                          <div className="min-w-0 flex-1">
-                                            <div
-                                              className="
+                                              {/* Content */}
+                                              <div className="min-w-0 flex-1">
+                                                <div
+                                                  className="
                                                 flex flex-wrap items-center
                                                 gap-2
                                               "
-                                            >
-                                              <span
-                                                className="
+                                                >
+                                                  <span
+                                                    className="
                                                   text-base font-semibold
-                                                  text-cyan-300
+                                                  text-[#22C4D3]
                                                 "
-                                              >
-                                                {userName || 'Usuario'}
-                                              </span>
-                                              <span
-                                                className="
+                                                  >
+                                                    {userName || 'Usuario'}
+                                                  </span>
+                                                  <span
+                                                    className="
                                                   text-xs text-white/40
                                                 "
-                                              >
-                                                {post.createdAt
-                                                  ? new Date(
-                                                      post.createdAt
-                                                    ).toLocaleDateString(
-                                                      'es-ES',
-                                                      {
-                                                        day: '2-digit',
-                                                        month: 'short',
-                                                        year: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                      }
-                                                    )
-                                                  : ''}
-                                              </span>
-                                            </div>
+                                                  >
+                                                    {post.createdAt
+                                                      ? new Date(
+                                                          post.createdAt
+                                                        ).toLocaleDateString(
+                                                          'es-ES',
+                                                          {
+                                                            day: '2-digit',
+                                                            month: 'short',
+                                                            year: 'numeric',
+                                                            hour: '2-digit',
+                                                            minute: '2-digit',
+                                                          }
+                                                        )
+                                                      : ''}
+                                                  </span>
+                                                </div>
 
-                                            <p
-                                              className="
+                                                <p
+                                                  className="
                                                 mt-2 text-sm leading-relaxed
                                                 text-white/90
                                               "
-                                            >
-                                              {post.content}
-                                            </p>
+                                                >
+                                                  {post.content}
+                                                </p>
 
-                                            {/* Mostrar media si existe */}
-                                            {(post.imageKey ||
-                                              post.audioKey ||
-                                              post.videoKey) && (
-                                              <div className="mt-6 space-y-4">
-                                                {/* Imagen y Video lado a lado */}
+                                                {/* Mostrar media si existe */}
                                                 {(post.imageKey ||
+                                                  post.audioKey ||
                                                   post.videoKey) && (
-                                                  <div
-                                                    className="
+                                                  <div className="mt-6 space-y-4">
+                                                    {/* Imagen y Video lado a lado */}
+                                                    {(post.imageKey ||
+                                                      post.videoKey) && (
+                                                      <div
+                                                        className="
                                                       grid grid-cols-1 gap-4
                                                       sm:grid-cols-2
                                                     "
-                                                  >
-                                                    {/* Imagen - Marco premium */}
-                                                    {post.imageKey && (
-                                                      <button
-                                                        onClick={() =>
-                                                          setLightboxImage(
-                                                            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`
-                                                          )
-                                                        }
-                                                        className="
+                                                      >
+                                                        {/* Imagen - Marco premium */}
+                                                        {post.imageKey && (
+                                                          <button
+                                                            onClick={() =>
+                                                              setLightboxImage(
+                                                                `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`
+                                                              )
+                                                            }
+                                                            className="
                                                           group relative
                                                           overflow-hidden
                                                           rounded-lg border
-                                                          border-cyan-700/35
+                                                          border-[#22C4D3]/35
                                                           shadow-lg
                                                           shadow-black/50
                                                           transition-all
                                                           duration-300
-                                                          hover:border-cyan-400
+                                                          hover:border-[#22C4D3]
                                                           hover:shadow-xl
-                                                          hover:shadow-cyan-500/30
+                                                          hover:shadow-[#22C4D3]/30
                                                         "
-                                                      >
-                                                        <Image
-                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
-                                                          alt="Imagen del post"
-                                                          className="
+                                                          >
+                                                            <Image
+                                                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
+                                                              alt="Imagen del post"
+                                                              className="
                                                             h-64 w-full
                                                             object-cover
                                                             transition-transform
                                                             duration-300
                                                             group-hover:scale-110
                                                           "
-                                                          loading="lazy"
-                                                          width={500}
-                                                          height={256}
-                                                          onError={(e) => {
-                                                            console.error(
-                                                              'Error cargando imagen:',
-                                                              e.currentTarget
-                                                                .src
-                                                            );
-                                                          }}
-                                                        />
-                                                        <div
-                                                          className="
+                                                              loading="lazy"
+                                                              width={500}
+                                                              height={256}
+                                                              onError={(e) => {
+                                                                console.error(
+                                                                  'Error cargando imagen:',
+                                                                  e
+                                                                    .currentTarget
+                                                                    .src
+                                                                );
+                                                              }}
+                                                            />
+                                                            <div
+                                                              className="
                                                             absolute inset-0
                                                             flex items-center
                                                             justify-center
@@ -4386,360 +4210,373 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             duration-300
                                                             group-hover:bg-black/30
                                                           "
-                                                        >
-                                                          <ImageIcon
-                                                            className="
+                                                            >
+                                                              <ImageIcon
+                                                                className="
                                                               size-6 text-white
                                                               opacity-0
                                                               transition-opacity
                                                               duration-300
                                                               group-hover:opacity-100
                                                             "
-                                                          />
-                                                        </div>
-                                                      </button>
-                                                    )}
-                                                    {/* Video */}
-                                                    {post.videoKey && (
-                                                      <div
-                                                        className="
+                                                              />
+                                                            </div>
+                                                          </button>
+                                                        )}
+                                                        {/* Video */}
+                                                        {post.videoKey && (
+                                                          <div
+                                                            className="
                                                           overflow-hidden
                                                           rounded-lg border
-                                                          border-cyan-700/35
+                                                          border-[#22C4D3]/35
                                                           bg-black shadow-lg
                                                           shadow-black/50
                                                           transition-all
                                                           duration-300
-                                                          hover:border-cyan-400
+                                                          hover:border-[#22C4D3]
                                                           hover:shadow-xl
-                                                          hover:shadow-cyan-500/30
+                                                          hover:shadow-[#22C4D3]/30
                                                         "
-                                                      >
-                                                        <video
-                                                          controls
-                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.videoKey}`}
-                                                          className="
+                                                          >
+                                                            <video
+                                                              controls
+                                                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.videoKey}`}
+                                                              className="
                                                             h-64 w-full
                                                             object-cover
                                                           "
-                                                          onError={() =>
-                                                            console.error(
-                                                              'Error cargando video:',
-                                                              post.videoKey
-                                                            )
-                                                          }
+                                                              onError={() =>
+                                                                console.error(
+                                                                  'Error cargando video:',
+                                                                  post.videoKey
+                                                                )
+                                                              }
+                                                            />
+                                                          </div>
+                                                        )}
+                                                      </div>
+                                                    )}
+                                                    {/* Audio - Ancho completo debajo */}
+                                                    {post.audioKey && (
+                                                      <div
+                                                        className="
+                                                      flex items-center gap-3
+                                                      rounded-lg border
+                                                      border-[#22C4D3]/35
+                                                      bg-gradient-to-r
+                                                      from-[#061c37]/60
+                                                      via-[#061c37]/40
+                                                      to-[#061c37]/60 p-4
+                                                      shadow-md shadow-black/30
+                                                      transition-all
+                                                      duration-300
+                                                      hover:border-[#22C4D3]/60
+                                                      hover:from-[#061c37]/80
+                                                      hover:to-[#061c37]/80
+                                                    "
+                                                      >
+                                                        <Music
+                                                          className="
+                                                        size-5 flex-shrink-0
+                                                        text-[#22C4D3]/80
+                                                      "
+                                                        />
+                                                        <audio
+                                                          controls
+                                                          className="h-8 flex-1"
+                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
                                                         />
                                                       </div>
                                                     )}
                                                   </div>
                                                 )}
-                                                {/* Audio - Ancho completo debajo */}
-                                                {post.audioKey && (
-                                                  <div
-                                                    className="
-                                                      flex items-center gap-3
-                                                      rounded-lg border
-                                                      border-cyan-700/35
-                                                      bg-gradient-to-r
-                                                      from-slate-800/60
-                                                      via-slate-800/40
-                                                      to-slate-800/60 p-4
-                                                      shadow-md shadow-black/30
-                                                      transition-all
-                                                      duration-300
-                                                      hover:border-cyan-400/60
-                                                      hover:from-slate-800/80
-                                                      hover:to-slate-800/80
-                                                    "
-                                                  >
-                                                    <Music
-                                                      className="
-                                                        size-5 flex-shrink-0
-                                                        text-cyan-400/80
-                                                      "
-                                                    />
-                                                    <audio
-                                                      controls
-                                                      className="h-8 flex-1"
-                                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
-                                                    />
-                                                  </div>
-                                                )}
-                                              </div>
-                                            )}
 
-                                            {/* Acciones */}
-                                            <div
-                                              className="
+                                                {/* Acciones */}
+                                                <div
+                                                  className="
                                                 mt-4 space-y-3 border-t
                                                 border-white/10 pt-3
                                               "
-                                            >
-                                              <div
-                                                className="
+                                                >
+                                                  <div
+                                                    className="
                                                   flex items-center gap-2
                                                 "
-                                              >
-                                                <button
-                                                  className="
-                                                    rounded-lg p-2 text-gray-400
-                                                    transition-colors
-                                                    hover:bg-gray-800
-                                                    hover:text-white
-                                                  "
-                                                  title="Me gusta"
-                                                >
-                                                  <ThumbsUp className="size-5" />
-                                                </button>
-                                                <button
-                                                  onClick={() => {
-                                                    const isExpanded =
-                                                      expandedPosts.has(
-                                                        post.id
-                                                      );
-                                                    if (isExpanded) {
-                                                      expandedPosts.delete(
-                                                        post.id
-                                                      );
-                                                    } else {
-                                                      expandedPosts.add(
-                                                        post.id
-                                                      );
-                                                    }
-                                                    setExpandedPosts(
-                                                      new Set(expandedPosts)
-                                                    );
-                                                  }}
-                                                  className="
-                                                    relative rounded-lg p-2
-                                                    text-gray-400
-                                                    transition-colors
-                                                    hover:bg-gray-800
-                                                    hover:text-white
-                                                  "
-                                                  title="Comentarios"
-                                                >
-                                                  <span
-                                                    className="
-                                                      absolute -top-1 -right-1
-                                                      inline-flex size-5
-                                                      items-center
-                                                      justify-center
-                                                      rounded-full
-                                                      bg-cyan-500/20 text-xs
-                                                      font-semibold
-                                                      text-cyan-400
-                                                    "
                                                   >
-                                                    {postReplies[post.id]
-                                                      ?.length || 0}
-                                                  </span>
-                                                </button>
-                                                <button
-                                                  onClick={() => {
-                                                    setReplyingToPostId(
-                                                      (prev) => {
-                                                        const newSet = new Set(
-                                                          prev
-                                                        );
-                                                        if (
-                                                          newSet.has(post.id)
-                                                        ) {
-                                                          newSet.delete(
+                                                    <button
+                                                      className="
+                                                    rounded-lg p-2 text-[#94A3B8]
+                                                    transition-colors
+                                                    hover:bg-[#061c37]
+                                                    hover:text-white
+                                                  "
+                                                      title="Me gusta"
+                                                    >
+                                                      <ThumbsUp className="size-5" />
+                                                    </button>
+                                                    <button
+                                                      onClick={() => {
+                                                        const isExpanded =
+                                                          expandedPosts.has(
+                                                            post.id
+                                                          );
+                                                        if (isExpanded) {
+                                                          expandedPosts.delete(
                                                             post.id
                                                           );
                                                         } else {
-                                                          newSet.add(post.id);
-                                                          setReplyMessage('');
+                                                          expandedPosts.add(
+                                                            post.id
+                                                          );
                                                         }
-                                                        return newSet;
-                                                      }
-                                                    );
-                                                  }}
-                                                  className="
-                                                    rounded-lg p-2 text-gray-400
-                                                    transition-colors
-                                                    hover:bg-gray-800
-                                                    hover:text-white
-                                                  "
-                                                  title="Responder"
-                                                >
-                                                  <CornerDownLeft className="size-5" />
-                                                </button>
-                                              </div>
-
-                                              {/* Respuestas colapsables - Diseño profesional */}
-                                              <div
-                                                className="
-                                                  mt-3 border-t border-gray-800
-                                                  pt-3
-                                                "
-                                              >
-                                                {!expandedPosts.has(post.id) ? (
-                                                  <button
-                                                    onClick={() => {
-                                                      expandedPosts.add(
-                                                        post.id
-                                                      );
-                                                      setExpandedPosts(
-                                                        new Set(expandedPosts)
-                                                      );
-                                                    }}
-                                                    className="
-                                                      text-sm text-gray-400
-                                                      transition-colors
-                                                      hover:text-cyan-300
-                                                    "
-                                                  >
-                                                    Ver{' '}
-                                                    {postReplies[post.id]
-                                                      ?.length || 0}{' '}
-                                                    respuesta
-                                                    {(postReplies[post.id]
-                                                      ?.length || 0) > 1
-                                                      ? 's'
-                                                      : ''}
-                                                  </button>
-                                                ) : (
-                                                  <div className="space-y-3">
-                                                    <button
-                                                      onClick={() => {
-                                                        expandedPosts.delete(
-                                                          post.id
-                                                        );
                                                         setExpandedPosts(
                                                           new Set(expandedPosts)
                                                         );
                                                       }}
                                                       className="
-                                                        text-sm text-gray-400
-                                                        transition-colors
-                                                        hover:text-cyan-300
-                                                      "
+                                                    relative rounded-lg p-2
+                                                    text-[#94A3B8]
+                                                    transition-colors
+                                                    hover:bg-[#061c37]
+                                                    hover:text-white
+                                                  "
+                                                      title="Comentarios"
                                                     >
-                                                      Ocultar respuestas
+                                                      <span
+                                                        className="
+                                                      absolute -top-1 -right-1
+                                                      inline-flex size-5
+                                                      items-center
+                                                      justify-center
+                                                      rounded-full
+                                                      bg-[#22C4D3]/20 text-xs
+                                                      font-semibold
+                                                      text-[#22C4D3]
+                                                    "
+                                                      >
+                                                        {postReplies[post.id]
+                                                          ?.length || 0}
+                                                      </span>
                                                     </button>
-                                                    {postReplies[post.id]?.map(
-                                                      (reply) => {
-                                                        const replyUserName =
-                                                          typeof reply.userId ===
-                                                          'object'
-                                                            ? reply.userId?.name
-                                                            : 'Usuario';
-                                                        const replyUserInitial =
-                                                          replyUserName?.[0]?.toUpperCase() ||
-                                                          '?';
-                                                        return (
-                                                          <div
-                                                            key={reply.id}
-                                                            className="
-                                                              ml-6 rounded-xl
-                                                              bg-gray-800/50 p-4
-                                                            "
-                                                          >
+                                                    <button
+                                                      onClick={() => {
+                                                        setReplyingToPostId(
+                                                          (prev) => {
+                                                            const newSet =
+                                                              new Set(prev);
+                                                            if (
+                                                              newSet.has(
+                                                                post.id
+                                                              )
+                                                            ) {
+                                                              newSet.delete(
+                                                                post.id
+                                                              );
+                                                            } else {
+                                                              newSet.add(
+                                                                post.id
+                                                              );
+                                                              setReplyMessage(
+                                                                ''
+                                                              );
+                                                            }
+                                                            return newSet;
+                                                          }
+                                                        );
+                                                      }}
+                                                      className="
+                                                    rounded-lg p-2 text-[#94A3B8]
+                                                    transition-colors
+                                                    hover:bg-[#061c37]
+                                                    hover:text-white
+                                                  "
+                                                      title="Responder"
+                                                    >
+                                                      <CornerDownLeft className="size-5" />
+                                                    </button>
+                                                  </div>
+
+                                                  {/* Respuestas colapsables - Diseño profesional */}
+                                                  <div
+                                                    className="
+                                                  mt-3 border-t border-[#061c37]
+                                                  pt-3
+                                                "
+                                                  >
+                                                    {!expandedPosts.has(
+                                                      post.id
+                                                    ) ? (
+                                                      <button
+                                                        onClick={() => {
+                                                          expandedPosts.add(
+                                                            post.id
+                                                          );
+                                                          setExpandedPosts(
+                                                            new Set(
+                                                              expandedPosts
+                                                            )
+                                                          );
+                                                        }}
+                                                        className="
+                                                      text-sm text-[#94A3B8]
+                                                      transition-colors
+                                                      hover:text-[#22C4D3]
+                                                    "
+                                                      >
+                                                        Ver{' '}
+                                                        {postReplies[post.id]
+                                                          ?.length || 0}{' '}
+                                                        respuesta
+                                                        {(postReplies[post.id]
+                                                          ?.length || 0) > 1
+                                                          ? 's'
+                                                          : ''}
+                                                      </button>
+                                                    ) : (
+                                                      <div className="space-y-3">
+                                                        <button
+                                                          onClick={() => {
+                                                            expandedPosts.delete(
+                                                              post.id
+                                                            );
+                                                            setExpandedPosts(
+                                                              new Set(
+                                                                expandedPosts
+                                                              )
+                                                            );
+                                                          }}
+                                                          className="
+                                                        text-sm text-[#94A3B8]
+                                                        transition-colors
+                                                        hover:text-[#22C4D3]
+                                                      "
+                                                        >
+                                                          Ocultar respuestas
+                                                        </button>
+                                                        {postReplies[
+                                                          post.id
+                                                        ]?.map((reply) => {
+                                                          const replyUserName =
+                                                            typeof reply.userId ===
+                                                            'object'
+                                                              ? reply.userId
+                                                                  ?.name
+                                                              : 'Usuario';
+                                                          const replyUserInitial =
+                                                            replyUserName?.[0]?.toUpperCase() ||
+                                                            '?';
+                                                          return (
                                                             <div
+                                                              key={reply.id}
                                                               className="
-                                                                flex items-start
-                                                                gap-3
-                                                              "
+                                                              ml-6 rounded-xl
+                                                              bg-[#061c37]/50 p-4
+                                                            "
                                                             >
                                                               <div
                                                                 className="
+                                                                flex items-start
+                                                                gap-3
+                                                              "
+                                                              >
+                                                                <div
+                                                                  className="
                                                                   flex size-8
                                                                   flex-shrink-0
                                                                   items-center
                                                                   justify-center
                                                                   rounded-full
                                                                   bg-gradient-to-br
-                                                                  from-cyan-700
-                                                                  to-cyan-400
+                                                                  from-[#22C4D3]
+                                                                  to-[#22C4D3]
                                                                   text-xs
                                                                   font-bold
                                                                   text-white
                                                                 "
-                                                              >
-                                                                {
-                                                                  replyUserInitial
-                                                                }
-                                                              </div>
-                                                              <div
-                                                                className="
-                                                                  min-w-0 flex-1
-                                                                "
-                                                              >
+                                                                >
+                                                                  {
+                                                                    replyUserInitial
+                                                                  }
+                                                                </div>
                                                                 <div
                                                                   className="
+                                                                  min-w-0 flex-1
+                                                                "
+                                                                >
+                                                                  <div
+                                                                    className="
                                                                     flex
                                                                     flex-wrap
                                                                     items-center
                                                                     gap-2
                                                                   "
-                                                                >
-                                                                  <span
-                                                                    className="
+                                                                  >
+                                                                    <span
+                                                                      className="
                                                                       text-sm
                                                                       font-semibold
                                                                       text-white
                                                                     "
-                                                                  >
-                                                                    {
-                                                                      replyUserName
-                                                                    }
-                                                                  </span>
-                                                                  <span
-                                                                    className="
+                                                                    >
+                                                                      {
+                                                                        replyUserName
+                                                                      }
+                                                                    </span>
+                                                                    <span
+                                                                      className="
                                                                       text-xs
-                                                                      text-gray-500
+                                                                      text-[#94A3B8]
                                                                     "
-                                                                  >
-                                                                    {reply.createdAt
-                                                                      ? new Date(
-                                                                          reply.createdAt
-                                                                        ).toLocaleString(
-                                                                          'es-ES',
-                                                                          {
-                                                                            day: '2-digit',
-                                                                            month:
-                                                                              'short',
-                                                                            year: 'numeric',
-                                                                            hour: '2-digit',
-                                                                            minute:
-                                                                              '2-digit',
-                                                                          }
-                                                                        )
-                                                                      : ''}
-                                                                  </span>
-                                                                </div>
-                                                                {reply.content && (
-                                                                  <p
-                                                                    className="
+                                                                    >
+                                                                      {reply.createdAt
+                                                                        ? new Date(
+                                                                            reply.createdAt
+                                                                          ).toLocaleString(
+                                                                            'es-ES',
+                                                                            {
+                                                                              day: '2-digit',
+                                                                              month:
+                                                                                'short',
+                                                                              year: 'numeric',
+                                                                              hour: '2-digit',
+                                                                              minute:
+                                                                                '2-digit',
+                                                                            }
+                                                                          )
+                                                                        : ''}
+                                                                    </span>
+                                                                  </div>
+                                                                  {reply.content && (
+                                                                    <p
+                                                                      className="
                                                                       mt-2
                                                                       text-sm
-                                                                      text-gray-300
+                                                                      text-[#94A3B8]
                                                                     "
-                                                                  >
-                                                                    {
-                                                                      reply.content
-                                                                    }
-                                                                  </p>
-                                                                )}
-                                                                {(reply.imageKey ||
-                                                                  reply.videoKey ||
-                                                                  reply.audioKey) && (
-                                                                  <div
-                                                                    className="
+                                                                    >
+                                                                      {
+                                                                        reply.content
+                                                                      }
+                                                                    </p>
+                                                                  )}
+                                                                  {(reply.imageKey ||
+                                                                    reply.videoKey ||
+                                                                    reply.audioKey) && (
+                                                                    <div
+                                                                      className="
                                                                       mt-3 grid
                                                                       grid-cols-1
                                                                       gap-4
                                                                       sm:grid-cols-2
                                                                     "
-                                                                  >
-                                                                    {(reply.imageKey ||
-                                                                      reply.videoKey) && (
-                                                                      <>
-                                                                        {reply.imageKey && (
-                                                                          <button
-                                                                            className="
+                                                                    >
+                                                                      {(reply.imageKey ||
+                                                                        reply.videoKey) && (
+                                                                        <>
+                                                                          {reply.imageKey && (
+                                                                            <button
+                                                                              className="
                                                                               group
                                                                               relative
                                                                               h-40
@@ -4748,230 +4585,237 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                               overflow-hidden
                                                                               rounded-lg
                                                                               border
-                                                                              border-cyan-700/40
-                                                                              bg-gray-900
+                                                                              border-[#22C4D3]/40
+                                                                              bg-[#04101f]
                                                                               transition-all
                                                                               hover:shadow-lg
-                                                                              hover:shadow-cyan-500/20
+                                                                              hover:shadow-[#22C4D3]/20
                                                                             "
-                                                                            onClick={() =>
-                                                                              setLightboxImage(
-                                                                                `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
-                                                                              )
-                                                                            }
-                                                                          >
-                                                                            <Image
-                                                                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
-                                                                              alt="Respuesta"
-                                                                              className="
+                                                                              onClick={() =>
+                                                                                setLightboxImage(
+                                                                                  `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
+                                                                                )
+                                                                              }
+                                                                            >
+                                                                              <Image
+                                                                                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
+                                                                                alt="Respuesta"
+                                                                                className="
                                                                                 size-full
                                                                                 object-cover
                                                                                 transition-transform
                                                                                 duration-300
                                                                                 group-hover:scale-105
                                                                               "
-                                                                              width={
-                                                                                500
-                                                                              }
-                                                                              height={
-                                                                                160
-                                                                              }
-                                                                            />
-                                                                          </button>
-                                                                        )}
-                                                                        {reply.videoKey && (
-                                                                          <div
-                                                                            className="
+                                                                                width={
+                                                                                  500
+                                                                                }
+                                                                                height={
+                                                                                  160
+                                                                                }
+                                                                              />
+                                                                            </button>
+                                                                          )}
+                                                                          {reply.videoKey && (
+                                                                            <div
+                                                                              className="
                                                                               relative
                                                                               h-40
                                                                               w-full
                                                                               overflow-hidden
                                                                               rounded-lg
                                                                               border
-                                                                              border-cyan-700/40
-                                                                              bg-gray-900
+                                                                              border-[#22C4D3]/40
+                                                                              bg-[#04101f]
                                                                               transition-all
                                                                               hover:shadow-lg
-                                                                              hover:shadow-cyan-500/20
+                                                                              hover:shadow-[#22C4D3]/20
                                                                             "
-                                                                          >
-                                                                            <video
-                                                                              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                                                              className="
+                                                                            >
+                                                                              <video
+                                                                                src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
+                                                                                className="
                                                                                 size-full
                                                                                 object-cover
                                                                               "
-                                                                              controls
-                                                                            />
-                                                                          </div>
-                                                                        )}
-                                                                      </>
-                                                                    )}
-                                                                    {reply.audioKey && (
-                                                                      <div
-                                                                        className="
+                                                                                controls
+                                                                              />
+                                                                            </div>
+                                                                          )}
+                                                                        </>
+                                                                      )}
+                                                                      {reply.audioKey && (
+                                                                        <div
+                                                                          className="
                                                                           col-span-1
                                                                           sm:col-span-2
                                                                         "
-                                                                      >
-                                                                        <audio
-                                                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.audioKey}`}
-                                                                          className="
+                                                                        >
+                                                                          <audio
+                                                                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.audioKey}`}
+                                                                            className="
                                                                             w-full
                                                                             rounded-lg
                                                                             border
-                                                                            border-cyan-700/40
-                                                                            bg-gray-900
+                                                                            border-[#22C4D3]/40
+                                                                            bg-[#04101f]
                                                                           "
-                                                                          controls
-                                                                        />
-                                                                      </div>
-                                                                    )}
-                                                                  </div>
-                                                                )}
+                                                                            controls
+                                                                          />
+                                                                        </div>
+                                                                      )}
+                                                                    </div>
+                                                                  )}
+                                                                </div>
                                                               </div>
                                                             </div>
-                                                          </div>
-                                                        );
-                                                      }
+                                                          );
+                                                        })}
+                                                      </div>
                                                     )}
                                                   </div>
-                                                )}
-                                              </div>
 
-                                              {/* Formulario para responder */}
-                                              {replyingToPostId.has(
-                                                post.id
-                                              ) && (
-                                                <div
-                                                  className="
+                                                  {/* Formulario para responder */}
+                                                  {replyingToPostId.has(
+                                                    post.id
+                                                  ) && (
+                                                    <div
+                                                      className="
                                                     mt-4 space-y-3 border-l-2
-                                                    border-cyan-700/30 pl-4
+                                                    border-[#22C4D3]/30 pl-4
                                                   "
-                                                >
-                                                  <textarea
-                                                    className="
+                                                    >
+                                                      <textarea
+                                                        className="
                                                       w-full resize-none
                                                       rounded-xl border
-                                                      border-cyan-700/30
-                                                      bg-slate-800 p-3 text-sm
+                                                      border-[#22C4D3]/30
+                                                      bg-[#061c37] p-3 text-sm
                                                       text-white
-                                                      placeholder:text-gray-500
+                                                      placeholder:text-[#94A3B8]
                                                       focus:border-primary
                                                       focus:outline-none
                                                     "
-                                                    placeholder="Escribe tu respuesta..."
-                                                    value={
-                                                      replyMessage[post.id] ||
-                                                      ''
-                                                    }
-                                                    onChange={(e) =>
-                                                      setReplyMessage(
-                                                        (prev) => ({
-                                                          ...prev,
-                                                          [post.id]:
-                                                            e.target.value,
-                                                        })
-                                                      )
-                                                    }
-                                                    rows={2}
-                                                    autoFocus
-                                                  />
-
-                                                  {/* Audio Recorder para replies */}
-                                                  {showReplyAudioRecorder.has(
-                                                    post.id
-                                                  ) && (
-                                                    <div className="mb-2">
-                                                      <AudioRecorder
-                                                        onAudioSelect={(
-                                                          file
-                                                        ) => {
-                                                          setReplyAudio(
+                                                        placeholder="Escribe tu respuesta..."
+                                                        value={
+                                                          replyMessage[
+                                                            post.id
+                                                          ] || ''
+                                                        }
+                                                        onChange={(e) =>
+                                                          setReplyMessage(
                                                             (prev) => ({
                                                               ...prev,
-                                                              [post.id]: file,
+                                                              [post.id]:
+                                                                e.target.value,
                                                             })
-                                                          );
-                                                          setShowReplyAudioRecorder(
-                                                            (prev) =>
-                                                              new Set(
-                                                                [
-                                                                  ...prev,
-                                                                ].filter(
-                                                                  (id) =>
-                                                                    id !==
-                                                                    post.id
-                                                                )
-                                                              )
-                                                          );
-                                                        }}
-                                                        onClose={() =>
-                                                          setShowReplyAudioRecorder(
-                                                            (prev) =>
-                                                              new Set(
-                                                                [
-                                                                  ...prev,
-                                                                ].filter(
-                                                                  (id) =>
-                                                                    id !==
-                                                                    post.id
-                                                                )
-                                                              )
                                                           )
                                                         }
+                                                        rows={2}
+                                                        autoFocus
                                                       />
-                                                    </div>
-                                                  )}
 
-                                                  {/* Media previews */}
-                                                  {(replyImage[post.id] ||
-                                                    replyVideo[post.id] ||
-                                                    replyAudio[post.id]) && (
-                                                    <div
-                                                      className="
+                                                      {/* Audio Recorder para replies */}
+                                                      {showReplyAudioRecorder.has(
+                                                        post.id
+                                                      ) && (
+                                                        <div className="mb-2">
+                                                          <AudioRecorder
+                                                            onAudioSelect={(
+                                                              file
+                                                            ) => {
+                                                              setReplyAudio(
+                                                                (prev) => ({
+                                                                  ...prev,
+                                                                  [post.id]:
+                                                                    file,
+                                                                })
+                                                              );
+                                                              setShowReplyAudioRecorder(
+                                                                (prev) =>
+                                                                  new Set(
+                                                                    [
+                                                                      ...prev,
+                                                                    ].filter(
+                                                                      (id) =>
+                                                                        id !==
+                                                                        post.id
+                                                                    )
+                                                                  )
+                                                              );
+                                                            }}
+                                                            onClose={() =>
+                                                              setShowReplyAudioRecorder(
+                                                                (prev) =>
+                                                                  new Set(
+                                                                    [
+                                                                      ...prev,
+                                                                    ].filter(
+                                                                      (id) =>
+                                                                        id !==
+                                                                        post.id
+                                                                    )
+                                                                  )
+                                                              )
+                                                            }
+                                                          />
+                                                        </div>
+                                                      )}
+
+                                                      {/* Media previews */}
+                                                      {(replyImage[post.id] ||
+                                                        replyVideo[post.id] ||
+                                                        replyAudio[
+                                                          post.id
+                                                        ]) && (
+                                                        <div
+                                                          className="
                                                         grid grid-cols-1 gap-2
                                                         sm:grid-cols-2
                                                       "
-                                                    >
-                                                      {replyImage[post.id] && (
-                                                        <div
-                                                          className="
+                                                        >
+                                                          {replyImage[
+                                                            post.id
+                                                          ] && (
+                                                            <div
+                                                              className="
                                                             relative
                                                             overflow-hidden
                                                             rounded-lg border
-                                                            border-cyan-700/40
+                                                            border-[#22C4D3]/40
                                                           "
-                                                        >
-                                                          <Image
-                                                            src={URL.createObjectURL(
-                                                              replyImage[
-                                                                post.id
-                                                              ]
-                                                            )}
-                                                            alt="Preview"
-                                                            className="
+                                                            >
+                                                              <Image
+                                                                src={URL.createObjectURL(
+                                                                  replyImage[
+                                                                    post.id
+                                                                  ]
+                                                                )}
+                                                                alt="Preview"
+                                                                className="
                                                               h-40 w-full
                                                               object-cover
                                                             "
-                                                            width={500}
-                                                            height={160}
-                                                          />
-                                                          <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                              setReplyImage(
-                                                                (prev) => {
-                                                                  const updated =
-                                                                    { ...prev };
-                                                                  delete updated[
-                                                                    post.id
-                                                                  ];
-                                                                  return updated;
+                                                                width={500}
+                                                                height={160}
+                                                              />
+                                                              <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                  setReplyImage(
+                                                                    (prev) => {
+                                                                      const updated =
+                                                                        {
+                                                                          ...prev,
+                                                                        };
+                                                                      delete updated[
+                                                                        post.id
+                                                                      ];
+                                                                      return updated;
+                                                                    }
+                                                                  )
                                                                 }
-                                                              )
-                                                            }
-                                                            className="
+                                                                className="
                                                               absolute top-1
                                                               right-1
                                                               rounded-full
@@ -4979,11 +4823,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                               text-white
                                                               hover:bg-red-700
                                                             "
-                                                          >
-                                                            <X className="size-4" />
-                                                          </button>
-                                                          <span
-                                                            className="
+                                                              >
+                                                                <X className="size-4" />
+                                                              </button>
+                                                              <span
+                                                                className="
                                                               absolute bottom-1
                                                               left-1 rounded
                                                               bg-black/60 px-2
@@ -4991,51 +4835,55 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                               font-semibold
                                                               text-white
                                                             "
-                                                          >
-                                                            {
-                                                              replyImage[
-                                                                post.id
-                                                              ].name
-                                                            }
-                                                          </span>
-                                                        </div>
-                                                      )}
-                                                      {replyVideo[post.id] && (
-                                                        <div
-                                                          className="
+                                                              >
+                                                                {
+                                                                  replyImage[
+                                                                    post.id
+                                                                  ].name
+                                                                }
+                                                              </span>
+                                                            </div>
+                                                          )}
+                                                          {replyVideo[
+                                                            post.id
+                                                          ] && (
+                                                            <div
+                                                              className="
                                                             relative
                                                             overflow-hidden
                                                             rounded-lg border
-                                                            border-cyan-700/40
+                                                            border-[#22C4D3]/40
                                                             bg-black
                                                           "
-                                                        >
-                                                          <video
-                                                            src={URL.createObjectURL(
-                                                              replyVideo[
-                                                                post.id
-                                                              ]
-                                                            )}
-                                                            className="
+                                                            >
+                                                              <video
+                                                                src={URL.createObjectURL(
+                                                                  replyVideo[
+                                                                    post.id
+                                                                  ]
+                                                                )}
+                                                                className="
                                                               h-40 w-full
                                                               object-cover
                                                             "
-                                                          />
-                                                          <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                              setReplyVideo(
-                                                                (prev) => {
-                                                                  const updated =
-                                                                    { ...prev };
-                                                                  delete updated[
-                                                                    post.id
-                                                                  ];
-                                                                  return updated;
+                                                              />
+                                                              <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                  setReplyVideo(
+                                                                    (prev) => {
+                                                                      const updated =
+                                                                        {
+                                                                          ...prev,
+                                                                        };
+                                                                      delete updated[
+                                                                        post.id
+                                                                      ];
+                                                                      return updated;
+                                                                    }
+                                                                  )
                                                                 }
-                                                              )
-                                                            }
-                                                            className="
+                                                                className="
                                                               absolute top-1
                                                               right-1
                                                               rounded-full
@@ -5043,11 +4891,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                               text-white
                                                               hover:bg-red-700
                                                             "
-                                                          >
-                                                            <X className="size-4" />
-                                                          </button>
-                                                          <span
-                                                            className="
+                                                              >
+                                                                <X className="size-4" />
+                                                              </button>
+                                                              <span
+                                                                className="
                                                               absolute bottom-1
                                                               left-1 rounded
                                                               bg-black/60 px-2
@@ -5055,267 +4903,276 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                               font-semibold
                                                               text-white
                                                             "
-                                                          >
-                                                            {
-                                                              replyVideo[
-                                                                post.id
-                                                              ].name
-                                                            }
-                                                          </span>
-                                                        </div>
-                                                      )}
-                                                      {replyAudio[post.id] && (
-                                                        <div
-                                                          className="
+                                                              >
+                                                                {
+                                                                  replyVideo[
+                                                                    post.id
+                                                                  ].name
+                                                                }
+                                                              </span>
+                                                            </div>
+                                                          )}
+                                                          {replyAudio[
+                                                            post.id
+                                                          ] && (
+                                                            <div
+                                                              className="
                                                             relative flex
                                                             items-center gap-2
                                                             rounded-lg border
-                                                            border-cyan-700/40
+                                                            border-[#22C4D3]/40
                                                             bg-gradient-to-r
-                                                            from-slate-800/60
-                                                            via-slate-800/40
-                                                            to-slate-800/60 p-2
+                                                            from-[#061c37]/60
+                                                            via-[#061c37]/40
+                                                            to-[#061c37]/60 p-2
                                                           "
-                                                        >
-                                                          <Music
-                                                            className="
+                                                            >
+                                                              <Music
+                                                                className="
                                                               size-4
                                                               flex-shrink-0
-                                                              text-cyan-400/80
+                                                              text-[#22C4D3]/80
                                                             "
-                                                          />
-                                                          <span
-                                                            className="
+                                                              />
+                                                              <span
+                                                                className="
                                                               flex-1 truncate
                                                               text-xs
                                                               font-semibold
                                                               text-white
                                                             "
-                                                          >
-                                                            {
-                                                              replyAudio[
-                                                                post.id
-                                                              ].name
-                                                            }
-                                                          </span>
-                                                          <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                              setReplyAudio(
-                                                                (prev) => {
-                                                                  const updated =
-                                                                    { ...prev };
-                                                                  delete updated[
+                                                              >
+                                                                {
+                                                                  replyAudio[
                                                                     post.id
-                                                                  ];
-                                                                  return updated;
+                                                                  ].name
                                                                 }
-                                                              )
-                                                            }
-                                                            className="
+                                                              </span>
+                                                              <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                  setReplyAudio(
+                                                                    (prev) => {
+                                                                      const updated =
+                                                                        {
+                                                                          ...prev,
+                                                                        };
+                                                                      delete updated[
+                                                                        post.id
+                                                                      ];
+                                                                      return updated;
+                                                                    }
+                                                                  )
+                                                                }
+                                                                className="
                                                               rounded-full
                                                               bg-red-600 p-1
                                                               text-white
                                                               hover:bg-red-700
                                                             "
-                                                          >
-                                                            <X className="size-3" />
-                                                          </button>
+                                                              >
+                                                                <X className="size-3" />
+                                                              </button>
+                                                            </div>
+                                                          )}
                                                         </div>
                                                       )}
-                                                    </div>
-                                                  )}
 
-                                                  <div
-                                                    className="
+                                                      <div
+                                                        className="
                                                       flex flex-wrap
                                                       items-center gap-2
                                                     "
-                                                  >
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        const input =
-                                                          document.createElement(
-                                                            'input'
-                                                          );
-                                                        input.type = 'file';
-                                                        input.accept =
-                                                          'audio/*';
-                                                        input.onchange = (
-                                                          e
-                                                        ) => {
-                                                          const file = (
-                                                            e.target as HTMLInputElement
-                                                          ).files?.[0];
-                                                          if (file)
-                                                            setReplyAudio(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [post.id]: file,
-                                                              })
-                                                            );
-                                                        };
-                                                        input.click();
-                                                      }}
-                                                      className="
-                                                        rounded-lg p-2
-                                                        text-gray-400
-                                                        transition-colors
-                                                        hover:bg-gray-800
-                                                        hover:text-white
-                                                      "
-                                                      title="Subir audio"
-                                                    >
-                                                      <Mic className="size-4" />
-                                                    </button>
-
-                                                    <button
-                                                      type="button"
-                                                      onClick={() =>
-                                                        setShowReplyAudioRecorder(
-                                                          (prev) =>
-                                                            prev.has(post.id)
-                                                              ? new Set(
-                                                                  [
+                                                      >
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => {
+                                                            const input =
+                                                              document.createElement(
+                                                                'input'
+                                                              );
+                                                            input.type = 'file';
+                                                            input.accept =
+                                                              'audio/*';
+                                                            input.onchange = (
+                                                              e
+                                                            ) => {
+                                                              const file = (
+                                                                e.target as HTMLInputElement
+                                                              ).files?.[0];
+                                                              if (file)
+                                                                setReplyAudio(
+                                                                  (prev) => ({
                                                                     ...prev,
-                                                                  ].filter(
-                                                                    (id) =>
-                                                                      id !==
-                                                                      post.id
-                                                                  )
+                                                                    [post.id]:
+                                                                      file,
+                                                                  })
+                                                                );
+                                                            };
+                                                            input.click();
+                                                          }}
+                                                          className="
+                                                        rounded-lg p-2
+                                                        text-[#94A3B8]
+                                                        transition-colors
+                                                        hover:bg-[#061c37]
+                                                        hover:text-white
+                                                      "
+                                                          title="Subir audio"
+                                                        >
+                                                          <Mic className="size-4" />
+                                                        </button>
+
+                                                        <button
+                                                          type="button"
+                                                          onClick={() =>
+                                                            setShowReplyAudioRecorder(
+                                                              (prev) =>
+                                                                prev.has(
+                                                                  post.id
                                                                 )
-                                                              : new Set([
-                                                                  ...prev,
-                                                                  post.id,
-                                                                ])
-                                                        )
-                                                      }
-                                                      className="
+                                                                  ? new Set(
+                                                                      [
+                                                                        ...prev,
+                                                                      ].filter(
+                                                                        (id) =>
+                                                                          id !==
+                                                                          post.id
+                                                                      )
+                                                                    )
+                                                                  : new Set([
+                                                                      ...prev,
+                                                                      post.id,
+                                                                    ])
+                                                            )
+                                                          }
+                                                          className="
                                                         rounded-lg p-2
-                                                        text-gray-400
+                                                        text-[#94A3B8]
                                                         transition-colors
-                                                        hover:bg-gray-800
+                                                        hover:bg-[#061c37]
                                                         hover:text-white
                                                       "
-                                                      title="Grabar audio"
-                                                    >
-                                                      <Music className="size-4" />
-                                                    </button>
+                                                          title="Grabar audio"
+                                                        >
+                                                          <Music className="size-4" />
+                                                        </button>
 
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        const input =
-                                                          document.createElement(
-                                                            'input'
-                                                          );
-                                                        input.type = 'file';
-                                                        input.accept =
-                                                          'image/*';
-                                                        input.onchange = (
-                                                          e
-                                                        ) => {
-                                                          const file = (
-                                                            e.target as HTMLInputElement
-                                                          ).files?.[0];
-                                                          if (file)
-                                                            setReplyImage(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [post.id]: file,
-                                                              })
-                                                            );
-                                                        };
-                                                        input.click();
-                                                      }}
-                                                      className="
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => {
+                                                            const input =
+                                                              document.createElement(
+                                                                'input'
+                                                              );
+                                                            input.type = 'file';
+                                                            input.accept =
+                                                              'image/*';
+                                                            input.onchange = (
+                                                              e
+                                                            ) => {
+                                                              const file = (
+                                                                e.target as HTMLInputElement
+                                                              ).files?.[0];
+                                                              if (file)
+                                                                setReplyImage(
+                                                                  (prev) => ({
+                                                                    ...prev,
+                                                                    [post.id]:
+                                                                      file,
+                                                                  })
+                                                                );
+                                                            };
+                                                            input.click();
+                                                          }}
+                                                          className="
                                                         rounded-lg p-2
-                                                        text-gray-400
+                                                        text-[#94A3B8]
                                                         transition-colors
-                                                        hover:bg-gray-800
+                                                        hover:bg-[#061c37]
                                                         hover:text-white
                                                       "
-                                                      title="Adjuntar imagen"
-                                                    >
-                                                      <ImageIcon className="size-4" />
-                                                    </button>
+                                                          title="Adjuntar imagen"
+                                                        >
+                                                          <ImageIcon className="size-4" />
+                                                        </button>
 
-                                                    <button
-                                                      type="button"
-                                                      onClick={() => {
-                                                        const input =
-                                                          document.createElement(
-                                                            'input'
-                                                          );
-                                                        input.type = 'file';
-                                                        input.accept =
-                                                          'video/*';
-                                                        input.onchange = (
-                                                          e
-                                                        ) => {
-                                                          const file = (
-                                                            e.target as HTMLInputElement
-                                                          ).files?.[0];
-                                                          if (file)
-                                                            setReplyVideo(
-                                                              (prev) => ({
-                                                                ...prev,
-                                                                [post.id]: file,
-                                                              })
-                                                            );
-                                                        };
-                                                        input.click();
-                                                      }}
-                                                      className="
+                                                        <button
+                                                          type="button"
+                                                          onClick={() => {
+                                                            const input =
+                                                              document.createElement(
+                                                                'input'
+                                                              );
+                                                            input.type = 'file';
+                                                            input.accept =
+                                                              'video/*';
+                                                            input.onchange = (
+                                                              e
+                                                            ) => {
+                                                              const file = (
+                                                                e.target as HTMLInputElement
+                                                              ).files?.[0];
+                                                              if (file)
+                                                                setReplyVideo(
+                                                                  (prev) => ({
+                                                                    ...prev,
+                                                                    [post.id]:
+                                                                      file,
+                                                                  })
+                                                                );
+                                                            };
+                                                            input.click();
+                                                          }}
+                                                          className="
                                                         rounded-lg p-2
-                                                        text-gray-400
+                                                        text-[#94A3B8]
                                                         transition-colors
-                                                        hover:bg-gray-800
+                                                        hover:bg-[#061c37]
                                                         hover:text-white
                                                       "
-                                                      title="Adjuntar video"
-                                                    >
-                                                      <Video className="size-4" />
-                                                    </button>
+                                                          title="Adjuntar video"
+                                                        >
+                                                          <Video className="size-4" />
+                                                        </button>
 
-                                                    <button
-                                                      onClick={() =>
-                                                        handleCreateReply(
-                                                          post.id
-                                                        )
-                                                      }
-                                                      disabled={
-                                                        (!(
-                                                          replyMessage[
-                                                            post.id
-                                                          ] || ''
-                                                        ).trim() &&
-                                                          !replyAudio[
-                                                            post.id
-                                                          ] &&
-                                                          !replyImage[
-                                                            post.id
-                                                          ] &&
-                                                          !replyVideo[
-                                                            post.id
-                                                          ]) ||
-                                                        isSubmittingReply
-                                                      }
-                                                      className="
+                                                        <button
+                                                          onClick={() =>
+                                                            handleCreateReply(
+                                                              post.id
+                                                            )
+                                                          }
+                                                          disabled={
+                                                            (!(
+                                                              replyMessage[
+                                                                post.id
+                                                              ] || ''
+                                                            ).trim() &&
+                                                              !replyAudio[
+                                                                post.id
+                                                              ] &&
+                                                              !replyImage[
+                                                                post.id
+                                                              ] &&
+                                                              !replyVideo[
+                                                                post.id
+                                                              ]) ||
+                                                            isSubmittingReply
+                                                          }
+                                                          className="
                                                         ml-auto rounded
-                                                        bg-cyan-700 px-3 py-1
+                                                        bg-[#22C4D3] px-3 py-1
                                                         text-xs font-semibold
                                                         text-white
                                                         transition-colors
                                                         hover:bg-cyan-600
                                                         disabled:opacity-50
                                                       "
-                                                    >
-                                                      {isSubmittingReply ? (
-                                                        <>
-                                                          <div
-                                                            className="
+                                                        >
+                                                          {isSubmittingReply ? (
+                                                            <>
+                                                              <div
+                                                                className="
                                                               mr-1 inline-block
                                                               size-3
                                                               animate-spin
@@ -5324,28 +5181,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                               border-white
                                                               border-t-transparent
                                                             "
-                                                          />
-                                                          Enviando...
-                                                        </>
-                                                      ) : (
-                                                        'Responder'
-                                                      )}
-                                                    </button>
-                                                    <button
-                                                      onClick={() => {
-                                                        setReplyingToPostId(
-                                                          (prev) => {
-                                                            const newSet =
-                                                              new Set(prev);
-                                                            newSet.delete(
-                                                              post.id
+                                                              />
+                                                              Enviando...
+                                                            </>
+                                                          ) : (
+                                                            'Responder'
+                                                          )}
+                                                        </button>
+                                                        <button
+                                                          onClick={() => {
+                                                            setReplyingToPostId(
+                                                              (prev) => {
+                                                                const newSet =
+                                                                  new Set(prev);
+                                                                newSet.delete(
+                                                                  post.id
+                                                                );
+                                                                return newSet;
+                                                              }
                                                             );
-                                                            return newSet;
-                                                          }
-                                                        );
-                                                        setReplyMessage('');
-                                                      }}
-                                                      className="
+                                                            setReplyMessage('');
+                                                          }}
+                                                          className="
                                                         rounded border
                                                         border-white/20 px-3
                                                         py-1 text-xs
@@ -5353,872 +5210,891 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         transition-colors
                                                         hover:text-white
                                                       "
-                                                    >
-                                                      Cancelar
-                                                    </button>
-                                                  </div>
+                                                        >
+                                                          Cancelar
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  )}
                                                 </div>
-                                              )}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Modal para crear foro */}
+                        {/* El modal de crear foro ha sido eliminado, ahora el formulario es siempre visible arriba */}
+                      </div>
+                    )}
+                    {/* Proyectos Tab */}
+                    {activeTab === 'proyectos' && (
+                      <div className="animate-in fade-in duration-500">
+                        <h2 className="mb-6 text-2xl font-bold text-white">
+                          Proyectos de Estudiantes
+                        </h2>
+                        {loadingProjects ? (
+                          <div className="text-white/60">
+                            Cargando proyectos...
+                          </div>
+                        ) : (
+                          <>
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                              {Array.isArray(studentProjects) &&
+                              studentProjects.length > 0 ? (
+                                studentProjects.map((project) => (
+                                  <div
+                                    key={project.id}
+                                    className="
+                                  group rounded-2xl border border-[#22C4D3]/30
+                                  bg-gradient-to-br from-[#061c37]
+                                  via-[#04101f]/30 to-[#04101f]/30 p-6 shadow-xl
+                                  transition-all duration-300
+                                  hover:scale-[1.03] hover:border-[#22C4D3]
+                                  hover:shadow-2xl
+                                "
+                                  >
+                                    <div className="mb-4 flex items-center gap-4">
+                                      {project.cover_image_key && (
+                                        <Image
+                                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.cover_image_key}`}
+                                          alt={project.name}
+                                          width={64}
+                                          height={64}
+                                          className="
+                                        size-16 rounded-xl border
+                                        border-[#22C4D3]/30 object-cover shadow
+                                      "
+                                          quality={60}
+                                        />
+                                      )}
+                                      <div>
+                                        <h3
+                                          className="
+                                        mb-1 text-xl font-bold text-[#22C4D3]
+                                      "
+                                        >
+                                          {project.name}
+                                        </h3>
+                                        <span
+                                          className="
+                                        inline-block rounded bg-[#22C4D3]/20 px-2
+                                        py-0.5 text-xs font-semibold
+                                        text-[#22C4D3]
+                                      "
+                                        >
+                                          {project.type_project}
+                                        </span>
                                       </div>
-                                    );
-                                  })}
+                                    </div>
+                                    <div className="mb-2 flex flex-col gap-1">
+                                      <span className="text-xs text-[#22C4D3]">
+                                        Estudiante:
+                                      </span>
+                                      <span
+                                        className="
+                                      text-xs font-semibold text-white/80
+                                    "
+                                      >
+                                        {project.studentName ||
+                                          project.users_name ||
+                                          project.user?.name ||
+                                          project.userId}
+                                      </span>
+                                      {(project.studentEmail ||
+                                        project.users_email ||
+                                        project.user?.email) && (
+                                        <span className="text-xs text-[#22C4D3]">
+                                          {project.studentEmail ||
+                                            project.users_email ||
+                                            project.user?.email}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <button
+                                      className="
+                                    mt-4 w-full rounded bg-[#22C4D3]/20 px-4 py-2
+                                    font-semibold text-[#22C4D3] transition
+                                    hover:bg-[#22C4D3]/40 hover:text-white
+                                  "
+                                      onClick={() =>
+                                        setSelectedProject(project)
+                                      }
+                                    >
+                                      Ver más
+                                    </button>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="col-span-full text-white/60">
+                                  {loadingProjects
+                                    ? 'Cargando proyectos...'
+                                    : 'No hay proyectos de estudiantes para este curso o hubo un error al obtenerlos.'}
                                 </div>
                               )}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Modal para crear foro */}
-                    {/* El modal de crear foro ha sido eliminado, ahora el formulario es siempre visible arriba */}
-                  </div>
-                )}
-                {/* Proyectos Tab */}
-                {activeTab === 'proyectos' && (
-                  <div className="animate-in fade-in duration-500">
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      Proyectos de Estudiantes
-                    </h2>
-                    {loadingProjects ? (
-                      <div className="text-white/60">Cargando proyectos...</div>
-                    ) : (
-                      <>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                          {Array.isArray(studentProjects) &&
-                          studentProjects.length > 0 ? (
-                            studentProjects.map((project) => (
-                              <div
-                                key={project.id}
-                                className="
-                                  group rounded-2xl border border-cyan-500/30
-                                  bg-gradient-to-br from-slate-800
-                                  via-cyan-900/30 to-cyan-950/30 p-6 shadow-xl
-                                  transition-all duration-300
-                                  hover:scale-[1.03] hover:border-cyan-400
-                                  hover:shadow-2xl
-                                "
-                              >
-                                <div className="mb-4 flex items-center gap-4">
-                                  {project.cover_image_key && (
-                                    <Image
-                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.cover_image_key}`}
-                                      alt={project.name}
-                                      width={64}
-                                      height={64}
-                                      className="
-                                        size-16 rounded-xl border
-                                        border-cyan-500/30 object-cover shadow
-                                      "
-                                      quality={60}
-                                    />
-                                  )}
-                                  <div>
-                                    <h3
-                                      className="
-                                        mb-1 text-xl font-bold text-cyan-300
-                                      "
-                                    >
-                                      {project.name}
-                                    </h3>
-                                    <span
-                                      className="
-                                        inline-block rounded bg-cyan-500/20 px-2
-                                        py-0.5 text-xs font-semibold
-                                        text-cyan-300
-                                      "
-                                    >
-                                      {project.type_project}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="mb-2 flex flex-col gap-1">
-                                  <span className="text-xs text-cyan-400">
-                                    Estudiante:
-                                  </span>
-                                  <span
-                                    className="
-                                      text-xs font-semibold text-white/80
-                                    "
-                                  >
-                                    {project.studentName ||
-                                      project.users_name ||
-                                      project.user?.name ||
-                                      project.userId}
-                                  </span>
-                                  {(project.studentEmail ||
-                                    project.users_email ||
-                                    project.user?.email) && (
-                                    <span className="text-xs text-cyan-300">
-                                      {project.studentEmail ||
-                                        project.users_email ||
-                                        project.user?.email}
-                                    </span>
-                                  )}
-                                </div>
-                                <button
+                            {/* Modal de detalles del proyecto */}
+                            {selectedProject && (
+                              <Portal>
+                                <div
                                   className="
-                                    mt-4 w-full rounded bg-cyan-500/20 px-4 py-2
-                                    font-semibold text-cyan-300 transition
-                                    hover:bg-cyan-500/40 hover:text-white
-                                  "
-                                  onClick={() => setSelectedProject(project)}
-                                >
-                                  Ver más
-                                </button>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="col-span-full text-white/60">
-                              {loadingProjects
-                                ? 'Cargando proyectos...'
-                                : 'No hay proyectos de estudiantes para este curso o hubo un error al obtenerlos.'}
-                            </div>
-                          )}
-                        </div>
-                        {/* Modal de detalles del proyecto */}
-                        {selectedProject && (
-                          <Portal>
-                            <div
-                              className="
                                 fixed inset-0 z-50 flex items-center
                                 justify-center bg-black/60 backdrop-blur-sm
                               "
-                            >
-                              <div
-                                className="
-                                  relative w-full max-w-2xl rounded-2xl border
-                                  border-cyan-500/40 bg-slate-800 p-4 shadow-2xl
-                                  sm:p-8
-                                "
-                                style={{
-                                  maxHeight: '90vh',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                }}
-                              >
-                                <button
-                                  className="
-                                    absolute top-4 right-4 text-cyan-400
-                                    hover:text-white
-                                  "
-                                  onClick={() => setSelectedProject(null)}
                                 >
-                                  ✕
-                                </button>
-                                <h3
-                                  className="
-                                    mb-4 text-center text-2xl font-bold
-                                    break-words text-cyan-300
-                                  "
-                                >
-                                  {selectedProject.name}
-                                </h3>
-                                {/* Imagen y video juntos, una sola vez, lado a lado */}
-                                {(selectedProject.cover_image_key ||
-                                  selectedProject.cover_video_key) && (
                                   <div
                                     className="
+                                  relative w-full max-w-2xl rounded-2xl border
+                                  border-[#22C4D3]/40 bg-[#061c37] p-4 shadow-2xl
+                                  sm:p-8
+                                "
+                                    style={{
+                                      maxHeight: '90vh',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                    }}
+                                  >
+                                    <button
+                                      className="
+                                    absolute top-4 right-4 text-[#22C4D3]
+                                    hover:text-white
+                                  "
+                                      onClick={() => setSelectedProject(null)}
+                                    >
+                                      ✕
+                                    </button>
+                                    <h3
+                                      className="
+                                    mb-4 text-center text-2xl font-bold
+                                    break-words text-[#22C4D3]
+                                  "
+                                    >
+                                      {selectedProject.name}
+                                    </h3>
+                                    {/* Imagen y video juntos, una sola vez, lado a lado */}
+                                    {(selectedProject.cover_image_key ||
+                                      selectedProject.cover_video_key) && (
+                                      <div
+                                        className="
                                       mb-6 flex w-full flex-row items-center
                                       justify-center gap-4
                                     "
-                                  >
-                                    {selectedProject.cover_image_key && (
-                                      <div
-                                        className="
+                                      >
+                                        {selectedProject.cover_image_key && (
+                                          <div
+                                            className="
                                           flex flex-1 items-center
                                           justify-center
                                         "
-                                      >
-                                        <Image
-                                          src={
-                                            selectedProject.cover_image_key.startsWith(
-                                              'http'
-                                            )
-                                              ? selectedProject.cover_image_key
-                                              : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_image_key}`
-                                          }
-                                          alt={selectedProject.name}
-                                          width={400}
-                                          height={240}
-                                          className="
+                                          >
+                                            <Image
+                                              src={
+                                                selectedProject.cover_image_key.startsWith(
+                                                  'http'
+                                                )
+                                                  ? selectedProject.cover_image_key
+                                                  : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_image_key}`
+                                              }
+                                              alt={selectedProject.name}
+                                              width={400}
+                                              height={240}
+                                              className="
                                             max-h-60 w-full rounded-xl border
-                                            border-cyan-500/20 object-contain
+                                            border-[#22C4D3]/20 object-contain
                                             shadow
                                           "
-                                          style={{
-                                            objectFit: 'contain',
-                                            maxWidth: '100%',
-                                          }}
-                                          quality={70}
-                                          unoptimized={selectedProject.cover_image_key.startsWith(
-                                            'http'
-                                          )}
-                                        />
-                                      </div>
-                                    )}
-                                    {selectedProject.cover_video_key && (
-                                      <div
-                                        className="
+                                              style={{
+                                                objectFit: 'contain',
+                                                maxWidth: '100%',
+                                              }}
+                                              quality={70}
+                                              unoptimized={selectedProject.cover_image_key.startsWith(
+                                                'http'
+                                              )}
+                                            />
+                                          </div>
+                                        )}
+                                        {selectedProject.cover_video_key && (
+                                          <div
+                                            className="
                                           flex flex-1 items-center
                                           justify-center
                                         "
-                                      >
-                                        <video
-                                          src={
-                                            selectedProject.cover_video_key.startsWith(
-                                              'http'
-                                            )
-                                              ? selectedProject.cover_video_key
-                                              : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_video_key}`
-                                          }
-                                          controls
-                                          className="
+                                          >
+                                            <video
+                                              src={
+                                                selectedProject.cover_video_key.startsWith(
+                                                  'http'
+                                                )
+                                                  ? selectedProject.cover_video_key
+                                                  : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_video_key}`
+                                              }
+                                              controls
+                                              className="
                                             max-h-60 w-full rounded-xl border
-                                            border-cyan-500/20 object-contain
+                                            border-[#22C4D3]/20 object-contain
                                             shadow
                                           "
-                                          style={{
-                                            objectFit: 'contain',
-                                            maxWidth: '100%',
-                                          }}
-                                        />
+                                              style={{
+                                                objectFit: 'contain',
+                                                maxWidth: '100%',
+                                              }}
+                                            />
+                                          </div>
+                                        )}
                                       </div>
                                     )}
-                                  </div>
-                                )}
-                                <div className="mb-2 flex items-center gap-2">
-                                  <span className="font-semibold text-cyan-400">
-                                    Tipo:
-                                  </span>
-                                  <span className="break-words text-cyan-200">
-                                    {selectedProject.type_project}
-                                  </span>
-                                </div>
-                                <div className="mb-2">
-                                  <span className="font-semibold text-cyan-400">
-                                    Estudiante:
-                                  </span>
-                                  <span className="ml-2 break-words text-cyan-200">
-                                    {selectedProject.studentName ||
-                                      selectedProject.users_name ||
-                                      selectedProject.user?.name ||
-                                      selectedProject.userId}
-                                  </span>
-                                  {(selectedProject.studentEmail ||
-                                    selectedProject.users_email ||
-                                    selectedProject.user?.email) && (
-                                    <span className="ml-2 break-words text-cyan-300">
-                                      {selectedProject.studentEmail ||
-                                        selectedProject.users_email ||
-                                        selectedProject.user?.email}
-                                    </span>
-                                  )}
-                                </div>
-                                <div
-                                  className="flex-1 overflow-y-auto pr-1"
-                                  style={{ minHeight: 0 }}
-                                >
-                                  <div className="mb-2">
-                                    <span className="font-semibold text-cyan-400">
-                                      Planteamiento:
-                                    </span>
-                                    <p
-                                      className="
-                                        break-words whitespace-pre-line
-                                        text-white/80
-                                      "
-                                      style={{ wordBreak: 'break-word' }}
-                                    >
-                                      {selectedProject.planteamiento}
-                                    </p>
-                                  </div>
-                                  <div className="mb-2">
-                                    <span className="font-semibold text-cyan-400">
-                                      Justificación:
-                                    </span>
-                                    <p
-                                      className="
-                                        break-words whitespace-pre-line
-                                        text-white/80
-                                      "
-                                      style={{ wordBreak: 'break-word' }}
-                                    >
-                                      {selectedProject.justificacion}
-                                    </p>
-                                  </div>
-                                  <div className="mb-2">
-                                    <span className="font-semibold text-cyan-400">
-                                      Objetivo general:
-                                    </span>
-                                    <p
-                                      className="
-                                        break-words whitespace-pre-line
-                                        text-white/80
-                                      "
-                                      style={{ wordBreak: 'break-word' }}
-                                    >
-                                      {selectedProject.objetivo_general}
-                                    </p>
-                                  </div>
-                                  <div className="mb-2 grid grid-cols-2 gap-2">
-                                    <div>
-                                      <span className="text-xs text-cyan-400">
-                                        Inicio:
+                                    <div className="mb-2 flex items-center gap-2">
+                                      <span className="font-semibold text-[#22C4D3]">
+                                        Tipo:
                                       </span>
-                                      <div
-                                        className="
-                                          text-xs break-words text-white/60
-                                        "
-                                      >
-                                        {selectedProject.fecha_inicio}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <span className="text-xs text-cyan-400">
-                                        Fin:
+                                      <span className="break-words text-[#22C4D3]">
+                                        {selectedProject.type_project}
                                       </span>
-                                      <div
-                                        className="
-                                          text-xs break-words text-white/60
-                                        "
-                                      >
-                                        {selectedProject.fecha_fin}
-                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="mb-2 flex flex-wrap gap-2">
-                                    <span className="text-xs text-cyan-400">
-                                      Horas/día:
-                                    </span>
-                                    <span
-                                      className="
-                                        text-xs break-words text-white/70
-                                      "
-                                    >
-                                      {selectedProject.horas_por_dia}
-                                    </span>
-                                    <span className="text-xs text-cyan-400">
-                                      Total horas:
-                                    </span>
-                                    <span
-                                      className="
-                                        text-xs break-words text-white/70
-                                      "
-                                    >
-                                      {selectedProject.total_horas}
-                                    </span>
-                                    <span className="text-xs text-cyan-400">
-                                      Días estimados:
-                                    </span>
-                                    <span
-                                      className="
-                                        text-xs break-words text-white/70
-                                      "
-                                    >
-                                      {selectedProject.dias_estimados}
-                                    </span>
-                                  </div>
-                                  {selectedProject.public_comment && (
                                     <div className="mb-2">
-                                      <span className="text-xs text-cyan-400">
-                                        Comentario público:
+                                      <span className="font-semibold text-[#22C4D3]">
+                                        Estudiante:
                                       </span>
-                                      <p
-                                        className="
+                                      <span className="ml-2 break-words text-[#22C4D3]">
+                                        {selectedProject.studentName ||
+                                          selectedProject.users_name ||
+                                          selectedProject.user?.name ||
+                                          selectedProject.userId}
+                                      </span>
+                                      {(selectedProject.studentEmail ||
+                                        selectedProject.users_email ||
+                                        selectedProject.user?.email) && (
+                                        <span className="ml-2 break-words text-[#22C4D3]">
+                                          {selectedProject.studentEmail ||
+                                            selectedProject.users_email ||
+                                            selectedProject.user?.email}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div
+                                      className="flex-1 overflow-y-auto pr-1"
+                                      style={{ minHeight: 0 }}
+                                    >
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-[#22C4D3]">
+                                          Planteamiento:
+                                        </span>
+                                        <p
+                                          className="
+                                        break-words whitespace-pre-line
+                                        text-white/80
+                                      "
+                                          style={{ wordBreak: 'break-word' }}
+                                        >
+                                          {selectedProject.planteamiento}
+                                        </p>
+                                      </div>
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-[#22C4D3]">
+                                          Justificación:
+                                        </span>
+                                        <p
+                                          className="
+                                        break-words whitespace-pre-line
+                                        text-white/80
+                                      "
+                                          style={{ wordBreak: 'break-word' }}
+                                        >
+                                          {selectedProject.justificacion}
+                                        </p>
+                                      </div>
+                                      <div className="mb-2">
+                                        <span className="font-semibold text-[#22C4D3]">
+                                          Objetivo general:
+                                        </span>
+                                        <p
+                                          className="
+                                        break-words whitespace-pre-line
+                                        text-white/80
+                                      "
+                                          style={{ wordBreak: 'break-word' }}
+                                        >
+                                          {selectedProject.objetivo_general}
+                                        </p>
+                                      </div>
+                                      <div className="mb-2 grid grid-cols-2 gap-2">
+                                        <div>
+                                          <span className="text-xs text-[#22C4D3]">
+                                            Inicio:
+                                          </span>
+                                          <div
+                                            className="
+                                          text-xs break-words text-white/60
+                                        "
+                                          >
+                                            {selectedProject.fecha_inicio}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <span className="text-xs text-[#22C4D3]">
+                                            Fin:
+                                          </span>
+                                          <div
+                                            className="
+                                          text-xs break-words text-white/60
+                                        "
+                                          >
+                                            {selectedProject.fecha_fin}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="mb-2 flex flex-wrap gap-2">
+                                        <span className="text-xs text-[#22C4D3]">
+                                          Horas/día:
+                                        </span>
+                                        <span
+                                          className="
+                                        text-xs break-words text-white/70
+                                      "
+                                        >
+                                          {selectedProject.horas_por_dia}
+                                        </span>
+                                        <span className="text-xs text-[#22C4D3]">
+                                          Total horas:
+                                        </span>
+                                        <span
+                                          className="
+                                        text-xs break-words text-white/70
+                                      "
+                                        >
+                                          {selectedProject.total_horas}
+                                        </span>
+                                        <span className="text-xs text-[#22C4D3]">
+                                          Días estimados:
+                                        </span>
+                                        <span
+                                          className="
+                                        text-xs break-words text-white/70
+                                      "
+                                        >
+                                          {selectedProject.dias_estimados}
+                                        </span>
+                                      </div>
+                                      {selectedProject.public_comment && (
+                                        <div className="mb-2">
+                                          <span className="text-xs text-[#22C4D3]">
+                                            Comentario público:
+                                          </span>
+                                          <p
+                                            className="
                                           text-xs break-words
                                           whitespace-pre-line text-white/60
                                         "
-                                        style={{ wordBreak: 'break-word' }}
-                                      >
-                                        {selectedProject.public_comment}
-                                      </p>
+                                            style={{ wordBreak: 'break-word' }}
+                                          >
+                                            {selectedProject.public_comment}
+                                          </p>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
+                                  </div>
                                 </div>
-                              </div>
-                            </div>
-                          </Portal>
+                              </Portal>
+                            )}
+                          </>
                         )}
-                      </>
+                      </div>
                     )}
-                  </div>
-                )}
-                {activeTab === 'recursos' && (
-                  <div className="animate-in fade-in duration-500">
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      Recursos del curso
-                    </h2>
+                    {activeTab === 'recursos' && (
+                      <div className="animate-in fade-in duration-500">
+                        <h2 className="mb-6 text-2xl font-bold text-white">
+                          Recursos del curso
+                        </h2>
 
-                    {loadingResources ? (
-                      <div className="flex items-center gap-3 text-white/60">
-                        <div
-                          className="
+                        {loadingResources ? (
+                          <div className="flex items-center gap-3 text-white/60">
+                            <div
+                              className="
             size-5 animate-spin rounded-full border-2
-            border-cyan-500 border-t-transparent
+            border-[#22C4D3] border-t-transparent
           "
-                        />
-                        Cargando recursos...
-                      </div>
-                    ) : lessonResources.length === 0 ? (
-                      <div
-                        className="
+                            />
+                            Cargando recursos...
+                          </div>
+                        ) : lessonResources.length === 0 ? (
+                          <div
+                            className="
           rounded-xl border border-dashed border-white/20
-          bg-slate-800/30 p-8 text-center
+          bg-[#061c37]/30 p-8 text-center
         "
-                      >
-                        <p className="text-white/60">
-                          No hay recursos registrados en este curso.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {[...lessonResources]
-                          .sort(
-                            (a, b) => a.lessonOrderIndex - b.lessonOrderIndex
-                          )
-                          .map((lessonRes) => {
-                            const fileKeys = lessonRes.resourceKey
-                              ? lessonRes.resourceKey
-                                  .split(',')
-                                  .map((k) => k.trim())
-                                  .filter(Boolean)
-                              : [];
+                          >
+                            <p className="text-white/60">
+                              No hay recursos registrados en este curso.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {[...lessonResources]
+                              .sort(
+                                (a, b) =>
+                                  a.lessonOrderIndex - b.lessonOrderIndex
+                              )
+                              .map((lessonRes) => {
+                                const fileKeys = lessonRes.resourceKey
+                                  ? lessonRes.resourceKey
+                                      .split(',')
+                                      .map((k) => k.trim())
+                                      .filter(Boolean)
+                                  : [];
 
-                            const fileNames = lessonRes.resourceNames
-                              ? lessonRes.resourceNames
-                                  .split(',')
-                                  .map((n) => n.trim())
-                                  .filter(Boolean)
-                              : [];
+                                const fileNames = lessonRes.resourceNames
+                                  ? lessonRes.resourceNames
+                                      .split(',')
+                                      .map((n) => n.trim())
+                                      .filter(Boolean)
+                                  : [];
 
-                            type ResourceItem = {
-                              id: string;
-                              label: string;
-                              url: string;
-                            };
+                                type ResourceItem = {
+                                  id: string;
+                                  label: string;
+                                  url: string;
+                                };
 
-                            const items: ResourceItem[] = [];
-                            const baseUrl =
-                              process.env.NEXT_PUBLIC_AWS_S3_URL ?? '';
+                                const items: ResourceItem[] = [];
+                                const baseUrl =
+                                  process.env.NEXT_PUBLIC_AWS_S3_URL ?? '';
 
-                            if (lessonRes.coverImageKey) {
-                              items.push({
-                                id: 'image',
-                                label: 'Imagen de portada',
-                                url: `${baseUrl}/${lessonRes.coverImageKey}`,
-                              });
-                            }
+                                if (lessonRes.coverImageKey) {
+                                  items.push({
+                                    id: 'image',
+                                    label: 'Imagen de portada',
+                                    url: `${baseUrl}/${lessonRes.coverImageKey}`,
+                                  });
+                                }
 
-                            if (lessonRes.coverVideoKey) {
-                              items.push({
-                                id: 'video',
-                                label: 'Video de la clase',
-                                url: `${baseUrl}/${lessonRes.coverVideoKey}`,
-                              });
-                            }
+                                if (lessonRes.coverVideoKey) {
+                                  items.push({
+                                    id: 'video',
+                                    label: 'Video de la clase',
+                                    url: `${baseUrl}/${lessonRes.coverVideoKey}`,
+                                  });
+                                }
 
-                            fileKeys.forEach((key, idx) => {
-                              items.push({
-                                id: `file-${idx}`,
-                                label: fileNames[idx] ?? key,
-                                url: `${baseUrl}/${key}`,
-                              });
-                            });
+                                fileKeys.forEach((key, idx) => {
+                                  items.push({
+                                    id: `file-${idx}`,
+                                    label: fileNames[idx] ?? key,
+                                    url: `${baseUrl}/${key}`,
+                                  });
+                                });
 
-                            return (
-                              <div
-                                key={lessonRes.lessonId}
-                                className="
-                  rounded-2xl border border-cyan-500/30
-                  bg-slate-700/60 p-5 shadow-md shadow-cyan-500/5
-                "
-                              >
-                                <div className="mb-4 flex items-center gap-3">
-                                  <span
+                                return (
+                                  <div
+                                    key={lessonRes.lessonId}
                                     className="
-                      flex size-8 items-center justify-center rounded-full
-                      bg-cyan-500/30 text-sm font-bold text-cyan-300
-                    "
+                  rounded-2xl border border-[#22C4D3]/30
+                  bg-[#0d2a4d]/60 p-5 shadow-md shadow-[#22C4D3]/5
+                "
                                   >
-                                    {lessonRes.lessonOrderIndex ?? '?'}
-                                  </span>
+                                    <div className="mb-4 flex items-center gap-3">
+                                      <span
+                                        className="
+                      flex size-8 items-center justify-center rounded-full
+                      bg-[#22C4D3]/30 text-sm font-bold text-[#22C4D3]
+                    "
+                                      >
+                                        {lessonRes.lessonOrderIndex ?? '?'}
+                                      </span>
 
-                                  <h3 className="text-lg font-semibold text-white">
-                                    {lessonRes.lessonTitle ?? 'Sin título'}
-                                  </h3>
+                                      <h3 className="text-lg font-semibold text-white">
+                                        {lessonRes.lessonTitle ?? 'Sin título'}
+                                      </h3>
 
-                                  <span className="ml-auto text-xs text-gray-300">
-                                    {items.length} recurso
-                                    {items.length !== 1 ? 's' : ''}
-                                  </span>
-                                </div>
+                                      <span className="ml-auto text-xs text-[#94A3B8]">
+                                        {items.length} recurso
+                                        {items.length !== 1 ? 's' : ''}
+                                      </span>
+                                    </div>
 
-                                <ul className="space-y-3">
-                                  {items.map((item) => (
-                                    <li
-                                      key={item.id}
-                                      className="
+                                    <ul className="space-y-3">
+                                      {items.map((item) => (
+                                        <li
+                                          key={item.id}
+                                          className="
                         flex flex-col gap-3 rounded-xl border
-                        border-cyan-500/20 bg-slate-600/50 p-4
-                        transition-colors hover:border-cyan-400/40
-                        hover:bg-slate-600/70 sm:flex-row
+                        border-[#22C4D3]/20 bg-[#0d2a4d]/50 p-4
+                        transition-colors hover:border-[#22C4D3]/40
+                        hover:bg-[#0d2a4d]/70 sm:flex-row
                         sm:items-center sm:justify-between
                       "
-                                    >
-                                      <div className="flex-1">
-                                        <span className="font-semibold text-white">
-                                          {item.label}
-                                        </span>
-                                      </div>
-
-                                      <div className="flex shrink-0 flex-wrap gap-2">
-                                        <a
-                                          href={item.url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="
-                            rounded-lg bg-blue-500 px-3 py-1.5
-                            text-sm font-semibold text-white
-                            transition hover:bg-blue-400
-                          "
                                         >
-                                          👁 Ver
-                                        </a>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
-                          })}
+                                          <div className="flex-1">
+                                            <span className="font-semibold text-white">
+                                              {item.label}
+                                            </span>
+                                          </div>
+
+                                          <div className="flex shrink-0 flex-wrap gap-2">
+                                            <a
+                                              href={item.url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="
+                            rounded-lg border border-[#1d283a] bg-[#0d2a4d]
+                            px-3 py-1.5 text-sm font-semibold text-white
+                            transition hover:bg-[#0d2a4d]/70
+                          "
+                                            >
+                                              👁 Ver
+                                            </a>
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                )}
 
-                {activeTab === 'actividades' && (
-                  <div className="animate-in fade-in duration-500">
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      Actividades del curso
-                    </h2>
+                    {activeTab === 'actividades' && (
+                      <div className="animate-in fade-in duration-500">
+                        <h2 className="mb-6 text-2xl font-bold text-white">
+                          Actividades del curso
+                        </h2>
 
-                    {loadingActivities ? (
-                      <div className="flex items-center gap-3 text-white/60">
-                        <div
-                          className="
+                        {loadingActivities ? (
+                          <div className="flex items-center gap-3 text-white/60">
+                            <div
+                              className="
                           size-5 animate-spin rounded-full border-2
-                          border-cyan-500 border-t-transparent
+                          border-[#22C4D3] border-t-transparent
                         "
-                        />
-                        Cargando actividades...
-                      </div>
-                    ) : courseActivities.length === 0 ? (
-                      <div
-                        className="
+                            />
+                            Cargando actividades...
+                          </div>
+                        ) : courseActivities.length === 0 ? (
+                          <div
+                            className="
                         rounded-xl border border-dashed border-white/20
-                        bg-slate-800/30 p-8 text-center
+                        bg-[#061c37]/30 p-8 text-center
                       "
-                      >
-                        <p className="text-white/60">
-                          No hay actividades registradas en este curso.
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {Object.entries(
-                          courseActivities.reduce<
-                            Record<string, CourseActivity[]>
-                          >((acc, act) => {
-                            const key = `${act.lessonOrderIndex ?? 0}-${act.lessonsId}`;
+                          >
+                            <p className="text-white/60">
+                              No hay actividades registradas en este curso.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            {Object.entries(
+                              courseActivities.reduce<
+                                Record<string, CourseActivity[]>
+                              >((acc, act) => {
+                                const key = `${act.lessonOrderIndex ?? 0}-${act.lessonsId}`;
 
-                            if (!acc[key]) {
-                              acc[key] = [];
-                            }
+                                if (!acc[key]) {
+                                  acc[key] = [];
+                                }
 
-                            acc[key].push(act);
+                                acc[key].push(act);
 
-                            return acc;
-                          }, {})
-                        )
-                          .sort(([a], [b]) => {
-                            const [ai] = a.split('-').map(Number);
-                            const [bi] = b.split('-').map(Number);
+                                return acc;
+                              }, {})
+                            )
+                              .sort(([a], [b]) => {
+                                const [ai] = a.split('-').map(Number);
+                                const [bi] = b.split('-').map(Number);
 
-                            return (ai ?? 0) - (bi ?? 0);
-                          })
-                          .map(([key, acts]) => {
-                            const first = acts[0]!;
+                                return (ai ?? 0) - (bi ?? 0);
+                              })
+                              .map(([key, acts]) => {
+                                const first = acts[0]!;
 
-                            return (
-                              <div
-                                key={key}
-                                className="
-    rounded-2xl border border-cyan-500/30
-    bg-slate-700/60 p-5 shadow-md shadow-cyan-500/5
-  "
-                              >
-                                <div className="mb-4 flex items-center gap-3">
-                                  <span
+                                return (
+                                  <div
+                                    key={key}
                                     className="
-  flex size-8 items-center justify-center
-  rounded-full bg-cyan-500/30 text-sm
-  font-bold text-cyan-300
-"
+    rounded-2xl border border-[#22C4D3]/30
+    bg-[#0d2a4d]/60 p-5 shadow-md shadow-[#22C4D3]/5
+  "
                                   >
-                                    {first.lessonOrderIndex ?? '?'}
-                                  </span>
+                                    <div className="mb-4 flex items-center gap-3">
+                                      <span
+                                        className="
+  flex size-8 items-center justify-center
+  rounded-full bg-[#22C4D3]/30 text-sm
+  font-bold text-[#22C4D3]
+"
+                                      >
+                                        {first.lessonOrderIndex ?? '?'}
+                                      </span>
 
-                                  <h3 className="text-lg font-semibold text-white">
-                                    {first.lessonTitle ?? 'Sin título'}
-                                  </h3>
+                                      <h3 className="text-lg font-semibold text-white">
+                                        {first.lessonTitle ?? 'Sin título'}
+                                      </h3>
 
-                                  <span className="ml-auto text-xs text-gray-300">
-                                    {' '}
-                                    {acts.length} actividad
-                                    {acts.length !== 1 ? 'es' : ''}
-                                  </span>
-                                </div>
+                                      <span className="ml-auto text-xs text-[#94A3B8]">
+                                        {' '}
+                                        {acts.length} actividad
+                                        {acts.length !== 1 ? 'es' : ''}
+                                      </span>
+                                    </div>
 
-                                <ul className="space-y-3">
-                                  {acts.map((act) => (
-                                    <li
-                                      key={act.id}
-                                      className="
+                                    <ul className="space-y-3">
+                                      {acts.map((act) => (
+                                        <li
+                                          key={act.id}
+                                          className="
   flex flex-col gap-3 rounded-xl border
-  border-cyan-500/20 bg-slate-600/50 p-4
-  transition-colors hover:border-cyan-400/40 hover:bg-slate-600/70
+  border-[#22C4D3]/20 bg-[#0d2a4d]/50 p-4
+  transition-colors hover:border-[#22C4D3]/40 hover:bg-[#0d2a4d]/70
   sm:flex-row sm:items-center
   sm:justify-between
 "
-                                    >
-                                      <div className="flex-1">
-                                        <div
-                                          className="
+                                        >
+                                          <div className="flex-1">
+                                            <div
+                                              className="
                                           flex flex-wrap items-center gap-2
                                         "
-                                        >
-                                          <span className="font-semibold text-white">
-                                            {act.name}
-                                          </span>
+                                            >
+                                              <span className="font-semibold text-white">
+                                                {act.name}
+                                              </span>
 
-                                          {act.revisada ? (
-                                            <span
-                                              className="
+                                              {act.revisada ? (
+                                                <span
+                                                  className="
 rounded-full bg-green-500/30 px-2
 py-0.5 text-xs font-semibold
 text-green-300
 "
-                                            >
-                                              Calificable
-                                            </span>
-                                          ) : (
-                                            <span
-                                              className="
-rounded-full bg-gray-500/40 px-2
-py-0.5 text-xs text-gray-200
+                                                >
+                                                  Calificable
+                                                </span>
+                                              ) : (
+                                                <span
+                                                  className="
+rounded-full bg-[#0d2a4d]/40 px-2
+py-0.5 text-xs text-[#94A3B8]
 "
-                                            >
-                                              No calificable
-                                            </span>
-                                          )}
+                                                >
+                                                  No calificable
+                                                </span>
+                                              )}
 
-                                          {act.revisada &&
-                                            act.porcentaje != null &&
-                                            act.porcentaje > 0 && (
-                                              <span
-                                                className="
-rounded-full bg-cyan-500/30 px-2
-py-0.5 text-xs text-cyan-300
+                                              {act.revisada &&
+                                                act.porcentaje != null &&
+                                                act.porcentaje > 0 && (
+                                                  <span
+                                                    className="
+rounded-full bg-[#22C4D3]/30 px-2
+py-0.5 text-xs text-[#22C4D3]
 "
-                                              >
-                                                {act.porcentaje}%
-                                              </span>
-                                            )}
+                                                  >
+                                                    {act.porcentaje}%
+                                                  </span>
+                                                )}
 
-                                          {act.fechaMaximaEntrega && (
-                                            <span
-                                              className="
+                                              {act.fechaMaximaEntrega && (
+                                                <span
+                                                  className="
 rounded-full bg-yellow-500/30 px-2
 py-0.5 text-xs text-yellow-300
 "
-                                            >
-                                              📅{' '}
-                                              {new Date(
-                                                act.fechaMaximaEntrega
-                                              ).toLocaleDateString('es-CO', {
-                                                day: '2-digit',
-                                                month: 'short',
-                                                year: 'numeric',
-                                              })}
-                                            </span>
-                                          )}
-                                        </div>
+                                                >
+                                                  📅{' '}
+                                                  {new Date(
+                                                    act.fechaMaximaEntrega
+                                                  ).toLocaleDateString(
+                                                    'es-CO',
+                                                    {
+                                                      day: '2-digit',
+                                                      month: 'short',
+                                                      year: 'numeric',
+                                                    }
+                                                  )}
+                                                </span>
+                                              )}
+                                            </div>
 
-                                        {act.description && (
-                                          <p
-                                            className="
+                                            {act.description && (
+                                              <p
+                                                className="
 mt-2 line-clamp-2 text-sm
-text-gray-300
+text-[#94A3B8]
 "
-                                          >
-                                            {act.description}
-                                          </p>
-                                        )}
-                                      </div>
+                                              >
+                                                {act.description}
+                                              </p>
+                                            )}
+                                          </div>
 
-                                      <div
-                                        className="
+                                          <div
+                                            className="
                                         flex shrink-0 flex-wrap gap-2
                                       "
-                                      >
-                                        <a
-                                          data-tour-id="tutorial-actividad-ver"
-                                          href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades/${act.id}`}
-                                          className="
-  rounded-lg bg-blue-500 px-3 py-1.5
+                                          >
+                                            <a
+                                              data-tour-id="tutorial-actividad-ver"
+                                              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades/${act.id}`}
+                                              className="
+  rounded-lg border border-[#1d283a] bg-[#0d2a4d] px-3 py-1.5
   text-sm font-semibold text-white
   transition
-  hover:bg-blue-400
+  hover:bg-[#0d2a4d]/70
 "
-                                        >
-                                          👁 Ver
-                                        </a>
+                                            >
+                                              👁 Ver
+                                            </a>
 
-                                        <a
-                                          href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades?activityId=${act.id}`}
-                                          className="
-  rounded-lg border border-cyan-400
-  bg-cyan-500/10 px-3 py-1.5 text-sm font-semibold
-  text-cyan-300 transition
-  hover:bg-cyan-500 hover:text-white
+                                            <a
+                                              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades?activityId=${act.id}`}
+                                              className="
+  rounded-lg border border-[#22C4D3]
+  bg-[#22C4D3]/10 px-3 py-1.5 text-sm font-semibold
+  text-[#22C4D3] transition
+  hover:bg-[#22C4D3] hover:text-white
 "
-                                        >
-                                          ✏️ Editar
-                                        </a>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            );
-                          })}
+                                            >
+                                              ✏️ Editar
+                                            </a>
+                                          </div>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                );
+                              })}
+                          </div>
+                        )}
                       </div>
                     )}
-                  </div>
-                )}
 
-                {/* Embeddings Tab */}
-                {activeTab === 'embeddings' && (
-                  <div className="animate-in fade-in space-y-8 duration-500">
-                    <div>
-                      <h2 className="mb-4 text-3xl font-bold text-white">
-                        🧠 Sistema de Embeddings Inteligente
-                      </h2>
-                      <p className="text-white/70">
-                        Genera embeddings vectoriales para búsquedas semánticas
-                        completas que incluyen todo el contenido del curso:
-                        lecciones, actividades, archivos y recursos.
-                      </p>
-                    </div>
+                    {/* Embeddings Tab */}
+                    {activeTab === 'embeddings' && (
+                      <div className="animate-in fade-in space-y-8 duration-500">
+                        <div>
+                          <h2 className="mb-4 text-3xl font-bold text-white">
+                            🧠 Sistema de Embeddings Inteligente
+                          </h2>
+                          <p className="text-white/70">
+                            Genera embeddings vectoriales para búsquedas
+                            semánticas completas que incluyen todo el contenido
+                            del curso: lecciones, actividades, archivos y
+                            recursos.
+                          </p>
+                        </div>
 
-                    {/* Dos opciones: Completo o Solo Curso */}
-                    <div
-                      className="
+                        {/* Dos opciones: Completo o Solo Curso */}
+                        <div
+                          className="
                         grid gap-6
                         md:grid-cols-2
                       "
-                    >
-                      {/* Opción 1: Embeddings Completo */}
-                      <div
-                        className="
-                          rounded-lg border border-blue-500/30 bg-blue-500/5 p-6
-                          backdrop-blur-sm
-                        "
-                      >
-                        <h3
-                          className="
-                            mb-2 flex items-center gap-2 text-lg font-semibold
-                            text-blue-400
-                          "
                         >
-                          <span>🚀</span> Completo (Recomendado)
-                        </h3>
-                        <p className="mb-4 text-sm text-white/70">
-                          Procesa el curso completo incluyendo:
-                        </p>
-                        <ul className="mb-4 space-y-1 text-xs text-white/60">
-                          <li>✅ Descripción y metadata del curso</li>
-                          <li>✅ Todas las lecciones y sus contenidos</li>
-                          <li>✅ Todas las actividades</li>
-                          <li>✅ Archivos asociados (PDF, DOCX, TXT)</li>
-                        </ul>
-                        {course && (
-                          <EmbeddingsGeneratorComplete
-                            courseId={courseIdNumber}
-                            courseTitle={course.title}
-                          />
-                        )}
-                      </div>
-
-                      {/* Opción 2: Embeddings Simple */}
-                      <div
-                        className="
-                          rounded-lg border border-purple-500/30 bg-purple-500/5
+                          {/* Opción 1: Embeddings Completo */}
+                          <div
+                            className="
+                          rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/5
                           p-6 backdrop-blur-sm
                         "
-                      >
-                        <h3
-                          className="
+                          >
+                            <h3
+                              className="
                             mb-2 flex items-center gap-2 text-lg font-semibold
-                            text-purple-400
+                            text-[#22C4D3]
                           "
-                        >
-                          <span>⚡</span> Simple (Solo Metadata)
-                        </h3>
-                        <p className="mb-4 text-sm text-white/70">
-                          Procesa solo la información básica:
-                        </p>
-                        <ul className="mb-4 space-y-1 text-xs text-white/60">
-                          <li>✅ Título del curso</li>
-                          <li>✅ Descripción</li>
-                          <li>⚠️ Sin contenido de archivos</li>
-                          <li>⚠️ Sin datos de lecciones</li>
-                        </ul>
-                        {course && (
-                          <EmbeddingsGenerator
-                            courseId={courseIdNumber}
-                            courseTitle={course.title}
-                            courseDescription={course.description}
-                          />
-                        )}
-                      </div>
-                    </div>
+                            >
+                              <span>🚀</span> Completo (Recomendado)
+                            </h3>
+                            <p className="mb-4 text-sm text-white/70">
+                              Procesa el curso completo incluyendo:
+                            </p>
+                            <ul className="mb-4 space-y-1 text-xs text-white/60">
+                              <li>✅ Descripción y metadata del curso</li>
+                              <li>✅ Todas las lecciones y sus contenidos</li>
+                              <li>✅ Todas las actividades</li>
+                              <li>✅ Archivos asociados (PDF, DOCX, TXT)</li>
+                            </ul>
+                            {course && (
+                              <EmbeddingsGeneratorComplete
+                                courseId={courseIdNumber}
+                                courseTitle={course.title}
+                              />
+                            )}
+                          </div>
 
-                    {/* Información general */}
-                    <div
-                      className="
-                        rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4
+                          {/* Opción 2: Embeddings Simple */}
+                          <div
+                            className="
+                          rounded-lg border border-[#1d283a] bg-[#0d2a4d]/40
+                          p-6 backdrop-blur-sm
+                        "
+                          >
+                            <h3
+                              className="
+                            mb-2 flex items-center gap-2 text-lg font-semibold
+                            text-white
+                          "
+                            >
+                              <span>⚡</span> Simple (Solo Metadata)
+                            </h3>
+                            <p className="mb-4 text-sm text-white/70">
+                              Procesa solo la información básica:
+                            </p>
+                            <ul className="mb-4 space-y-1 text-xs text-white/60">
+                              <li>✅ Título del curso</li>
+                              <li>✅ Descripción</li>
+                              <li>⚠️ Sin contenido de archivos</li>
+                              <li>⚠️ Sin datos de lecciones</li>
+                            </ul>
+                            {course && (
+                              <EmbeddingsGenerator
+                                courseId={courseIdNumber}
+                                courseTitle={course.title}
+                                courseDescription={course.description}
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Información general */}
+                        <div
+                          className="
+                        rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/5 p-4
                       "
-                    >
-                      <p className="text-xs text-cyan-400/70">
-                        <strong>💡 Recomendación:</strong> Usa la opción
-                        <strong> Completo</strong> para obtener búsquedas
-                        semánticas más precisas que consideren TODO el contenido
-                        de tu curso, incluyendo documentos y recursos.
-                      </p>
-                    </div>
+                        >
+                          <p className="text-xs text-[#22C4D3]/70">
+                            <strong>💡 Recomendación:</strong> Usa la opción
+                            <strong> Completo</strong> para obtener búsquedas
+                            semánticas más precisas que consideren TODO el
+                            contenido de tu curso, incluyendo documentos y
+                            recursos.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {/* ⬅️ VERIFICA QUE ESTE CIERRE ESTÉ AQUÍ */}
                   </div>
-                )}
-                {/* ⬅️ VERIFICA QUE ESTE CIERRE ESTÉ AQUÍ */}
+                </div>
               </div>
-            </div>
+            )
+          )}
+        </div>
+
+        {/* Portada + acciones fijas (sticky) en desktop */}
+        <div className="hidden lg:block">
+          <div className="sticky top-6 flex flex-col space-y-6 self-start">
+            {renderCoverAndActions()}
           </div>
-        )
-      )}
+        </div>
+      </div>
 
       <ModalScheduleMeeting
         isOpen={isMeetingModalOpen}
