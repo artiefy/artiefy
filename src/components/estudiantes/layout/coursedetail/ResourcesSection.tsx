@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BsFiletypeXls } from 'react-icons/bs';
 import {
   FaDownload,
+  FaExternalLinkAlt,
   FaFilePdf,
   FaFilePowerpoint,
   FaFileWord,
@@ -100,6 +101,14 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
     return /^https?:\/\//i.test(value) || /^www\./i.test(value);
   };
 
+  // URL final del recurso: link externo tal cual, o archivo en S3
+  const buildResourceUrl = (key: string) => {
+    if (!isExternalResource(key)) {
+      return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`;
+    }
+    return key.startsWith('http') ? key : `https://${key.replace(/^\/+/, '')}`;
+  };
+
   const getFileIcon = (fileName: string, resourceKey: string) => {
     // Si es un link externo, mostrar icono de enlace
     if (isExternalResource(resourceKey)) {
@@ -155,12 +164,7 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
 
       await Promise.all(
         allResources.map(async (resource, index) => {
-          const isExternal = isExternalResource(resource.key);
-          const url = isExternal
-            ? resource.key.startsWith('http')
-              ? resource.key
-              : `https://${resource.key.replace(/^\/+/, '')}`
-            : `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${resource.key}`;
+          const url = buildResourceUrl(resource.key);
 
           try {
             const resp = await fetch(url);
@@ -210,15 +214,11 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
   };
 
   const handleDownload = (resource: Resource) => {
-    // Detectar si es un recurso externo
-    const isExternal = isExternalResource(resource.key);
-    const url = isExternal
-      ? resource.key.startsWith('http')
-        ? resource.key
-        : `https://${resource.key.replace(/^\/+/, '')}`
-      : `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${resource.key}`;
-
-    window.open(url, '_blank');
+    window.open(
+      buildResourceUrl(resource.key),
+      '_blank',
+      'noopener,noreferrer'
+    );
   };
 
   if (isLoading) {
@@ -315,49 +315,75 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
 
               {/* Lista de recursos */}
               <div className="ml-9 space-y-2">
-                {resources.map((resource, index) => (
-                  <div
-                    key={index}
-                    className="
+                {resources.map((resource, index) => {
+                  const isExternal = isExternalResource(resource.key);
+                  const resourceUrl = buildResourceUrl(resource.key);
+
+                  return (
+                    <div
+                      key={index}
+                      className="
                       group flex items-center justify-between border p-3
                       transition-all duration-200
                       hover:cursor-pointer
                     "
-                    style={{
-                      backgroundColor: '#061c3799',
-                      borderColor: 'hsla(217, 33%, 17%, 0.5)',
-                      borderRadius: '12px',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#082345';
-                      e.currentTarget.style.borderColor = '#1D283A';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#061c3799';
-                      e.currentTarget.style.borderColor =
-                        'hsla(217, 33%, 17%, 0.5)';
-                    }}
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="rounded-lg bg-background/50 p-2">
-                        {getFileIcon(resource.fileName, resource.key)}
+                      style={{
+                        backgroundColor: '#061c3799',
+                        borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                        borderRadius: '12px',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#082345';
+                        e.currentTarget.style.borderColor = '#1D283A';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = '#061c3799';
+                        e.currentTarget.style.borderColor =
+                          'hsla(217, 33%, 17%, 0.5)';
+                      }}
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="rounded-lg bg-background/50 p-2">
+                          {getFileIcon(resource.fileName, resource.key)}
+                        </div>
+                        <div className="min-w-0">
+                          {isExternal ? (
+                            <a
+                              href={resourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="
+                              block truncate text-sm font-medium text-[#22c4d3]
+                              underline-offset-4 transition-colors
+                              hover:underline
+                              focus-visible:underline
+                              focus-visible:outline-none
+                            "
+                            >
+                              {resource.fileName}
+                            </a>
+                          ) : (
+                            <p
+                              className="
+                              truncate text-sm font-medium text-foreground
+                            "
+                            >
+                              {resource.fileName}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {isExternal
+                              ? 'Enlace externo'
+                              : getFileSize(resource.fileName)}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p
-                          className="
-                            truncate text-sm font-medium text-foreground
-                          "
-                        >
-                          {resource.fileName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {getFileSize(resource.fileName)}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDownload(resource)}
-                      className="
+                      <button
+                        aria-label={
+                          isExternal ? 'Abrir enlace' : 'Descargar recurso'
+                        }
+                        onClick={() => handleDownload(resource)}
+                        className="
                         inline-flex h-9 items-center justify-center gap-2
                         rounded-2xl px-3 text-sm font-medium whitespace-nowrap
                         opacity-0 ring-offset-background transition-opacity
@@ -368,23 +394,28 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
                         [&_svg]:pointer-events-none [&_svg]:size-4
                         [&_svg]:shrink-0
                       "
-                      style={{
-                        transition:
-                          'background-color 0.2s, opacity 0.2s, color 0.2s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#22c4d3';
-                        e.currentTarget.style.color = '#000000';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.color = '';
-                      }}
-                    >
-                      <FaDownload className="size-4" />
-                    </button>
-                  </div>
-                ))}
+                        style={{
+                          transition:
+                            'background-color 0.2s, opacity 0.2s, color 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#22c4d3';
+                          e.currentTarget.style.color = '#000000';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = '';
+                        }}
+                      >
+                        {isExternal ? (
+                          <FaExternalLinkAlt className="size-4" />
+                        ) : (
+                          <FaDownload className="size-4" />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
