@@ -643,7 +643,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
           onClick={() => isMobile && setIsOpen(false)}
           className={cn(
             `
-              fixed inset-0 z-30 bg-black/60 backdrop-blur-md
+              fixed inset-0 z-[35] bg-black/60 backdrop-blur-md
               transition-opacity duration-300
             `,
             !isMobile && 'pointer-events-none'
@@ -652,22 +652,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         />
       )}
 
-      {/* Botón X arriba a la izquierda solo en móvil+abierto */}
-      {isMobile && isOpen && (
-        <button
-          onClick={() => setIsOpen(false)}
-          className="
-            fixed top-4 left-4 z-60 rounded-lg bg-gray-900/80 p-2 text-white
-            hover:bg-gray-800
-            focus:ring-2 focus:ring-gray-200 focus:outline-hidden
-            md:hidden
-          "
-          aria-controls="sidebar"
-          aria-expanded={isOpen}
-        >
-          <FiX size={24} />
-        </button>
-      )}
       {/* Navbar */}
       <nav
         className="
@@ -683,10 +667,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              {/* Botón menú hamburguesa solo en móvil+cerrado */}
-              {isMobile && !isOpen && (
+              {/* Botón menú hamburguesa / cerrar, solo en móvil. Vive en el
+                  flujo normal del navbar (no fixed) para no solaparse con el
+                  avatar/nombre de usuario que va al lado. */}
+              {isMobile && (
                 <button
-                  onClick={() => setIsOpen(true)}
+                  onClick={() => setIsOpen(!isOpen)}
                   className="
                     rounded-lg p-2 text-white
                     hover:bg-gray-100
@@ -696,7 +682,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   aria-controls="sidebar"
                   aria-expanded={isOpen}
                 >
-                  <FiMenu size={20} />
+                  {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
                 </button>
               )}
               <div className="flex items-center gap-2">

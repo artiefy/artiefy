@@ -8,6 +8,7 @@ import { useUser } from '@clerk/nextjs';
 import { CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 
+import QuestionSubidaList from '~/components/educators/layout/ListActSubidaFile';
 import SelectParametro from '~/components/educators/layout/SelectParametro';
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
 import {
@@ -136,6 +137,48 @@ const Page: React.FC = () => {
   const isEditing = activityId !== null;
 
   const [loadingActivity, setLoadingActivity] = useState(isEditing);
+
+  // Subida de documento: una vez creada la actividad base, se muestra de una
+  // el formulario para subir el archivo en esta misma página (sin redirigir).
+  // Se guarda también en la URL para sobrevivir al reload que hace
+  // FormActCompletado al guardar cada archivo, permitiendo subir más de uno.
+  const [uploadActivityId, setUploadActivityId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const idParam = searchParams?.get('uploadingActivityId');
+    if (idParam) setUploadActivityId(parseInt(idParam, 10));
+  }, [searchParams]);
+
+  // Subida de documento: campos visibles de una al elegir el tipo, para
+  // adjuntar el primer documento en el mismo paso de creación.
+  const [docPregunta, setDocPregunta] = useState('');
+  const [docCriterios, setDocCriterios] = useState('');
+  const [docArchivo, setDocArchivo] = useState<File | null>(null);
+  const [docImagen, setDocImagen] = useState<File | null>(null);
+
+  const uploadFileToS3 = async (file: File): Promise<string> => {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contentType: file.type,
+        fileSize: file.size,
+        fileName: file.name,
+      }),
+    });
+    if (!res.ok) throw new Error('Error al generar la URL de subida');
+    const { url, fields, key } = (await res.json()) as {
+      url: string;
+      fields: Record<string, string>;
+      key: string;
+    };
+    const uploadForm = new FormData();
+    Object.entries(fields).forEach(([k, v]) => uploadForm.append(k, v));
+    uploadForm.append('file', file);
+    const uploadRes = await fetch(url, { method: 'POST', body: uploadForm });
+    if (!uploadRes.ok) throw new Error('Error al subir archivo');
+    return key;
+  };
 
   useEffect(() => {
     if (!isEditing || !activityId) return;
@@ -587,6 +630,50 @@ const Page: React.FC = () => {
         description: `Actividad ${isEditing ? 'actualizada' : 'creada'} correctamente`,
       });
 
+      // Subida de documento: si el educador ya llenó los campos del
+      // documento (visibles de una al elegir el tipo), se suben junto con
+      // la creación de la actividad, en el mismo clic de "Crear".
+      if (!isEditing && formData.type === '1') {
+        if (docPregunta || docCriterios || docArchivo || docImagen) {
+          try {
+            const archivoKey = docArchivo
+              ? await uploadFileToS3(docArchivo)
+              : '';
+            const portadaKey = docImagen ? await uploadFileToS3(docImagen) : '';
+
+            await fetch('/api/educadores/question/archivos', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                activityId: actividadId,
+                questionsFilesSubida: {
+                  id: crypto.randomUUID(),
+                  text: docPregunta,
+                  parametros: docCriterios,
+                  pesoPregunta: 0,
+                  archivoKey,
+                  portadaKey,
+                },
+              }),
+            });
+          } catch (err) {
+            console.error('Error al subir el documento inicial:', err);
+            toast('Error', {
+              description:
+                'La actividad se creó, pero hubo un error subiendo el documento.',
+            });
+          }
+        }
+
+        // Se queda en la misma pantalla, mostrando lo ya subido y la
+        // opción de subir más de un archivo antes de finalizar.
+        setUploadActivityId(actividadId);
+        const params = new URLSearchParams(window.location.search);
+        params.set('uploadingActivityId', String(actividadId));
+        router.replace(`${window.location.pathname}?${params.toString()}`);
+        return;
+      }
+
       router.push(
         `/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
       );
@@ -712,6 +799,36 @@ const Page: React.FC = () => {
                 <span className="sr-only">Cargando actividad…</span>
               </div>
             </main>
+          ) : uploadActivityId ? (
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-[#22C4D3]/40 bg-[#061c37] p-6 text-center shadow-2xl">
+                <p className="text-lg font-semibold text-white">
+                  Actividad creada. Ahora sube el documento.
+                </p>
+                <p className="mt-1 text-sm text-[#94A3B8]">
+                  Puedes subir más de un archivo antes de finalizar.
+                </p>
+              </div>
+
+              <QuestionSubidaList activityId={uploadActivityId} />
+
+              <div className="flex justify-end">
+                <Button
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${uploadActivityId}`
+                    )
+                  }
+                  className="
+                    rounded-lg border-none bg-[#22C4D3] px-6 py-2
+                    font-semibold text-[#01142B]
+                    hover:bg-[#00A5C0]
+                  "
+                >
+                  Finalizar
+                </Button>
+              </div>
+            </div>
           ) : (
             <form
               className="mx-auto w-full justify-center rounded-lg bg-white p-4"
@@ -1042,6 +1159,137 @@ const Page: React.FC = () => {
                 }
                 selectedColor={color}
               />
+
+              {formData.type === '1' && !isEditing && (
+                <div
+                  className="
+                    mt-6 space-y-6 rounded-2xl border border-[#22C4D3]/40
+                    bg-[#01142B] p-6 shadow-2xl
+                  "
+                >
+                  <h3
+                    className="
+                      bg-gradient-to-r from-[#22C4D3] to-[#00BDD8]
+                      bg-clip-text text-center text-xl font-extrabold
+                      tracking-tight text-transparent
+                    "
+                  >
+                    Documento a subir
+                  </h3>
+
+                  <div className="space-y-2">
+                    <label className="block font-bold text-[#22C4D3]">
+                      Pregunta
+                    </label>
+                    <textarea
+                      className="
+                        w-full rounded-lg border border-[#1d283a]/40
+                        bg-[#1e2939] p-3 text-white shadow-md outline-none
+                        placeholder:text-[#00BDD8]
+                        focus:border focus:border-[#22C4D3]
+                        focus:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+                      "
+                      placeholder="Digite aquí la descripción del trabajo"
+                      value={docPregunta}
+                      onChange={(e) => setDocPregunta(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block font-bold text-[#22C4D3]">
+                      Criterios de evaluación
+                    </label>
+                    <textarea
+                      className="
+                        w-full rounded-lg border border-[#1d283a]/40
+                        bg-[#1e2939] p-3 text-white shadow-md outline-none
+                        placeholder:text-[#00BDD8]
+                        focus:border focus:border-[#22C4D3]
+                        focus:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+                      "
+                      placeholder="Parámetros de evaluación"
+                      value={docCriterios}
+                      onChange={(e) => setDocCriterios(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block font-bold text-[#22C4D3]">
+                      Archivo de ayuda
+                    </label>
+                    <div
+                      className="
+                        relative flex items-center justify-between
+                        rounded-lg border border-[#1d283a]/40 bg-[#1e2939]
+                        px-4 py-2 shadow transition-all duration-200
+                        focus-within:border-[#22C4D3]
+                        focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+                      "
+                    >
+                      <span className="truncate text-sm text-[#00BDD8]">
+                        {docArchivo?.name ??
+                          'Selecciona un archivo de ayuda (PDF, Word, video...)'}
+                      </span>
+                      <label
+                        className="
+                          cursor-pointer rounded-md bg-[#00BDD8] px-3 py-1
+                          text-sm font-bold text-[#01142B] transition-all
+                          duration-150
+                          hover:bg-[#00A5C0]
+                        "
+                      >
+                        Seleccionar
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,video/*,application/*"
+                          onChange={(e) =>
+                            setDocArchivo(e.target.files?.[0] ?? null)
+                          }
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block font-bold text-[#22C4D3]">
+                      Recurso complementario (imagen)
+                    </label>
+                    <div
+                      className="
+                        relative flex items-center justify-between
+                        rounded-lg border border-[#1d283a]/40 bg-[#1e2939]
+                        px-4 py-2 shadow transition-all duration-200
+                        focus-within:border-[#22C4D3]
+                        focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+                      "
+                    >
+                      <span className="truncate text-sm text-[#00BDD8]">
+                        {docImagen?.name ??
+                          'Selecciona una imagen complementaria'}
+                      </span>
+                      <label
+                        className="
+                          cursor-pointer rounded-md bg-[#22C4D3] px-3 py-1
+                          text-sm font-bold text-[#01142B] transition-all
+                          duration-150
+                          hover:bg-[#00A5C0]
+                        "
+                      >
+                        Seleccionar
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            setDocImagen(e.target.files?.[0] ?? null)
+                          }
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {isUploading && (
                 <div className="my-1">

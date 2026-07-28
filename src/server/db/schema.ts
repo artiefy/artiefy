@@ -2283,6 +2283,7 @@ export const guidedProjects = pgTable('guided_projects', {
   deliverablesDescription: text('deliverables_description'),
   studentsCount: integer('students_count').default(0),
   contentHours: integer('content_hours').default(0),
+  repositoryUrl: text('repository_url'),
   slug: varchar('slug', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

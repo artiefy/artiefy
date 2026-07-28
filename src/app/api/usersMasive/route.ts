@@ -484,7 +484,11 @@ export async function POST(request: Request) {
       const firstName = safeTrim(userData.firstName);
       const lastName = safeTrim(userData.lastName);
       const email = safeTrim(userData.email).toLowerCase();
-      const role = safeTrim(userData.role) || 'estudiante';
+      // Rol explícito de la fila; si viene vacío, para un usuario NUEVO se
+      // asume 'estudiante', pero para uno EXISTENTE no se toca su rol actual
+      // (evita que una carga sin columna de rol degrade a un educador/admin).
+      const providedRole = safeTrim(userData.role);
+      const role = providedRole || 'estudiante';
       const phone = safeTrim(userData.phone);
       const documentNumber = safeTrim(
         userData.document ?? userData.identificacionNumero
@@ -519,9 +523,9 @@ export async function POST(request: Request) {
         continue;
       }
 
-      // Validación de rol
+      // Validación de rol (solo si la fila trae un rol explícito)
       const validRoles = ['estudiante', 'educador', 'admin', 'super-admin'];
-      if (!validRoles.includes(role)) {
+      if (providedRole && !validRoles.includes(role)) {
         resultados.push({
           email,
           estado: 'ERROR',
@@ -628,7 +632,17 @@ export async function POST(request: Request) {
             .update(users)
             .set({
               name: `${firstName} ${lastName}`,
-              role: role as 'estudiante' | 'educador' | 'admin' | 'super-admin',
+              // Solo se pisa el rol si la fila lo trajo explícito; si no,
+              // se conserva el rol que el usuario ya tenía.
+              ...(providedRole
+                ? {
+                    role: role as
+                      | 'estudiante'
+                      | 'educador'
+                      | 'admin'
+                      | 'super-admin',
+                  }
+                : {}),
               updatedAt: new Date(),
               planType: 'Premium',
               subscriptionEndDate: new Date(formattedEndDate),
