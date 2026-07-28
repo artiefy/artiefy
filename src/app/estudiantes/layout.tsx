@@ -1,6 +1,6 @@
 import React from 'react';
 
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
+import { LegacyChatbotSlot } from '~/components/agents/LegacyChatbotSlot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 
@@ -18,7 +18,7 @@ export default function StudentLayout({
     <div className="relative min-h-screen">
       {children}
       <TourComponent />
-      <StudentChatbot isAlwaysVisible={true} />
+      <LegacyChatbotSlot />
       <TicketSupportChatbot />
     </div>
   );

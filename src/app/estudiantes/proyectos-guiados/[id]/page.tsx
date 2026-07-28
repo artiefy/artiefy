@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
 
+import { CoachChatWidget } from '~/components/agents/CoachChatWidget';
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { GuidedProjectDetails } from '~/components/estudiantes/proyectos/GuidedProjectDetails';
@@ -131,6 +132,21 @@ async function ProjectContent({ id }: { id: string }) {
           project={project}
           initialIsEnrolled={project.enrolled ?? false}
         />
+        {project.enrolled && (
+          <CoachChatWidget
+            projectId={project.id}
+            projectTitle={project.title}
+            objectives={(project.objectives ?? []).map((objective) => ({
+              id: objective.id,
+              title: objective.title,
+              activities: (objective.activities ?? []).map((activity) => ({
+                id: activity.id,
+                name: activity.name,
+                isCompleted: activity.isCompleted ?? false,
+              })),
+            }))}
+          />
+        )}
       </section>
     );
   } catch (error) {
