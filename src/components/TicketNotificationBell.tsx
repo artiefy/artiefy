@@ -36,7 +36,8 @@ export function TicketNotificationBell() {
     <button
       onClick={handleClick}
       className={`
-        group relative ml-2 rounded-full p-2 transition-all
+        group relative flex items-center justify-center rounded-full p-2
+        transition-all
         hover:bg-gray-800
         md:hover:bg-primary
         ${isAnimating ? 'animate-bounce' : ''}
