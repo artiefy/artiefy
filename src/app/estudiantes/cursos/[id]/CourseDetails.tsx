@@ -81,6 +81,20 @@ type NavKey =
   | 'resultados'
   | 'foro';
 
+const NAV_KEYS: NavKey[] = [
+  'curso',
+  'grabadas',
+  'proyectos',
+  'recursos',
+  'actividades',
+  'certificacion',
+  'resultados',
+  'foro',
+];
+
+const isNavKey = (value: string): value is NavKey =>
+  (NAV_KEYS as string[]).includes(value);
+
 type CourseGradeSummary = {
   finalGrade: number;
   courseCompleted?: boolean;
@@ -327,6 +341,42 @@ export default function CourseDetails({
   const autoEnrollForcePlansRef = useRef(false);
   const showLoginModal = activeAuthModal === 'login';
   const showSignUpModal = activeAuthModal === 'signup';
+
+  // Deep-link a una sección concreta (?tab=resultados). Lo usa el botón
+  // "Ver Reporte de Calificaciones" del modal de actividades cuando viene
+  // desde una clase (otra ruta).
+  useEffect(() => {
+    const requestedTab = searchParams?.get('tab');
+    if (!requestedTab || !isNavKey(requestedTab)) return;
+
+    setActivePill(requestedTab);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tab');
+      const query = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        '',
+        `${url.pathname}${query ? `?${query}` : ''}`
+      );
+    }
+  }, [searchParams]);
+
+  // Cambio de sección solicitado desde un hijo de esta misma página (el modal
+  // de actividades). Evita navegar y re-renderizar el curso entero.
+  useEffect(() => {
+    const handleTabRequest = (event: Event) => {
+      const detail = (event as CustomEvent<{ tab?: string }>).detail;
+      const requestedTab = detail?.tab;
+      if (!requestedTab || !isNavKey(requestedTab)) return;
+      setActivePill(requestedTab);
+    };
+
+    window.addEventListener('artiefy-course-tab', handleTabRequest);
+    return () =>
+      window.removeEventListener('artiefy-course-tab', handleTabRequest);
+  }, []);
 
   useEffect(() => {
     if (searchParams?.get('show_signup') !== 'true') return;

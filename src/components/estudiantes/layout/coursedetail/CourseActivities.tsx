@@ -547,7 +547,19 @@ export function CourseActivities({
             lastLessonId === selectedLesson.id &&
             selectedLastActivityId === selectedActivity.id
           }
-          onViewHistoryAction={() => {}}
+          onViewHistoryAction={() => {
+            // Antes era un no-op: el botón "Ver Reporte de Calificaciones" no
+            // hacía nada desde el detalle del curso. Ahora abre el menú de
+            // Resultados, que es donde se calculan parámetros y nota final.
+            // Ya estamos en la página del curso, así que basta con avisarle
+            // qué sección abrir (sin navegar ni tocar la URL).
+            setIsModalOpen(false);
+            window.dispatchEvent(
+              new CustomEvent('artiefy-course-tab', {
+                detail: { tab: 'resultados' },
+              })
+            );
+          }}
           onActivityCompleteAction={async () => {
             if (!selectedActivity) return;
             await completeActivity(selectedActivity.id, userId);

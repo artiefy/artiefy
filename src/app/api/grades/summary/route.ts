@@ -131,21 +131,8 @@ export async function GET(request: NextRequest) {
       ORDER BY parameter_id;
     `)) as unknown as DBQueryResult;
 
-    // Debug logs for grade calculation
-    console.log('Grade Calculation Debug:');
-    console.log('Raw Query Result:', queryResult);
-
     // Single declaration of rows
     const dbRows = queryResult?.rows ?? [];
-    console.log(
-      'Parameter Rows:',
-      dbRows.map((row) => ({
-        name: row.name,
-        weight: row.weight,
-        grade: row.grade,
-        contribution: (((row.grade ?? 0) * (row.weight ?? 0)) / 100).toFixed(2),
-      }))
-    );
 
     // Transform results with proper type safety
     const parameters: GradeParameter[] = dbRows
@@ -219,8 +206,6 @@ export async function GET(request: NextRequest) {
 
     // Update materias grades with the correct final grade
     if (finalGrade > 0) {
-      console.log('Updating materia grades with final grade:', finalGrade);
-
       await db.execute(sql`
 			  WITH course_materias AS (
 				SELECT m.id as materia_id
@@ -239,15 +224,6 @@ export async function GET(request: NextRequest) {
 				grade = EXCLUDED.grade,
 				updated_at = EXCLUDED.updated_at
 			`);
-
-      // Verify the update
-      const updatedGrades = await db.execute(sql`
-			  SELECT m.title, mg.grade
-			  FROM materia_grades mg
-			  JOIN materias m ON m.id = mg.materia_id
-			  WHERE m.courseid = ${courseId} AND mg.user_id = ${userId}
-			`);
-      console.log('Updated materia grades:', updatedGrades);
     }
 
     const response: GradeResponse = {
