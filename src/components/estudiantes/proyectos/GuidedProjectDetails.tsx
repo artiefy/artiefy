@@ -212,12 +212,9 @@ export function GuidedProjectDetails({
   // Lógica de Suscripción (Clonada de cursos)
   const userPlanType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    | string
-    | undefined;
+    string | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | null
-    | undefined;
+    string | null | undefined;
 
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&
@@ -1229,22 +1226,23 @@ export function GuidedProjectDetails({
       <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
         <GuidedProjectBreadcrumb title={project.title} />
 
-        {/* Banner de Suscripción Expirada */}
+        {/* Aviso de suscripción expirada: mismo mensaje y misma validación que
+            el detalle de curso. El contenido sigue visible, pero bloqueado. */}
         {isEnrolled && (!isSubscriptionValid || !hasValidPlan) && (
-          <div className="mb-6 flex items-center justify-between rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-200">
-            <div className="flex items-center gap-3">
-              <MdErrorOutline className="size-6 shrink-0 text-red-400" />
-              <p className="text-sm font-medium">
-                Tu suscripción ha expirado o no es válida para este proyecto.
-                Puedes ver el contenido, pero no podrás marcar actividades como
-                completadas.
-              </p>
-            </div>
+          <div className="mb-6 rounded-xl border border-red-500 bg-red-50 p-5 text-red-600 md:p-6">
+            <h3 className="mb-2 text-xl font-bold">
+              ¡Tu suscripción ha expirado!
+            </h3>
+            <p className="mb-5 text-sm md:text-base">
+              Para seguir disfrutando de todo el contenido premium y continuar
+              tu aprendizaje, necesitas renovar tu suscripción.
+            </p>
             <button
+              type="button"
               onClick={() => router.push('/planes')}
-              className="ml-4 shrink-0 rounded-lg bg-red-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-600"
+              className="rounded-lg bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
             >
-              Renovar Plan
+              Renovar Suscripción Ahora
             </button>
           </div>
         )}

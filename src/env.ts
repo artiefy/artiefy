@@ -15,6 +15,10 @@ export const env = createEnv({
     POSTGRES_DATABASE: z.string().min(1),
 
     CLERK_SECRET_KEY: z.string().min(1),
+    // Signing secret of the Clerk webhook endpoint (Dashboard → Webhooks).
+    // Optional so the app still builds before the endpoint is configured; the
+    // route returns 500 when it is missing.
+    CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
 
     UPSTASH_REDIS_REST_URL: z.url(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
@@ -107,6 +111,7 @@ export const env = createEnv({
     POSTGRES_DATABASE: process.env.POSTGRES_DATABASE,
 
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    CLERK_WEBHOOK_SIGNING_SECRET: process.env.CLERK_WEBHOOK_SIGNING_SECRET,
 
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,

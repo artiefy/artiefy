@@ -136,21 +136,41 @@ export default function CourseComments({
     setLocalIsEnrolled(isEnrolled);
   }, [isEnrolled]);
 
-  const checkEnrollment = useCallback(async () => {
-    if (userId) {
-      try {
-        const enrolled = await isUserEnrolled(courseId, userId);
-        setLocalIsEnrolled(enrolled);
-        onEnrollmentChange?.(enrolled);
-      } catch (error) {
-        console.error('Error checking enrollment:', error);
-      }
-    }
-  }, [courseId, userId, onEnrollmentChange]);
+  // El padre pasa `onEnrollmentChange` como arrow inline, así que su identidad
+  // cambia en cada render. Guardarlo en un ref evita que el efecto de abajo se
+  // recree y dispare la server action en cada render.
+  const onEnrollmentChangeRef = useRef(onEnrollmentChange);
+
+  // Se sincroniza en un efecto: escribir un ref durante el render rompe las
+  // reglas de React y hace que el valor se pierda en renders descartados.
+  useEffect(() => {
+    onEnrollmentChangeRef.current = onEnrollmentChange;
+  }, [onEnrollmentChange]);
 
   useEffect(() => {
-    void checkEnrollment();
-  }, [checkEnrollment, userId]);
+    if (!userId) return;
+
+    // Al navegar fuera de la página, Next aborta la server action en vuelo y
+    // lanza "An unexpected response was received from the server". No es un
+    // fallo real, así que se ignora si el componente ya se desmontó.
+    let isMounted = true;
+
+    void (async () => {
+      try {
+        const enrolled = await isUserEnrolled(courseId, userId);
+        if (!isMounted) return;
+        setLocalIsEnrolled(enrolled);
+        onEnrollmentChangeRef.current?.(enrolled);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('Error checking enrollment:', error);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [courseId, userId]);
 
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
