@@ -246,6 +246,27 @@ const getResourceIcon = (name: string) => {
   return RESOURCE_ICON_BY_EXTENSION[ext] ?? FileText;
 };
 
+// Descarga real del recurso: un <a download> normal no fuerza la descarga
+// en enlaces cross-origin a S3 (el navegador simplemente lo abre), así que
+// se trae el archivo como blob y se dispara la descarga desde ahí.
+const downloadResource = async (url: string, fileName: string) => {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error();
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    toast.error('No se pudo descargar el archivo');
+  }
+};
+
 // Estilos de marca para el README renderizado (sin depender del plugin de
 // Tailwind typography, que no está instalado en el proyecto).
 const markdownComponents: Components = {
