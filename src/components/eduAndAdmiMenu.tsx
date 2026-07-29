@@ -709,11 +709,15 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 </button>
               )}
               <div
-                className="
-                  liquid-glass mobile-header-floating-control flex
-                  items-center gap-2 rounded-full !bg-[#01152d]/55 py-1 pr-3
-                  pl-1 !backdrop-blur-2xl !backdrop-saturate-150
-                "
+                className={cn(
+                  'flex items-center gap-2 rounded-full',
+                  shouldShowText &&
+                    `
+                    liquid-glass mobile-header-floating-control
+                    !bg-[#01152d]/55 py-1 pr-3 pl-1 !backdrop-blur-2xl
+                    !backdrop-saturate-150
+                  `
+                )}
               >
                 <div
                   className="

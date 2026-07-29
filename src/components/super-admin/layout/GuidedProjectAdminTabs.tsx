@@ -20,6 +20,7 @@ import {
   Eye,
   File as FileIcon,
   FileBox,
+  FileSpreadsheet,
   FileText,
   Folder,
   GitFork,
@@ -36,6 +37,7 @@ import {
   Pencil,
   PlayCircle,
   Plus,
+  Presentation,
   Quote,
   Rocket,
   Send,
@@ -215,6 +217,33 @@ const CODE_LANGUAGE_BY_EXTENSION: Record<string, string> = {
   yml: 'yaml',
   yaml: 'yaml',
   md: 'markdown',
+};
+
+// Recursos de sesión: el nombre guardado a veces es la key de S3 completa
+// (uploads/nombre-<timestamp>-<uuid>.ext). Para mostrarlo, se limpia el
+// prefijo y el sufijo aleatorio y se deja solo "nombre.ext".
+const prettifyResourceName = (name: string): string => {
+  const withoutPrefix = name.replace(/^uploads\//, '');
+  return withoutPrefix.replace(
+    /-\d{10,}-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\.[^./]+$)/i,
+    ''
+  );
+};
+
+const RESOURCE_ICON_BY_EXTENSION: Record<
+  string,
+  React.ComponentType<{ className?: string }>
+> = {
+  xls: FileSpreadsheet,
+  xlsx: FileSpreadsheet,
+  csv: FileSpreadsheet,
+  ppt: Presentation,
+  pptx: Presentation,
+};
+
+const getResourceIcon = (name: string) => {
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
+  return RESOURCE_ICON_BY_EXTENSION[ext] ?? FileText;
 };
 
 // Estilos de marca para el README renderizado (sin depender del plugin de
@@ -571,6 +600,27 @@ export function GuidedProjectAdminTabs({
   };
 
   const objectives = project.objectives ?? [];
+
+  // Recursos: cada sesión guarda sus archivos como listas separadas por
+  // coma en resourceKey/resourceNames (mismo patrón usado en las lecciones
+  // de curso).
+  const objectivesWithResources = objectives
+    .map((objective) => {
+      const keys = (objective.resourceKey ?? '')
+        .split(',')
+        .map((k) => k.trim())
+        .filter(Boolean);
+      const names = (objective.resourceNames ?? '')
+        .split(',')
+        .map((n) => n.trim())
+        .filter(Boolean);
+      const resources = keys.map((key, idx) => ({
+        key,
+        name: prettifyResourceName(names[idx] ?? key),
+      }));
+      return { id: objective.id, title: objective.title, resources };
+    })
+    .filter((objective) => objective.resources.length > 0);
 
   const [expandedObjectiveId, setExpandedObjectiveId] = useState<number | null>(
     objectives[0]?.id ?? null
@@ -1981,8 +2031,49 @@ export function GuidedProjectAdminTabs({
 
             {/* Recursos */}
             {activeTab === 'recursos' && (
-              <div className="rounded-2xl border border-[#22C4D3]/20 bg-[#061c37] p-8 text-center text-white/50">
-                Los recursos del proyecto estarán disponibles pronto.
+              <div className="space-y-6">
+                {objectivesWithResources.length === 0 ? (
+                  <div className="rounded-2xl border border-[#22C4D3]/20 bg-[#061c37] p-8 text-center text-white/50">
+                    Aún no hay recursos cargados. Se agregan al crear o editar
+                    una sesión.
+                  </div>
+                ) : (
+                  objectivesWithResources.map((objective) => (
+                    <div
+                      key={objective.id}
+                      className="rounded-2xl border border-[#22C4D3]/30 bg-[#0d2a4d]/60 p-5 shadow-md shadow-[#22C4D3]/5"
+                    >
+                      <h3 className="mb-3 text-sm font-semibold tracking-wide text-[#22C4D3] uppercase">
+                        {objective.title}
+                      </h3>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {objective.resources.map((resource) => {
+                          const ResourceIcon = getResourceIcon(resource.name);
+                          return (
+                            <a
+                              key={resource.key}
+                              href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${resource.key}`}
+                              download={resource.name}
+                              className="group flex items-center gap-3 rounded-lg border border-white/10 bg-[#061c37] p-3 transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/5"
+                            >
+                              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]">
+                                <ResourceIcon className="size-5" />
+                              </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm text-white/90 group-hover:text-white">
+                                  {resource.name}
+                                </span>
+                                <span className="text-xs text-white/40">
+                                  Clic para descargar
+                                </span>
+                              </span>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             )}
 

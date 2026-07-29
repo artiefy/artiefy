@@ -56,6 +56,12 @@ export function ModalFormGuidedObjective({
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Recursos de la sesión: los ya guardados (al editar) y los nuevos por subir.
+  const [existingResources, setExistingResources] = useState<
+    { key: string; name: string }[]
+  >([]);
+  const [newResourceFiles, setNewResourceFiles] = useState<File[]>([]);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -70,6 +76,8 @@ export function ModalFormGuidedObjective({
       setCoverVideoFile(undefined);
       setImagePreview(null);
       setVideoPreview(null);
+      setExistingResources([]);
+      setNewResourceFiles([]);
       return;
     }
 
@@ -104,6 +112,23 @@ export function ModalFormGuidedObjective({
           setNeedsVideo(false);
           setVideoPreview(null);
         }
+
+        const keys: string[] = data.resourceKey
+          ? String(data.resourceKey)
+              .split(',')
+              .map((k: string) => k.trim())
+              .filter(Boolean)
+          : [];
+        const names: string[] = data.resourceNames
+          ? String(data.resourceNames)
+              .split(',')
+              .map((n: string) => n.trim())
+              .filter(Boolean)
+          : [];
+        setExistingResources(
+          keys.map((key, idx) => ({ key, name: names[idx] ?? key }))
+        );
+        setNewResourceFiles([]);
       } catch {
         toast.error('Error al cargar la sesión');
       } finally {
@@ -189,12 +214,24 @@ export function ModalFormGuidedObjective({
         coverVideoKey = result.key;
       }
 
+      const uploadedResources = await Promise.all(
+        newResourceFiles.map(async (file) => ({
+          key: (await uploadFileToS3(file)).key,
+          // El nombre original del archivo, no la key de S3 (que /api/upload
+          // devuelve como "fileName" por compatibilidad con otros flujos).
+          name: file.name,
+        }))
+      );
+      const allResources = [...existingResources, ...uploadedResources];
+
       const payload = {
         title: formData.title,
         description: formData.description,
         duration: formData.duration,
         coverImageKey,
         coverVideoKey,
+        resourceKey: allResources.map((r) => r.key).join(','),
+        resourceNames: allResources.map((r) => r.name).join(','),
         ...(isEditing ? {} : { orderIndex }),
       };
 
@@ -377,6 +414,50 @@ export function ModalFormGuidedObjective({
                 </div>
               </div>
             )}
+
+            <div className="space-y-3">
+              <label className={labelClass}>Recursos de la sesión</label>
+
+              {existingResources.length > 0 && (
+                <ul className="space-y-2">
+                  {existingResources.map((resource, index) => (
+                    <li
+                      key={`${resource.key}-${index}`}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-cyan-500/20 bg-slate-800 px-3 py-2"
+                    >
+                      <span className="truncate text-sm text-white">
+                        {resource.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExistingResources((prev) =>
+                            prev.filter((_, i) => i !== index)
+                          )
+                        }
+                        className="shrink-0 text-xs font-medium text-red-400 hover:text-red-300"
+                      >
+                        Quitar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <FileUpload
+                key="resources"
+                type="file"
+                label="Agregar recursos (PDF, Word, Excel, PowerPoint)"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                maxSize={50}
+                multiple
+                tipo="Recursos"
+                onFileChange={(files) =>
+                  setNewResourceFiles(Array.isArray(files) ? files : [])
+                }
+                files={newResourceFiles}
+              />
+            </div>
 
             <div className="flex justify-end gap-3 pt-2">
               <Button
