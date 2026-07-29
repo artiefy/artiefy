@@ -27,11 +27,19 @@ import type {
   GuidedObjectiveActivity,
 } from '~/types/guided-projects';
 
-interface GuidedProjectActivitiesProps {
+interface GuidedObjectivesAccordionProps {
   objectives: GuidedObjective[];
   isEnrolled: boolean;
   guidedProjectId: number;
   isSubscriptionValid?: boolean;
+  /**
+   * Namespace for the generated DOM ids. Required when the accordion is
+   * rendered more than once on the same page (tab panels stay mounted).
+   */
+  idPrefix?: string;
+}
+
+interface GuidedProjectActivitiesProps extends GuidedObjectivesAccordionProps {
   introduction?: string | null;
 }
 
@@ -101,12 +109,37 @@ const compareActivities = (
 };
 
 export function GuidedProjectActivities({
+  introduction,
+  ...accordionProps
+}: GuidedProjectActivitiesProps) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex size-8 items-center justify-center rounded-lg border border-accent/30 bg-accent/15 text-accent">
+          <Target className="size-4" aria-hidden="true" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Objetivos</h2>
+      </div>
+
+      {introduction?.trim() && (
+        <p className="mb-6 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+          {introduction}
+        </p>
+      )}
+
+      <GuidedObjectivesAccordion {...accordionProps} />
+    </section>
+  );
+}
+
+export function GuidedObjectivesAccordion({
   objectives,
   isEnrolled,
   guidedProjectId,
   isSubscriptionValid = true,
-  introduction,
-}: GuidedProjectActivitiesProps) {
+  idPrefix,
+}: GuidedObjectivesAccordionProps) {
+  const namespace = idPrefix ?? `guided-project-${guidedProjectId}`;
   const firstObjective = objectives[0];
   const [expandedObjectiveId, setExpandedObjectiveId] = useState<number | null>(
     () => firstObjective?.id ?? null
@@ -132,20 +165,7 @@ export function GuidedProjectActivities({
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex size-8 items-center justify-center rounded-lg border border-accent/30 bg-accent/15 text-accent">
-          <Target className="size-4" aria-hidden="true" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground">Objetivos</h2>
-      </div>
-
-      {introduction?.trim() && (
-        <p className="mb-6 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-          {introduction}
-        </p>
-      )}
-
+    <>
       {objectives.length === 0 ? (
         <div className="rounded-lg border border-border/50 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
           Aún no hay sesiones disponibles para este proyecto.
@@ -163,8 +183,8 @@ export function GuidedProjectActivities({
             const isObjectiveCompleted =
               activities.length > 0 &&
               completedActivities === activities.length;
-            const objectiveButtonId = `guided-project-${guidedProjectId}-objective-${objective.id}-trigger`;
-            const objectivePanelId = `guided-project-${guidedProjectId}-objective-${objective.id}-panel`;
+            const objectiveButtonId = `${namespace}-objective-${objective.id}-trigger`;
+            const objectivePanelId = `${namespace}-objective-${objective.id}-panel`;
 
             return (
               <div
@@ -248,201 +268,204 @@ export function GuidedProjectActivities({
                     </p>
                   )}
 
-                  {activities.map((activity, activityIndex) => {
-                    const isCompleted = isActivityCompleted(activity);
-                    const isActivityOpen = expandedActivityId === activity.id;
-                    const isBlocked = !objective.isEnabled;
-                    const cannotAccess =
-                      !isEnrolled || isBlocked || !isSubscriptionValid;
-                    const activityButtonId = `guided-project-${guidedProjectId}-activity-${activity.id}-trigger`;
-                    const activityPanelId = `guided-project-${guidedProjectId}-activity-${activity.id}-panel`;
-                    const buildHelpId = `guided-project-${guidedProjectId}-activity-${activity.id}-build-help`;
-                    const activityDates = formatActivityDates(
-                      activity.startDate,
-                      activity.endDate
-                    );
-                    const accessLabel = !isEnrolled
-                      ? 'Inscríbete para acceder'
-                      : isBlocked
-                        ? 'Actividad bloqueada'
-                        : !isSubscriptionValid
-                          ? 'Renueva tu plan para acceder'
-                          : undefined;
+                  {/* Indented rail so activities read as a submenu of the objective */}
+                  <div className="ml-6 border-l border-border/40 sm:ml-10">
+                    {activities.map((activity, activityIndex) => {
+                      const isCompleted = isActivityCompleted(activity);
+                      const isActivityOpen = expandedActivityId === activity.id;
+                      const isBlocked = !objective.isEnabled;
+                      const cannotAccess =
+                        !isEnrolled || isBlocked || !isSubscriptionValid;
+                      const activityButtonId = `${namespace}-activity-${activity.id}-trigger`;
+                      const activityPanelId = `${namespace}-activity-${activity.id}-panel`;
+                      const buildHelpId = `${namespace}-activity-${activity.id}-build-help`;
+                      const activityDates = formatActivityDates(
+                        activity.startDate,
+                        activity.endDate
+                      );
+                      const accessLabel = !isEnrolled
+                        ? 'Inscríbete para acceder'
+                        : isBlocked
+                          ? 'Actividad bloqueada'
+                          : !isSubscriptionValid
+                            ? 'Renueva tu plan para acceder'
+                            : undefined;
 
-                    return (
-                      <div
-                        key={activity.id}
-                        className="border-b border-border/30 last:border-b-0"
-                      >
-                        <button
-                          id={activityButtonId}
-                          type="button"
-                          aria-expanded={isActivityOpen}
-                          aria-controls={activityPanelId}
-                          onClick={() =>
-                            setExpandedActivityId(
-                              isActivityOpen ? null : activity.id
-                            )
-                          }
-                          className="w-full py-4 pr-4 pl-8 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
-                        >
-                          <span className="mb-1 block text-xs text-muted-foreground">
-                            Actividad {activityIndex + 1}
-                          </span>
-                          <span className="flex items-center justify-between gap-3">
-                            <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                              <span
-                                className={cn(
-                                  'text-sm font-medium',
-                                  isCompleted
-                                    ? 'text-foreground/70 line-through'
-                                    : 'text-foreground'
-                                )}
-                              >
-                                {activity.name}
-                              </span>
-                              {activity.weekNumber != null && (
-                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <CalendarDays
-                                    className="size-3"
-                                    aria-hidden="true"
-                                  />
-                                  Semana {activity.weekNumber}
-                                </span>
-                              )}
-                            </span>
-
-                            <span className="flex shrink-0 items-center gap-2">
-                              {isBlocked ? (
-                                <LockKeyhole
-                                  className="size-3.5 text-amber-400"
-                                  aria-label="Actividad bloqueada"
-                                />
-                              ) : isCompleted ? (
-                                <CheckCircle2
-                                  className="size-4 text-emerald-400"
-                                  aria-label="Actividad completada"
-                                />
-                              ) : null}
-                              <ChevronDown
-                                className={cn(
-                                  'size-4 text-muted-foreground transition-transform',
-                                  isActivityOpen && 'rotate-180'
-                                )}
-                                aria-hidden="true"
-                              />
-                            </span>
-                          </span>
-                        </button>
-
+                      return (
                         <div
-                          id={activityPanelId}
-                          role="region"
-                          aria-labelledby={activityButtonId}
-                          hidden={!isActivityOpen}
-                          className="space-y-3 pr-4 pb-4 pl-8"
+                          key={activity.id}
+                          className="border-b border-border/30 last:border-b-0"
                         >
-                          {activity.description?.trim() && (
-                            <div className="rounded-lg bg-muted/30 p-3">
-                              <span className="mb-1 block text-xs font-medium text-muted-foreground">
-                                Descripción
+                          <button
+                            id={activityButtonId}
+                            type="button"
+                            aria-expanded={isActivityOpen}
+                            aria-controls={activityPanelId}
+                            onClick={() =>
+                              setExpandedActivityId(
+                                isActivityOpen ? null : activity.id
+                              )
+                            }
+                            className="w-full p-4 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset sm:pl-5"
+                          >
+                            <span className="mb-1 block text-xs text-muted-foreground">
+                              Actividad {activityIndex + 1}
+                            </span>
+                            <span className="flex items-center justify-between gap-3">
+                              <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                                <span
+                                  className={cn(
+                                    'text-sm font-semibold',
+                                    isCompleted
+                                      ? 'text-white/70 line-through'
+                                      : 'text-white'
+                                  )}
+                                >
+                                  {activity.name}
+                                </span>
+                                {activity.weekNumber != null && (
+                                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <CalendarDays
+                                      className="size-3"
+                                      aria-hidden="true"
+                                    />
+                                    Semana {activity.weekNumber}
+                                  </span>
+                                )}
                               </span>
-                              <p className="text-sm leading-relaxed whitespace-pre-line text-foreground/80">
-                                {activity.description}
-                              </p>
-                            </div>
-                          )}
 
-                          {activityDates && (
-                            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <CalendarDays
-                                className="size-3.5"
-                                aria-hidden="true"
-                              />
-                              <span>
-                                <span className="font-medium">Fechas:</span>{' '}
-                                {activityDates}
-                              </span>
-                            </p>
-                          )}
-
-                          <div className="flex flex-wrap gap-2">
-                            {cannotAccess ? (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                disabled
-                                title={accessLabel}
-                              >
-                                <LockKeyhole
-                                  data-icon="inline-start"
+                              <span className="flex shrink-0 items-center gap-2">
+                                {isBlocked ? (
+                                  <LockKeyhole
+                                    className="size-3.5 text-amber-400"
+                                    aria-label="Actividad bloqueada"
+                                  />
+                                ) : isCompleted ? (
+                                  <CheckCircle2
+                                    className="size-4 text-emerald-400"
+                                    aria-label="Actividad completada"
+                                  />
+                                ) : null}
+                                <ChevronDown
+                                  className={cn(
+                                    'size-4 text-muted-foreground transition-transform',
+                                    isActivityOpen && 'rotate-180'
+                                  )}
                                   aria-hidden="true"
                                 />
-                                Instrucción
-                              </Button>
-                            ) : (
-                              <Button asChild variant="outline" size="sm">
-                                <Link
-                                  href={`/estudiantes/proyectos-guiados/${guidedProjectId}/actividades/${activity.id}`}
+                              </span>
+                            </span>
+                          </button>
+
+                          <div
+                            id={activityPanelId}
+                            role="region"
+                            aria-labelledby={activityButtonId}
+                            hidden={!isActivityOpen}
+                            className="space-y-3 px-4 pb-4 sm:pl-5"
+                          >
+                            {activity.description?.trim() && (
+                              <div className="rounded-lg bg-muted/30 p-3">
+                                <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                                  Descripción
+                                </span>
+                                <p className="text-sm leading-relaxed whitespace-pre-line text-foreground/80">
+                                  {activity.description}
+                                </p>
+                              </div>
+                            )}
+
+                            {activityDates && (
+                              <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <CalendarDays
+                                  className="size-3.5"
+                                  aria-hidden="true"
+                                />
+                                <span>
+                                  <span className="font-medium">Fechas:</span>{' '}
+                                  {activityDates}
+                                </span>
+                              </p>
+                            )}
+
+                            <div className="flex flex-wrap gap-2">
+                              {cannotAccess ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  disabled
+                                  title={accessLabel}
                                 >
-                                  <BookOpen
+                                  <LockKeyhole
                                     data-icon="inline-start"
                                     aria-hidden="true"
                                   />
                                   Instrucción
-                                </Link>
-                              </Button>
-                            )}
+                                </Button>
+                              ) : (
+                                <Button asChild variant="outline" size="sm">
+                                  <Link
+                                    href={`/estudiantes/proyectos-guiados/${guidedProjectId}/actividades/${activity.id}`}
+                                  >
+                                    <BookOpen
+                                      data-icon="inline-start"
+                                      aria-hidden="true"
+                                    />
+                                    Instrucción
+                                  </Link>
+                                </Button>
+                              )}
 
-                            <div className="flex flex-col items-start gap-1">
+                              <div className="flex flex-col items-start gap-1">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  aria-disabled="true"
+                                  aria-describedby={buildHelpId}
+                                  onClick={(event) => event.preventDefault()}
+                                  className="cursor-not-allowed border-accent/40 text-accent opacity-60"
+                                >
+                                  <Wrench
+                                    data-icon="inline-start"
+                                    aria-hidden="true"
+                                  />
+                                  Construir
+                                </Button>
+                                <span
+                                  id={buildHelpId}
+                                  className="text-[11px] text-muted-foreground"
+                                >
+                                  Disponible próximamente
+                                </span>
+                              </div>
+
                               <Button
                                 type="button"
-                                variant="outline"
                                 size="sm"
-                                aria-disabled="true"
-                                aria-describedby={buildHelpId}
-                                onClick={(event) => event.preventDefault()}
-                                className="cursor-not-allowed border-accent/40 text-accent opacity-60"
+                                disabled={cannotAccess}
+                                title={accessLabel}
+                                onClick={() =>
+                                  setSubmissionActivity({
+                                    id: activity.id,
+                                    name: activity.name,
+                                  })
+                                }
+                                className="bg-gradient-to-r from-primary to-primary/80 text-slate-950 hover:from-primary hover:to-primary"
                               >
-                                <Wrench
+                                <Send
                                   data-icon="inline-start"
                                   aria-hidden="true"
                                 />
-                                Construir
+                                Entregar
                               </Button>
-                              <span
-                                id={buildHelpId}
-                                className="text-[11px] text-muted-foreground"
-                              >
-                                Disponible próximamente
-                              </span>
                             </div>
-
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={cannotAccess}
-                              title={accessLabel}
-                              onClick={() =>
-                                setSubmissionActivity({
-                                  id: activity.id,
-                                  name: activity.name,
-                                })
-                              }
-                              className="bg-gradient-to-r from-primary to-primary/80 text-slate-950 hover:from-primary hover:to-primary"
-                            >
-                              <Send
-                                data-icon="inline-start"
-                                aria-hidden="true"
-                              />
-                              Entregar
-                            </Button>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );
@@ -461,6 +484,6 @@ export function GuidedProjectActivities({
           }}
         />
       )}
-    </section>
+    </>
   );
 }
