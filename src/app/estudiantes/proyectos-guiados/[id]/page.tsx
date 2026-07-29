@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
 
-import { CoachChatWidget } from '~/components/agents/CoachChatWidget';
+import { AgentChatWidget } from '~/components/agents/AgentChatWidget';
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { GuidedProjectDetails } from '~/components/estudiantes/proyectos/GuidedProjectDetails';
@@ -132,21 +132,30 @@ async function ProjectContent({ id }: { id: string }) {
           project={project}
           initialIsEnrolled={project.enrolled ?? false}
         />
-        {project.enrolled && (
-          <CoachChatWidget
-            projectId={project.id}
-            projectTitle={project.title}
-            objectives={(project.objectives ?? []).map((objective) => ({
-              id: objective.id,
-              title: objective.title,
-              activities: (objective.activities ?? []).map((activity) => ({
-                id: activity.id,
-                name: activity.name,
-                isCompleted: activity.isCompleted ?? false,
-              })),
-            }))}
-          />
-        )}
+        {/* Enrolled learners get the Coach with project context; everyone else
+            still gets the general agent, since the global mount steps aside on
+            this route. */}
+        <AgentChatWidget
+          project={
+            project.enrolled
+              ? {
+                  id: project.id,
+                  title: project.title,
+                  objectives: (project.objectives ?? []).map((objective) => ({
+                    id: objective.id,
+                    title: objective.title,
+                    activities: (objective.activities ?? []).map(
+                      (activity) => ({
+                        id: activity.id,
+                        name: activity.name,
+                        isCompleted: activity.isCompleted ?? false,
+                      })
+                    ),
+                  })),
+                }
+              : undefined
+          }
+        />
       </section>
     );
   } catch (error) {

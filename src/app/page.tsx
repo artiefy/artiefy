@@ -23,11 +23,6 @@ const HeroCanvas = dynamic(
   () => import('~/components/estudiantes/layout/HeroCanvas'),
   { ssr: false }
 );
-const StudentChatbot = dynamic(
-  () =>
-    import('~/components/estudiantes/layout/studentdashboard/StudentChatbot'),
-  { ssr: false }
-);
 const TicketSupportChatbot = dynamic(
   () => import('~/components/estudiantes/layout/TicketSupportChatbot'),
   { ssr: false }
@@ -55,9 +50,7 @@ export default function HomePage() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showAnuncio, setShowAnuncio] = useState(false);
-  const [chatbotKey] = useState<number>(0);
-  const [showChatbot, setShowChatbot] = useState<boolean>(false);
-  const [lastSearchQuery] = useState<string>('');
+  const [, setShowChatbot] = useState<boolean>(false);
   void showAnuncio;
   const { isSignedIn: _isSignedIn } = useAuth();
   const [anuncios, setAnuncios] = useState<
@@ -77,10 +70,6 @@ export default function HomePage() {
     null
   );
   const userRole = getUserRole(user?.publicMetadata?.role);
-
-  const handleSearchComplete = useCallback(() => {
-    setShowChatbot(false);
-  }, []);
 
   const dashboardRoute = getDashboardRouteByRole(userRole);
 
@@ -254,14 +243,6 @@ export default function HomePage() {
 
       <TourComponent />
 
-      <StudentChatbot
-        isAlwaysVisible={true}
-        showChat={showChatbot}
-        key={chatbotKey}
-        className="animation-delay-400 animate-zoom-in"
-        initialSearchQuery={lastSearchQuery}
-        onSearchComplete={handleSearchComplete}
-      />
       <TicketSupportChatbot />
 
       {/* Modales de autenticación */}

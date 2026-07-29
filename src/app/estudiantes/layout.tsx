@@ -1,6 +1,5 @@
 import React from 'react';
 
-import { LegacyChatbotSlot } from '~/components/agents/LegacyChatbotSlot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 
@@ -18,7 +17,6 @@ export default function StudentLayout({
     <div className="relative min-h-screen">
       {children}
       <TourComponent />
-      <LegacyChatbotSlot />
       <TicketSupportChatbot />
     </div>
   );
