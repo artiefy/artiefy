@@ -394,6 +394,22 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const shouldShowText = isMobile ? isOpen : isHovered;
   const sidebarWidth = shouldShowText ? 'w-56' : 'w-16';
 
+  // Los home de cada rol no deben quedarse "activos" en cualquier página
+  // (todo vive bajo ese prefijo); el resto de enlaces sí se mantienen en
+  // azul mientras la ruta actual esté dentro de esa sección (ej. ver el
+  // detalle de un curso mantiene "Cursos" resaltado).
+  const dashboardRoots = [
+    '/dashboard/super-admin',
+    '/dashboard/admin',
+    '/dashboard/educadores',
+  ];
+  const isNavLinkActive = (link?: string) => {
+    if (!link || !pathname) return false;
+    if (pathname === link) return true;
+    if (dashboardRoots.includes(link)) return false;
+    return pathname.startsWith(`${link}/`);
+  };
+
   const renderSubItem = (sub: NavSubItem, idx: number) => {
     if (!sub.link) {
       return (
@@ -410,7 +426,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         </li>
       );
     }
-    const isActive = pathname === sub.link;
+    const isActive = isNavLinkActive(sub.link);
     return (
       <li key={idx}>
         <Link
@@ -448,7 +464,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
               `
                 group relative flex w-full items-center rounded-lg p-2
                 text-white transition-all duration-200
-                hover:bg-primary hover:text-black
               `,
               !shouldShowText && 'justify-center'
             )}
@@ -465,8 +480,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <span
               className={cn(
                 `
-                  relative transition duration-75
-                  group-hover:text-black
+                  relative inline-flex transition-all duration-200
+                  group-hover:scale-110 group-hover:brightness-125
                 `,
                 isActive ? 'text-primary' : 'text-gray-300'
               )}
@@ -478,7 +493,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 className={cn(
                   `
                     ml-2.5 flex-1 text-left text-xs font-medium
-                    whitespace-nowrap
+                    whitespace-nowrap transition-all duration-200
+                    group-hover:scale-105 group-hover:brightness-125
                   `,
                   isActive && 'text-primary'
                 )}
@@ -492,7 +508,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     }
 
     if (item.kind === 'link') {
-      const isActive = pathname === item.link;
+      const isActive = isNavLinkActive(item.link);
       return (
         <li key={item.id}>
           <Link
@@ -501,7 +517,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
               `
                 group relative flex items-center rounded-lg p-2 text-white
                 transition-all duration-200
-                hover:bg-primary hover:text-black
               `,
               !shouldShowText && 'justify-center'
             )}
@@ -518,8 +533,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <span
               className={cn(
                 `
-                  relative transition duration-75
-                  group-hover:text-black
+                  relative inline-flex transition-all duration-200
+                  group-hover:scale-110 group-hover:brightness-125
                 `,
                 isActive ? 'text-primary' : 'text-gray-300'
               )}
@@ -541,7 +556,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             {shouldShowText && (
               <span
                 className={cn(
-                  'ml-2.5 flex items-center text-xs font-medium whitespace-nowrap',
+                  `
+                    ml-2.5 flex items-center text-xs font-medium
+                    whitespace-nowrap transition-all duration-200
+                    group-hover:scale-105 group-hover:brightness-125
+                  `,
                   isActive && 'text-primary'
                 )}
               >
@@ -565,9 +584,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     }
 
     const isMenuOpen = !!openMenus[item.id];
-    const hasActiveChild = item.items.some(
-      (sub) => sub.link && pathname === sub.link
-    );
+    const hasActiveChild = item.items.some((sub) => isNavLinkActive(sub.link));
     return (
       <li key={item.id}>
         <button
@@ -577,7 +594,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             `
               group relative flex w-full items-center rounded-lg p-2
               text-white transition-all duration-300
-              hover:bg-secondary hover:text-white
             `,
             !shouldShowText && 'justify-center'
           )}
@@ -591,14 +607,26 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
               "
             />
           )}
-          <span className={hasActiveChild ? 'text-primary' : 'text-gray-300'}>
+          <span
+            className={cn(
+              `
+                inline-flex transition-all duration-200
+                group-hover:scale-110 group-hover:brightness-125
+              `,
+              hasActiveChild ? 'text-primary' : 'text-gray-300'
+            )}
+          >
             {item.icon}
           </span>
           {shouldShowText && (
             <>
               <span
                 className={cn(
-                  'ml-2.5 w-32 shrink-0 text-left text-xs font-medium whitespace-nowrap',
+                  `
+                    ml-2.5 w-32 shrink-0 text-left text-xs font-medium
+                    whitespace-nowrap transition-all duration-200
+                    group-hover:scale-105 group-hover:brightness-125
+                  `,
                   hasActiveChild && 'text-primary'
                 )}
               >
@@ -653,12 +681,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       )}
 
       {/* Navbar */}
-      <nav
-        className="
-          fixed top-0 z-40 w-full border-b border-white/10
-          bg-[#01152d]/35 backdrop-blur-md
-        "
-      >
+      <nav className="fixed top-0 z-40 w-full bg-transparent">
         <div
           className="
             py-1.5 pr-2.5 pl-3
@@ -685,7 +708,17 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
                 </button>
               )}
-              <div className="flex items-center gap-2">
+              <div
+                className={cn(
+                  'flex items-center gap-2 rounded-full',
+                  shouldShowText &&
+                    `
+                    liquid-glass mobile-header-floating-control
+                    !bg-[#01152d]/55 py-1 pr-3 pl-1 !backdrop-blur-2xl
+                    !backdrop-saturate-150
+                  `
+                )}
+              >
                 <div
                   className="
                     flex size-8 shrink-0 items-center justify-center
@@ -706,21 +739,37 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
               />
-              <TicketNotificationBell />
-              <UserButton
-                showName
-                appearance={{
-                  elements: {
-                    userButtonBox: '!flex-row-reverse',
-                    userButtonAvatarBox: '!size-8 !rounded-full !bg-primary',
-                    userButtonOuterIdentifier:
-                      '!text-sm !font-bold !text-white',
-                  },
-                  variables: {
-                    colorForeground: '#000000',
-                  },
-                }}
-              />
+              <div
+                className="
+                  liquid-glass mobile-header-floating-control flex size-10
+                  items-center justify-center rounded-full !bg-[#01152d]/55
+                  !backdrop-blur-2xl !backdrop-saturate-150
+                "
+              >
+                <TicketNotificationBell />
+              </div>
+              <div
+                className="
+                  liquid-glass mobile-header-floating-control rounded-full
+                  !bg-[#01152d]/55 py-1 pr-3 pl-1 !backdrop-blur-2xl
+                  !backdrop-saturate-150
+                "
+              >
+                <UserButton
+                  showName
+                  appearance={{
+                    elements: {
+                      userButtonBox: '!flex-row-reverse',
+                      userButtonAvatarBox: '!size-8 !rounded-full !bg-primary',
+                      userButtonOuterIdentifier:
+                        '!text-sm !font-bold !text-white',
+                    },
+                    variables: {
+                      colorForeground: '#000000',
+                    },
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -750,7 +799,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
           <ul className="mt-3 space-y-1.5 font-medium">
             {navItems.map((item) => {
               const isActive = item.link
-                ? pathname === item.link
+                ? isNavLinkActive(item.link)
                 : activeItem === item.id;
               return (
                 <li key={item.id} onClick={item.onClick}>
@@ -761,7 +810,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       `
                       group relative flex items-center rounded-lg p-2 text-white
                       transition-all duration-200
-                      hover:bg-primary hover:text-black
                     `,
                       !shouldShowText && 'justify-center'
                     )}
@@ -778,8 +826,8 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     <span
                       className={cn(
                         `
-                        relative transition duration-75
-                        group-hover:text-black
+                        relative inline-flex transition-all duration-200
+                        group-hover:scale-110 group-hover:brightness-125
                       `,
                         isActive ? 'text-primary' : 'text-gray-300'
                       )}
@@ -803,7 +851,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     {shouldShowText && (
                       <span
                         className={cn(
-                          'ml-2.5 flex items-center text-xs font-medium whitespace-nowrap',
+                          `
+                          ml-2.5 flex items-center text-xs font-medium
+                          whitespace-nowrap transition-all duration-200
+                          group-hover:scale-105 group-hover:brightness-125
+                        `,
                           isActive && 'text-primary'
                         )}
                       >
