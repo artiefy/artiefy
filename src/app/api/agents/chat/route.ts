@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 
+import { env } from '~/env';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
 
 interface AgentChatRequestBody {
@@ -12,15 +13,14 @@ interface AgentChatRequestBody {
 }
 
 /**
- * Read at request time, never at module scope: Next.js can inline
- * `process.env.*` at build time, so a variable added to Vercel after the build
- * would stay `undefined` until the next deploy.
+ * Read at request time, never at module scope, so a value added to the
+ * environment after the build is picked up without freezing as `undefined`.
  */
 function readAgentsConfig() {
   return {
-    webhookUrl: process.env.N8N_AGENTS_WEBHOOK_URL,
-    authHeader: process.env.N8N_AGENTS_AUTH_HEADER,
-    authValue: process.env.N8N_AGENTS_AUTH_VALUE,
+    webhookUrl: env.N8N_AGENTS_WEBHOOK_URL,
+    authHeader: env.N8N_AGENTS_AUTH_HEADER,
+    authValue: env.N8N_AGENTS_AUTH_VALUE,
   };
 }
 
