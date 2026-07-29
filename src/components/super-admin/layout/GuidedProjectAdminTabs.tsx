@@ -2050,11 +2050,16 @@ export function GuidedProjectAdminTabs({
                         {objective.resources.map((resource) => {
                           const ResourceIcon = getResourceIcon(resource.name);
                           return (
-                            <a
+                            <button
                               key={resource.key}
-                              href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${resource.key}`}
-                              download={resource.name}
-                              className="group flex items-center gap-3 rounded-lg border border-white/10 bg-[#061c37] p-3 transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/5"
+                              type="button"
+                              onClick={() =>
+                                void downloadResource(
+                                  `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${resource.key}`,
+                                  resource.name
+                                )
+                              }
+                              className="group flex items-center gap-3 rounded-lg border border-white/10 bg-[#061c37] p-3 text-left transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/5"
                             >
                               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]">
                                 <ResourceIcon className="size-5" />
@@ -2067,7 +2072,7 @@ export function GuidedProjectAdminTabs({
                                   Clic para descargar
                                 </span>
                               </span>
-                            </a>
+                            </button>
                           );
                         })}
                       </div>
