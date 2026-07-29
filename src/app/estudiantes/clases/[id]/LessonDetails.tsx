@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
+import useSWR from 'swr';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import { LessonActivityModal } from '~/components/estudiantes/layout/lessondetail/LessonActivityModal';
@@ -83,6 +84,16 @@ interface CourseGradeSummary {
   }[];
 }
 
+const gradeSummaryFetcher = async (
+  url: string
+): Promise<GradeSummaryResponse> => {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Error fetching ${url}: ${response.status}`);
+  }
+  return (await response.json()) as GradeSummaryResponse;
+};
+
 interface LessonDetailsProps {
   lesson: LessonWithProgress;
   activities: Activity[]; // Change from activity to activities
@@ -144,11 +155,31 @@ export default function LessonDetails({
     }))
   );
 
-  // Add the missing state variables
-  const [isGradesLoading, setIsGradesLoading] = useState(true);
-  const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
-    null
-  );
+  // Resumen de calificaciones en tiempo real: SWR revalida al volver a la
+  // pestaña y hace polling cada 5s, así la nota se actualiza sola cuando el
+  // educador califica o cuando el alumno termina una actividad, sin recargar.
+  // Mismo intervalo y misma clave que usa el detalle del curso, para que
+  // ambas vistas compartan caché de SWR.
+  const gradeSummaryKey =
+    lesson.courseId && userId
+      ? `/api/grades/summary?courseId=${lesson.courseId}&userId=${userId}`
+      : null;
+  const {
+    data: gradeSummaryData,
+    isLoading: isGradesLoading,
+    mutate: mutateGradeSummary,
+  } = useSWR<GradeSummaryResponse>(gradeSummaryKey, gradeSummaryFetcher, {
+    refreshInterval: 5000,
+    revalidateOnFocus: true,
+    keepPreviousData: true,
+  });
+  const gradeSummary: CourseGradeSummary | null = gradeSummaryData
+    ? {
+        finalGrade: gradeSummaryData.finalGrade ?? 0,
+        courseCompleted: gradeSummaryData.isCompleted ?? false,
+        parameters: gradeSummaryData.parameters ?? [],
+      }
+    : null;
   // Tabs state for content navigation
   const [activeTab, setActiveTab] = useState<TabType>('transcription');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -174,34 +205,6 @@ export default function LessonDetails({
       isInitialized.current = true;
     }
   }, [lesson?.porcentajecompletado, activities]);
-
-  // Update the useEffect that loads grades with proper typing
-  useEffect(() => {
-    const loadGrades = async () => {
-      try {
-        setIsGradesLoading(true);
-        const response = await fetch(
-          `/api/grades/summary?courseId=${lesson.courseId}&userId=${userId}`
-        );
-        if (response.ok) {
-          const data = (await response.json()) as GradeSummaryResponse;
-          setGradeSummary({
-            finalGrade: data.finalGrade ?? 0,
-            courseCompleted: data.isCompleted ?? false,
-            parameters: data.parameters ?? [],
-          });
-        }
-      } catch {
-        // El estado de carga se restablece en el bloque finally.
-      } finally {
-        setIsGradesLoading(false);
-      }
-    };
-
-    if (lesson.courseId && userId) {
-      void loadGrades();
-    }
-  }, [lesson.courseId, userId]);
 
   // Show loading progress on initial render
   useEffect(() => {
@@ -358,6 +361,10 @@ export default function LessonDetails({
     try {
       await completeActivity(activities[0].id, userId); // Add userId parameter
       setIsActivityCompleted(true);
+
+      // No esperar al siguiente tick del polling: refrescar la nota ya mismo
+      // para que Resultados refleje la actividad recién entregada.
+      void mutateGradeSummary();
 
       // Parent state updated; child component (or modal) shows the toast to avoid duplicates
     } catch {
@@ -716,8 +723,7 @@ export default function LessonDetails({
         // Tipar la respuesta
         interface TranscriptionResponse {
           transcription?:
-            | string
-            | { start: number; end: number; text: string }[];
+            string | { start: number; end: number; text: string }[];
         }
         const data: TranscriptionResponse = await res.json();
         let parsed: { start: number; end: number; text: string }[] = [];

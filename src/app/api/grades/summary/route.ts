@@ -204,7 +204,14 @@ export async function GET(request: NextRequest) {
       ? totalParameterActivities > 0 && ungradedParameterActivities === 0
       : true;
 
-    // Update materias grades with the correct final grade
+    // Update materias grades with the correct final grade.
+    // This endpoint is polled every 5s by the course and lesson views, so the
+    // DO UPDATE is guarded: without the WHERE, every poll rewrote the same
+    // value and produced a heap write + WAL record per student per tick. With
+    // it, Postgres only writes when the grade actually moved — the stored
+    // value ends up identical either way, and `updated_at` now means "when the
+    // grade changed" (no consumer reads it; verified across program/materias/
+    // certificados, which only select materia_id and grade).
     if (finalGrade > 0) {
       await db.execute(sql`
 			  WITH course_materias AS (
@@ -213,16 +220,17 @@ export async function GET(request: NextRequest) {
 				WHERE m.courseid = ${courseId}
 			  )
 			  INSERT INTO materia_grades (materia_id, user_id, grade, updated_at)
-			  SELECT 
+			  SELECT
 				cm.materia_id,
 				${userId},
 				${finalGrade},
 				NOW()
 			  FROM course_materias cm
 			  ON CONFLICT (materia_id, user_id)
-			  DO UPDATE SET 
+			  DO UPDATE SET
 				grade = EXCLUDED.grade,
 				updated_at = EXCLUDED.updated_at
+			  WHERE materia_grades.grade IS DISTINCT FROM EXCLUDED.grade
 			`);
     }
 
