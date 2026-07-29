@@ -257,6 +257,9 @@ export function LessonActivityModal({
   const [showResults, setShowResults] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [isResultsLoaded, setIsResultsLoaded] = useState(false);
+  // True cuando hay un intento registrado pero su detalle por pregunta ya no
+  // está disponible (Redis expirado). Evita pintar un desglose falso en ceros.
+  const [answersDetailMissing, setAnswersDetailMissing] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
   const [isSavingResults, setIsSavingResults] = useState(false);
   const [canCloseModal, setCanCloseModal] = useState(false); // Add new state to track if user can close modal
@@ -292,6 +295,7 @@ export function LessonActivityModal({
     setShowResults(false);
     setFinalScore(0);
     setIsResultsLoaded(false);
+    setAnswersDetailMissing(false);
     setIsSavingResults(false);
     setCanCloseModal(false);
     setSelectedFile(null);
@@ -344,12 +348,33 @@ export function LessonActivityModal({
 
         // Si existe al menos un intento previo, mostrar resultado inmediatamente.
         const hasPreviousAttempt = Number(data?.attemptCount ?? 0) > 0;
-        if (hasPreviousAttempt || data?.isAlreadyCompleted) {
-          setFinalScore(data.score ?? 0);
-          setUserAnswers(data.answers ?? {});
-          setShowResults(true);
-          setIsResultsLoaded(true);
+        const storedAnswers = (data?.answers ?? {}) as Record<
+          string,
+          UserAnswer
+        >;
+        const hasStoredAnswers = Object.keys(storedAnswers).length > 0;
+
+        if (!hasPreviousAttempt && !data?.isAlreadyCompleted) return;
+
+        // El detalle por pregunta vive en Redis y puede expirar aunque el
+        // intento siga registrado en Postgres. Sin ese detalle NO se puede
+        // pintar el desglose: hacerlo marcaba todas las preguntas como
+        // incorrectas con "Tu respuesta:" vacío y calificación 0.0.
+        if (!hasStoredAnswers) {
+          if (data?.isAlreadyCompleted) {
+            setFinalScore(data.score ?? 0);
+            setAnswersDetailMissing(true);
+            setShowResults(true);
+            setIsResultsLoaded(true);
+          }
+          return;
         }
+
+        setFinalScore(data.score ?? 0);
+        setUserAnswers(storedAnswers);
+        setAnswersDetailMissing(false);
+        setShowResults(true);
+        setIsResultsLoaded(true);
       } catch (error) {
         console.error('Error fetching saved answers:', error);
       }
@@ -363,12 +388,24 @@ export function LessonActivityModal({
   }, [isOpen, activity?.id, userId]);
 
   useEffect(() => {
-    if (savedResults) {
-      setFinalScore(savedResults.score ?? 0);
-      setUserAnswers(savedResults.answers ?? {});
-      setShowResults(true);
-      setIsResultsLoaded(true);
+    if (!savedResults) return;
+
+    const storedAnswers = (savedResults.answers ?? {}) as Record<
+      string,
+      UserAnswer
+    >;
+    const hasStoredAnswers = Object.keys(storedAnswers).length > 0;
+
+    // Mismo criterio que el fetch: sin detalle guardado no se pinta desglose.
+    if (!hasStoredAnswers && !savedResults.isAlreadyCompleted) return;
+
+    setFinalScore(savedResults.score ?? 0);
+    setAnswersDetailMissing(!hasStoredAnswers);
+    if (hasStoredAnswers) {
+      setUserAnswers(storedAnswers);
     }
+    setShowResults(true);
+    setIsResultsLoaded(true);
   }, [savedResults]);
 
   useEffect(() => {
@@ -380,7 +417,9 @@ export function LessonActivityModal({
 
       // Only set attempts limit for revisada activities
       if (activity.revisada) {
-        setAttemptsLeft(data.attemptsLeft ?? 3);
+        // Clamp: la API puede devolver negativos si hubo más intentos que el
+        // límite, y un valor negativo rompe el bloque "Te quedan N intentos".
+        setAttemptsLeft(Math.max(0, data.attemptsLeft ?? 3));
       } else {
         setAttemptsLeft(null); // null indicates infinite attempts
       }
@@ -612,6 +651,7 @@ export function LessonActivityModal({
     try {
       setIsSavingResults(true);
       setIsResultsLoaded(false);
+      setAnswersDetailMissing(false);
       const score = calculateScore();
       setFinalScore(score);
       setShowResults(true);
@@ -660,7 +700,7 @@ export function LessonActivityModal({
           );
           const attemptsData =
             (await attemptsResponse.json()) as AttemptsResponse;
-          setAttemptsLeft(3 - (attemptsData.attempts ?? 0));
+          setAttemptsLeft(Math.max(0, 3 - (attemptsData.attempts ?? 0)));
         } catch (attemptError) {
           console.error('Error checking attempts:', attemptError);
         }
@@ -920,6 +960,40 @@ export function LessonActivityModal({
     );
   };
 
+  // El reporte de calificaciones se ofrece al cerrar la última actividad de la
+  // clase (y también en la última del curso). Se renderiza aparte del botón de
+  // acción para no reemplazar "Intentar Nuevamente" ni "Ir a la Siguiente Clase".
+  const canShowGradeReport =
+    showResults &&
+    isResultsLoaded &&
+    activity.typeid !== 1 &&
+    (isLastActivityInLesson || (isLastActivity && isLastLesson));
+
+  const renderGradeReportButton = () => (
+    <Button
+      onClick={onViewHistoryAction}
+      className="
+        w-full bg-blue-500 text-white
+        hover:bg-blue-600
+        active:scale-[0.98]
+      "
+    >
+      <span className="flex items-center justify-center gap-2">
+        <FaTrophy className="mr-1" />
+        Ver Reporte de Calificaciones
+        <BiSolidReport className="ml-1 h-8" />
+      </span>
+    </Button>
+  );
+
+  // Reinicia el cuestionario para un nuevo intento.
+  const handleRetryActivity = () => {
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setShowResults(false);
+    setAnswersDetailMissing(false);
+  };
+
   const renderActionButton = () => {
     // Loading states checks
     if (!isResultsLoaded) {
@@ -937,38 +1011,29 @@ export function LessonActivityModal({
       );
     }
 
-    // Last activity of last lesson with grade report
-    if (isLastActivity && isLastLesson && showResults) {
+    // Última actividad del curso ya resuelta: cerrar marca el curso al día.
+    // Solo cuando realmente terminó (aprobada o sin intentos), para no tapar
+    // "Intentar Nuevamente" como hacía la versión anterior.
+    const hasFinishedActivity =
+      finalScore >= 3 ||
+      Boolean(savedResults?.isAlreadyCompleted) ||
+      (activity.revisada && attemptsLeft === 0);
+
+    if (isLastActivity && isLastLesson && showResults && hasFinishedActivity) {
       return (
-        <div className="space-y-3">
-          <Button
-            onClick={onViewHistoryAction}
-            className="
-              w-full bg-blue-500 text-white
-              hover:bg-blue-600
-              active:scale-[0.98]
-            "
-          >
-            <span className="flex items-center justify-center gap-2">
-              <FaTrophy className="mr-1" />
-              Ver Reporte de Calificaciones
-              <BiSolidReport className="ml-1 h-8" />
-            </span>
-          </Button>
-          <Button
-            onClick={() => {
-              onActivityCompleteAction();
-              onCloseAction();
-            }}
-            className="
-              w-full bg-[#00BDD8] text-white transition-all duration-200
-              hover:bg-[#00A5C0]
-              active:scale-[0.98]
-            "
-          >
-            Cerrar
-          </Button>
-        </div>
+        <Button
+          onClick={() => {
+            onActivityCompleteAction();
+            onCloseAction();
+          }}
+          className="
+            w-full bg-[#00BDD8] text-white transition-all duration-200
+            hover:bg-[#00A5C0]
+            active:scale-[0.98]
+          "
+        >
+          Cerrar
+        </Button>
       );
     }
 
@@ -991,7 +1056,7 @@ export function LessonActivityModal({
 
     // For activities with revisada=true and score < 3
     if (activity.revisada && finalScore < 3) {
-      if (attemptsLeft && attemptsLeft > 0) {
+      if (attemptsLeft !== null && attemptsLeft > 0) {
         return (
           <div className="space-y-3">
             <p className="text-center text-sm text-gray-400">
@@ -1002,11 +1067,7 @@ export function LessonActivityModal({
               intento{attemptsLeft !== 1 ? 's' : ''}
             </p>
             <Button
-              onClick={() => {
-                setCurrentQuestionIndex(0);
-                setUserAnswers({});
-                setShowResults(false);
-              }}
+              onClick={handleRetryActivity}
               className="
                 w-full bg-yellow-500 font-bold text-background
                 hover:bg-yellow-600
@@ -1058,11 +1119,7 @@ export function LessonActivityModal({
             ! Intentos ilimitados hasta aprobar !
           </p>
           <Button
-            onClick={() => {
-              setCurrentQuestionIndex(0);
-              setUserAnswers({});
-              setShowResults(false);
-            }}
+            onClick={handleRetryActivity}
             className="
               w-full bg-yellow-500 font-bold text-background
               hover:bg-yellow-600
@@ -1137,7 +1194,7 @@ export function LessonActivityModal({
     }
 
     if (finalScore < 3 && activity.revisada) {
-      if (attemptsLeft && attemptsLeft > 0) {
+      if (attemptsLeft !== null && attemptsLeft > 0) {
         return (
           <>
             <p className="text-center text-sm text-gray-400">
@@ -1148,11 +1205,7 @@ export function LessonActivityModal({
               intento{attemptsLeft !== 1 ? 's' : ''}
             </p>
             <Button
-              onClick={() => {
-                setCurrentQuestionIndex(0);
-                setUserAnswers({});
-                setShowResults(false);
-              }}
+              onClick={handleRetryActivity}
               className="
                 w-full bg-yellow-500 font-bold text-background
                 hover:bg-yellow-600
@@ -1203,11 +1256,7 @@ export function LessonActivityModal({
             ! Intentos ilimitados hasta aprobar !
           </p>
           <Button
-            onClick={() => {
-              setCurrentQuestionIndex(0);
-              setUserAnswers({});
-              setShowResults(false);
-            }}
+            onClick={handleRetryActivity}
             className="
               w-full bg-yellow-500 font-bold text-background
               hover:bg-yellow-600
@@ -1362,45 +1411,59 @@ export function LessonActivityModal({
           <div className="mt-3 mb-4">
             {' '}
             {/* Added mb-4 to add space at bottom */}
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="max-h-[60vh] overflow-y-auto pr-6">
-                {' '}
-                {/* Added pr-6 for more spacing */}
-                <div className="divide-y divide-gray-100">
-                  {questions.map((question, idx) => {
-                    const userAnswer = userAnswers[question.id];
-                    const isCorrect = userAnswer?.isCorrect;
-                    const displayAnswer = userAnswer
-                      ? getDisplayAnswer(userAnswer, question)
-                      : '';
+            {answersDetailMissing ? (
+              <div
+                className="
+                  rounded-xl border border-gray-200 bg-white p-5 text-center
+                  shadow-sm
+                "
+              >
+                <p className="text-sm text-gray-600">
+                  Esta actividad ya fue presentada. El detalle de tus respuestas
+                  de ese intento ya no está disponible, pero tu calificación
+                  quedó registrada.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div className="max-h-[60vh] overflow-y-auto pr-6">
+                  {' '}
+                  {/* Added pr-6 for more spacing */}
+                  <div className="divide-y divide-gray-100">
+                    {questions.map((question, idx) => {
+                      const userAnswer = userAnswers[question.id];
+                      const isCorrect = userAnswer?.isCorrect;
+                      const displayAnswer = userAnswer
+                        ? getDisplayAnswer(userAnswer, question)
+                        : '';
 
-                    return (
-                      <div
-                        key={question.id}
-                        className="
+                      return (
+                        <div
+                          key={question.id}
+                          className="
                           space-y-3 p-4 transition-all
                           hover:bg-gray-50
                         "
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900">
-                              <span className="mr-2 text-gray-500">
-                                Pregunta {idx + 1}:
-                              </span>
-                              {question.text}
-                            </p>
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900">
+                                <span className="mr-2 text-gray-500">
+                                  Pregunta {idx + 1}:
+                                </span>
+                                {question.text}
+                              </p>
+                            </div>
+                            {isCorrect ? (
+                              <CheckCircleIcon className="size-6 text-green-600" />
+                            ) : (
+                              <XCircleIcon className="size-6 text-red-600" />
+                            )}
                           </div>
-                          {isCorrect ? (
-                            <CheckCircleIcon className="size-6 text-green-600" />
-                          ) : (
-                            <XCircleIcon className="size-6 text-red-600" />
-                          )}
-                        </div>
 
-                        <div className="ml-6 space-y-2">
-                          <div
-                            className={`
+                          <div className="ml-6 space-y-2">
+                            <div
+                              className={`
                               rounded-md p-2
                               ${
                                 isCorrect
@@ -1408,38 +1471,44 @@ export function LessonActivityModal({
                                   : 'bg-red-50 text-red-800'
                               }
                             `}
-                          >
-                            <p className="text-sm">
-                              <span className="font-bold">Tu respuesta:</span>{' '}
-                              <span className="font-bold">{displayAnswer}</span>
-                            </p>
-                          </div>
-                          {/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
-                          {!isCorrect && finalScore >= 3 && (
-                            <div
-                              className="
+                            >
+                              <p className="text-sm">
+                                <span className="font-bold">Tu respuesta:</span>{' '}
+                                <span className="font-bold">
+                                  {displayAnswer}
+                                </span>
+                              </p>
+                            </div>
+                            {/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
+                            {!isCorrect && finalScore >= 3 && (
+                              <div
+                                className="
                                 rounded-md bg-gray-50 p-2 text-sm text-gray-900
                               "
-                            >
-                              <span className="font-bold">
-                                Respuesta correcta:
-                              </span>{' '}
-                              <span className="font-bold">
-                                {getDisplayCorrectAnswer(question)}
-                              </span>
-                            </div>
-                          )}
+                              >
+                                <span className="font-bold">
+                                  Respuesta correcta:
+                                </span>{' '}
+                                <span className="font-bold">
+                                  {getDisplayCorrectAnswer(question)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
         {/* Add margin-top to create space between results and action buttons */}
-        <div>{renderActionButton()}</div>
+        <div className="space-y-3">
+          {canShowGradeReport && renderGradeReportButton()}
+          {renderActionButton()}
+        </div>
       </div>
     );
   };
@@ -2427,19 +2496,19 @@ export function LessonActivityModal({
             data-[state=closed]:zoom-out-95
             data-[state=open]:animate-in data-[state=open]:fade-in-0
             data-[state=open]:zoom-in-95
-            fixed top-1/2 left-1/2 z-[100004] flex -translate-1/2 flex-col gap-4
-            overflow-hidden rounded-lg border bg-background shadow-lg
-            duration-200
+            fixed z-[100004] flex flex-col gap-4 overflow-hidden rounded-lg
+            border bg-background shadow-lg duration-200
             [&>button]:bg-background [&>button]:text-background
             [&>button]:hover:text-background
             ${
               isMobile
                 ? `
-                  max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)]
-                  overflow-y-auto rounded-2xl p-4
+                  top-[calc(env(safe-area-inset-top,0px)+4.5rem)] right-4 bottom-[calc(env(safe-area-inset-bottom,0px)+5.5rem)]
+                  left-4 w-auto max-w-none overflow-y-auto rounded-2xl p-4
                 `
                 : `
-                  max-h-[90vh] w-full overflow-y-auto rounded-2xl p-6
+                  top-1/2 left-1/2 max-h-[90vh] w-full -translate-1/2
+                  overflow-y-auto rounded-2xl p-6
                   sm:max-w-[500px]
                 `
             }

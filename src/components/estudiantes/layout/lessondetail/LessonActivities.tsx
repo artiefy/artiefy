@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { BookOpen, CircleHelp, Clock, FileUp, Rocket } from 'lucide-react';
 import {
   FaCheckCircle,
@@ -11,7 +13,6 @@ import {
 } from 'react-icons/fa';
 import { TbClockFilled } from 'react-icons/tb';
 import { toast } from 'sonner';
-import useSWR from 'swr';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
@@ -19,7 +20,6 @@ import { sortLessons } from '~/utils/lessonSorting';
 import { useMediaQuery } from '~/utils/useMediaQuery';
 
 import { LessonActivityModal } from './LessonActivityModal';
-import { GradeHistory } from './LessonGradeHistory';
 
 import type { Activity, Lesson, SavedAnswer } from '~/types';
 
@@ -46,76 +46,6 @@ interface SavedResults {
   answers: Record<string, SavedAnswer>;
   isAlreadyCompleted?: boolean;
 }
-
-interface CourseGradeSummary {
-  finalGrade: number;
-  courseCompleted?: boolean;
-  parameters: {
-    name: string;
-    grade: number;
-    weight: number;
-    activities: {
-      id: number;
-      name: string;
-      grade: number;
-    }[];
-  }[];
-}
-
-interface GradeSummaryResponse {
-  finalGrade: number;
-  courseCompleted?: boolean;
-  isCompleted: boolean;
-  parameters: {
-    name: string;
-    grade: number;
-    weight: number;
-    activities: {
-      id: number;
-      name: string;
-      grade: number;
-    }[];
-  }[];
-}
-
-const isValidGradeSummaryResponse = (
-  data: unknown
-): data is GradeSummaryResponse => {
-  if (!data || typeof data !== 'object') return false;
-
-  const response = data as Partial<GradeSummaryResponse>;
-
-  return (
-    typeof response.finalGrade === 'number' &&
-    Array.isArray(response.parameters) &&
-    response.parameters.every(
-      (param) =>
-        typeof param.name === 'string' &&
-        typeof param.grade === 'number' &&
-        typeof param.weight === 'number' &&
-        Array.isArray(param.activities) &&
-        param.activities.every(
-          (act) =>
-            typeof act.id === 'number' &&
-            typeof act.name === 'string' &&
-            typeof act.grade === 'number'
-        )
-    )
-  );
-};
-
-const fetchGradeData = async (url: string): Promise<GradeSummaryResponse> => {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error('Failed to fetch grades');
-
-  const rawData: unknown = await response.json();
-
-  if (!isValidGradeSummaryResponse(rawData)) {
-    throw new Error('Invalid grade summary response format');
-  }
-
-  return rawData;
-};
 
 interface ActivityTypeMeta {
   label: string;
@@ -190,12 +120,19 @@ interface ActivityAnswersResponse {
   score: number;
   answers: Record<string, SavedAnswer>;
   isAlreadyCompleted: boolean;
+  attemptCount?: number;
 }
 
 interface ActivityState {
   savedResults: SavedResults | null;
   isLoading: boolean;
   isCompleted: boolean;
+  /**
+   * The student already submitted this activity at least once. A failing
+   * non-revisada activity never becomes `isCompleted`, but reopening it must
+   * still show the previous attempt and its grade instead of a blank quiz.
+   */
+  hasAttempt: boolean;
 }
 
 const LessonActivities = ({
@@ -220,12 +157,8 @@ const LessonActivities = ({
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
     null
   );
-  const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(true);
-  const [_isGradesLoading, setIsGradesLoading] = useState(true);
-  const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
-    null
-  );
+  const router = useRouter();
   // Add underscore prefix to mark as intentionally unused local state
   const [_isActivityCompleted, setIsActivityCompleted] = useState(
     propIsActivityCompleted
@@ -236,6 +169,14 @@ const LessonActivities = ({
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  // "Ver Reporte de Calificaciones" lleva al menú de Resultados del curso, que
+  // es donde vive el cálculo real por parámetro y la nota final.
+  const handleViewGradeReport = () => {
+    closeModal();
+    setSelectedActivity(null);
+    router.push(`/estudiantes/cursos/${courseId}?tab=resultados`);
+  };
 
   const handleQuestionsAnswered = () => {
     if (selectedActivity) {
@@ -267,28 +208,6 @@ const LessonActivities = ({
     }
     return Promise.resolve();
   };
-
-  const { data: grades } = useSWR<GradeSummaryResponse>(
-    courseId && userId
-      ? `/api/grades/summary?courseId=${courseId}&userId=${userId}`
-      : null,
-    fetchGradeData,
-    {
-      refreshInterval: 5000,
-      revalidateOnFocus: false,
-    }
-  );
-
-  useEffect(() => {
-    if (grades) {
-      setGradeSummary({
-        finalGrade: grades.finalGrade,
-        courseCompleted: grades.isCompleted,
-        parameters: grades.parameters,
-      });
-      setIsGradesLoading(false);
-    }
-  }, [grades]);
 
   const isActivityAnswersResponse = (
     data: unknown
@@ -324,16 +243,21 @@ const LessonActivities = ({
 
           const rawData: unknown = await response.json();
           if (isActivityAnswersResponse(rawData)) {
+            const hasAttempt =
+              rawData.isAlreadyCompleted || (rawData.attemptCount ?? 0) > 0;
             return {
               activityId: activity.id,
               state: {
-                savedResults: {
-                  score: rawData.score,
-                  answers: rawData.answers,
-                  isAlreadyCompleted: rawData.isAlreadyCompleted,
-                },
+                savedResults: hasAttempt
+                  ? {
+                      score: rawData.score,
+                      answers: rawData.answers,
+                      isAlreadyCompleted: rawData.isAlreadyCompleted,
+                    }
+                  : null,
                 isLoading: false,
                 isCompleted: rawData.isAlreadyCompleted,
+                hasAttempt,
               },
             };
           }
@@ -384,10 +308,11 @@ const LessonActivities = ({
               savedResults: {
                 score: rawData.score,
                 answers: rawData.answers,
-                isAlreadyCompleted: true,
+                isAlreadyCompleted: rawData.isAlreadyCompleted,
               },
               isLoading: false,
-              isCompleted: true,
+              isCompleted: rawData.isAlreadyCompleted,
+              hasAttempt: true,
             },
           }));
         }
@@ -471,14 +396,19 @@ const LessonActivities = ({
       );
     }
 
-    if (activityState?.isCompleted && activityState?.savedResults) {
+    if (
+      (activityState?.isCompleted || activityState?.hasAttempt) &&
+      activityState?.savedResults
+    ) {
       return (
         <>
           {activityState.isLoading && <Icons.spinner className="mr-2 size-4" />}
           <span className="font-semibold">
             {activity.typeid === 1 ? 'Ver Documento' : 'Ver Resultados'}
           </span>
-          <FaCheckCircle className="ml-2 inline text-white" />
+          {activityState.isCompleted && (
+            <FaCheckCircle className="ml-2 inline text-white" />
+          )}
         </>
       );
     }
@@ -718,7 +648,7 @@ const LessonActivities = ({
             >
               <button
                 onClick={
-                  activityState?.isCompleted
+                  activityState?.isCompleted || activityState?.hasAttempt
                     ? () => handleCompletedActivityClick(activity)
                     : () => handleOpenActivity(activity)
                 }
@@ -804,9 +734,11 @@ const LessonActivities = ({
           savedResults: null,
           isLoading: false,
           isCompleted: false,
+          hasAttempt: false,
         }),
         isCompleted: true,
         isLoading: false,
+        hasAttempt: true,
       };
 
       try {
@@ -825,6 +757,7 @@ const LessonActivities = ({
               },
               isLoading: false,
               isCompleted: rawData.isAlreadyCompleted,
+              hasAttempt: true,
             };
           }
         }
@@ -1073,18 +1006,12 @@ const LessonActivities = ({
           savedResults={activitiesState[selectedActivity.id]?.savedResults}
           isLastLesson={isLastLesson}
           isLastActivity={isLastActivity}
-          onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
+          onViewHistoryAction={handleViewGradeReport}
           onActivityCompleteAction={handleActivityCompletion}
           isLastActivityInLesson={isLastActivityInLesson(selectedActivity)}
           nextLesson={nextLesson}
         />
       )}
-
-      <GradeHistory
-        isOpen={isGradeHistoryOpen}
-        onClose={() => setIsGradeHistoryOpen(false)}
-        gradeSummary={gradeSummary}
-      />
     </div>
   );
 };

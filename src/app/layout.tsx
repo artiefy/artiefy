@@ -9,6 +9,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import { GlobalAgentChat } from '~/components/agents/GlobalAgentChat';
 import { SiteHeader } from '~/components/estudiantes/layout/SiteHeader';
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
@@ -172,6 +173,7 @@ export default function RootLayout({
             <NotificationSubscription />
             <SiteHeader />
             {children}
+            <GlobalAgentChat />
           </Providers>
           <SpeedInsights />
           <Analytics />

@@ -35,11 +35,23 @@ export async function checkSubscriptionStatus(
   userEmail?: string,
   userName?: string // Nuevo: para personalizar el correo
 ) {
-  if (
-    !subscriptionData?.subscriptionEndDate ||
-    !subscriptionData.subscriptionStatus
-  ) {
+  if (!subscriptionData?.subscriptionStatus) {
     return null;
+  }
+
+  const isActive = subscriptionData.subscriptionStatus === 'active';
+
+  // Sin fecha de fin no hay cuenta regresiva posible: solo se avisa si el
+  // estado ya dice que la suscripción no está activa.
+  if (!subscriptionData.subscriptionEndDate) {
+    if (isActive) return null;
+
+    return {
+      shouldNotify: true,
+      message: `Tu suscripción ${subscriptionData.planType ?? 'Plan actual'} ha expirado`,
+      severity: 'expired',
+      daysLeft: 0,
+    };
   }
 
   const nowUTC = new Date();
@@ -87,7 +99,7 @@ export async function checkSubscriptionStatus(
   const planName = subscriptionData.planType ?? 'Plan actual';
 
   // Notificación por correo para 7 días, 3 días y el mismo día
-  if (subscriptionData.subscriptionStatus === 'active') {
+  if (isActive) {
     if ([7, 3, 1, 0].includes(diffDays)) {
       if (userEmail) {
         await sendEmailNotification({
@@ -133,8 +145,14 @@ export async function checkSubscriptionStatus(
     }
   }
 
-  if (diffDays <= 0) {
-    if (userEmail) {
+  // El aviso de expirada sale con CUALQUIERA de las dos condiciones: que el
+  // estado ya no sea 'active', o que la fecha de fin haya pasado. Antes solo
+  // se miraba la fecha, así que una cuenta marcada 'inactive' con fecha futura
+  // no mostraba nada.
+  if (!isActive || diffDays <= 0) {
+    // El correo sigue atado a la fecha vencida para no reenviarlo por un
+    // cambio de estado con la fecha todavía por delante.
+    if (userEmail && diffDays <= 0) {
       await sendEmailNotification({
         to: userEmail,
         userName: userName ?? '',

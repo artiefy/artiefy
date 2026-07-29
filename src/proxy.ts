@@ -95,7 +95,8 @@ function isPublicContentPath(pathname: string): boolean {
 }
 
 function isPublicApiPath(pathname: string): boolean {
-  return pathname === '/api/image-proxy';
+  // El webhook de Clerk se autentica con su propia firma (svix), no con sesión.
+  return pathname === '/api/image-proxy' || pathname === '/api/webhooks/clerk';
 }
 
 function isApiPath(pathname: string): boolean {
@@ -103,14 +104,14 @@ function isApiPath(pathname: string): boolean {
 }
 
 // Rutas de contenido con [id] que requieren suscripción activa.
+//
+// Solo el contenido que se CONSUME queda cerrado aquí (las clases). Las páginas
+// de DETALLE —curso, programa, proyecto guiado— quedan abiertas: un estudiante
+// con la suscripción vencida puede verlas, y es el botón de inscripción el que
+// lo envía a /planes (los cursos gratis no lo hacen). El detalle de las
+// actividades de un proyecto guiado se valida server-side en su propia página.
 function isSubscriptionGatedPath(pathname: string): boolean {
-  return (
-    /^\/estudiantes\/cursos\/[^/]+/.test(pathname) ||
-    /^\/estudiantes\/clases\/[^/]+/.test(pathname) ||
-    /^\/estudiantes\/programas\/[^/]+/.test(pathname) ||
-    /^\/estudiantes\/proyectos-guiados\/[^/]+/.test(pathname) ||
-    /^\/(cursos|programas)\/[^/]+/.test(pathname)
-  );
+  return /^\/estudiantes\/clases\/[^/]+/.test(pathname);
 }
 
 // Determina si la suscripción está vencida/inactiva a partir de los claims del
@@ -225,9 +226,10 @@ export default clerkMiddleware(async (auth, req) => {
     }
 
     // 2) Gating de suscripción: un estudiante autenticado con la suscripción
-    //    vencida/inactiva no puede ver contenido [id] (curso, clase, programa,
-    //    proyecto guiado); se le envía a /planes. Los visitantes anónimos siguen
-    //    pudiendo ver las páginas públicas para registrarse y comprar.
+    //    vencida/inactiva no puede ver las clases; se le envía a /planes. El
+    //    detalle de cursos, programas y proyectos guiados sigue siendo visible
+    //    para que pueda explorar el catálogo y comprar desde ahí. Los visitantes
+    //    anónimos siguen pudiendo ver las páginas públicas.
     if (
       userId &&
       (role === STUDENT_ROLE || !role) &&

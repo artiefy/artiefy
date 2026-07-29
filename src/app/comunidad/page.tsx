@@ -1,5 +1,4 @@
 import Footer from '~/components/estudiantes/layout/Footer';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 
@@ -10,7 +9,6 @@ import Component from './spaces';
 export default function Page() {
   return (
     <>
-      <StudentChatbot isAlwaysVisible />
       <TicketSupportChatbot />
       <TourComponent />
       <Component />

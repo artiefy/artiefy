@@ -488,9 +488,11 @@ export function CourseContent({
                   >
                     {lesson.title}
                   </span>
-                  <span className="shrink-0 text-sm text-gray-300">
-                    ({lesson.duration} mins)
-                  </span>
+                  {Number(lesson.duration) > 0 && (
+                    <span className="shrink-0 text-sm text-gray-300">
+                      ({lesson.duration} mins)
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -745,8 +747,7 @@ export function CourseContent({
 
     // Check subscription status from metadata first
     const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-      | string
-      | undefined;
+      string | undefined;
     const isStatusInactive = subscriptionStatus === 'inactive';
 
     // Then check end date

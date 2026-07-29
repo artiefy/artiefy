@@ -46,7 +46,10 @@ import { IoPlayOutline } from 'react-icons/io5';
 import { MdErrorOutline } from 'react-icons/md';
 import { toast } from 'sonner';
 
-import { GuidedProjectActivities } from '~/components/estudiantes/proyectos/GuidedProjectActivities';
+import {
+  GuidedObjectivesAccordion,
+  GuidedProjectActivities,
+} from '~/components/estudiantes/proyectos/GuidedProjectActivities';
 import { GuidedProjectBreadcrumb } from '~/components/estudiantes/proyectos/GuidedProjectBreadcrumb';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import {
@@ -61,7 +64,7 @@ import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-proje
 import { unenrollFromGuidedProject } from '~/server/actions/estudiantes/guided-projects/unenrollFromGuidedProject';
 import { plansPersonas } from '~/types/plans';
 
-import type { GuidedObjective, GuidedProject } from '~/types/guided-projects';
+import type { GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
 
 type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro';
@@ -200,9 +203,6 @@ export function GuidedProjectDetails({
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [activePill, setActivePill] = useState<NavKey>('actividades');
-  const [expandedObjective, setExpandedObjective] = useState<number | null>(
-    null
-  );
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -212,12 +212,9 @@ export function GuidedProjectDetails({
   // Lógica de Suscripción (Clonada de cursos)
   const userPlanType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    | string
-    | undefined;
+    string | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | null
-    | undefined;
+    string | null | undefined;
 
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&
@@ -494,74 +491,6 @@ export function GuidedProjectDetails({
   const sectionIconClass =
     'flex size-8 items-center justify-center rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/15 text-[#22C4D3]';
 
-  const renderObjectiveAccordion = (
-    objective: GuidedObjective,
-    idx: number
-  ) => {
-    const activities = objective.activities ?? [];
-    const isOpen = expandedObjective === objective.id;
-    return (
-      <div
-        key={objective.id}
-        className="overflow-hidden rounded-lg border border-[#1d283a]"
-      >
-        <button
-          type="button"
-          onClick={() => setExpandedObjective(isOpen ? null : objective.id)}
-          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-white/5"
-        >
-          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#0d2a4d] text-xs font-medium text-[#94A3B8]">
-            {idx + 1}
-          </div>
-          <span className="flex-1 text-sm text-[#94A3B8]">
-            {objective.title}
-          </span>
-          {activities.length > 0 && (
-            <span className="mr-2 hidden text-xs text-[#94A3B8] sm:inline">
-              {activities.filter((a) => a.isCompleted).length}/
-              {activities.length} actividades
-            </span>
-          )}
-          {activities.length > 0 ? (
-            <ChevronDown
-              className={`size-4 text-[#94A3B8] transition-transform ${isOpen ? 'rotate-180' : ''}`}
-            />
-          ) : (
-            <ChevronRight className="size-4 text-[#94A3B8]" />
-          )}
-        </button>
-        {isOpen && activities.length > 0 && (
-          <div className="border-t border-[#1d283a] bg-[#04101f]">
-            {activities.map((activity, aIdx) => (
-              <div
-                key={activity.id}
-                className="border-b border-[#1d283a]/60 p-4 last:border-b-0"
-              >
-                <span className="text-xs text-[#94A3B8]">
-                  Actividad {aIdx + 1}
-                </span>
-                <div className="mt-1 flex items-center justify-between gap-3">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                    <h4 className="text-sm font-medium text-white">
-                      {activity.name}
-                    </h4>
-                    {activity.weekNumber != null && (
-                      <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8]">
-                        <Clock className="size-3" />
-                        Semana {activity.weekNumber}
-                      </span>
-                    )}
-                  </div>
-                  <ChevronRight className="size-4 shrink-0 text-[#94A3B8]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderOverview = () => (
     <div className="space-y-6">
       {/* El problema */}
@@ -597,24 +526,24 @@ export function GuidedProjectDetails({
               No es un curso que ves. Es un proyecto que construyes con
               acompañamiento real.
             </p>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <ol className="space-y-3">
               {HOW_IT_WORKS_STEPS.map((step, i) => (
-                <div
+                <li
                   key={step.title}
-                  className="rounded-xl border border-[#1d283a]/60 bg-[#0a1f3a]/40 p-4"
+                  className="flex items-start gap-4 rounded-xl border border-[#1d283a]/60 bg-[#0a1f3a]/40 p-4"
                 >
-                  <div className="mb-2 flex items-center gap-3">
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/15 text-sm font-bold text-[#22C4D3]">
-                      {i + 1}
-                    </div>
-                    <h3 className="font-semibold text-white">{step.title}</h3>
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/15 text-sm font-bold text-[#22C4D3]">
+                    {i + 1}
                   </div>
-                  <p className="text-sm leading-relaxed text-[#94A3B8]">
-                    {step.description}
-                  </p>
-                </div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-white">{step.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-[#94A3B8]">
+                      {step.description}
+                    </p>
+                  </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </>
         )}
       </section>
@@ -636,11 +565,13 @@ export function GuidedProjectDetails({
             </p>
           )}
           {objectives.length > 0 && (
-            <div className="space-y-3">
-              {objectives.map((objective, idx) =>
-                renderObjectiveAccordion(objective, idx)
-              )}
-            </div>
+            <GuidedObjectivesAccordion
+              objectives={objectives}
+              isEnrolled={isEnrolled}
+              guidedProjectId={project.id}
+              isSubscriptionValid={isSubscriptionValid && hasValidPlan}
+              idPrefix={`guided-project-${project.id}-overview`}
+            />
           )}
         </section>
       )}
@@ -689,7 +620,7 @@ export function GuidedProjectDetails({
           tu LinkedIn para que cualquier reclutador compruebe lo que
           construiste.
         </p>
-        <div className="rounded-xl border border-[#22C4D3]/30 bg-[#04101f] p-5">
+        <div className="rounded-xl border border-[#22C4D3]/30 bg-[#061c37] p-5">
           <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[#22C4D3]">
             <Award className="size-3.5" />
             CONSTANCIA
@@ -786,7 +717,7 @@ export function GuidedProjectDetails({
               ))}
             </ul>
           </div>
-          <div className="rounded-xl border border-[#1d283a] bg-[#04101f] p-4">
+          <div className="rounded-xl border border-[#1d283a] bg-[#061c37] p-4">
             <div className="mb-3 flex items-center gap-2 text-[#94A3B8]">
               <XCircle className="size-4" />
               <h3 className="font-semibold text-white">No es para ti si...</h3>
@@ -808,36 +739,46 @@ export function GuidedProjectDetails({
 
       {/* Tu educador en este proyecto */}
       {hasEducatorInfo && (
-        <section className={sectionClass}>
+        <section className={cn(sectionClass, 'relative overflow-hidden')}>
           <h2 className="font-display mb-6 text-xl font-bold text-white md:text-2xl">
             Tu educador en este proyecto
           </h2>
-          <div className="flex items-start gap-4 sm:gap-6">
-            {instructorImageUrl ? (
-              <Image
-                src={instructorImageUrl}
-                alt={project.instructorName ?? 'Educador'}
-                width={80}
-                height={80}
-                unoptimized={instructorImageIsExternal}
-                className="size-16 shrink-0 rounded-xl border-2 border-[#22C4D3]/20 object-cover sm:size-20"
+          <div className="flex flex-col-reverse items-center gap-6 sm:flex-row-reverse sm:items-end sm:gap-8">
+            <div className="relative shrink-0 self-center sm:-mr-8 sm:-mb-8 sm:self-end md:-mr-10 md:-mb-10">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -m-6 rounded-full opacity-60 blur-2xl"
+                style={{
+                  background:
+                    'radial-gradient(circle, rgba(34, 196, 211, 0.45) 0%, rgba(34, 196, 211, 0.15) 45%, transparent 70%)',
+                }}
               />
-            ) : (
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-xl border-2 border-[#22C4D3]/20 bg-[#0d2a4d] text-2xl font-bold text-[#22C4D3] sm:size-20">
-                {(project.instructorName ?? 'E').charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <h3 className="text-lg font-semibold text-white">
+              {instructorImageUrl ? (
+                <Image
+                  src={instructorImageUrl}
+                  alt={project.instructorName ?? 'Educador'}
+                  width={288}
+                  height={288}
+                  unoptimized={instructorImageIsExternal}
+                  className="relative size-48 object-contain object-center drop-shadow-[0_8px_24px_rgba(34,196,211,0.25)] sm:size-64 sm:object-bottom md:size-72"
+                />
+              ) : (
+                <div className="relative flex size-40 items-center justify-center rounded-full border-2 border-[#22C4D3]/20 bg-[#0d2a4d] text-5xl font-bold text-[#22C4D3] sm:size-48">
+                  {(project.instructorName ?? 'E').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 text-center sm:pb-2 sm:text-left">
+              <h3 className="font-display text-2xl font-bold text-white sm:text-3xl">
                 {project.instructorName}
               </h3>
               {project.instructorProfesion && (
-                <p className="mt-0.5 text-sm font-medium text-[#22C4D3]">
+                <p className="mt-1 text-sm font-medium text-[#22C4D3] sm:text-base">
                   {project.instructorProfesion}
                 </p>
               )}
               {project.instructorDescripcion && (
-                <p className="mt-3 text-sm leading-relaxed text-[#94A3B8]">
+                <p className="mt-4 text-sm leading-relaxed text-[#94A3B8] sm:text-base">
                   {project.instructorDescripcion}
                 </p>
               )}
@@ -860,7 +801,7 @@ export function GuidedProjectDetails({
           {TESTIMONIALS.map((testimonial) => (
             <div
               key={testimonial.name}
-              className="rounded-xl border border-[#1d283a] bg-[#04101f] p-4"
+              className="rounded-xl border border-[#1d283a] bg-[#061c37] p-4"
             >
               <div className="mb-3 flex items-center gap-3">
                 <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#0d2a4d] text-xs font-bold text-[#22C4D3]">
@@ -894,7 +835,7 @@ export function GuidedProjectDetails({
             individualPriceValue ? 'sm:grid-cols-2' : 'max-w-md'
           )}
         >
-          <div className="relative rounded-2xl border-2 border-[#22C4D3]/60 bg-[#04101f] p-5">
+          <div className="relative rounded-2xl border-2 border-[#22C4D3]/60 bg-[#061c37] p-5">
             <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#22C4D3]/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#22C4D3]">
               <Sparkles className="size-3" /> RECOMENDADO
             </div>
@@ -1041,7 +982,7 @@ export function GuidedProjectDetails({
                   />
                 </button>
                 {isOpen && (
-                  <div className="border-t border-[#1d283a] bg-[#04101f] p-4">
+                  <div className="border-t border-[#1d283a] bg-[#061c37] p-4">
                     <p className="text-sm leading-relaxed text-[#94A3B8]">
                       {item.a}
                     </p>
@@ -1229,22 +1170,23 @@ export function GuidedProjectDetails({
       <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
         <GuidedProjectBreadcrumb title={project.title} />
 
-        {/* Banner de Suscripción Expirada */}
+        {/* Aviso de suscripción expirada: mismo mensaje y misma validación que
+            el detalle de curso. El contenido sigue visible, pero bloqueado. */}
         {isEnrolled && (!isSubscriptionValid || !hasValidPlan) && (
-          <div className="mb-6 flex items-center justify-between rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-200">
-            <div className="flex items-center gap-3">
-              <MdErrorOutline className="size-6 shrink-0 text-red-400" />
-              <p className="text-sm font-medium">
-                Tu suscripción ha expirado o no es válida para este proyecto.
-                Puedes ver el contenido, pero no podrás marcar actividades como
-                completadas.
-              </p>
-            </div>
+          <div className="mb-6 rounded-xl border border-red-500 bg-red-50 p-5 text-red-600 md:p-6">
+            <h3 className="mb-2 text-xl font-bold">
+              ¡Tu suscripción ha expirado!
+            </h3>
+            <p className="mb-5 text-sm md:text-base">
+              Para seguir disfrutando de todo el contenido premium y continuar
+              tu aprendizaje, necesitas renovar tu suscripción.
+            </p>
             <button
+              type="button"
               onClick={() => router.push('/planes')}
-              className="ml-4 shrink-0 rounded-lg bg-red-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-600"
+              className="rounded-lg bg-red-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600"
             >
-              Renovar Plan
+              Renovar Suscripción Ahora
             </button>
           </div>
         )}

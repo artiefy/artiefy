@@ -81,6 +81,20 @@ type NavKey =
   | 'resultados'
   | 'foro';
 
+const NAV_KEYS: NavKey[] = [
+  'curso',
+  'grabadas',
+  'proyectos',
+  'recursos',
+  'actividades',
+  'certificacion',
+  'resultados',
+  'foro',
+];
+
+const isNavKey = (value: string): value is NavKey =>
+  (NAV_KEYS as string[]).includes(value);
+
 type CourseGradeSummary = {
   finalGrade: number;
   courseCompleted?: boolean;
@@ -327,6 +341,42 @@ export default function CourseDetails({
   const autoEnrollForcePlansRef = useRef(false);
   const showLoginModal = activeAuthModal === 'login';
   const showSignUpModal = activeAuthModal === 'signup';
+
+  // Deep-link a una sección concreta (?tab=resultados). Lo usa el botón
+  // "Ver Reporte de Calificaciones" del modal de actividades cuando viene
+  // desde una clase (otra ruta).
+  useEffect(() => {
+    const requestedTab = searchParams?.get('tab');
+    if (!requestedTab || !isNavKey(requestedTab)) return;
+
+    setActivePill(requestedTab);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tab');
+      const query = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        '',
+        `${url.pathname}${query ? `?${query}` : ''}`
+      );
+    }
+  }, [searchParams]);
+
+  // Cambio de sección solicitado desde un hijo de esta misma página (el modal
+  // de actividades). Evita navegar y re-renderizar el curso entero.
+  useEffect(() => {
+    const handleTabRequest = (event: Event) => {
+      const detail = (event as CustomEvent<{ tab?: string }>).detail;
+      const requestedTab = detail?.tab;
+      if (!requestedTab || !isNavKey(requestedTab)) return;
+      setActivePill(requestedTab);
+    };
+
+    window.addEventListener('artiefy-course-tab', handleTabRequest);
+    return () =>
+      window.removeEventListener('artiefy-course-tab', handleTabRequest);
+  }, []);
 
   useEffect(() => {
     if (searchParams?.get('show_signup') !== 'true') return;
@@ -1209,8 +1259,7 @@ export default function CourseDetails({
     try {
       const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
       const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-        | string
-        | null;
+        string | null;
       const nextSubscriptionActive =
         subscriptionStatus === 'active' &&
         (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
@@ -1411,6 +1460,32 @@ export default function CourseDetails({
       </button>
     </div>
   );
+
+  // Un curso gratis (course_types.requiredSubscriptionLevel === 'none' y no
+  // comprable individualmente) nunca se bloquea, aunque la suscripción del
+  // estudiante esté vencida.
+  const hasCourseAccess = isSubscriptionActive || _hasFree;
+
+  // Con la suscripción vencida el contenido sigue VISIBLE pero inerte: el
+  // estudiante ve qué hay en cada sección y el aviso le explica que debe
+  // renovar para volver a usarlo.
+  const renderLockedIfExpired = (content: ReactNode) => {
+    if (!isEnrolled || hasCourseAccess) return content;
+
+    return (
+      <div className="space-y-6">
+        {renderSubscriptionExpiredNotice()}
+        <div
+          inert
+          className="
+            pointer-events-none opacity-60 select-none
+          "
+        >
+          {content}
+        </div>
+      </div>
+    );
+  };
 
   if (isLoading) {
     return <CourseDetailsSkeleton />;
@@ -2645,7 +2720,7 @@ export default function CourseDetails({
                           <ProjectsSection
                             courseId={course.id}
                             isEnrolled={isEnrolled}
-                            isSubscriptionActive={isSubscriptionActive}
+                            isSubscriptionActive={hasCourseAccess}
                             onProjectsChange={() => {
                               // Recargar conteo de proyectos
                               void fetch(
@@ -2663,23 +2738,23 @@ export default function CourseDetails({
                           renderAccessGuard('proyectos')
                         )
                       ) : activePill === 'recursos' ? (
-                        isEnrolled && !isSubscriptionActive ? (
-                          renderSubscriptionExpiredNotice()
-                        ) : isEnrolled ? (
-                          <ResourcesSection courseId={course.id} />
+                        isEnrolled ? (
+                          renderLockedIfExpired(
+                            <ResourcesSection courseId={course.id} />
+                          )
                         ) : (
                           renderAccessGuard('recursos')
                         )
                       ) : activePill === 'actividades' ? (
-                        isEnrolled && !isSubscriptionActive ? (
-                          renderSubscriptionExpiredNotice()
-                        ) : isEnrolled ? (
-                          <CourseActivities
-                            lessons={lessonsWithActivities}
-                            isEnrolled={isEnrolled}
-                            courseId={course.id}
-                            userId={userId}
-                          />
+                        isEnrolled ? (
+                          renderLockedIfExpired(
+                            <CourseActivities
+                              lessons={lessonsWithActivities}
+                              isEnrolled={isEnrolled}
+                              courseId={course.id}
+                              userId={userId}
+                            />
+                          )
                         ) : (
                           renderAccessGuard('actividades')
                         )
@@ -2688,7 +2763,7 @@ export default function CourseDetails({
                           <CourseContent
                             course={course}
                             isEnrolled={isEnrolled}
-                            isSubscriptionActive={isSubscriptionActive}
+                            isSubscriptionActive={hasCourseAccess}
                             subscriptionEndDate={subscriptionEndDate}
                             isSignedIn={!!isSignedIn}
                             classMeetings={classMeetings}
@@ -2699,153 +2774,152 @@ export default function CourseDetails({
                           renderAccessGuard('grabadas')
                         )
                       ) : activePill === 'certificacion' ? (
-                        isEnrolled && !isSubscriptionActive ? (
-                          renderSubscriptionExpiredNotice()
-                        ) : isEnrolled ? (
-                          <div
-                            className="
+                        isEnrolled ? (
+                          renderLockedIfExpired(
+                            <div
+                              className="
                               rounded-2xl border border-border bg-card p-6
                               shadow-xl
                               md:p-8
                             "
-                          >
-                            <div className="mb-6 flex items-center gap-3">
-                              <div
-                                className="
+                            >
+                              <div className="mb-6 flex items-center gap-3">
+                                <div
+                                  className="
                                   flex size-12 items-center justify-center
                                   rounded-xl bg-gradient-to-br from-amber-400
                                   to-orange-500
                                 "
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="size-6 text-white"
                                 >
-                                  <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path>
-                                  <circle cx="12" cy="8" r="6"></circle>
-                                </svg>
-                              </div>
-                              <div>
-                                <h2
-                                  className="
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="size-6 text-white"
+                                  >
+                                    <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path>
+                                    <circle cx="12" cy="8" r="6"></circle>
+                                  </svg>
+                                </div>
+                                <div>
+                                  <h2
+                                    className="
                                     font-display text-xl font-bold
                                     text-foreground
                                     md:text-2xl
                                   "
-                                >
-                                  Certificación Del Curso
-                                </h2>
-                                <p className="text-sm text-muted-foreground">
-                                  Cumple los requisitos para habilitar tu
-                                  certificado.
-                                </p>
+                                  >
+                                    Certificación Del Curso
+                                  </h2>
+                                  <p className="text-sm text-muted-foreground">
+                                    Cumple los requisitos para habilitar tu
+                                    certificado.
+                                  </p>
+                                </div>
                               </div>
-                            </div>
 
-                            <div className="mb-6 rounded-xl bg-secondary p-5">
-                              <div
-                                className="
-                                  mb-3 flex items-center justify-between
-                                "
-                              >
-                                <span
-                                  className="
-                                    text-sm font-medium text-foreground
-                                  "
-                                >
-                                  Progreso hacia la certificación
-                                </span>
-                                <span className="text-sm font-bold text-primary">
-                                  {certificateProgressPercent}%
-                                </span>
-                              </div>
-                              <div
-                                className="
-                                  h-3 overflow-hidden rounded-full bg-muted
-                                "
-                              >
+                              <div className="mb-6 rounded-xl bg-secondary p-5">
                                 <div
                                   className="
+                                  mb-3 flex items-center justify-between
+                                "
+                                >
+                                  <span
+                                    className="
+                                    text-sm font-medium text-foreground
+                                  "
+                                  >
+                                    Progreso hacia la certificación
+                                  </span>
+                                  <span className="text-sm font-bold text-primary">
+                                    {certificateProgressPercent}%
+                                  </span>
+                                </div>
+                                <div
+                                  className="
+                                  h-3 overflow-hidden rounded-full bg-muted
+                                "
+                                >
+                                  <div
+                                    className="
                                     h-full rounded-full bg-gradient-to-r
                                     from-amber-400 to-orange-500 transition-all
                                   "
-                                  style={{
-                                    width: `${certificateProgressPercent}%`,
-                                  }}
-                                />
-                              </div>
-                              <div
-                                className="
+                                    style={{
+                                      width: `${certificateProgressPercent}%`,
+                                    }}
+                                  />
+                                </div>
+                                <div
+                                  className="
                                   mt-3 space-y-1 text-xs text-muted-foreground
                                 "
-                              >
-                                {hasParameters && (
-                                  <div className="flex items-center gap-2">
-                                    {parametersFullyGraded ? (
-                                      <FaCheckCircle className="size-3.5 text-green-400" />
-                                    ) : (
-                                      <FaLock className="size-3.5 text-white/70" />
-                                    )}
-                                    <span>
-                                      Calificación de parámetros:{' '}
-                                      {parameterActivityStats.graded}/
-                                      {parameterActivityStats.total}
-                                    </span>
-                                  </div>
-                                )}
-                                {hasActivities ? (
-                                  <div className="flex items-center gap-2">
-                                    {activitiesCompleted ? (
-                                      <FaCheckCircle className="size-3.5 text-green-400" />
-                                    ) : (
-                                      <FaLock className="size-3.5 text-white/70" />
-                                    )}
-                                    <span>
-                                      Actividades completadas:{' '}
-                                      {activitiesStats.completed}/
-                                      {activitiesStats.total}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    {lessonsProgressOk ? (
-                                      <FaCheckCircle className="size-3.5 text-green-400" />
-                                    ) : (
-                                      <FaLock className="size-3.5 text-white/70" />
-                                    )}
-                                    <span>
-                                      Clases &gt; 90%: {lessonsAboveNinety}/
-                                      {totalLessons}
-                                    </span>
-                                  </div>
-                                )}
+                                >
+                                  {hasParameters && (
+                                    <div className="flex items-center gap-2">
+                                      {parametersFullyGraded ? (
+                                        <FaCheckCircle className="size-3.5 text-green-400" />
+                                      ) : (
+                                        <FaLock className="size-3.5 text-white/70" />
+                                      )}
+                                      <span>
+                                        Calificación de parámetros:{' '}
+                                        {parameterActivityStats.graded}/
+                                        {parameterActivityStats.total}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {hasActivities ? (
+                                    <div className="flex items-center gap-2">
+                                      {activitiesCompleted ? (
+                                        <FaCheckCircle className="size-3.5 text-green-400" />
+                                      ) : (
+                                        <FaLock className="size-3.5 text-white/70" />
+                                      )}
+                                      <span>
+                                        Actividades completadas:{' '}
+                                        {activitiesStats.completed}/
+                                        {activitiesStats.total}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center gap-2">
+                                      {lessonsProgressOk ? (
+                                        <FaCheckCircle className="size-3.5 text-green-400" />
+                                      ) : (
+                                        <FaLock className="size-3.5 text-white/70" />
+                                      )}
+                                      <span>
+                                        Clases &gt; 90%: {lessonsAboveNinety}/
+                                        {totalLessons}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
 
-                            <div
-                              className="
+                              <div
+                                className="
                                 flex flex-col items-center gap-3 text-center
                                 sm:flex-row sm:items-center sm:justify-between
                                 sm:text-left
                               "
-                            >
-                              <p className="text-sm text-muted-foreground">
-                                El botón se habilita cuando cumples todos los
-                                requisitos del curso.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={handleCertificateClick}
-                                disabled={!isCertificateUnlocked}
-                                className={`
+                              >
+                                <p className="text-sm text-muted-foreground">
+                                  El botón se habilita cuando cumples todos los
+                                  requisitos del curso.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={handleCertificateClick}
+                                  disabled={!isCertificateUnlocked}
+                                  className={`
                                   inline-flex items-center gap-2 rounded-full
                                   border px-5 py-2 text-sm font-semibold
                                   transition
@@ -2865,36 +2939,37 @@ export default function CourseDetails({
                                       `
                                   }
                                 `}
-                              >
-                                {isCertificateUnlocked ? (
-                                  <FaCheckCircle className="size-4 text-green-400" />
-                                ) : (
-                                  <FaLock className="size-4 text-white/70" />
-                                )}
-                                {isCertificateUnlocked
-                                  ? 'Ver tu certificado'
-                                  : 'Certificado bloqueado'}
-                              </button>
+                                >
+                                  {isCertificateUnlocked ? (
+                                    <FaCheckCircle className="size-4 text-green-400" />
+                                  ) : (
+                                    <FaLock className="size-4 text-white/70" />
+                                  )}
+                                  {isCertificateUnlocked
+                                    ? 'Ver tu certificado'
+                                    : 'Certificado bloqueado'}
+                                </button>
+                              </div>
                             </div>
-                          </div>
+                          )
                         ) : (
                           renderAccessGuard('certificacion')
                         )
                       ) : activePill === 'foro' ? (
-                        isEnrolled && !isSubscriptionActive ? (
-                          renderSubscriptionExpiredNotice()
-                        ) : isEnrolled ? (
-                          <CourseForum courseId={course.id} />
+                        isEnrolled ? (
+                          renderLockedIfExpired(
+                            <CourseForum courseId={course.id} />
+                          )
                         ) : (
                           renderAccessGuard('foro')
                         )
                       ) : activePill === 'resultados' ? (
-                        isEnrolled && !isSubscriptionActive ? (
-                          renderSubscriptionExpiredNotice()
-                        ) : isEnrolled ? (
-                          <LessonGradeHistoryInline
-                            gradeSummary={gradeSummary}
-                          />
+                        isEnrolled ? (
+                          renderLockedIfExpired(
+                            <LessonGradeHistoryInline
+                              gradeSummary={gradeSummary}
+                            />
+                          )
                         ) : (
                           renderAccessGuard('resultados')
                         )
@@ -2902,7 +2977,7 @@ export default function CourseDetails({
                         <CourseContent
                           course={course}
                           isEnrolled={isEnrolled}
-                          isSubscriptionActive={isSubscriptionActive}
+                          isSubscriptionActive={hasCourseAccess}
                           subscriptionEndDate={subscriptionEndDate}
                           isSignedIn={!!isSignedIn}
                           classMeetings={classMeetings}

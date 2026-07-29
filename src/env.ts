@@ -15,6 +15,10 @@ export const env = createEnv({
     POSTGRES_DATABASE: z.string().min(1),
 
     CLERK_SECRET_KEY: z.string().min(1),
+    // Signing secret of the Clerk webhook endpoint (Dashboard → Webhooks).
+    // Optional so the app still builds before the endpoint is configured; the
+    // route returns 500 when it is missing.
+    CLERK_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
 
     UPSTASH_REDIS_REST_URL: z.url(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
@@ -60,6 +64,10 @@ export const env = createEnv({
     // Optional: OpenAI Assistant ID (asst_...)
     OPENAI_ASSISTANT_ID: z.string().min(1).optional(),
     N8N_WEBHOOK_ID: z.string().min(1),
+    // Multi-agent chat (Artie / Tutor / Coach) webhook and its header auth.
+    N8N_AGENTS_WEBHOOK_URL: z.url().optional(),
+    N8N_AGENTS_AUTH_HEADER: z.string().min(1).optional(),
+    N8N_AGENTS_AUTH_VALUE: z.string().min(1).optional(),
 
     ESP32_BASE_URL: z.url().optional(),
     ESP32_API_KEY: z.string().optional(),
@@ -103,6 +111,7 @@ export const env = createEnv({
     POSTGRES_DATABASE: process.env.POSTGRES_DATABASE,
 
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
+    CLERK_WEBHOOK_SIGNING_SECRET: process.env.CLERK_WEBHOOK_SIGNING_SECRET,
 
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
@@ -144,6 +153,9 @@ export const env = createEnv({
     OPENAI_ASSISTANT_API_KEY: process.env.OPENAI_ASSISTANT_API_KEY,
     OPENAI_ASSISTANT_ID: process.env.OPENAI_ASSISTANT_ID,
     N8N_WEBHOOK_ID: process.env.N8N_WEBHOOK_ID,
+    N8N_AGENTS_WEBHOOK_URL: process.env.N8N_AGENTS_WEBHOOK_URL,
+    N8N_AGENTS_AUTH_HEADER: process.env.N8N_AGENTS_AUTH_HEADER,
+    N8N_AGENTS_AUTH_VALUE: process.env.N8N_AGENTS_AUTH_VALUE,
 
     ESP32_BASE_URL: process.env.ESP32_BASE_URL,
     ESP32_API_KEY: process.env.ESP32_API_KEY,
