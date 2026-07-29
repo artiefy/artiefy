@@ -11,9 +11,18 @@ interface AgentChatRequestBody {
   activityId?: unknown;
 }
 
-const WEBHOOK_URL = process.env.N8N_AGENTS_WEBHOOK_URL;
-const AUTH_HEADER = process.env.N8N_AGENTS_AUTH_HEADER;
-const AUTH_VALUE = process.env.N8N_AGENTS_AUTH_VALUE;
+/**
+ * Read at request time, never at module scope: Next.js can inline
+ * `process.env.*` at build time, so a variable added to Vercel after the build
+ * would stay `undefined` until the next deploy.
+ */
+function readAgentsConfig() {
+  return {
+    webhookUrl: process.env.N8N_AGENTS_WEBHOOK_URL,
+    authHeader: process.env.N8N_AGENTS_AUTH_HEADER,
+    authValue: process.env.N8N_AGENTS_AUTH_VALUE,
+  };
+}
 
 /**
  * Builds the plain-text context block handed to the Coach agent. The agent has
@@ -73,6 +82,12 @@ function buildProjectContext(
 }
 
 export async function POST(request: NextRequest) {
+  const {
+    webhookUrl: WEBHOOK_URL,
+    authHeader: AUTH_HEADER,
+    authValue: AUTH_VALUE,
+  } = readAgentsConfig();
+
   if (!WEBHOOK_URL || !AUTH_HEADER || !AUTH_VALUE) {
     return NextResponse.json(
       {
