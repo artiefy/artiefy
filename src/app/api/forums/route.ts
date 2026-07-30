@@ -11,7 +11,7 @@ import {
   updateForumById,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
-import { courses, forums, users } from '~/server/db/schema';
+import { courses, forums, guidedProjects, users } from '~/server/db/schema';
 import { uploadMediaToS3 } from '~/server/lib/s3-upload';
 
 export async function POST(req: Request) {
@@ -21,7 +21,8 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     console.log('✅ formData recibido');
 
-    const courseId = formData.get('courseId') as string;
+    const courseId = formData.get('courseId') as string | null;
+    const guidedProjectId = formData.get('guidedProjectId') as string | null;
     const title = formData.get('title') as string;
     const description = formData.get('description') as string;
     const userId = formData.get('userId') as string;
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
 
     console.log('📝 Datos recibidos:', {
       courseId,
+      guidedProjectId,
       title,
       description,
       userId,
@@ -37,7 +39,7 @@ export async function POST(req: Request) {
       documentFile,
     });
 
-    if (!courseId || !title || !userId) {
+    if ((!courseId && !guidedProjectId) || !title || !userId) {
       console.error('❌ Falta algún campo obligatorio');
       return NextResponse.json(
         { message: 'Campos requeridos faltantes' },
@@ -45,28 +47,65 @@ export async function POST(req: Request) {
       );
     }
 
-    // Validar que courseId sea un número válido
-    const courseIdNum = Number(courseId);
-    if (isNaN(courseIdNum) || courseIdNum <= 0) {
-      console.error('❌ courseId inválido:', courseId);
+    if (courseId && guidedProjectId) {
       return NextResponse.json(
-        { message: 'El ID del curso debe ser un número válido' },
+        {
+          message:
+            'Un foro debe pertenecer a un curso o a un proyecto guiado, no a ambos',
+        },
         { status: 400 }
       );
     }
+
+    // Validar que el id del dueño sea un número válido
+    const courseIdNum = courseId ? Number(courseId) : null;
+    const guidedProjectIdNum = guidedProjectId ? Number(guidedProjectId) : null;
+    if (
+      (courseIdNum !== null && (isNaN(courseIdNum) || courseIdNum <= 0)) ||
+      (guidedProjectIdNum !== null &&
+        (isNaN(guidedProjectIdNum) || guidedProjectIdNum <= 0))
+    ) {
+      console.error('❌ id de propietario inválido:', {
+        courseId,
+        guidedProjectId,
+      });
+      return NextResponse.json(
+        {
+          message:
+            'El ID del curso o proyecto guiado debe ser un número válido',
+        },
+        { status: 400 }
+      );
+    }
+
+    // Carpeta S3 de referencia para el upload (solo usado para namespacing,
+    // uploadMediaToS3 no lo persiste en ningún lado).
+    const ownerFolderId = courseIdNum ?? guidedProjectIdNum ?? 0;
 
     let coverImageKey = '';
     let documentKey = '';
 
     // Función para guardar un archivo
     if (coverImage?.name) {
-      const uploadResult = await uploadMediaToS3(
-        coverImage,
-        'image',
-        userId,
-        courseIdNum
-      );
-      coverImageKey = uploadResult.key;
+      try {
+        const uploadResult = await uploadMediaToS3(
+          coverImage,
+          'image',
+          userId,
+          ownerFolderId
+        );
+        coverImageKey = uploadResult.key;
+      } catch (uploadError) {
+        return NextResponse.json(
+          {
+            message:
+              uploadError instanceof Error
+                ? uploadError.message
+                : 'No se pudo subir la imagen de portada',
+          },
+          { status: 400 }
+        );
+      }
     }
 
     if (documentFile?.name) {
@@ -77,7 +116,7 @@ export async function POST(req: Request) {
           documentFile,
           'audio',
           userId,
-          courseIdNum
+          ownerFolderId
         );
         documentKey = uploadResult.key;
       } catch {
@@ -88,7 +127,9 @@ export async function POST(req: Request) {
 
     // Crear el foro
     const newForum = await createForum(
-      courseIdNum,
+      courseIdNum
+        ? { courseId: courseIdNum }
+        : { guidedProjectId: guidedProjectIdNum! },
       title,
       description,
       userId,
@@ -108,11 +149,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // Obtener estudiantes inscritos
-    const enrolledStudents = await db.query.enrollments.findMany({
-      where: (enrollments, { eq }) => eq(enrollments.courseId, courseIdNum),
-      with: { user: true },
-    });
+    // Obtener estudiantes inscritos (solo aplica a foros de curso; los
+    // foros de proyecto guiado no notifican por correo por ahora)
+    const enrolledStudents = courseIdNum
+      ? await db.query.enrollments.findMany({
+          where: (enrollments, { eq }) => eq(enrollments.courseId, courseIdNum),
+          with: { user: true },
+        })
+      : [];
 
     const studentEmails = enrolledStudents
       .map((enroll) => enroll.user?.email)
@@ -173,6 +217,7 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const courseId = searchParams.get('courseId');
+    const guidedProjectId = searchParams.get('guidedProjectId');
 
     const instructorUser = alias(users, 'instructorUser');
 
@@ -184,6 +229,7 @@ export async function GET(req: Request) {
         coverImageKey: forums.coverImageKey,
         documentKey: forums.documentKey,
         courseId: forums.courseId,
+        guidedProjectId: forums.guidedProjectId,
         createdAt: forums.createdAt,
         updatedAt: forums.updatedAt,
         course: {
@@ -191,6 +237,11 @@ export async function GET(req: Request) {
           title: courses.title,
           descripcion: courses.description,
           coverImageKey: courses.coverImageKey,
+        },
+        guidedProject: {
+          id: guidedProjects.id,
+          title: guidedProjects.title,
+          coverImageKey: guidedProjects.coverImageKey,
         },
         instructor: {
           id: instructorUser.id,
@@ -203,14 +254,22 @@ export async function GET(req: Request) {
       })
       .from(forums)
       .leftJoin(courses, eq(forums.courseId, courses.id))
+      .leftJoin(guidedProjects, eq(forums.guidedProjectId, guidedProjects.id))
       .leftJoin(users, eq(forums.userId, users.id))
       .leftJoin(instructorUser, eq(courses.instructor, instructorUser.id));
 
-    // Si se proporciona courseId, filtrar por ese curso
+    // Si se proporciona courseId o guidedProjectId, filtrar por ese dueño
     if (courseId) {
       const courseIdNum = Number(courseId);
       if (!isNaN(courseIdNum)) {
         query = query.where(eq(forums.courseId, courseIdNum)) as typeof query;
+      }
+    } else if (guidedProjectId) {
+      const guidedProjectIdNum = Number(guidedProjectId);
+      if (!isNaN(guidedProjectIdNum)) {
+        query = query.where(
+          eq(forums.guidedProjectId, guidedProjectIdNum)
+        ) as typeof query;
       }
     }
 
@@ -230,9 +289,11 @@ export async function GET(req: Request) {
           coverImageKey: forum.coverImageKey ?? '',
           documentKey: forum.documentKey ?? '',
           courseId: forum.courseId,
+          guidedProjectId: forum.guidedProjectId,
           createdAt: forum.createdAt,
           updatedAt: forum.updatedAt,
-          course: forum.course,
+          course: forum.courseId ? forum.course : null,
+          guidedProject: forum.guidedProjectId ? forum.guidedProject : null,
           user: forum.user,
           instructor: forum.instructor,
           _count: {

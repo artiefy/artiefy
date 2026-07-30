@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { FileText, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import FileUpload from '~/components/educators/layout/FilesUpload';
@@ -61,6 +62,8 @@ export function ModalFormGuidedObjective({
     { key: string; name: string }[]
   >([]);
   const [newResourceFiles, setNewResourceFiles] = useState<File[]>([]);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkName, setLinkName] = useState('');
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -78,6 +81,8 @@ export function ModalFormGuidedObjective({
       setVideoPreview(null);
       setExistingResources([]);
       setNewResourceFiles([]);
+      setLinkUrl('');
+      setLinkName('');
       return;
     }
 
@@ -189,6 +194,24 @@ export function ModalFormGuidedObjective({
       setImagePreview(URL.createObjectURL(file));
       toast.success('Frame capturado como imagen de portada');
     }, 'image/png');
+  };
+
+  const handleAddLink = () => {
+    const url = linkUrl.trim();
+    if (!url) {
+      toast.error('Ingresa una URL');
+      return;
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      toast.error('El enlace debe iniciar con http:// o https://');
+      return;
+    }
+    setExistingResources((prev) => [
+      ...prev,
+      { key: url, name: linkName.trim() || url },
+    ]);
+    setLinkUrl('');
+    setLinkName('');
   };
 
   const handleSubmit = async () => {
@@ -420,27 +443,35 @@ export function ModalFormGuidedObjective({
 
               {existingResources.length > 0 && (
                 <ul className="space-y-2">
-                  {existingResources.map((resource, index) => (
-                    <li
-                      key={`${resource.key}-${index}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-cyan-500/20 bg-slate-800 px-3 py-2"
-                    >
-                      <span className="truncate text-sm text-white">
-                        {resource.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExistingResources((prev) =>
-                            prev.filter((_, i) => i !== index)
-                          )
-                        }
-                        className="shrink-0 text-xs font-medium text-red-400 hover:text-red-300"
+                  {existingResources.map((resource, index) => {
+                    const isLink = /^https?:\/\//i.test(resource.key);
+                    return (
+                      <li
+                        key={`${resource.key}-${index}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-cyan-500/20 bg-slate-800 px-3 py-2"
                       >
-                        Quitar
-                      </button>
-                    </li>
-                  ))}
+                        <span className="flex min-w-0 items-center gap-2 text-sm text-white">
+                          {isLink ? (
+                            <Link2 className="size-4 shrink-0 text-cyan-400" />
+                          ) : (
+                            <FileText className="size-4 shrink-0 text-cyan-400" />
+                          )}
+                          <span className="truncate">{resource.name}</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExistingResources((prev) =>
+                              prev.filter((_, i) => i !== index)
+                            )
+                          }
+                          className="shrink-0 text-xs font-medium text-red-400 hover:text-red-300"
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
 
@@ -457,6 +488,45 @@ export function ModalFormGuidedObjective({
                 }
                 files={newResourceFiles}
               />
+
+              <div className="space-y-2 rounded-lg border border-cyan-500/20 bg-slate-800/50 p-3">
+                <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                  Agregar enlace
+                </label>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <Input
+                    value={linkUrl}
+                    onChange={(e) => setLinkUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddLink();
+                      }
+                    }}
+                    placeholder="https://ejemplo.com/recurso"
+                    className="border-cyan-500/30 bg-slate-800 text-white placeholder-gray-500"
+                  />
+                  <Input
+                    value={linkName}
+                    onChange={(e) => setLinkName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddLink();
+                      }
+                    }}
+                    placeholder="Nombre del enlace (opcional)"
+                    className="border-cyan-500/30 bg-slate-800 text-white placeholder-gray-500"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  onClick={handleAddLink}
+                  className="w-full bg-cyan-500 text-white hover:bg-cyan-600 sm:w-auto"
+                >
+                  Agregar enlace
+                </Button>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 pt-2">

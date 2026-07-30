@@ -29,13 +29,33 @@ interface CoursesModels {
   coverImageKey: string;
 }
 
-const ForumHome = () => {
+interface GuidedProjectModel {
+  id: number;
+  title: string;
+}
+
+type OwnerType = 'course' | 'guidedProject';
+
+interface ForumHomeProps {
+  // Los proyectos guiados son un concepto de super-admin/educador; el panel
+  // de "admin" (más limitado) no los administra, así que ahí se oculta el
+  // selector y este componente se comporta igual que antes.
+  allowGuidedProjects?: boolean;
+}
+
+const ForumHome = ({ allowGuidedProjects = true }: ForumHomeProps) => {
   const { user } = useUser();
+  const [ownerType, setOwnerType] = useState<OwnerType>('course');
   const [courseId, setCourseId] = useState<number | null>(null);
+  const [guidedProjectId, setGuidedProjectId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [courses, setCourses] = useState<CoursesModels[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
+  const [guidedProjects, setGuidedProjects] = useState<GuidedProjectModel[]>(
+    []
+  );
+  const [loadingGuidedProjects, setLoadingGuidedProjects] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -44,13 +64,34 @@ const ForumHome = () => {
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [searchCourse, setSearchCourse] = useState('');
   const [showCourseList, setShowCourseList] = useState(false);
+  const [searchGuidedProject, setSearchGuidedProject] = useState('');
+  const [showGuidedProjectList, setShowGuidedProjectList] = useState(false);
+
+  const resetForm = () => {
+    setCourseId(null);
+    setGuidedProjectId(null);
+    setTitle('');
+    setDescription('');
+    setCoverImage(null);
+    setDocumentFile(null);
+    setSearchCourse('');
+    setSearchGuidedProject('');
+    setOwnerType('course');
+  };
 
   const handleCreateForum = async () => {
     if (!user) return;
 
     // Validar campos obligatorios
-    if (!courseId || courseId <= 0) {
+    if (ownerType === 'course' && (!courseId || courseId <= 0)) {
       toast.error('Debes seleccionar un curso válido');
+      return;
+    }
+    if (
+      ownerType === 'guidedProject' &&
+      (!guidedProjectId || guidedProjectId <= 0)
+    ) {
+      toast.error('Debes seleccionar un proyecto guiado válido');
       return;
     }
     if (!title.trim()) {
@@ -71,7 +112,11 @@ const ForumHome = () => {
       setUploadProgress(60);
 
       const formData = new FormData();
-      formData.append('courseId', String(courseId));
+      if (ownerType === 'course') {
+        formData.append('courseId', String(courseId));
+      } else {
+        formData.append('guidedProjectId', String(guidedProjectId));
+      }
       formData.append('title', title);
       formData.append('description', description);
       formData.append('userId', userId);
@@ -84,31 +129,25 @@ const ForumHome = () => {
       });
 
       setUploadProgress(100);
-      const json: unknown = await response.json();
-      const responseSchema = z.object({
-        success: z.boolean(),
-        message: z.string().optional(),
-      });
-      const result = responseSchema.parse(json);
-
-      if (result.success) {
-        toast.success('Foro creado exitosamente!');
-        setIsDialogOpen(false);
-        window.location.reload();
-      } else {
-        toast.error(result.message ?? 'Error al crear el foro');
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
+        throw new Error(errorBody?.message ?? 'Error al crear el foro');
       }
+      await response.json();
+
+      toast.success('Foro creado exitosamente!');
+      setIsDialogOpen(false);
+      window.location.reload();
     } catch (error) {
       console.error('Error al crear el foro:', error);
-      toast.error('Error al crear el foro');
+      toast.error(
+        error instanceof Error ? error.message : 'Error al crear el foro'
+      );
     } finally {
       setIsUploading(false);
-      setCourseId(null);
-      setTitle('');
-      setDescription('');
-      setCoverImage(null);
-      setDocumentFile(null);
-      setSearchCourse('');
+      resetForm();
     }
   };
 
@@ -141,6 +180,31 @@ const ForumHome = () => {
 
     void fetchCourses();
   }, [user]);
+
+  useEffect(() => {
+    const fetchGuidedProjects = async () => {
+      if (!user || !allowGuidedProjects) return;
+      try {
+        setLoadingGuidedProjects(true);
+        const response = await fetch('/api/guided-projects');
+        const json: unknown = await response.json();
+        const guidedProjectsSchema = z.array(
+          z.object({
+            id: z.number(),
+            title: z.string(),
+          })
+        );
+        const data = guidedProjectsSchema.parse(json);
+        setGuidedProjects(data);
+      } catch (error) {
+        console.error('Error al obtener proyectos guiados:', error);
+      } finally {
+        setLoadingGuidedProjects(false);
+      }
+    };
+
+    void fetchGuidedProjects();
+  }, [user, allowGuidedProjects]);
 
   return (
     <div
@@ -181,7 +245,7 @@ const ForumHome = () => {
               </Button>
             </DialogTrigger>
 
-            <DialogContent className="w-full max-w-md rounded-lg bg-[#111] text-white">
+            <DialogContent className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-[#111] text-white">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-white">
                   Crear Nuevo Foro
@@ -192,95 +256,204 @@ const ForumHome = () => {
               </DialogHeader>
 
               <div className="mt-4 space-y-4">
-                {/* Curso asociado */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-primary">
-                    Curso asociado
-                  </label>
-                  {loadingCourses ? (
-                    <p className="text-sm text-gray-400">Cargando cursos...</p>
-                  ) : courses.length > 0 ? (
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        placeholder="Buscar o seleccionar un curso..."
-                        value={searchCourse}
-                        onChange={(e) => setSearchCourse(e.target.value)}
-                        onFocus={() => setShowCourseList(true)}
-                        className="text-white"
-                      />
-                      {showCourseList && (
-                        <>
-                          <div
-                            className="fixed inset-0 z-10"
-                            onClick={() => setShowCourseList(false)}
-                          />
-                          <div
-                            className="
-                              absolute z-20 mt-1 max-h-60 w-full overflow-auto
-                              rounded-md border border-white/20 bg-[#111]
-                              shadow-lg
-                            "
-                          >
-                            {courses
-                              .filter((c) =>
-                                c.title
-                                  .toLowerCase()
-                                  .includes(searchCourse.toLowerCase())
-                              )
-                              .map((c) => (
-                                <button
-                                  key={c.id}
-                                  type="button"
-                                  onClick={() => {
-                                    setCourseId(c.id);
-                                    setSearchCourse(c.title);
-                                    setShowCourseList(false);
-                                  }}
-                                  className="
-                                    w-full px-3 py-2 text-left text-sm
-                                    text-white transition
-                                    hover:bg-white/10
-                                  "
-                                >
-                                  {c.title}
-                                </button>
-                              ))}
-                          </div>
-                        </>
-                      )}
+                {/* Tipo de foro */}
+                {allowGuidedProjects && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      ¿Para qué es este foro?
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setOwnerType('course')}
+                        className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                          ownerType === 'course'
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-white/20 text-gray-400 hover:bg-white/5'
+                        }`}
+                      >
+                        Curso
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOwnerType('guidedProject')}
+                        className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                          ownerType === 'guidedProject'
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-white/20 text-gray-400 hover:bg-white/5'
+                        }`}
+                      >
+                        Proyecto guiado
+                      </button>
                     </div>
-                  ) : (
-                    <p className="text-sm text-red-500">
-                      No tienes cursos disponibles.
-                    </p>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Título */}
-                <div className="space-y-1">
-                  <label className="text-sm text-primary">
-                    Título del foro
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Ej. Debate sobre técnica"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="text-white"
-                  />
-                </div>
+                {/* Curso asociado */}
+                {ownerType === 'course' && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Curso asociado
+                    </label>
+                    {loadingCourses ? (
+                      <p className="text-sm text-gray-400">
+                        Cargando cursos...
+                      </p>
+                    ) : courses.length > 0 ? (
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          placeholder="Buscar o seleccionar un curso..."
+                          value={searchCourse}
+                          onChange={(e) => setSearchCourse(e.target.value)}
+                          onFocus={() => setShowCourseList(true)}
+                          className="text-white"
+                        />
+                        {showCourseList && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setShowCourseList(false)}
+                            />
+                            <div
+                              className="
+                                absolute z-20 mt-1 max-h-60 w-full overflow-auto
+                                rounded-md border border-white/20 bg-[#111]
+                                shadow-lg
+                              "
+                            >
+                              {courses
+                                .filter((c) =>
+                                  c.title
+                                    .toLowerCase()
+                                    .includes(searchCourse.toLowerCase())
+                                )
+                                .map((c) => (
+                                  <button
+                                    key={c.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setCourseId(c.id);
+                                      setSearchCourse(c.title);
+                                      setShowCourseList(false);
+                                    }}
+                                    className="
+                                      w-full px-3 py-2 text-left text-sm
+                                      text-white transition
+                                      hover:bg-white/10
+                                    "
+                                  >
+                                    {c.title}
+                                  </button>
+                                ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-red-500">
+                        No tienes cursos disponibles.
+                      </p>
+                    )}
+                  </div>
+                )}
 
-                {/* Descripción */}
-                <div className="space-y-1">
-                  <label className="text-sm text-primary">Descripción</label>
-                  <Input
-                    type="text"
-                    placeholder="Breve descripción del foro"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="text-white"
-                  />
+                {/* Proyecto guiado asociado */}
+                {allowGuidedProjects && ownerType === 'guidedProject' && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">
+                      Proyecto guiado asociado
+                    </label>
+                    {loadingGuidedProjects ? (
+                      <p className="text-sm text-gray-400">
+                        Cargando proyectos guiados...
+                      </p>
+                    ) : guidedProjects.length > 0 ? (
+                      <div className="relative">
+                        <Input
+                          type="text"
+                          placeholder="Buscar o seleccionar un proyecto guiado..."
+                          value={searchGuidedProject}
+                          onChange={(e) =>
+                            setSearchGuidedProject(e.target.value)
+                          }
+                          onFocus={() => setShowGuidedProjectList(true)}
+                          className="text-white"
+                        />
+                        {showGuidedProjectList && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setShowGuidedProjectList(false)}
+                            />
+                            <div
+                              className="
+                                absolute z-20 mt-1 max-h-60 w-full overflow-auto
+                                rounded-md border border-white/20 bg-[#111]
+                                shadow-lg
+                              "
+                            >
+                              {guidedProjects
+                                .filter((p) =>
+                                  p.title
+                                    .toLowerCase()
+                                    .includes(searchGuidedProject.toLowerCase())
+                                )
+                                .map((p) => (
+                                  <button
+                                    key={p.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setGuidedProjectId(p.id);
+                                      setSearchGuidedProject(p.title);
+                                      setShowGuidedProjectList(false);
+                                    }}
+                                    className="
+                                      w-full px-3 py-2 text-left text-sm
+                                      text-white transition
+                                      hover:bg-white/10
+                                    "
+                                  >
+                                    {p.title}
+                                  </button>
+                                ))}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-red-500">
+                        No hay proyectos guiados disponibles.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Título + Descripción */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-sm text-primary">
+                      Título del foro
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Ej. Debate sobre técnica"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="text-white"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-sm text-primary">Descripción</label>
+                    <Input
+                      type="text"
+                      placeholder="Breve descripción del foro"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="text-white"
+                    />
+                  </div>
                 </div>
 
                 {/* Instructor info */}
@@ -292,8 +465,9 @@ const ForumHome = () => {
                 >
                   Instructor: {user?.fullName}
                 </div>
-                <div className="space-y-3">
-                  {/* Imagen de portada */}
+
+                {/* Imagen de portada + Documento adjunto */}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className="text-sm font-medium text-primary">
                       Imagen de portada (opcional)
@@ -417,10 +591,7 @@ const ForumHome = () => {
                     sm:w-auto
                   "
                   onClick={() => {
-                    setCourseId(null);
-                    setTitle('');
-                    setDescription('');
-                    setSearchCourse('');
+                    resetForm();
                     setIsDialogOpen(false);
                   }}
                 >

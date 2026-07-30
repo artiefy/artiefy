@@ -4,10 +4,16 @@ import { db } from '../../server/db/index';
 import {
   courses,
   forums,
+  guidedProjects,
+  postLikes,
   postReplies,
   posts,
   users,
 } from '../../server/db/schema';
+
+export type ForumOwner =
+  | { courseId: number; guidedProjectId?: undefined }
+  | { courseId?: undefined; guidedProjectId: number };
 
 interface Post {
   id: number;
@@ -33,7 +39,12 @@ interface Foro {
     descripcion: string | null;
     instructor: string | null;
     coverImageKey: string | null;
-  };
+  } | null;
+  guidedProjectId: {
+    id: number;
+    title: string | null;
+    coverImageKey: string | null;
+  } | null;
   title: string;
   description: string;
   userId: {
@@ -45,9 +56,10 @@ interface Foro {
   documentKey: string | null; // Added property
 }
 
-// Crear un nuevo foro para un curso específico
+// Crear un nuevo foro para un curso o para un proyecto guiado (exactamente
+// uno de los dos, igual que la restricción forums_exactly_one_owner_check).
 export async function createForum(
-  courseId: number,
+  owner: ForumOwner,
   title: string,
   description: string,
   userId: string,
@@ -57,7 +69,8 @@ export async function createForum(
   const [newForum] = await db
     .insert(forums)
     .values({
-      courseId,
+      courseId: owner.courseId ?? null,
+      guidedProjectId: owner.guidedProjectId ?? null,
       title,
       description,
       userId,
@@ -75,6 +88,7 @@ export async function getForumById(forumId: number): Promise<Foro | null> {
       .select({
         id: forums.id,
         courseId: forums.courseId,
+        guidedProjectId: forums.guidedProjectId,
         title: forums.title,
         description: forums.description,
         userId: forums.userId,
@@ -86,9 +100,12 @@ export async function getForumById(forumId: number): Promise<Foro | null> {
         userName: users.name,
         userEmail: users.email,
         courseCoverImageKey: courses.coverImageKey,
+        guidedProjectTitle: guidedProjects.title,
+        guidedProjectCoverImageKey: guidedProjects.coverImageKey,
       })
       .from(forums)
       .leftJoin(courses, eq(forums.courseId, courses.id))
+      .leftJoin(guidedProjects, eq(forums.guidedProjectId, guidedProjects.id))
       .leftJoin(users, eq(forums.userId, users.id))
       .where(eq(forums.id, forumId));
 
@@ -97,13 +114,22 @@ export async function getForumById(forumId: number): Promise<Foro | null> {
 
     return {
       id: forum.id,
-      courseId: {
-        id: forum.courseId,
-        title: forum.courseTitle,
-        descripcion: forum.courseDescription,
-        instructor: forum.courseInstructor,
-        coverImageKey: forum.courseCoverImageKey,
-      },
+      courseId: forum.courseId
+        ? {
+            id: forum.courseId,
+            title: forum.courseTitle,
+            descripcion: forum.courseDescription,
+            instructor: forum.courseInstructor,
+            coverImageKey: forum.courseCoverImageKey,
+          }
+        : null,
+      guidedProjectId: forum.guidedProjectId
+        ? {
+            id: forum.guidedProjectId,
+            title: forum.guidedProjectTitle,
+            coverImageKey: forum.guidedProjectCoverImageKey,
+          }
+        : null,
       userId: {
         id: forum.userId,
         name: forum.userName ?? '',
@@ -167,6 +193,60 @@ export async function getForumByCourseId(courseId: number) {
       userId: {
         id: forumData.userId,
         name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
+        role: forumData.userRole ?? null,
+      },
+      createdAt: forumData.createdAt,
+      updatedAt: forumData.updatedAt,
+    };
+  } catch (error: unknown) {
+    console.error(error);
+    return null;
+  }
+}
+
+// Obtener foro por id de proyecto guiado (equivalente a getForumByCourseId)
+export async function getForumByGuidedProjectId(guidedProjectId: number) {
+  try {
+    const forum = await db
+      .select({
+        id: forums.id,
+        guidedProjectId: forums.guidedProjectId,
+        title: forums.title,
+        description: forums.description,
+        userId: forums.userId,
+        createdAt: forums.createdAt,
+        updatedAt: forums.updatedAt,
+        projectTitle: guidedProjects.title,
+        projectCoverImageKey: guidedProjects.coverImageKey,
+        userName: users.name,
+        userRole: users.role,
+      })
+      .from(forums)
+      .leftJoin(guidedProjects, eq(forums.guidedProjectId, guidedProjects.id))
+      .leftJoin(users, eq(forums.userId, users.id))
+      .where(eq(forums.guidedProjectId, guidedProjectId));
+
+    if (!forum || forum.length === 0) {
+      return null;
+    }
+
+    const forumData = forum[0];
+    if (!forumData) {
+      return null;
+    }
+
+    return {
+      id: forumData.id,
+      guidedProjectId: {
+        id: forumData.guidedProjectId,
+        title: forumData.projectTitle,
+        coverImageKey: forumData.projectCoverImageKey,
+      },
+      title: forumData.title,
+      description: forumData.description ?? '',
+      userId: {
+        id: forumData.userId,
+        name: forumData.userName ?? '',
         role: forumData.userRole ?? null,
       },
       createdAt: forumData.createdAt,
@@ -260,9 +340,19 @@ export async function getAllForums() {
 
 //delete forum by id
 export async function deleteForumById(forumId: number) {
-  // Primero elimina los registros relacionados en la tabla 'posts'
+  // postReplies/postLikes no tienen ON DELETE CASCADE hacia posts, así que
+  // hay que limpiarlos manualmente antes de borrar los posts o la FK falla.
+  const postsToDelete = await db
+    .select({ id: posts.id })
+    .from(posts)
+    .where(eq(posts.forumId, forumId));
+
+  for (const post of postsToDelete) {
+    await db.delete(postReplies).where(eq(postReplies.postId, post.id));
+    await db.delete(postLikes).where(eq(postLikes.postId, post.id));
+  }
+
   await db.delete(posts).where(eq(posts.forumId, forumId));
-  // Luego elimina el foro
   await db.delete(forums).where(eq(forums.id, forumId));
 }
 

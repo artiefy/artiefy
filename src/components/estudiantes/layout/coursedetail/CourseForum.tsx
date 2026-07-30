@@ -67,11 +67,11 @@ const fetcher = async (url: string) => {
   }
 };
 
-interface CourseForumProps {
-  courseId: number;
-}
+type CourseForumProps =
+  | { courseId: number; guidedProjectId?: undefined }
+  | { courseId?: undefined; guidedProjectId: number };
 
-export function CourseForum({ courseId }: CourseForumProps) {
+export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const [newPost, setNewPost] = useState('');
@@ -114,10 +114,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
   // Obtener el rol del usuario desde Clerk metadata
   const userRole = user?.publicMetadata?.role as Roles | undefined;
 
+  const forumLookupUrl = courseId
+    ? `/api/estudiantes/forums/by-course?courseId=${courseId}`
+    : `/api/estudiantes/guided-projects/${guidedProjectId}/forums/by-project`;
+
   const { data: forum, isLoading: forumLoading } = useSWR<Forum | null>(
-    isSignedIn
-      ? `/api/estudiantes/forums/by-course?courseId=${courseId}`
-      : null,
+    isSignedIn ? forumLookupUrl : null,
     fetcher
   );
 
@@ -255,16 +257,25 @@ export function CourseForum({ courseId }: CourseForumProps) {
         imageKey = await uploadImage(replyImage);
       }
 
-      await fetch('/api/forums/posts/postReplay', {
+      const res = await fetch('/api/forums/posts/postReplay', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: message, postId, imageKey }),
       });
+      if (!res.ok) {
+        setErrorMessage('No se pudo enviar la respuesta. Intenta de nuevo.');
+        setTimeout(() => setErrorMessage(null), 5000);
+        return;
+      }
       setReplyDrafts((prev) => ({ ...prev, [postId]: '' }));
       setReplyImages((prev) => ({ ...prev, [postId]: null }));
       setReplyingTo(null);
       await mutatePosts();
       await mutateReplies();
+    } catch (error) {
+      console.error('Error al responder:', error);
+      setErrorMessage('No se pudo enviar la respuesta. Intenta de nuevo.');
+      setTimeout(() => setErrorMessage(null), 5000);
     } finally {
       setIsReplying((prev) => ({ ...prev, [postId]: false }));
     }
@@ -504,7 +515,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
           No hay foro disponible
         </h3>
         <p className="text-sm text-slate-300">
-          Este curso aún no tiene foro creado.
+          {courseId
+            ? 'Este curso aún no tiene foro creado.'
+            : 'Este proyecto aún no tiene foro creado.'}
         </p>
       </div>
     );
@@ -540,7 +553,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
           >
             <MdOutlineForum className="size-4" />
           </span>
-          Foro del curso
+          {courseId ? 'Foro del curso' : 'Foro del proyecto'}
         </h3>
         <p className="mt-1 text-sm text-[#94a3b8]">
           {totalComments} comentarios · Comparte dudas y avances con tus
@@ -1015,16 +1028,14 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         }
                         className={cn(
                           `
-                            inline-flex items-center gap-2 rounded-md px-3 py-2
-                            text-sm font-medium transition
-                            focus-visible:ring-2 focus-visible:ring-offset-2
+                            inline-flex items-center gap-2 rounded-md
+                            bg-[#22C4D3] px-3 py-2 text-sm font-medium
+                            text-[#080C16] transition-colors
+                            hover:bg-primary/90
+                            focus-visible:ring-2 focus-visible:ring-ring
+                            focus-visible:ring-offset-2
                             focus-visible:outline-none
-                          `,
-                          `
-                            bg-secondary text-secondary-foreground
-                            hover:bg-secondary/80
-                            focus-visible:ring-primary
-                            focus-visible:ring-offset-background
+                            disabled:pointer-events-none
                           `,
                           (!replyDrafts[post.id]?.trim() ||
                             isReplying[post.id] ||

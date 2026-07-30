@@ -8,6 +8,7 @@ import {
   getPostsByForo,
 } from '~/models/super-adminModels/forumAndPosts';
 import { db } from '~/server/db';
+import { getGuidedProjectForumAccess } from '~/server/services/guided-projects/guidedForumAccess';
 
 export async function GET(
   _req: Request,
@@ -86,19 +87,35 @@ export async function POST(
     imageKey = (body as { imageKey: string }).imageKey;
   }
 
-  // Verifica inscripción
+  // Verifica inscripción / autorización según el dueño real del foro
   const forum = await getForumById(forumId);
   if (!forum)
     return NextResponse.json({ error: 'Foro no encontrado' }, { status: 404 });
-  const enrollment = await db.query.enrollments.findFirst({
-    where: (enrollments, { eq, and }) =>
-      and(
-        eq(enrollments.userId, userId),
-        eq(enrollments.courseId, forum.courseId.id)
-      ),
-  });
-  if (!enrollment)
-    return NextResponse.json({ error: 'No inscrito' }, { status: 403 });
+
+  if (forum.courseId) {
+    const courseIdValue = forum.courseId.id;
+    const enrollment = await db.query.enrollments.findFirst({
+      where: (enrollments, { eq, and }) =>
+        and(
+          eq(enrollments.userId, userId),
+          eq(enrollments.courseId, courseIdValue)
+        ),
+    });
+    if (!enrollment)
+      return NextResponse.json({ error: 'No inscrito' }, { status: 403 });
+  } else if (forum.guidedProjectId) {
+    const access = await getGuidedProjectForumAccess({
+      projectId: forum.guidedProjectId.id,
+      userId,
+    });
+    if (!access.success)
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  } else {
+    return NextResponse.json(
+      { error: 'El foro no tiene un propietario válido' },
+      { status: 400 }
+    );
+  }
 
   const post = await createPost(forumId, userId, content, imageKey);
   return NextResponse.json(post);
