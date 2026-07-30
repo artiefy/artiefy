@@ -369,10 +369,8 @@ export function ProfileView({
           <div className="hide-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
             <div
               className="
-                inline-flex w-max items-center gap-2 rounded-2xl border
-                border-border/30 bg-card/50 p-2 backdrop-blur-sm
+                inline-flex w-max items-center gap-2 py-1
                 sm:w-full sm:justify-center
-                lg:rounded-3xl lg:p-3
               "
             >
               {TABS.map((tab) => {

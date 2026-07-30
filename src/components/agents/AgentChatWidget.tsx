@@ -242,13 +242,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     }
   };
 
+  // `js-floating-launcher` lets globals.css lift the launcher above the fixed
+  // mobile bottom nav on small screens.
   if (!isOpen) {
     return (
       <button
         type="button"
         aria-label="Abrir chat con Artie"
         onClick={() => setIsOpen(true)}
-        className="fixed right-6 bottom-6 z-60 flex size-14 items-center justify-center rounded-full transition-transform hover:scale-105"
+        className="js-floating-launcher fixed right-6 bottom-6 z-60 flex size-14 items-center justify-center rounded-full transition-transform hover:scale-105"
         style={{
           background: `linear-gradient(135deg, ${LAUNCHER_COLOR}, rgba(34, 196, 211, 0.65))`,
           boxShadow: '0 4px 24px rgba(34, 196, 211, 0.35)',
@@ -261,8 +263,11 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
 
   return (
     <div
-      className="fixed right-6 bottom-6 z-60 flex w-[440px] max-w-[calc(100vw-48px)] flex-col"
-      style={{ height: 'min(70vh, 620px)', borderRadius: 20 }}
+      className="
+        js-agent-chat-panel fixed right-3 bottom-6 left-3 z-60 flex flex-col
+        md:right-6 md:left-auto md:w-[440px] md:max-w-[calc(100vw-48px)]
+      "
+      style={{ height: 'min(70dvh, 620px)', borderRadius: 20 }}
     >
       <div
         className="holo-glass relative flex h-full flex-col overflow-hidden rounded-[20px]"

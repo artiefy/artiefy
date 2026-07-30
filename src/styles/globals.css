@@ -493,13 +493,18 @@ body.no-chrome {
     body.has-bottom-nav
     .js-floating-launcher,
   html:not(.mobile-bottom-cta-visible) body.has-bottom-nav .ticket-button {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6.25rem);
   }
 
   html:not(.mobile-bottom-cta-visible)
     body.has-bottom-nav
     .js-support-floating-launcher {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 9.75rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10.75rem);
+  }
+
+  /* Agent (Artie) chat panel: keep the whole panel above the bottom bar. */
+  body.has-bottom-nav .js-agent-chat-panel {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6rem);
   }
 }
 
