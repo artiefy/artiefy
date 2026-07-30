@@ -29,6 +29,7 @@ import {
   ImageOff,
   Layers,
   Lightbulb,
+  Link2,
   ListChecks,
   Loader2,
   LockKeyhole,
@@ -60,6 +61,8 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
+import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
+import { ModalFormForum } from '~/components/super-admin/modals/ModalFormForum';
 import { ModalFormGuidedActivity } from '~/components/super-admin/modals/ModalFormGuidedActivity';
 import { ModalFormGuidedObjective } from '~/components/super-admin/modals/ModalFormGuidedObjective';
 import { ModalGuidedProjectForm } from '~/components/super-admin/modals/ModalGuidedProjectForm';
@@ -245,6 +248,11 @@ const getResourceIcon = (name: string) => {
   const ext = name.split('.').pop()?.toLowerCase() ?? '';
   return RESOURCE_ICON_BY_EXTENSION[ext] ?? FileText;
 };
+
+// Los recursos de sesión pueden ser archivos subidos a S3 (key relativa) o
+// enlaces externos pegados tal cual (URL completa) — mismo patrón que
+// storageKeyToUrl en ~/lib/profileCover.
+const isLinkResource = (key: string) => /^https?:\/\//i.test(key);
 
 // Descarga real del recurso: un <a download> normal no fuerza la descarga
 // en enlaces cross-origin a S3 (el navegador simplemente lo abre), así que
@@ -635,10 +643,16 @@ export function GuidedProjectAdminTabs({
         .split(',')
         .map((n) => n.trim())
         .filter(Boolean);
-      const resources = keys.map((key, idx) => ({
-        key,
-        name: prettifyResourceName(names[idx] ?? key),
-      }));
+      const resources = keys.map((key, idx) => {
+        const isLink = isLinkResource(key);
+        return {
+          key,
+          name: isLink
+            ? (names[idx] ?? key)
+            : prettifyResourceName(names[idx] ?? key),
+          isLink,
+        };
+      });
       return { id: objective.id, title: objective.title, resources };
     })
     .filter((objective) => objective.resources.length > 0);
@@ -660,6 +674,53 @@ export function GuidedProjectAdminTabs({
   const [expandedActivityId, setExpandedActivityId] = useState<number | null>(
     null
   );
+
+  // ─── Pestaña Foro ──────────────────────────────────────────────────────
+  const [projectForums, setProjectForums] = useState<
+    {
+      id: number;
+      title: string;
+      description: string;
+      createdAt?: string;
+      user: { id: string; name: string };
+    }[]
+  >([]);
+  const [loadingForums, setLoadingForums] = useState(false);
+  const [forumModalOpen, setForumModalOpen] = useState(false);
+  const [editingForumId, setEditingForumId] = useState<number | null>(null);
+
+  const fetchProjectForums = async () => {
+    setLoadingForums(true);
+    try {
+      const res = await fetch(`/api/forums?guidedProjectId=${project.id}`);
+      if (!res.ok) throw new Error();
+      const data = (await res.json()) as typeof projectForums;
+      setProjectForums(data);
+    } catch {
+      toast.error('No se pudieron cargar los foros del proyecto');
+    } finally {
+      setLoadingForums(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'foro') void fetchProjectForums();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, project.id]);
+
+  const handleDeleteForum = async (forumId: number) => {
+    if (!confirm('¿Eliminar este foro y todo su contenido?')) return;
+    try {
+      const res = await fetch(`/api/forums?id=${forumId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error();
+      toast.success('Foro eliminado');
+      void fetchProjectForums();
+    } catch {
+      toast.error('No se pudo eliminar el foro');
+    }
+  };
 
   const handleDeleteProject = async () => {
     if (!confirm('¿Estás seguro de eliminar este proyecto guiado?')) return;
@@ -2069,6 +2130,30 @@ export function GuidedProjectAdminTabs({
                       </h3>
                       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {objective.resources.map((resource) => {
+                          if (resource.isLink) {
+                            return (
+                              <a
+                                key={resource.key}
+                                href={resource.key}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group flex items-center gap-3 rounded-lg border border-white/10 bg-[#061c37] p-3 text-left transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/5"
+                              >
+                                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]">
+                                  <Link2 className="size-5" />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm text-white/90 group-hover:text-white">
+                                    {resource.name}
+                                  </span>
+                                  <span className="text-xs text-white/40">
+                                    Clic para abrir
+                                  </span>
+                                </span>
+                              </a>
+                            );
+                          }
+
                           const ResourceIcon = getResourceIcon(resource.name);
                           return (
                             <button
@@ -2105,8 +2190,82 @@ export function GuidedProjectAdminTabs({
 
             {/* Foro */}
             {activeTab === 'foro' && (
-              <div className="rounded-2xl border border-[#22C4D3]/20 bg-[#061c37] p-8 text-center text-white/50">
-                El foro de este proyecto estará disponible pronto.
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-white">
+                    Foros del proyecto
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingForumId(null);
+                      setForumModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg bg-[#22C4D3] px-3.5 py-2 text-sm font-medium text-[#04101f] transition-colors hover:bg-[#22C4D3]/90"
+                  >
+                    <Plus className="size-4" /> Nuevo foro
+                  </button>
+                </div>
+
+                {loadingForums ? (
+                  <div className="flex justify-center py-12">
+                    <div className="size-8 animate-spin rounded-full border-b-2 border-[#22C4D3]" />
+                  </div>
+                ) : projectForums.length === 0 ? (
+                  <div className="rounded-2xl border border-[#22C4D3]/20 bg-[#061c37] p-8 text-center text-white/50">
+                    Aún no hay foros para este proyecto. Crea uno para que
+                    instructores y estudiantes puedan discutir.
+                  </div>
+                ) : (
+                  <>
+                    {/* Gestión de foros: el primero creado es el que se
+                        muestra abajo, igual que ven los estudiantes. Los
+                        demás quedan disponibles para reordenar/editar. */}
+                    <div className="flex flex-wrap gap-2">
+                      {projectForums.map((forum) => (
+                        <div
+                          key={forum.id}
+                          className="flex items-center gap-1 rounded-full border border-white/10 bg-[#061c37] py-1 pr-1 pl-3 text-xs text-white/80"
+                        >
+                          <span className="max-w-[180px] truncate">
+                            {forum.title}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingForumId(forum.id);
+                              setForumModalOpen(true);
+                            }}
+                            className="rounded-full p-1 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                            aria-label="Editar foro"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleDeleteForum(forum.id)}
+                            className="rounded-full p-1 text-red-400/70 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                            aria-label="Eliminar foro"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-2xl border border-[#22C4D3]/20 bg-[#061c37] p-4 sm:p-6">
+                      <CourseForum guidedProjectId={project.id} />
+                    </div>
+                  </>
+                )}
+
+                <ModalFormForum
+                  open={forumModalOpen}
+                  onOpenChange={setForumModalOpen}
+                  guidedProjectId={project.id}
+                  forumId={editingForumId}
+                  onSuccess={fetchProjectForums}
+                />
               </div>
             )}
 

@@ -32,7 +32,12 @@ interface ForumsModels {
     title: string;
     descripcion: string;
     coverImageKey: string;
-  };
+  } | null;
+  guidedProject: {
+    id: number;
+    title: string;
+    coverImageKey: string;
+  } | null;
   instructor: {
     id: string;
     name: string;
@@ -133,152 +138,169 @@ export const Zone = () => {
         lg:grid-cols-3
       "
     >
-      {forums.map((forum) => (
-        <div
-          key={forum.id}
-          className="
+      {forums.map((forum) => {
+        const ownerCoverImageKey =
+          forum.course?.coverImageKey ?? forum.guidedProject?.coverImageKey;
+        const ownerLabel =
+          forum.course?.title ?? forum.guidedProject?.title ?? 'Sin categoría';
+
+        return (
+          <div
+            key={forum.id}
+            className="
             group relative flex h-full flex-col overflow-hidden rounded-2xl
             border border-gray-800 bg-gradient-to-b from-gray-900 to-gray-950
             shadow-xl transition-all duration-300
             hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10
           "
-        >
-          {/* Imagen de portada con overlay */}
-          <div className="relative h-44 flex-shrink-0 overflow-hidden">
-            <Image
-              src={
-                forum.course.coverImageKey
-                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forum.course.coverImageKey}`
-                  : '/login-fondo.webp'
-              }
-              alt={forum.title}
-              className="
+          >
+            {/* Imagen de portada con overlay */}
+            <div className="relative h-44 flex-shrink-0 overflow-hidden">
+              <Image
+                src={
+                  ownerCoverImageKey
+                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${ownerCoverImageKey}`
+                    : '/login-fondo.webp'
+                }
+                alt={forum.title}
+                className="
                 object-cover transition-transform duration-500
                 group-hover:scale-110
               "
-              fill
-            />
-            <div
-              className="
+                fill
+              />
+              <div
+                className="
                 absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60
                 to-transparent
               "
-            />
+              />
 
-            {/* Badge del curso */}
-            <div className="absolute top-3 left-3">
-              <span
-                className="
+              {/* Badge del curso o proyecto guiado */}
+              <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                <span
+                  className="
                   rounded-full bg-primary/20 px-3 py-1 text-xs font-medium
                   text-primary backdrop-blur-sm
                 "
-              >
-                {forum.course.title}
-              </span>
+                >
+                  {ownerLabel}
+                </span>
+                {forum.guidedProject && (
+                  <span
+                    className="
+                    rounded-full bg-purple-500/20 px-2 py-1 text-[10px]
+                    font-medium text-purple-300 backdrop-blur-sm
+                  "
+                  >
+                    Proyecto guiado
+                  </span>
+                )}
+              </div>
+
+              {/* Título sobre la imagen */}
+              <div className="absolute right-4 bottom-3 left-4">
+                <h2 className="line-clamp-2 text-lg font-bold text-white">
+                  {forum.title}
+                </h2>
+              </div>
             </div>
 
-            {/* Título sobre la imagen */}
-            <div className="absolute right-4 bottom-3 left-4">
-              <h2 className="line-clamp-2 text-lg font-bold text-white">
-                {forum.title}
-              </h2>
-            </div>
-          </div>
+            {/* Contenido */}
+            <div className="flex flex-1 flex-col p-4">
+              {/* Descripción - altura fija */}
+              <p className="mb-4 line-clamp-2 h-10 text-sm text-gray-400">
+                {forum.description}
+              </p>
 
-          {/* Contenido */}
-          <div className="flex flex-1 flex-col p-4">
-            {/* Descripción - altura fija */}
-            <p className="mb-4 line-clamp-2 h-10 text-sm text-gray-400">
-              {forum.description}
-            </p>
-
-            {/* Meta info */}
-            <div
-              className="
+              {/* Meta info */}
+              <div
+                className="
                 mb-4 flex flex-wrap items-center gap-4 text-xs text-gray-500
               "
-            >
-              <div className="flex items-center gap-1.5">
-                <User className="size-3.5" />
-                <span
-                  className="max-w-[100px] truncate"
-                  title={forum.instructor?.name ?? 'Sin nombre'}
-                >
-                  {forum.instructor?.name ?? 'Sin nombre'}
-                </span>
+              >
+                <div className="flex items-center gap-1.5">
+                  <User className="size-3.5" />
+                  <span
+                    className="max-w-[100px] truncate"
+                    title={forum.instructor?.name ?? 'Sin nombre'}
+                  >
+                    {forum.instructor?.name ?? 'Sin nombre'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="size-3.5" />
+                  <span>{formatDate(forum.createdAt)}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <Calendar className="size-3.5" />
-                <span>{formatDate(forum.createdAt)}</span>
-              </div>
-            </div>
 
-            {/* Spacer para empujar acciones al fondo */}
-            <div className="flex-1" />
+              {/* Spacer para empujar acciones al fondo */}
+              <div className="flex-1" />
 
-            {/* Acciones */}
-            <div className="mt-auto flex items-center justify-between gap-2">
-              <Link
-                href={`/dashboard/super-admin/foro/${forum.id}`}
-                className="
+              {/* Acciones */}
+              <div className="mt-auto flex items-center justify-between gap-2">
+                <Link
+                  href={`/dashboard/super-admin/foro/${forum.id}`}
+                  className="
                   flex-1 rounded-xl bg-primary px-4 py-2.5 text-center text-sm
                   font-semibold text-black transition-all
                   hover:opacity-90
                 "
-              >
-                Ver foro
-              </Link>
+                >
+                  Ver foro
+                </Link>
 
-              {forum.user.id === user?.id && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <button
-                      className="
+                {forum.user.id === user?.id && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <button
+                        className="
                         rounded-xl border border-red-500/30 bg-red-500/10 p-2.5
                         text-red-400 transition-all
                         hover:bg-red-500/20
                       "
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="border-gray-800 bg-gray-900">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle className="text-white">
-                        ¿Estás seguro?
-                      </AlertDialogTitle>
-                      <AlertDialogDescription className="text-gray-400">
-                        Esto eliminará el foro{' '}
-                        <strong className="text-white">{forum.title}</strong> y
-                        todo su contenido asociado.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel
-                        className="
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="border-gray-800 bg-gray-900">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-white">
+                          ¿Estás seguro?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-gray-400">
+                          Esto eliminará el foro{' '}
+                          <strong className="text-white">{forum.title}</strong>{' '}
+                          y todo su contenido asociado.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          className="
                           border-gray-700 bg-gray-800 text-white
                           hover:bg-gray-700
                         "
-                      >
-                        Cancelar
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDelete(forum.id)}
-                        className="
+                        >
+                          Cancelar
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(forum.id)}
+                          className="
                           bg-red-600 text-white
                           hover:bg-red-700
                         "
-                      >
-                        Eliminar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+                        >
+                          Eliminar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

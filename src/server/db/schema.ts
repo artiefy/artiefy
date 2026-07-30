@@ -2,6 +2,7 @@ import { relations, sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
+  check,
   date,
   decimal,
   index,
@@ -570,21 +571,71 @@ export const userLessonsProgress = pgTable(
 );
 
 //tabla de foros
-export const forums = pgTable('forums', {
-  id: serial('id').primaryKey(),
-  courseId: integer('course_id')
-    .references(() => courses.id)
-    .notNull(), // Relación con el curso
-  title: varchar('title', { length: 255 }).notNull(), // Título del foro (por ejemplo, "Discusiones del curso X")
-  userId: text('user_id')
-    .references(() => users.id)
-    .notNull(), // El usuario que crea el foro
-  description: text('description'), // Descripción opcional del foro
-  coverImageKey: text('cover_image_key'), // NUEVO: para imagen
-  documentKey: text('document_key'), // NUEVO: para archivo PDF, Word, etc.
-  createdAt: timestamp('created_at').defaultNow().notNull(), // Fecha de creación
-  updatedAt: timestamp('updated_at').defaultNow().notNull(), // Fecha de última actualización
-});
+// Tabla de foros
+export const forums = pgTable(
+  'forums',
+  {
+    id: serial('id').primaryKey(),
+
+    // Foro asociado a un curso.
+    // Es nullable porque también puede pertenecer a un proyecto guiado.
+    courseId: integer('course_id').references(() => courses.id, {
+      onDelete: 'cascade',
+    }),
+
+    // Foro asociado a un proyecto guiado.
+    // Es nullable porque también puede pertenecer a un curso.
+    guidedProjectId: integer('guided_project_id').references(
+      () => guidedProjects.id,
+      {
+        onDelete: 'cascade',
+      }
+    ),
+
+    title: varchar('title', { length: 255 }).notNull(),
+
+    // Usuario que creó el foro
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+
+    description: text('description'),
+
+    // Archivos opcionales
+    coverImageKey: text('cover_image_key'),
+    documentKey: text('document_key'),
+
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .notNull()
+      .$onUpdateFn(() => new Date()),
+  },
+  (table) => [
+    // Índices para consultar los foros por propietario
+    index('forums_course_id_idx').on(table.courseId),
+
+    index('forums_guided_project_id_idx').on(table.guidedProjectId),
+
+    // El foro debe pertenecer exactamente a uno:
+    // curso O proyecto guiado
+    check(
+      'forums_exactly_one_owner_check',
+      sql`
+        (
+          ${table.courseId} IS NOT NULL
+          AND ${table.guidedProjectId} IS NULL
+        )
+        OR
+        (
+          ${table.courseId} IS NULL
+          AND ${table.guidedProjectId} IS NOT NULL
+        )
+      `
+    ),
+  ]
+);
 
 //tabla de posts
 export const posts = pgTable('posts', {
@@ -874,6 +925,7 @@ export const materiasRelations = relations(materias, ({ one }) => ({
 export const coursesRelations = relations(courses, ({ many, one }) => ({
   lessons: many(lessons),
   enrollments: many(enrollments),
+  forums: many(forums),
   creator: one(users, {
     fields: [courses.creatorId],
     references: [users.id],
@@ -1193,15 +1245,8 @@ export const userActivitiesProgressRelations = relations(
   })
 );
 
-//relaciones de foros
-export const forumRelations = relations(forums, ({ one, many }) => ({
-  course: one(courses, {
-    fields: [forums.courseId],
-    references: [courses.id],
-  }), // Un foro está asociado a un solo curso (relación uno a uno)
-  posts: many(posts), // Un foro puede tener muchos posts (comentarios o temas de discusión)
-}));
-
+// Relaciones de foros: forumRelations vive más abajo (tras la declaración de
+// guidedProjects) porque necesita referenciar esa tabla.
 export const postRelations = relations(posts, ({ one }) => ({
   forum: one(forums, {
     fields: [posts.forumId],
@@ -1211,6 +1256,28 @@ export const postRelations = relations(posts, ({ one }) => ({
     fields: [posts.userId],
     references: [users.id],
   }), // Un post tiene un usuario creador
+}));
+
+export const postRepliesRelations = relations(postReplies, ({ one }) => ({
+  post: one(posts, {
+    fields: [postReplies.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postReplies.userId],
+    references: [users.id],
+  }),
+}));
+
+export const postLikesRelations = relations(postLikes, ({ one }) => ({
+  post: one(posts, {
+    fields: [postLikes.postId],
+    references: [posts.id],
+  }),
+  user: one(users, {
+    fields: [postLikes.userId],
+    references: [users.id],
+  }),
 }));
 
 export const userTimeTracking = pgTable('user_time_tracking', {
@@ -2565,6 +2632,7 @@ export const guidedProjectsRelations = relations(
     objectives: many(guidedObjectives),
     enrollments: many(guidedEnrollments),
     instructors: many(guidedProjectInstructors),
+    forums: many(forums),
   })
 );
 
@@ -2663,3 +2731,22 @@ export const guidedActivitySubmissionsRelations = relations(
     }),
   })
 );
+
+// Un foro pertenece exactamente a un curso O a un proyecto guiado
+// (forums_exactly_one_owner_check en la DB) — solo uno de los dos
+// campos de abajo estará resuelto según el dueño real del foro.
+export const forumRelations = relations(forums, ({ one, many }) => ({
+  course: one(courses, {
+    fields: [forums.courseId],
+    references: [courses.id],
+  }),
+  guidedProject: one(guidedProjects, {
+    fields: [forums.guidedProjectId],
+    references: [guidedProjects.id],
+  }),
+  creator: one(users, {
+    fields: [forums.userId],
+    references: [users.id],
+  }),
+  posts: many(posts),
+}));

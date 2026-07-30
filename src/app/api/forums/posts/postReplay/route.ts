@@ -263,11 +263,15 @@ export async function POST(request: NextRequest) {
       }
       console.log('[FORO][REPLY] 🧩 Foro obtenido:', foro);
 
-      const enrollmentResults = await db
-        .select({ userId: enrollments.userId })
-        .from(enrollments)
-        .where(eq(enrollments.courseId, foro.courseId))
-        .execute();
+      // Los foros de proyecto guiado no tienen curso asociado, así que no
+      // hay inscripciones de curso que notificar por este camino.
+      const enrollmentResults = foro.courseId
+        ? await db
+            .select({ userId: enrollments.userId })
+            .from(enrollments)
+            .where(eq(enrollments.courseId, foro.courseId))
+            .execute()
+        : [];
 
       const enrolledUserIds = enrollmentResults.map((e) => e.userId);
       const usersResult = await db

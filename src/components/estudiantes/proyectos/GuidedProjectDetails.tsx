@@ -46,6 +46,7 @@ import { IoPlayOutline } from 'react-icons/io5';
 import { MdErrorOutline } from 'react-icons/md';
 import { toast } from 'sonner';
 
+import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
 import {
   GuidedObjectivesAccordion,
   GuidedProjectActivities,
@@ -1425,9 +1426,7 @@ export function GuidedProjectDetails({
                     hidden={activePill !== 'foro'}
                     tabIndex={0}
                   >
-                    {renderComingSoon(
-                      'El foro de este proyecto estará disponible pronto.'
-                    )}
+                    <CourseForum guidedProjectId={project.id} />
                   </div>
                 </div>
               </div>

@@ -39,7 +39,7 @@ export default function page() {
           <BreadcrumbSeparator />
         </BreadcrumbList>
       </Breadcrumb>
-      <ForumHome />
+      <ForumHome allowGuidedProjects={false} />
     </>
   );
 }

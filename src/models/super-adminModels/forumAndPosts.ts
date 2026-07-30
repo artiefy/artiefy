@@ -1,7 +1,13 @@
 import { desc, eq } from 'drizzle-orm';
 
 import { db } from '../../server/db/index';
-import { courses, forums, posts, users } from '../../server/db/schema';
+import {
+  courses,
+  forums,
+  guidedProjects,
+  posts,
+  users,
+} from '../../server/db/schema';
 
 interface Post {
   id: number;
@@ -25,7 +31,12 @@ interface Foru {
     descripcion: string | null;
     instructor: string | null;
     coverImageKey: string | null;
-  };
+  } | null;
+  guidedProjectId: {
+    id: number;
+    title: string | null;
+    coverImageKey: string | null;
+  } | null;
   title: string;
   description: string;
   userId: {
@@ -57,6 +68,7 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
       .select({
         id: forums.id,
         courseId: forums.courseId,
+        guidedProjectId: forums.guidedProjectId,
         title: forums.title,
         description: forums.description,
         userId: forums.userId,
@@ -65,9 +77,12 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
         courseInstructor: courses.instructor,
         userName: users.name,
         courseCoverImageKey: courses.coverImageKey,
+        guidedProjectTitle: guidedProjects.title,
+        guidedProjectCoverImageKey: guidedProjects.coverImageKey,
       })
       .from(forums)
       .leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
+      .leftJoin(guidedProjects, eq(forums.guidedProjectId, guidedProjects.id))
       .leftJoin(users, eq(forums.userId, users.id)) // Unir con la tabla de usuarios
       .where(eq(forums.id, forumId));
 
@@ -80,13 +95,22 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
 
     return {
       id: forum.id,
-      courseId: {
-        id: forum.courseId,
-        title: forum.courseTitle,
-        descripcion: forum.courseDescription,
-        instructor: forum.courseInstructor,
-        coverImageKey: forum.courseCoverImageKey,
-      },
+      courseId: forum.courseId
+        ? {
+            id: forum.courseId,
+            title: forum.courseTitle,
+            descripcion: forum.courseDescription,
+            instructor: forum.courseInstructor,
+            coverImageKey: forum.courseCoverImageKey,
+          }
+        : null,
+      guidedProjectId: forum.guidedProjectId
+        ? {
+            id: forum.guidedProjectId,
+            title: forum.guidedProjectTitle,
+            coverImageKey: forum.guidedProjectCoverImageKey,
+          }
+        : null,
       userId: {
         id: forum.userId,
         name: forum.userName ?? '',
