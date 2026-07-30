@@ -396,6 +396,61 @@ body.no-chrome {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Typing indicator for the agent chat. The colour comes from --dot-color,
+   which each agent sets inline, so the dots match whoever is answering. */
+.dots-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dots-container .dot {
+  height: 8px;
+  width: 8px;
+  border-radius: 9999px;
+  background-color: var(--dot-color, #22c4d3);
+  animation: agent-dot-pulse 1.4s infinite ease-in-out;
+}
+
+.dots-container .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.dots-container .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes agent-dot-pulse {
+  0%,
+  100% {
+    transform: scale(0.8);
+    box-shadow: 0 0 0 0
+      color-mix(in srgb, var(--dot-color, #22c4d3) 55%, transparent);
+  }
+
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 7px
+      color-mix(in srgb, var(--dot-color, #22c4d3) 0%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dots-container .dot {
+    animation: agent-dot-fade 1.4s infinite ease-in-out;
+  }
+
+  @keyframes agent-dot-fade {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+}
+
 /* Thin scrollbar for the agent chat panels. */
 .scrollbar-minimal {
   scrollbar-width: thin;

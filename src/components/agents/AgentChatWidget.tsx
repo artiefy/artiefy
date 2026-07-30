@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { type CSSProperties, useMemo, useState } from 'react';
 
 import {
   ArrowLeftRight,
@@ -599,7 +599,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           )}
 
           {/* Messages / empty state */}
-          {messages.length === 0 ? (
+          {messages.length === 0 && !isSending ? (
             <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
               <div
                 className="mb-4 flex size-16 items-center justify-center rounded-2xl"
@@ -661,6 +661,38 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                   </div>
                 );
               })}
+
+              {isSending && (
+                <div className="flex justify-start">
+                  <div
+                    className="holo-glass rounded-2xl rounded-bl-sm px-4 py-3"
+                    style={{ borderColor: `${agent.color}26` }}
+                  >
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <AgentIcon
+                        className="size-3"
+                        style={{ color: agent.color }}
+                      />
+                      <span
+                        className="text-[10px] font-semibold"
+                        style={{ color: agent.color }}
+                      >
+                        {agent.name}
+                      </span>
+                    </div>
+                    <div
+                      className="dots-container"
+                      style={{ '--dot-color': agent.color } as CSSProperties}
+                      aria-live="polite"
+                      aria-label={`${agent.name} está escribiendo`}
+                    >
+                      <span className="dot" />
+                      <span className="dot" />
+                      <span className="dot" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

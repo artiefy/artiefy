@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { auth } from '@clerk/nextjs/server';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -116,6 +117,12 @@ function isUpdateCarteraBody(v: unknown): v is UpdateCarteraBody {
 }
 
 export async function GET(req: Request) {
+  const { userId: authUserId, sessionClaims } = await auth();
+  const role = sessionClaims?.metadata?.role;
+  if (!authUserId || (role !== 'admin' && role !== 'super-admin')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const url = new URL(req.url);
   const programId = url.searchParams.get('programId');
   const userId = url.searchParams.get('userId');
@@ -361,6 +368,12 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const { userId: authUserId, sessionClaims } = await auth();
+  const role = sessionClaims?.metadata?.role;
+  if (!authUserId || (role !== 'admin' && role !== 'super-admin')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const contentType = req.headers.get('content-type') ?? '';
 

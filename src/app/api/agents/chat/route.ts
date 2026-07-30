@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 
+import { env } from '~/env';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
 
 interface AgentChatRequestBody {
@@ -11,9 +12,17 @@ interface AgentChatRequestBody {
   activityId?: unknown;
 }
 
-const WEBHOOK_URL = process.env.N8N_AGENTS_WEBHOOK_URL;
-const AUTH_HEADER = process.env.N8N_AGENTS_AUTH_HEADER;
-const AUTH_VALUE = process.env.N8N_AGENTS_AUTH_VALUE;
+/**
+ * Read at request time, never at module scope, so a value added to the
+ * environment after the build is picked up without freezing as `undefined`.
+ */
+function readAgentsConfig() {
+  return {
+    webhookUrl: env.N8N_AGENTS_WEBHOOK_URL,
+    authHeader: env.N8N_AGENTS_AUTH_HEADER,
+    authValue: env.N8N_AGENTS_AUTH_VALUE,
+  };
+}
 
 /**
  * Builds the plain-text context block handed to the Coach agent. The agent has
@@ -73,6 +82,12 @@ function buildProjectContext(
 }
 
 export async function POST(request: NextRequest) {
+  const {
+    webhookUrl: WEBHOOK_URL,
+    authHeader: AUTH_HEADER,
+    authValue: AUTH_VALUE,
+  } = readAgentsConfig();
+
   if (!WEBHOOK_URL || !AUTH_HEADER || !AUTH_VALUE) {
     return NextResponse.json(
       {

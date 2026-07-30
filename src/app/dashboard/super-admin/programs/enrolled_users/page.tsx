@@ -107,9 +107,7 @@ const studentSchema = z
       .transform((v) => {
         if (v == null) return undefined;
         const normalized = v.trim().toLowerCase() as
-          | 'activo'
-          | 'inactivo'
-          | 'no verificado';
+          'activo' | 'inactivo' | 'no verificado';
         if (!['activo', 'inactivo', 'no verificado'].includes(normalized))
           return undefined;
         return normalized;
@@ -200,12 +198,7 @@ interface Student {
   inscripcionOrigen?: 'formulario' | 'artiefy';
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
   enrollmentStatus?:
-    | 'Nuevo'
-    | 'Estudiante'
-    | 'Graduando'
-    | 'Egresado'
-    | 'Aplaza'
-    | 'Retirado';
+    'Nuevo' | 'Estudiante' | 'Graduando' | 'Egresado' | 'Aplaza' | 'Retirado';
   userInscriptionDetails?: Record<string, unknown>;
 }
 
@@ -536,18 +529,18 @@ const allColumns: Column[] = [
   {
     id: 'programa',
     label: 'Programa (texto)',
-    defaultVisible: false,
+    defaultVisible: true,
     type: 'text',
   },
   {
     id: 'fechaInicio',
     label: 'Fecha inicio',
-    defaultVisible: false,
+    defaultVisible: true,
     type: 'date',
   },
-  { id: 'comercial', label: 'Comercial', defaultVisible: false, type: 'text' },
-  { id: 'sede', label: 'Sede', defaultVisible: false, type: 'text' },
-  { id: 'horario', label: 'Horario', defaultVisible: false, type: 'text' },
+  { id: 'comercial', label: 'Comercial', defaultVisible: true, type: 'text' },
+  { id: 'sede', label: 'Sede', defaultVisible: true, type: 'text' },
+  { id: 'horario', label: 'Horario', defaultVisible: true, type: 'text' },
   {
     id: 'numeroCuotas',
     label: 'N° cuotas',
@@ -2677,12 +2670,9 @@ export default function EnrolledUsersPage() {
             nivelNombre: s.nivelNombre ?? 'No definido',
             planType: s.planType ?? undefined,
             inscripcionOrigen: (s.inscripcionOrigen ?? 'artiefy') as
-              | 'formulario'
-              | 'artiefy',
+              'formulario' | 'artiefy',
             carteraStatus: (s.carteraStatus ?? computedByDate) as
-              | 'activo'
-              | 'inactivo'
-              | 'no verificado',
+              'activo' | 'inactivo' | 'no verificado',
             // Aseguramos que subscriptionEndDate sea string o null (no undefined)
             subscriptionEndDate:
               typeof s.subscriptionEndDate === 'string' &&
@@ -4522,11 +4512,8 @@ export default function EnrolledUsersPage() {
                             });
 
                             let etiqueta:
-                              | 'Al día'
-                              | 'En cartera'
-                              | 'No verificado' = esAlDiaBase
-                              ? 'Al día'
-                              : 'En cartera';
+                              'Al día' | 'En cartera' | 'No verificado' =
+                              esAlDiaBase ? 'Al día' : 'En cartera';
 
                             if (pagosMes.length > 0) {
                               const ultimo = [...pagosMes].sort(
