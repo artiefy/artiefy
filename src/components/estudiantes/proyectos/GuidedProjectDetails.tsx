@@ -1197,15 +1197,8 @@ export function GuidedProjectDetails({
           style={{
             backgroundColor: '#010b17',
             borderColor: '#061c37cc',
-            backgroundImage: coverImageUrl
-              ? `url(${coverImageUrl})`
-              : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center center',
           }}
         >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80" />
-
           <div className="relative z-10 space-y-6">
             <div
               className={`grid grid-cols-1 gap-8 ${isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'}`}
@@ -1218,7 +1211,7 @@ export function GuidedProjectDetails({
                     Proyecto Guiado
                   </span>
                 </div>
-                <h1 className="font-display max-w-full text-2xl leading-tight font-bold text-balance break-words text-foreground sm:text-3xl">
+                <h1 className="font-display max-w-full text-lg leading-snug font-bold text-balance break-words text-foreground sm:text-2xl">
                   {project.title}
                 </h1>
                 {(project.subtitle ?? project.description) && (

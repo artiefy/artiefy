@@ -502,9 +502,10 @@ body.no-chrome {
     bottom: calc(env(safe-area-inset-bottom, 0px) + 10.75rem);
   }
 
-  /* Agent (Artie) chat panel: keep the whole panel above the bottom bar. */
-  body.has-bottom-nav .js-agent-chat-panel {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 6rem);
+  /* Agent (Artie) chat panel: on phones it goes full screen, so it has to sit
+     above the fixed bottom bar instead of being lifted around it. */
+  .js-agent-chat-panel {
+    z-index: 2147483001;
   }
 }
 

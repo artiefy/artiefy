@@ -1,26 +1,43 @@
 'use client';
 
-import { type CSSProperties, useMemo, useState } from 'react';
+import {
+  type CSSProperties,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import Link from 'next/link';
 
 import {
+  AlignLeft,
   ArrowLeftRight,
   Brain,
   ChevronDown,
   ChevronRight,
   CircleCheck,
   FolderKanban,
-  History,
   type LucideIcon,
   Play,
+  Plus,
   Rocket,
   Send,
   Sparkles,
   Target,
+  Trash2,
   X,
 } from 'lucide-react';
 
 /** Artiefy brand cyan. The floating launcher keeps it for every agent. */
 const LAUNCHER_COLOR = '#22C4D3';
+
+/** Single shared quick action shown above the composer for every agent. */
+const QUICK_ACTIONS = ['Hablar con un asesor'];
+
+/** Chat history lives in the browser: the chat API stores no conversations. */
+const HISTORY_STORAGE_KEY = 'artiefy.agent-chat.history';
+const MAX_STORED_CONVERSATIONS = 20;
 
 export type AgentId = 'artie' | 'tutor' | 'coach';
 
@@ -32,7 +49,6 @@ interface AgentDefinition {
   color: string;
   icon: LucideIcon;
   emptyState: string;
-  chips: string[];
 }
 
 const AGENTS: Record<AgentId, AgentDefinition> = {
@@ -45,7 +61,6 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Sparkles,
     emptyState:
       'Tu guía principal en Artiefy. Pregúntame sobre cursos, proyectos, planes o cómo moverte por la plataforma.',
-    chips: ['Cursos', 'Proyectos', 'Planes', 'Hablar con un asesor'],
   },
   tutor: {
     id: 'tutor',
@@ -56,7 +71,6 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Brain,
     emptyState:
       'Busco dentro del material de todos los cursos de Artiefy para responderte con fuentes reales.',
-    chips: ['¿Qué cursos hay de IA?', '¿Qué temas cubre?', 'Recomiéndame uno'],
   },
   coach: {
     id: 'coach',
@@ -67,7 +81,6 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
     icon: Rocket,
     emptyState:
       'Mentor de tus proyectos guiados. Te acompaño paso a paso en la actividad que tengas activa.',
-    chips: ['¿Por dónde empiezo?', 'Estoy trabado', '¿Qué sigue?'],
   },
 };
 
@@ -102,10 +115,69 @@ interface ChatMessage {
   time: string;
 }
 
+type AgentQuotaTier = 'anon' | 'free' | 'premium';
+
+interface AgentQuotaPayload {
+  tier: AgentQuotaTier;
+  limit: number;
+  remaining: number;
+  resetsDaily: boolean;
+}
+
+interface AgentQuotaNotice {
+  title: string;
+  body: string;
+  primary: { label: string; href: string } | null;
+  secondary: { label: string; href: string } | null;
+}
+
+/** Friendly, sales-forward copy shown when an allowance runs out. */
+function buildQuotaNotice(quota: AgentQuotaPayload): AgentQuotaNotice {
+  if (quota.tier === 'premium') {
+    return {
+      title: 'Llegaste a tus mensajes de hoy',
+      body: `Tu plan incluye ${quota.limit} mensajes diarios con nuestros agentes. El cupo se renueva mañana y seguimos donde lo dejamos.`,
+      primary: null,
+      secondary: null,
+    };
+  }
+
+  if (quota.tier === 'free') {
+    return {
+      title: 'Se te acabaron los mensajes de prueba',
+      body: `Aprovechaste los ${quota.limit} mensajes de tu prueba gratis, y se nota que le estás sacando jugo. Con Premium tienes 50 mensajes al día con Artie, el Tutor y el Coach, más todos los cursos, para que nada te frene.`,
+      primary: { label: 'Quiero Premium', href: '/planes' },
+      secondary: null,
+    };
+  }
+
+  return {
+    title: 'Se te acabaron los mensajes gratis',
+    body: `Ya usaste los ${quota.limit} mensajes de cortesía. Crea tu cuenta y estrena 10 días de Premium, o pásate a Premium y conversa hasta 50 veces al día con nuestros agentes.`,
+    primary: { label: 'Quiero Premium', href: '/planes' },
+    secondary: { label: 'Crear cuenta gratis', href: '/sign-up' },
+  };
+}
+
+interface StoredConversation {
+  id: string;
+  agent: AgentId;
+  title: string;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
 function formatTime(date: Date) {
   return date.toLocaleTimeString('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
+  });
+}
+
+function formatDay(timestamp: number) {
+  return new Date(timestamp).toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: 'short',
   });
 }
 
@@ -121,9 +193,87 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<StoredConversation[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [quotaNotice, setQuotaNotice] = useState<AgentQuotaNotice | null>(null);
+  const hasLoadedHistory = useRef(false);
 
   const agent = AGENTS[agentId];
   const AgentIcon = agent.icon;
+
+  // Restore the locally stored conversations once, on mount.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StoredConversation[];
+      if (Array.isArray(parsed)) setHistory(parsed);
+    } catch {
+      // Corrupt or unavailable storage: start with an empty history.
+    }
+  }, []);
+
+  // Keep the open conversation mirrored into the history list. Only exchanges
+  // that got an answer are stored, so a blocked message leaves nothing behind.
+  useEffect(() => {
+    if (!conversationId) return;
+    if (!messages.some((message) => message.role === 'agent')) return;
+
+    const firstUserMessage = messages.find(
+      (message) => message.role === 'user'
+    );
+    const entry: StoredConversation = {
+      id: conversationId,
+      agent: agentId,
+      title: firstUserMessage?.text.slice(0, 60) ?? 'Nueva conversación',
+      updatedAt: Date.now(),
+      messages,
+    };
+
+    setHistory((prev) =>
+      [entry, ...prev.filter((item) => item.id !== conversationId)].slice(
+        0,
+        MAX_STORED_CONVERSATIONS
+      )
+    );
+  }, [messages, conversationId, agentId]);
+
+  // Persist on every change except the very first render, which would
+  // overwrite stored history before the load effect above has run.
+  useEffect(() => {
+    if (!hasLoadedHistory.current) {
+      hasLoadedHistory.current = true;
+      return;
+    }
+    try {
+      window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch {
+      // Storage full or blocked: history stays in memory for this session.
+    }
+  }, [history]);
+
+  const startNewConversation = () => {
+    setMessages([]);
+    setConversationId(null);
+    setDraft('');
+    setIsHistoryOpen(false);
+  };
+
+  const openConversation = (conversation: StoredConversation) => {
+    setAgentId(conversation.agent);
+    setMessages(conversation.messages);
+    setConversationId(conversation.id);
+    setIsHistoryOpen(false);
+  };
+
+  const deleteConversation = (id: string) => {
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+    if (conversationId === id) {
+      setMessages([]);
+      setConversationId(null);
+    }
+  };
 
   const { totalActivities, completedActivities, currentActivity } =
     useMemo(() => {
@@ -178,13 +328,19 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       objective.id === currentActivity?.objective.id);
 
   const sendMessage = async (text: string) => {
-    if (!text || isSending) return;
+    if (!text || isSending || quotaNotice) return;
 
     const now = new Date();
+    const userMessageId = `${now.getTime()}-user`;
+
+    if (!conversationId) {
+      setConversationId(`conv-${now.getTime()}`);
+    }
+
     setMessages((prev) => [
       ...prev,
       {
-        id: `${now.getTime()}-user`,
+        id: userMessageId,
         role: 'user',
         agent: agentId,
         text,
@@ -209,7 +365,20 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       const data = (await response.json()) as {
         reply?: string;
         error?: string;
+        quota?: AgentQuotaPayload;
       };
+
+      // Allowance exhausted: drop the optimistic message — it never reached
+      // the agent — and show the upgrade notice instead of a reply.
+      if (response.status === 429 && data.quota) {
+        setMessages((prev) =>
+          prev.filter((message) => message.id !== userMessageId)
+        );
+        setDraft(text);
+        setQuotaNotice(buildQuotaNotice(data.quota));
+        return;
+      }
+
       const replyTime = new Date();
 
       setMessages((prev) => [
@@ -264,13 +433,16 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   return (
     <div
       className="
-        js-agent-chat-panel fixed right-3 bottom-6 left-3 z-60 flex flex-col
-        md:right-6 md:left-auto md:w-[440px] md:max-w-[calc(100vw-48px)]
+        js-agent-chat-panel fixed inset-0 z-60 flex h-dvh flex-col
+        md:inset-auto md:right-6 md:bottom-6 md:h-[min(70dvh,620px)]
+        md:w-[440px] md:max-w-[calc(100vw-48px)]
       "
-      style={{ height: 'min(70dvh, 620px)', borderRadius: 20 }}
     >
       <div
-        className="holo-glass relative flex h-full flex-col overflow-hidden rounded-[20px]"
+        className="
+          holo-glass relative flex h-full flex-col overflow-hidden rounded-none
+          md:rounded-[20px]
+        "
         style={{
           boxShadow: `rgba(4, 6, 11, 0.6) 0px 8px 40px, ${agent.color} 0px 0px 1px`,
         }}
@@ -284,49 +456,67 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               'linear-gradient(135deg, rgba(34, 196, 211, 0.06), rgba(124, 59, 237, 0.03), transparent)',
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex size-10 items-center justify-center rounded-xl"
-                style={{
-                  background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}14)`,
-                }}
-              >
-                <AgentIcon className="size-5" style={{ color: agent.color }} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {agent.name}
-                  </h3>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                    style={{
-                      backgroundColor: `${agent.color}1f`,
-                      color: agent.color,
-                    }}
-                  >
-                    {agent.badge}
-                  </span>
-                  <span className="size-2 animate-pulse rounded-full bg-green-500" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Historial de chats"
+              aria-expanded={isHistoryOpen}
+              onClick={() => {
+                setIsHistoryOpen((prev) => !prev);
+                setIsSwitcherOpen(false);
+              }}
+              className="
+                flex size-9 shrink-0 items-center justify-center rounded-full
+                border transition-colors hover:bg-white/[0.08]
+              "
+              style={{
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <AlignLeft className="size-4 text-muted-foreground" />
+            </button>
+
+            <div className="flex min-w-0 flex-1 flex-col items-center">
+              <div className="flex items-center gap-2">
+                <h3 className="truncate text-sm font-semibold text-foreground">
+                  {agent.name}
+                </h3>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${agent.color}1f`,
+                    color: agent.color,
+                  }}
+                >
+                  {agent.badge}
+                </span>
+                <span className="size-2 animate-pulse rounded-full bg-green-500" />
+                <div
+                  className="flex size-8 shrink-0 items-center justify-center rounded-xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}14)`,
+                  }}
+                >
+                  <AgentIcon
+                    className="size-4"
+                    style={{ color: agent.color }}
+                  />
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Guía de Artiefy
-                </p>
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Guía de Artiefy
+              </p>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-label="Historial de chats"
-                className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-              >
-                <History className="size-4 text-muted-foreground" />
-              </button>
+
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 aria-label="Cambiar agente"
-                onClick={() => setIsSwitcherOpen((prev) => !prev)}
+                onClick={() => {
+                  setIsSwitcherOpen((prev) => !prev);
+                  setIsHistoryOpen(false);
+                }}
                 className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
               >
                 <ArrowLeftRight className="size-4 text-muted-foreground" />
@@ -342,6 +532,96 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
             </div>
           </div>
         </div>
+
+        {/* Chat history */}
+        {isHistoryOpen && (
+          <div className="holo-glass absolute inset-0 z-[72] flex flex-col">
+            <div
+              className="flex items-center justify-between border-b px-4 py-3"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
+            >
+              <h3 className="text-sm font-semibold text-foreground">
+                Historial de chats
+              </h3>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-label="Nueva conversación"
+                  onClick={startNewConversation}
+                  className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+                >
+                  <Plus className="size-4 text-muted-foreground" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Cerrar historial"
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+                >
+                  <X className="size-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            <div className="scrollbar-minimal flex-1 overflow-y-auto p-3">
+              {history.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  Todavía no tienes conversaciones guardadas. Escríbele a un
+                  agente y aparecerán aquí.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {history.map((conversation) => {
+                    const conversationAgent = AGENTS[conversation.agent];
+                    const ConversationIcon = conversationAgent.icon;
+
+                    return (
+                      <li
+                        key={conversation.id}
+                        className="flex items-center gap-1 rounded-xl px-1 transition-colors hover:bg-white/[0.04]"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openConversation(conversation)}
+                          className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5 text-left"
+                        >
+                          <div
+                            className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                            style={{
+                              background: `${conversationAgent.color}26`,
+                            }}
+                          >
+                            <ConversationIcon
+                              className="size-4"
+                              style={{ color: conversationAgent.color }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-foreground">
+                              {conversation.title}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {conversationAgent.name} ·{' '}
+                              {formatDay(conversation.updatedAt)}
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Eliminar ${conversation.title}`}
+                          onClick={() => deleteConversation(conversation.id)}
+                          className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+                        >
+                          <Trash2 className="size-3.5 text-muted-foreground" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Agent switcher */}
         {isSwitcherOpen && (
@@ -702,61 +982,117 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           )}
         </div>
 
-        {/* Composer */}
-        <div
-          className="space-y-2.5 border-t p-3"
-          style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
-        >
-          <div className="scrollbar-minimal flex gap-2 overflow-x-auto px-1 pb-1">
-            {agent.chips.map((chip) => (
+        {/* Upgrade notice: replaces the composer once the allowance is spent */}
+        {quotaNotice ? (
+          <div className="p-3">
+            <div
+              className="rounded-2xl border p-4 text-center"
+              style={{
+                borderColor: `${LAUNCHER_COLOR}40`,
+                background: `linear-gradient(135deg, ${LAUNCHER_COLOR}1f, ${LAUNCHER_COLOR}08)`,
+              }}
+            >
+              <div
+                className="mx-auto mb-3 flex size-11 items-center justify-center rounded-2xl"
+                style={{ background: `${LAUNCHER_COLOR}26` }}
+              >
+                <Sparkles
+                  className="size-5"
+                  style={{ color: LAUNCHER_COLOR }}
+                />
+              </div>
+              <h4 className="mb-1.5 text-sm font-semibold text-foreground">
+                {quotaNotice.title}
+              </h4>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                {quotaNotice.body}
+              </p>
+              {quotaNotice.primary && (
+                <Link
+                  href={quotaNotice.primary.href}
+                  className="
+                    flex w-full items-center justify-center rounded-xl px-4
+                    py-2.5 text-sm font-semibold transition-transform
+                    hover:scale-[1.02]
+                  "
+                  style={{
+                    backgroundColor: LAUNCHER_COLOR,
+                    color: 'rgb(8, 12, 22)',
+                  }}
+                >
+                  {quotaNotice.primary.label}
+                </Link>
+              )}
+              {quotaNotice.secondary && (
+                <Link
+                  href={quotaNotice.secondary.href}
+                  className="
+                    mt-2.5 block text-xs font-medium text-muted-foreground
+                    underline-offset-4 hover:underline
+                  "
+                >
+                  {quotaNotice.secondary.label}
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Composer */
+          <div className="space-y-2.5 p-3">
+            <div className="scrollbar-minimal flex gap-2 overflow-x-auto px-1 pb-1">
+              {QUICK_ACTIONS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => void sendMessage(chip)}
+                  disabled={isSending}
+                  className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:scale-[1.03] disabled:opacity-40"
+                  style={{
+                    borderColor: `${agent.color}33`,
+                    color: agent.color,
+                    backgroundColor: `${agent.color}14`,
+                  }}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    void sendMessage(draft.trim());
+                  }
+                }}
+                placeholder={
+                  isSending
+                    ? `${agent.name} está pensando...`
+                    : 'Escribe tu mensaje...'
+                }
+                aria-label="Mensaje de chat"
+                className="flex-1 rounded-xl border bg-holo-surface2/60 px-4 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}
+              />
               <button
-                key={chip}
                 type="button"
-                onClick={() => void sendMessage(chip)}
-                disabled={isSending}
-                className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:scale-[1.03] disabled:opacity-40"
+                onClick={() => void sendMessage(draft.trim())}
+                disabled={!draft.trim() || isSending}
+                aria-label="Enviar mensaje"
+                className="flex size-10 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{
-                  borderColor: `${agent.color}33`,
-                  color: agent.color,
-                  backgroundColor: `${agent.color}14`,
+                  backgroundColor: agent.color,
+                  color: 'rgb(8, 12, 22)',
                 }}
               >
-                {chip}
+                <Send className="size-4" />
               </button>
-            ))}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  void sendMessage(draft.trim());
-                }
-              }}
-              placeholder={
-                isSending
-                  ? `${agent.name} está pensando...`
-                  : 'Escribe tu mensaje...'
-              }
-              aria-label="Mensaje de chat"
-              className="flex-1 rounded-xl border bg-holo-surface2/60 px-4 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none"
-              style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}
-            />
-            <button
-              type="button"
-              onClick={() => void sendMessage(draft.trim())}
-              disabled={!draft.trim() || isSending}
-              aria-label="Enviar mensaje"
-              className="flex size-10 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ backgroundColor: agent.color, color: 'rgb(8, 12, 22)' }}
-            >
-              <Send className="size-4" />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
