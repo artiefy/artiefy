@@ -417,6 +417,52 @@ export function GuidedProjectDetails({
     () => objectives.reduce((acc, o) => acc + (o.activities?.length ?? 0), 0),
     [objectives]
   );
+
+  // Session resources are stored as two comma-separated, index-aligned columns:
+  // `resourceKey` holds an S3 key or a full URL, `resourceNames` its label.
+  const resourcesByObjective = useMemo(() => {
+    const buildS3Resource = (key: string) => {
+      const trimmed = key.trim();
+      if (!trimmed) return undefined;
+      const normalized = trimmed.toLowerCase();
+      if (normalized === 'none' || normalized === 'null') return undefined;
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      const base = process.env.NEXT_PUBLIC_AWS_S3_URL?.replace(/\/$/, '') ?? '';
+      return `${base}/${trimmed.replace(/^\/+/, '')}`;
+    };
+
+    return objectives
+      .map((objective, objectiveIndex) => {
+        const keys = (objective.resourceKey ?? '')
+          .split(',')
+          .map((key) => key.trim())
+          .filter(Boolean);
+        const names = (objective.resourceNames ?? '').split(',');
+
+        const resources = keys.flatMap((key, index) => {
+          const url = buildS3Resource(key);
+          if (!url) return [];
+
+          const isExternal = /^https?:\/\//i.test(key);
+          const providedName = names[index]?.trim();
+          const fallbackName = isExternal
+            ? key
+            : (key.split('/').pop() ?? 'Recurso');
+
+          return [
+            {
+              id: `${objective.id}-${index}`,
+              url,
+              name: providedName ? providedName : fallbackName,
+              isExternal,
+            },
+          ];
+        });
+
+        return { objective, objectiveIndex, resources };
+      })
+      .filter((entry) => entry.resources.length > 0);
+  }, [objectives]);
   const ratingValue =
     typeof project.rating === 'number' && project.rating > 0
       ? project.rating
@@ -491,6 +537,65 @@ export function GuidedProjectDetails({
     'rounded-2xl border border-[#1d283a] bg-[#061c37] p-6 md:p-8';
   const sectionIconClass =
     'flex size-8 items-center justify-center rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/15 text-[#22C4D3]';
+
+  const renderResources = () => {
+    if (resourcesByObjective.length === 0) {
+      return renderComingSoon(
+        'Este proyecto todavía no tiene recursos publicados.'
+      );
+    }
+
+    if (!isEnrolled) {
+      return renderComingSoon(
+        'Inscríbete en el proyecto para acceder a sus recursos.'
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {resourcesByObjective.map(
+          ({ objective, objectiveIndex, resources }) => (
+            <section key={objective.id} className={sectionClass}>
+              <div className="mb-4 flex items-center gap-2">
+                <div className={sectionIconClass}>
+                  <FileBox className="size-4" />
+                </div>
+                <h3 className="font-semibold text-foreground">
+                  Sesión {objectiveIndex + 1} · {objective.title}
+                </h3>
+              </div>
+              <ul className="space-y-2">
+                {resources.map((resource) => (
+                  <li key={resource.id}>
+                    <a
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-xl border border-[#1d283a] bg-[#010b17] px-4 py-3 transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/[0.06]"
+                    >
+                      <div className={sectionIconClass}>
+                        {resource.isExternal ? (
+                          <Globe className="size-4" />
+                        ) : (
+                          <Package className="size-4" />
+                        )}
+                      </div>
+                      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                        {resource.name}
+                      </span>
+                      <span className="shrink-0 text-xs text-[#94A3B8]">
+                        {resource.isExternal ? 'Enlace' : 'Archivo'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        )}
+      </div>
+    );
+  };
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -1408,9 +1513,7 @@ export function GuidedProjectDetails({
                     hidden={activePill !== 'recursos'}
                     tabIndex={0}
                   >
-                    {renderComingSoon(
-                      'Los recursos del proyecto estarán disponibles pronto.'
-                    )}
+                    {renderResources()}
                   </div>
                   <div
                     id={`guided-project-${project.id}-foro-panel`}
