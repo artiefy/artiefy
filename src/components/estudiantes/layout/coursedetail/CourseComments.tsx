@@ -24,15 +24,57 @@ import {
   getRepliesByCommentId,
   likeComment,
 } from '~/server/actions/estudiantes/comment/courseCommentActions';
+import {
+  addGuidedProjectComment,
+  addGuidedProjectReply,
+  deleteGuidedProjectComment,
+  deleteGuidedProjectReply,
+  editGuidedProjectComment,
+  getCommentsByGuidedProjectId,
+  getGuidedProjectRepliesByCommentId,
+  isUserEnrolledInGuidedProject,
+  likeGuidedProjectComment,
+} from '~/server/actions/estudiantes/comment/guidedProjectCommentActions';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
-interface CommentProps {
-  courseId: number;
+// Same widget serves courses and guided projects. Each target has its own
+// server actions and its own Redis namespace, so the id decides which set runs.
+// Declared at module scope to keep a stable identity across renders.
+const commentsApi = {
+  course: {
+    getComments: getCommentsByCourseId,
+    getReplies: getRepliesByCommentId,
+    checkEnrollment: isUserEnrolled,
+    add: addComment,
+    edit: editComment,
+    remove: deleteComment,
+    like: likeComment,
+    reply: addReply,
+    removeReply: deleteReply,
+  },
+  guidedProject: {
+    getComments: getCommentsByGuidedProjectId,
+    getReplies: getGuidedProjectRepliesByCommentId,
+    checkEnrollment: isUserEnrolledInGuidedProject,
+    add: addGuidedProjectComment,
+    edit: editGuidedProjectComment,
+    remove: deleteGuidedProjectComment,
+    like: likeGuidedProjectComment,
+    reply: addGuidedProjectReply,
+    removeReply: deleteGuidedProjectReply,
+  },
+} as const;
+
+type CommentTarget =
+  | { courseId: number; guidedProjectId?: undefined }
+  | { courseId?: undefined; guidedProjectId: number };
+
+type CommentProps = CommentTarget & {
   isEnrolled: boolean;
   onEnrollmentChange?: (enrolled: boolean) => void;
   onCommentsCountChange?: (count: number) => void;
   onRatingSummaryChange?: (summary: RatingSummary) => void;
-}
+};
 
 interface RatingSummary {
   count: number;
@@ -61,11 +103,16 @@ interface Reply {
 
 export default function CourseComments({
   courseId,
+  guidedProjectId,
   isEnrolled,
   onEnrollmentChange,
   onCommentsCountChange,
   onRatingSummaryChange,
 }: CommentProps) {
+  const isGuidedProject = typeof guidedProjectId === 'number';
+  const targetId = guidedProjectId ?? courseId!;
+  const api = isGuidedProject ? commentsApi.guidedProject : commentsApi.course;
+  const targetLabel = isGuidedProject ? 'proyecto guiado' : 'curso';
   const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
   const [message, setMessage] = useState('');
@@ -108,15 +155,15 @@ export default function CourseComments({
   useEffect(() => {
     const fetchComments = async () => {
       try {
-        const response = await getCommentsByCourseId(courseId);
+        const response = await api.getComments(targetId);
         const nextComments = response.comments as Comment[];
         setComments(nextComments);
         publishCommentStats(nextComments);
 
         // Cargar respuestas para cada comentario
         const repliesData: Record<string, Reply[]> = {};
-        for (const comment of response.comments) {
-          const commentReplies = await getRepliesByCommentId(comment.id);
+        for (const comment of nextComments) {
+          const commentReplies = await api.getReplies(comment.id);
           if (commentReplies.length > 0) {
             repliesData[comment.id] = commentReplies;
           }
@@ -130,7 +177,7 @@ export default function CourseComments({
     };
 
     void fetchComments();
-  }, [courseId, publishCommentStats]);
+  }, [api, targetId, publishCommentStats]);
 
   useEffect(() => {
     setLocalIsEnrolled(isEnrolled);
@@ -157,7 +204,7 @@ export default function CourseComments({
 
     void (async () => {
       try {
-        const enrolled = await isUserEnrolled(courseId, userId);
+        const enrolled = await api.checkEnrollment(targetId, userId);
         if (!isMounted) return;
         setLocalIsEnrolled(enrolled);
         onEnrollmentChangeRef.current?.(enrolled);
@@ -170,7 +217,7 @@ export default function CourseComments({
     return () => {
       isMounted = false;
     };
-  }, [courseId, userId]);
+  }, [api, targetId, userId]);
 
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
@@ -203,7 +250,7 @@ export default function CourseComments({
       return (
         <div className="mb-4 rounded-md bg-yellow-50 p-4">
           <p className="text-yellow-700">
-            Debes estar inscrito en el curso para dejar un comentario.
+            Debes estar inscrito en el {targetLabel} para dejar un comentario.
           </p>
         </div>
       );
@@ -222,16 +269,16 @@ export default function CourseComments({
     try {
       let response;
       if (editMode) {
-        response = await editComment(editMode, content, rating); // Pasar el rating en la edición también
+        response = await api.edit(editMode, content, rating); // Pasar el rating en la edición también
       } else {
-        response = await addComment(courseId, content, rating);
+        response = await api.add(targetId, content, rating);
       }
       setMessage(response.message);
       if (response.success) {
         setContent('');
         setRating(0);
         setEditMode(null); // Reset edit mode
-        const updatedComments = await getCommentsByCourseId(courseId);
+        const updatedComments = await api.getComments(targetId);
         const nextComments = updatedComments.comments as Comment[];
         setComments(nextComments);
         publishCommentStats(nextComments);
@@ -246,7 +293,7 @@ export default function CourseComments({
   const handleDelete = async (commentId: string) => {
     setDeletingComment(commentId); // Marcar el comentario como en proceso de eliminación
     try {
-      const response = await deleteComment(commentId);
+      const response = await api.remove(commentId);
       setMessage(response.message);
       if (response.success) {
         setComments((prevComments) => {
@@ -267,10 +314,10 @@ export default function CourseComments({
   const handleLike = async (commentId: string) => {
     setLikingComment(commentId); // Marcar el comentario como en proceso de "me gusta"
     try {
-      const response = await likeComment(commentId);
+      const response = await api.like(commentId);
       setMessage(response.message);
       if (response.success) {
-        const updatedComments = await getCommentsByCourseId(courseId);
+        const updatedComments = await api.getComments(targetId);
         const nextComments = updatedComments.comments as Comment[];
         setComments(nextComments);
         publishCommentStats(nextComments);
@@ -318,12 +365,12 @@ export default function CourseComments({
     if (!replyContent.trim()) return;
 
     try {
-      const response = await addReply(commentId, replyContent);
+      const response = await api.reply(commentId, replyContent);
       if (response.success) {
         setReplyContent('');
         setReplyingTo(null);
         // Recargar las respuestas para este comentario
-        const updatedReplies = await getRepliesByCommentId(commentId);
+        const updatedReplies = await api.getReplies(commentId);
         setReplies((prev) => ({ ...prev, [commentId]: updatedReplies }));
       }
       setMessage(response.message);
@@ -334,7 +381,7 @@ export default function CourseComments({
 
   const loadReplies = async (commentId: string) => {
     try {
-      const commentReplies = await getRepliesByCommentId(commentId);
+      const commentReplies = await api.getReplies(commentId);
       setReplies((prev) => ({ ...prev, [commentId]: commentReplies }));
       setShowReplies((prev) => ({ ...prev, [commentId]: true }));
     } catch (error) {
@@ -353,11 +400,11 @@ export default function CourseComments({
   const handleDeleteReply = async (commentId: string, replyId: string) => {
     setDeletingReply(replyId);
     try {
-      const response = await deleteReply(replyId);
+      const response = await api.removeReply(replyId);
       setMessage(response.message);
       if (response.success) {
         // Recargar las respuestas para este comentario
-        const updatedReplies = await getRepliesByCommentId(commentId);
+        const updatedReplies = await api.getReplies(commentId);
         setReplies((prev) => ({ ...prev, [commentId]: updatedReplies }));
       }
     } catch (error) {
@@ -385,7 +432,9 @@ export default function CourseComments({
     <>
       <div className="mb-6">
         <h3 className="text-xl font-semibold text-slate-100">
-          Opiniones del curso
+          {isGuidedProject
+            ? 'Opiniones del proyecto guiado'
+            : 'Opiniones del curso'}
         </h3>
         <p className="mt-1 text-sm text-slate-300">
           Comparte tu experiencia y lee lo que otros estudiantes opinan

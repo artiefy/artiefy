@@ -1540,14 +1540,10 @@ export default function CourseDetails({
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
           <div
             className="
-              relative rounded-2xl border p-2 shadow-xl shadow-black/20
-              backdrop-blur-sm
+              relative rounded-2xl border border-border/50 bg-card p-2 shadow-xl
+              shadow-black/20 backdrop-blur-sm
               md:p-8
             "
-            style={{
-              backgroundColor: '#010b17',
-              borderColor: '#061c37cc',
-            }}
           >
             <div className="relative z-10 space-y-6">
               {/* 

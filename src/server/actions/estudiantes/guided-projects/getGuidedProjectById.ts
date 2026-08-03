@@ -213,7 +213,9 @@ export async function getGuidedProjectById(
       prerequisites: project.prerequisites,
       techStack: project.techStack,
       deliverablesDescription: project.deliverablesDescription,
-      studentsCount: project.studentsCount,
+      // Real enrolled students, not the seeded `students_count` column, so the
+      // stat shown on the detail page reflects actual enrollments.
+      studentsCount: project.enrollments.length,
       contentHours: project.contentHours,
       repositoryUrl: project.repositoryUrl,
       slug: project.slug,

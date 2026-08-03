@@ -46,6 +46,7 @@ import { IoPlayOutline } from 'react-icons/io5';
 import { MdErrorOutline } from 'react-icons/md';
 import { toast } from 'sonner';
 
+import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
 import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
 import {
   GuidedObjectivesAccordion,
@@ -68,7 +69,12 @@ import { plansPersonas } from '~/types/plans';
 import type { GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
 
-type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro';
+type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro' | 'comentarios';
+
+interface RatingSummary {
+  count: number;
+  average: number;
+}
 
 interface GuidedProjectDetailsProps {
   project: GuidedProject;
@@ -195,6 +201,9 @@ const FAQ_ITEMS = [
 // hardcoded value, since plan pricing isn't exposed as a shared constant).
 const PREMIUM_DISPLAY_PRICE = 124900;
 
+// The enrolled-students stat is only shown above this many students.
+const MIN_STUDENTS_COUNT_TO_SHOW = 10;
+
 export function GuidedProjectDetails({
   project,
   initialIsEnrolled = false,
@@ -204,6 +213,12 @@ export function GuidedProjectDetails({
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [activePill, setActivePill] = useState<NavKey>('actividades');
+  // Live rating from real student comments; the stored `project.rating` column
+  // is a seeded value, so it must not drive the stars on its own.
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary>({
+    count: 0,
+    average: 0,
+  });
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -270,6 +285,11 @@ export function GuidedProjectDetails({
       key: 'foro',
       label: 'Foro',
       icon: <MessageSquare className="size-4 shrink-0" />,
+    },
+    {
+      key: 'comentarios',
+      label: 'Comentarios',
+      icon: <Star className="size-4 shrink-0" />,
     },
   ];
 
@@ -463,12 +483,16 @@ export function GuidedProjectDetails({
       })
       .filter((entry) => entry.resources.length > 0);
   }, [objectives]);
+  // Stars only show once real students have rated the project.
   const ratingValue =
-    typeof project.rating === 'number' && project.rating > 0
-      ? project.rating
+    ratingSummary.count > 0 && ratingSummary.average > 0
+      ? ratingSummary.average
       : null;
+  // The student count only shows once the project has real traction, so a
+  // freshly published project never advertises a near-empty classroom.
   const studentsCount =
-    typeof project.studentsCount === 'number' && project.studentsCount > 0
+    typeof project.studentsCount === 'number' &&
+    project.studentsCount > MIN_STUDENTS_COUNT_TO_SHOW
       ? project.studentsCount
       : null;
   const contentHours =
@@ -1297,13 +1321,7 @@ export function GuidedProjectDetails({
           </div>
         )}
 
-        <div
-          className="relative rounded-2xl border p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
-          style={{
-            backgroundColor: '#010b17',
-            borderColor: '#061c37cc',
-          }}
-        >
+        <div className="relative rounded-2xl border border-border/50 bg-card p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8">
           <div className="relative z-10 space-y-6">
             <div
               className={`grid grid-cols-1 gap-8 ${isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'}`}
@@ -1367,22 +1385,6 @@ export function GuidedProjectDetails({
                     <div className="hidden lg:block lg:space-y-4">
                       {renderStatsAndChips()}
                     </div>
-                    {isSubscriptionValid && hasValidPlan && (
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                          userPlanType === 'Premium'
-                            ? 'border-amber-500/40 text-amber-400'
-                            : 'border-blue-500/40 text-blue-400'
-                        }`}
-                      >
-                        {userPlanType === 'Premium' ? (
-                          <FaCrown className="size-3" />
-                        ) : (
-                          <FaStar className="size-3" />
-                        )}
-                        Plan {userPlanType} Activo
-                      </span>
-                    )}
                   </div>
 
                   {/* Desktop CTA Card (only when enrolled) */}
@@ -1523,6 +1525,19 @@ export function GuidedProjectDetails({
                     tabIndex={0}
                   >
                     <CourseForum guidedProjectId={project.id} />
+                  </div>
+                  <div
+                    id={`guided-project-${project.id}-comentarios-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-comentarios-tab`}
+                    hidden={activePill !== 'comentarios'}
+                    tabIndex={0}
+                  >
+                    <CourseComments
+                      guidedProjectId={project.id}
+                      isEnrolled={isEnrolled}
+                      onRatingSummaryChange={setRatingSummary}
+                    />
                   </div>
                 </div>
               </div>
