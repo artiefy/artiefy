@@ -594,7 +594,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         );
         return;
       }
-      window.location.href = `/dashboard/${basePath}/cursos/${courseId}/newActivity?parametroId=${parametroId}&porcentajeSugerido=${data.porcentajeSugerido}`;
+      router.push(
+        `/dashboard/${basePath}/cursos/${courseId}/newActivity?parametroId=${parametroId}&porcentajeSugerido=${data.porcentajeSugerido}`
+      );
     } catch (err) {
       console.error('[NAVIGATE] Error al consultar sugerencia:', err);
       alert('Error al consultar el porcentaje sugerido.');

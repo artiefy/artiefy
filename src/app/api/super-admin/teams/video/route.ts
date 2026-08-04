@@ -20,7 +20,6 @@ interface VideoIdxItem {
   isSecondary?: boolean;
 }
 // Para asegurarte de que estás en runtime Node (streams grandes)
-export const runtime = 'nodejs';
 
 // ---------------------- Helpers (puedes reutilizar los tuyos) ----------------------
 
@@ -149,7 +148,6 @@ export async function GET(req: Request) {
     signal: AbortSignal.timeout(20_000),
   });
 
-
   if (!listRes.ok) {
     const raw = await listRes.text().catch(() => '');
     void raw;
@@ -164,7 +162,6 @@ export async function GET(req: Request) {
     .filter(Boolean);
 
   const uniqueIds = Array.from(new Set(decodedIds));
-
 
   // ✅ Ahora guardamos TODAS las filas por meetingId (no solo una)
   const rowsByMeetingId = new Map<string, ClassMeetingRow[]>();
@@ -257,7 +254,6 @@ export async function GET(req: Request) {
       // c) Si alguna ya tiene video_key, úsala y no “contamines” otras
       const withKey = rowsForMeeting.find((r) => r.video_key);
       if (withKey?.video_key) {
-
         videos.push({
           meetingId: decodedId,
           videoKey: withKey.video_key,
@@ -390,10 +386,10 @@ export async function GET(req: Request) {
         const refreshed = rowsForMeeting.map((r) =>
           r.id === targetRow.id
             ? {
-              ...r,
-              video_key: r.video_key ?? videoKey,
-              video_key_2: r.video_key ? videoKey : r.video_key_2,
-            }
+                ...r,
+                video_key: r.video_key ?? videoKey,
+                video_key_2: r.video_key ? videoKey : r.video_key_2,
+              }
             : r
         );
         rowsByMeetingId.set(decodedId, refreshed);

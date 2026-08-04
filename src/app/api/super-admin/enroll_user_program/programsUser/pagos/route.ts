@@ -28,8 +28,6 @@ function parseDateOnly(dateStr: string): Date {
   return new Date(year, month - 1, day);
 }
 
-export const runtime = 'nodejs';
-
 const REGION = process.env.AWS_REGION ?? 'us-east-2';
 const BUCKET = process.env.AWS_S3_BUCKET ?? process.env.AWS_BUCKET_NAME ?? '';
 const PUBLIC_BASE_URL =

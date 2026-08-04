@@ -7,8 +7,6 @@ import { db } from '~/server/db';
 import { activities, userActivitiesProgress } from '~/server/db/schema';
 import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
-export const dynamic = 'force-dynamic';
-
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,

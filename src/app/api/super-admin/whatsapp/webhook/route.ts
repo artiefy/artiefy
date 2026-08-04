@@ -7,9 +7,6 @@ import { waMessages } from '~/server/db/schema';
 
 import { inbox, pushInbox } from '../_inbox';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN ?? '';
 
 // URL del webhook de n8n — usa la variable de entorno o el fallback de producción

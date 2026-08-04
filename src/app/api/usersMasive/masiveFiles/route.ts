@@ -116,7 +116,6 @@ async function sendWelcomeEmailsBatch(
 }
 
 // === Runtime ===
-export const runtime = 'nodejs';
 export const maxDuration = 300;
 
 // ====== Tipos ======

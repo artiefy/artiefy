@@ -29,14 +29,24 @@ const nextConfig: NextConfig = {
     ];
   },
   reactCompiler: false,
-  cacheComponents: false,
+  cacheComponents: true,
   expireTime: 3600,
-  // `experimental.useTypeScriptCli: true` makes `next build` run the
-  // project-local `tsc` binary instead of TypeScript's JavaScript compiler
-  // API. It is available in this version, but it is only required with
-  // TypeScript 7 — this project is on TypeScript 6, where the default
-  // in-process checker works and produces better Next.js code frames.
   experimental: {
+    // Next.js 16.3 turned `useTypeScriptCli` on by default, which makes
+    // `next build` shell out to the `tsc` binary owned by the `typescript`
+    // package. This project aliases `typescript` to
+    // `@typescript/typescript6`, whose binary is named `tsc6`, so the CLI
+    // checker finds no `tsc` there and aborts the build claiming TypeScript
+    // is not installed. Opting out restores the in-process JavaScript
+    // compiler API, which the aliased TypeScript 6 does provide and which
+    // also produces better Next.js code frames.
+    //
+    // Type checking still runs on TypeScript 7: `node_modules/.bin/tsc`
+    // resolves to `@typescript/native`, so `npm run check` and
+    // `npm run typecheck` get the ~10x faster native compiler. The
+    // `typescript` package has to stay on 6 because typescript-eslint needs
+    // the JavaScript compiler API that TypeScript 7 does not expose.
+    useTypeScriptCli: false,
     // Server Actions are stable since Next.js 14; only these tuning options
     // still live under `experimental`.
     serverActions: {

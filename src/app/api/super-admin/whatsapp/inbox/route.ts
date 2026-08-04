@@ -6,9 +6,6 @@ import { and, desc, eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 interface MediaData {
   id?: string;
   mime_type?: string;

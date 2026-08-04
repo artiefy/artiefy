@@ -18,8 +18,6 @@ import {
 } from '~/server/db/schema';
 import { sortLessons } from '~/utils/lessonSorting';
 
-export const runtime = 'nodejs';
-
 const REGION = process.env.AWS_REGION ?? 'us-east-2';
 const BUCKET = process.env.AWS_S3_BUCKET ?? process.env.AWS_BUCKET_NAME ?? '';
 const PUBLIC_BASE_URL =

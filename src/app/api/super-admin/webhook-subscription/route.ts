@@ -10,8 +10,6 @@ import {
   type ESP32ResponseData,
 } from '~/server/esp32/esp32-client';
 
-export const runtime = 'nodejs';
-
 // Tipos de respuesta
 interface WebhookPayload {
   userId: string;

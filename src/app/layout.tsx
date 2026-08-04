@@ -31,6 +31,10 @@ import type { Metadata, Viewport } from 'next';
 import '~/styles/globals.css';
 import '~/styles/loading.css';
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 const montserrat = Montserrat({
   subsets: ['latin'],
   display: 'swap',
@@ -81,19 +85,16 @@ export default function RootLayout({
     >
       {/* Canonical URL en los metadatos de la página */}
       <link rel="canonical" href={canonical} />
-
       {/* Verificación de Google */}
       <meta
         name="google-site-verification"
         content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
       />
-
       {/* Verificación de dominio de Facebook */}
       <meta
         name="facebook-domain-verification"
         content="zxh6j216xifuou0gxlb1hp0zomyjx0"
       />
-
       {/* Meta Pixel Code */}
       {/* Eliminar o comentar este bloque, ya no es necesario aquí */}
       {/*
@@ -113,28 +114,22 @@ export default function RootLayout({
         </Script>
         */}
       {/* End Meta Pixel Code */}
-
       {/* Schema.org con componentes Script de Next.js */}
       <Script id="schema-website" type="application/ld+json">
         {JSON.stringify(websiteSchema).replace(/</g, '\\u003c')}
       </Script>
-
       <Script id="schema-webpages" type="application/ld+json">
         {JSON.stringify(webPagesSchema).replace(/</g, '\\u003c')}
       </Script>
-
       <Script id="schema-navigation" type="application/ld+json">
         {JSON.stringify(siteNavigationSchema).replace(/</g, '\\u003c')}
       </Script>
-
       <Script id="schema-breadcrumb" type="application/ld+json">
         {JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c')}
       </Script>
-
       <Script id="schema-organization" type="application/ld+json">
         {JSON.stringify(organizationSchema).replace(/</g, '\\u003c')}
       </Script>
-
       <body
         className="bg-background font-sans text-primary"
         suppressHydrationWarning

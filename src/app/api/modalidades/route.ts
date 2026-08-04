@@ -3,8 +3,6 @@ import { NextResponse } from 'next/server';
 import { db } from '~/server/db';
 import { modalidades } from '~/server/db/schema';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   try {
     const all = await db

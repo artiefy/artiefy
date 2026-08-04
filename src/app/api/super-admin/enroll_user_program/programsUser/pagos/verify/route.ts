@@ -6,8 +6,6 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { pagos, pagoVerificaciones, users } from '~/server/db/schema';
 
-export const runtime = 'nodejs';
-
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────

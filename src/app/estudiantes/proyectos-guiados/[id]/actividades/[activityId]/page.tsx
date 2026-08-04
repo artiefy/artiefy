@@ -14,12 +14,13 @@ import type {
   GuidedObjectiveActivity,
 } from '~/types/guided-projects';
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 
 interface PageProps {
   params: Promise<{
@@ -148,9 +149,7 @@ export default async function GuidedActivityPage({ params }: PageProps) {
   const planType = String(user?.publicMetadata?.planType ?? '').toLowerCase();
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | null
-    | undefined;
+    string | null | undefined;
   const hasValidPlan = ['pro', 'premium', 'enterprise'].includes(planType);
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&

@@ -19,8 +19,6 @@ import { getModalidadById } from '~/models/super-adminModels/courseModelsSuperAd
 import { db } from '~/server/db';
 import { courseCourseTypes, courses, users } from '~/server/db/schema'; // Add users import
 
-export const dynamic = 'force-dynamic';
-
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 

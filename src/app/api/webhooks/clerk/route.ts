@@ -5,8 +5,6 @@ import { verifyWebhook } from '@clerk/nextjs/webhooks';
 import { env } from '~/env';
 import { grantSignupTrial } from '~/server/actions/estudiantes/subscriptions/grantSignupTrial';
 
-export const dynamic = 'force-dynamic';
-
 /**
  * Clerk webhook receiver. Handles `user.created` to grant the signup trial.
  *

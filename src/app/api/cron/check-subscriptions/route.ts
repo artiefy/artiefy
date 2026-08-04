@@ -3,8 +3,6 @@ import { type NextRequest } from 'next/server';
 import { env } from '~/env';
 import { checkAndUpdateSubscriptions } from '~/server/actions/estudiantes/subscriptions/checkAndUpdateSubscriptions';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(request: NextRequest) {
   const cronSecret = env.CRON_SECRET; // <-- Usa env.CRON_SECRET validado
   const authHeader = request.headers.get('authorization');

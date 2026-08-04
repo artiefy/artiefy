@@ -943,7 +943,7 @@ export default function ProjectInfoModal({
                   "
                   onClick={() => {
                     onClose();
-                    window.location.href = '/sign-in';
+                    router.push('/sign-in');
                   }}
                 >
                   <span className="w-full text-lg font-semibold">

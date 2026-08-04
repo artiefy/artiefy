@@ -3,7 +3,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { Show, useAuth, useUser } from '@clerk/nextjs';
 import { type OAuthStrategy } from '@clerk/shared/types';
@@ -62,6 +62,7 @@ export function Header({
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
   const pathname = usePathname();
+  const router = useRouter();
   const userRole = getUserRole(user?.publicMetadata?.role);
   const desktopSignInHref = `/sign-in?redirect_url=${encodeURIComponent(
     pathname || '/'
@@ -79,11 +80,9 @@ export function Header({
 
   const planType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    | string
-    | undefined;
+    string | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | undefined;
+    string | undefined;
 
   useEffect(() => {
     if (!user || userRole) return;
@@ -397,7 +396,7 @@ export function Header({
       return;
     }
 
-    window.location.href = desktopSignInHref;
+    router.push(desktopSignInHref);
   };
 
   const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
@@ -583,10 +582,12 @@ export function Header({
                             courses={previewCourses}
                             programs={previewPrograms}
                             onSelectCourse={(courseId: number) => {
-                              window.location.href = `/estudiantes/cursos/${courseId}`;
+                              router.push(`/estudiantes/cursos/${courseId}`);
                             }}
                             onSelectProgram={(programId: string | number) => {
-                              window.location.href = `/estudiantes/programas/${programId}`;
+                              router.push(
+                                `/estudiantes/programas/${programId}`
+                              );
                             }}
                           />
                         </Suspense>
@@ -1147,10 +1148,10 @@ export function Header({
                         courses={previewCourses}
                         programs={previewPrograms}
                         onSelectCourse={(courseId: number) => {
-                          window.location.href = `/estudiantes/cursos/${courseId}`;
+                          router.push(`/estudiantes/cursos/${courseId}`);
                         }}
                         onSelectProgram={(programId: string | number) => {
-                          window.location.href = `/estudiantes/programas/${programId}`;
+                          router.push(`/estudiantes/programas/${programId}`);
                         }}
                       />
                     </Suspense>

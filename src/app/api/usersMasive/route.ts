@@ -9,7 +9,6 @@ import { userCredentials, users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
 // Runtime configuration
-export const runtime = 'nodejs';
 export const maxDuration = 300;
 void userCredentials;
 
@@ -637,10 +636,7 @@ export async function POST(request: Request) {
               ...(providedRole
                 ? {
                     role: role as
-                      | 'estudiante'
-                      | 'educador'
-                      | 'admin'
-                      | 'super-admin',
+                      'estudiante' | 'educador' | 'admin' | 'super-admin',
                   }
                 : {}),
               updatedAt: new Date(),

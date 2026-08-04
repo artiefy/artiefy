@@ -22,8 +22,6 @@ import {
 } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
-export const runtime = 'nodejs'; // asegurar Node runtime (Buffer/S3)
-
 const BUCKET = process.env.AWS_S3_BUCKET ?? process.env.AWS_BUCKET_NAME ?? ''; // 👈 acepta ambas
 
 if (!BUCKET) {

@@ -219,6 +219,18 @@
       "sourceType": "autoskills-registry",
       "computedHash": "82a02f95879e9adf1a5a89f9ca2f51813e41ff3bab3c723cc8905f5a926bdd30"
     },
+    "next-cache-components-adoption": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "skillPath": "skills/next-cache-components-adoption/SKILL.md",
+      "computedHash": "c782eafdd51bb76642a8673bb4ef4c0e524c578f5cc1ba82ab56ff6db8647906"
+    },
+    "next-partial-prefetching-adoption": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "skillPath": "skills/next-partial-prefetching-adoption/SKILL.md",
+      "computedHash": "cfed44cfce68b08b2a7edf3d6f07b230a49dfbf180825ca49a5bbf12b27a558a"
+    },
     "next-upgrade": {
       "source": "vercel-labs/next-skills",
       "sourceType": "autoskills-registry",

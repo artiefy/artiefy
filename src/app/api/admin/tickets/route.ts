@@ -39,8 +39,6 @@ interface UpdateTicketBody extends Partial<
   assignedToIds?: string[];
 }
 
-export const dynamic = 'force-dynamic';
-
 async function notifySupportWatchers(ticketId: number, description: string) {
   const supportUsers = await Promise.all(
     SUPPORT_AUTO_ASSIGN_EMAILS.map(async (email) =>

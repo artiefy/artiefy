@@ -6,8 +6,6 @@ import { db } from '~/server/db';
 import { materiaGrades, materias } from '~/server/db/schema';
 import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
-export const dynamic = 'force-dynamic';
-
 interface MateriaWithGrade {
   id: number;
   title: string;

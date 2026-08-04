@@ -3,8 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { enrollUserInCourse } from '~/server/actions/estudiantes/courses/enrollIndividualCourse';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
-export const dynamic = 'force-dynamic';
-
 interface CoursePaymentData {
   email_buyer: string;
   state_pol: string;

@@ -10,8 +10,6 @@ import {
   type ESP32ResponseData,
 } from '~/server/esp32/esp32-client';
 
-export const runtime = 'nodejs';
-
 // Schema de validación
 const registerAccessSchema = z.object({
   userId: z.string().min(1, 'userId es requerido'),

@@ -2412,7 +2412,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       queueOrSaveUserMessage('🛠 Soporte Técnico');
       if (!isSignedIn) {
         const currentUrl = encodeURIComponent(window.location.href);
-        window.location.href = `/sign-in?redirect_url=${currentUrl}&action=create_ticket`;
+        router.push(`/sign-in?redirect_url=${currentUrl}&action=create_ticket`);
       } else {
         setIsOpen(false);
         window.dispatchEvent(
@@ -3707,7 +3707,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 const currentUrl = encodeURIComponent(
                                   window.location.href
                                 );
-                                window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                                router.push(
+                                  `/sign-in?redirect_url=${currentUrl}`
+                                );
                               }}
                               className={`
                                 mt-3 rounded-lg bg-background px-4 py-2 text-sm
@@ -3778,7 +3780,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                     const currentUrl = encodeURIComponent(
                                       window.location.href
                                     );
-                                    window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                                    router.push(
+                                      `/sign-in?redirect_url=${currentUrl}`
+                                    );
                                   }}
                                   className={`
                                     rounded-lg bg-gradient-to-r from-[#3AF4EF]

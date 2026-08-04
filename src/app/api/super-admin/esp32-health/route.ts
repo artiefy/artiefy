@@ -5,8 +5,6 @@ import {
   type ESP32ResponseData,
 } from '~/server/esp32/esp32-client';
 
-export const runtime = 'nodejs';
-
 interface HealthResponse {
   ok: boolean;
   status?: number;

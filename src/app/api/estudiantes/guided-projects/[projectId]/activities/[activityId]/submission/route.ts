@@ -40,8 +40,6 @@ import type {
   GuidedActivitySubmissionSuccessResponse,
 } from '~/lib/guidedActivitySubmissions';
 
-export const runtime = 'nodejs';
-
 const REQUEST_ID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const S3_CLEANUP_TIMEOUT_MS = 8_000;

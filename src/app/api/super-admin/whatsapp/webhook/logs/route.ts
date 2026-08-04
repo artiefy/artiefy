@@ -5,9 +5,6 @@ import { clearInbox, inbox } from '../../_inbox';
 
 import type { InboxItem } from '../../_inbox'; // Asegúrate que este tipo exista o ajústalo
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 function log(...args: unknown[]) {
   console.log('[WA-LOGS]', ...args);
 }
@@ -26,10 +23,7 @@ export function GET(req: NextRequest) {
   );
   const q = (url.searchParams.get('q') ?? '').toLowerCase();
   const dir = url.searchParams.get('direction') as
-    | 'inbound'
-    | 'outbound'
-    | 'status'
-    | null;
+    'inbound' | 'outbound' | 'status' | null;
   const fromFilter = url.searchParams.get('from');
   const sinceParam = url.searchParams.get('since');
   const since = sinceParam ? Number(sinceParam) : undefined;

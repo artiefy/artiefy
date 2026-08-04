@@ -13,7 +13,6 @@ import {
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
 
 // Adjust the import path as necessary
-export const dynamic = 'force-dynamic';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
