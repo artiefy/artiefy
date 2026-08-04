@@ -1299,7 +1299,9 @@ export function GuidedProjectDetails({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
+      {/* `lg:pt-24` clears the fixed header on large screens, the same offset the
+          course detail uses; without it the header covers the breadcrumb. */}
+      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8 lg:pt-24">
         <GuidedProjectBreadcrumb title={project.title} />
 
         {/* Aviso de suscripción expirada: mismo mensaje y misma validación que
