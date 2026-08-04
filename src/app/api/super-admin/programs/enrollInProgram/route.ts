@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { clerkClient } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -8,7 +8,26 @@ import { enrollmentPrograms, programas, users } from '~/server/db/schema';
 
 const BATCH_SIZE = 100;
 
+/**
+ * Both handlers here are staff-only: the POST grants active subscriptions and
+ * writes Clerk metadata, so it must never be reachable without a staff session.
+ * The middleware does not cover /api, so the check belongs in the route.
+ */
+async function requireStaff() {
+  const { userId, sessionClaims } = await auth();
+  const role = sessionClaims?.metadata.role;
+
+  if (!userId || (role !== 'admin' && role !== 'super-admin')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  return null;
+}
+
 export async function GET() {
+  const unauthorized = await requireStaff();
+  if (unauthorized) return unauthorized;
+
   try {
     const allPrograms = await db.select().from(programas);
     // Use a Set to filter out duplicate titles more efficiently
@@ -26,6 +45,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireStaff();
+  if (unauthorized) return unauthorized;
+
   try {
     const body = (await request.json()) as {
       programId: string;

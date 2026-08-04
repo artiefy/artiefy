@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 
+import { auth } from '@clerk/nextjs/server';
+
 import { GuidedProjectAdminTabs } from '~/components/super-admin/layout/GuidedProjectAdminTabs';
 import {
   Breadcrumb,
@@ -16,7 +18,8 @@ export default async function GuidedProjectDetailPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const project = await getGuidedProjectById(projectId);
+  const { userId } = await auth();
+  const project = await getGuidedProjectById(projectId, userId);
 
   if (!project) {
     notFound();

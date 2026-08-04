@@ -359,6 +359,7 @@ export function GuidedProjectDetails({
         toast.success(result.message);
         setIsEnrolled(true);
         setActivePill('actividades');
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -433,6 +434,7 @@ export function GuidedProjectDetails({
     () => project.objectives ?? [],
     [project.objectives]
   );
+  const canAccessContent = project.canAccessContent === true || isEnrolled;
   const totalActivities = useMemo(
     () => objectives.reduce((acc, o) => acc + (o.activities?.length ?? 0), 0),
     [objectives]
@@ -569,7 +571,7 @@ export function GuidedProjectDetails({
       );
     }
 
-    if (!isEnrolled) {
+    if (!canAccessContent) {
       return renderComingSoon(
         'Inscríbete en el proyecto para acceder a sus recursos.'
       );

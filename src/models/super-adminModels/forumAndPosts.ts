@@ -120,7 +120,7 @@ export async function getForumById(forumId: number): Promise<Foru | null> {
     };
   } catch (error: unknown) {
     console.error(error);
-    return null;
+    throw error;
   }
 }
 
@@ -314,6 +314,6 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
     return typedPosts;
   } catch (error: unknown) {
     console.error(error);
-    return [];
+    throw error;
   }
 }

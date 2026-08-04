@@ -29,31 +29,13 @@ interface GenerateContentResponse {
   timestamp?: string;
 }
 
-// Detectar si estamos en desarrollo o producción
-const isLocalEnv = () => {
-  if (typeof window !== 'undefined') {
-    return (
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1'
-    );
-  }
-  return process.env.NEXT_PUBLIC_BASE_URL?.includes('localhost') ?? false;
-};
-
-// Usar nuevas variables específicas para el flujo de PROYECTOS con detección automática de entorno
-const N8N_WEBHOOK_PROJECTS_LOCAL =
-  process.env.NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_LOCAL;
-const N8N_WEBHOOK_PROJECTS_PROD =
-  process.env.NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_PROD;
-
-// Legacy: mantener soporte para la URL anterior
-const N8N_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-
-// Fallback a variables del flujo anterior si es necesario
-const N8N_WEBHOOK_PROD =
-  process.env.N8N_WEBHOOK_PROD ?? process.env.NEXT_PUBLIC_N8N_WEBHOOK_PROD;
-const N8N_WEBHOOK_LOCAL =
-  process.env.N8N_WEBHOOK_LOCAL ?? process.env.NEXT_PUBLIC_N8N_WEBHOOK_LOCAL;
+/**
+ * Server-side proxy. The n8n webhook is no longer called from the browser: it
+ * had no authentication, so its NEXT_PUBLIC_ URL let anyone spend OpenAI credit
+ * straight from the console. The proxy requires a Clerk session and relays the
+ * n8n response untouched, so everything parsed below is unchanged.
+ */
+const GENERATE_CONTENT_ENDPOINT = '/api/projects/generate-content';
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -65,51 +47,6 @@ export const useGenerateContent = () => {
   const generateContent = async (
     options: GenerateContentOptions
   ): Promise<string | null> => {
-    // Construir una lista de URLs candidatas para el webhook
-    // Prioridad: 1) Nuevas variables PROJECTS (con detección automática de entorno)
-    //           2) Legacy NEXT_PUBLIC_N8N_WEBHOOK_URL
-    //           3) Variables del flujo anterior si es necesario
-    const candidates: string[] = [];
-
-    // Intentar primero las URLs específicas para proyectos, con detección automática
-    if (isLocalEnv()) {
-      // En desarrollo: intentar webhook-test primero
-      if (N8N_WEBHOOK_PROJECTS_LOCAL) {
-        candidates.push(N8N_WEBHOOK_PROJECTS_LOCAL);
-      }
-      if (N8N_WEBHOOK_PROJECTS_PROD) {
-        candidates.push(N8N_WEBHOOK_PROJECTS_PROD);
-      }
-    } else {
-      // En producción: intentar webhook primero
-      if (N8N_WEBHOOK_PROJECTS_PROD) {
-        candidates.push(N8N_WEBHOOK_PROJECTS_PROD);
-      }
-      if (N8N_WEBHOOK_PROJECTS_LOCAL) {
-        candidates.push(N8N_WEBHOOK_PROJECTS_LOCAL);
-      }
-    }
-
-    // Fallback a variables legacy
-    if (N8N_WEBHOOK_URL) {
-      candidates.push(N8N_WEBHOOK_URL);
-    }
-    if (typeof N8N_WEBHOOK_PROD === 'string' && N8N_WEBHOOK_PROD) {
-      candidates.push(N8N_WEBHOOK_PROD);
-    }
-    if (typeof N8N_WEBHOOK_LOCAL === 'string' && N8N_WEBHOOK_LOCAL) {
-      candidates.push(N8N_WEBHOOK_LOCAL);
-    }
-
-    if (candidates.length === 0) {
-      setError('URL de webhook de n8n no configurada');
-      console.error(
-        'N8N webhook URLs no están definidas en variables de entorno'
-      );
-      console.error('Verificar: NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_LOCAL/PROD');
-      return null;
-    }
-
     if (!options.prompt || options.prompt.trim().length < 3) {
       setError('El prompt debe tener al menos 3 caracteres');
       return null;
@@ -134,47 +71,19 @@ export const useGenerateContent = () => {
         timestamp: new Date().toISOString(),
       };
 
-      console.log('🚀 Enviando a n8n:', payload);
-      console.log(
-        '📍 Ambiente detectado:',
-        isLocalEnv() ? 'desarrollo' : 'producción'
-      );
-      console.log('🔗 URLs candidatas:', candidates);
+      // El proxy resuelve la URL del webhook y sus reintentos en el servidor.
+      const response = await fetch(GENERATE_CONTENT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-      let response: Response | null = null;
-      let lastError: unknown = null;
-
-      for (const url of candidates) {
-        try {
-          console.log('🚀 Intentando webhook de n8n:', url, payload);
-          // Intentar llamar al webhook candidato
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
-          if (!res.ok) {
-            // Guardar y continuar con el siguiente candidato
-            lastError = `${res.status} ${res.statusText}`;
-            console.warn('Webhook candidate returned non-ok:', url, res.status);
-            continue;
-          }
-          response = res;
-          break;
-        } catch (err) {
-          lastError = err;
-          console.warn('Error llamando webhook candidato:', url, err);
-          continue;
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Inicia sesión para generar contenido con IA');
         }
-      }
-
-      if (!response) {
         throw new Error(
-          lastError instanceof Error
-            ? lastError.message
-            : 'No response from any n8n webhook candidates'
+          `No pudimos generar el contenido (error ${response.status})`
         );
       }
 

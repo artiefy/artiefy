@@ -16,11 +16,12 @@ export type GuidedForumAccessFailure =
 
 export type GuidedForumAccessRole = 'admin' | 'instructor' | 'enrolled';
 
-// Acceso al foro de un proyecto guiado: admin/super-admin (por rol de
-// Clerk), el instructor asignado o el creador/instructor principal del
-// proyecto, o un estudiante inscrito. Un usuario que solo conozca la URL
+// Acceso al contenido protegido de un proyecto guiado: admin/super-admin
+// (por rol persistido o Clerk), el instructor asignado o el
+// creador/instructor principal
+// del proyecto, o un estudiante inscrito. Un usuario que solo conozca la URL
 // sin cumplir ninguna de estas condiciones queda fuera.
-export async function getGuidedProjectForumAccess({
+export async function getGuidedProjectContentAccess({
   projectId,
   userId,
 }: {
@@ -30,13 +31,6 @@ export async function getGuidedProjectForumAccess({
   | { success: true; role: GuidedForumAccessRole }
   | { success: false; reason: GuidedForumAccessFailure }
 > {
-  const [localUser] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  if (!localUser) return { success: false, reason: 'USER_NOT_FOUND' };
-
   const [project] = await db
     .select({
       id: guidedProjects.id,
@@ -48,15 +42,15 @@ export async function getGuidedProjectForumAccess({
     .limit(1);
   if (!project) return { success: false, reason: 'PROJECT_NOT_FOUND' };
 
-  try {
-    const client = await clerkClient();
-    const clerkUser = await client.users.getUser(userId);
-    const role = clerkUser.publicMetadata?.role;
-    if (role === 'admin' || role === 'super-admin') {
-      return { success: true, role: 'admin' };
-    }
-  } catch {
-    // Si Clerk falla, seguimos evaluando los demás caminos de autorización.
+  const [localUser] = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!localUser) return { success: false, reason: 'USER_NOT_FOUND' };
+
+  if (localUser.role === 'admin' || localUser.role === 'super-admin') {
+    return { success: true, role: 'admin' };
   }
 
   if (project.creatorId === userId || project.instructor === userId) {
@@ -87,5 +81,18 @@ export async function getGuidedProjectForumAccess({
     .limit(1);
   if (enrollment) return { success: true, role: 'enrolled' };
 
+  try {
+    const client = await clerkClient();
+    const clerkUser = await client.users.getUser(userId);
+    const role = clerkUser.publicMetadata?.role;
+    if (role === 'admin' || role === 'super-admin') {
+      return { success: true, role: 'admin' };
+    }
+  } catch {
+    // Clerk is a fallback for role synchronization; DB access still applies.
+  }
+
   return { success: false, reason: 'NOT_AUTHORIZED' };
 }
+
+export const getGuidedProjectForumAccess = getGuidedProjectContentAccess;

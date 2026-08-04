@@ -2218,9 +2218,8 @@ export function GuidedProjectAdminTabs({
                   </div>
                 ) : (
                   <>
-                    {/* Gestión de foros: el primero creado es el que se
-                        muestra abajo, igual que ven los estudiantes. Los
-                        demás quedan disponibles para reordenar/editar. */}
+                    {/* Gestión de foros: el selector inferior permite abrir
+                        cualquiera de los foros que también ven los estudiantes. */}
                     <div className="flex flex-wrap gap-2">
                       {projectForums.map((forum) => (
                         <div

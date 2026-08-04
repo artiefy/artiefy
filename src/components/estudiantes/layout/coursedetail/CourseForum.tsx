@@ -31,7 +31,8 @@ type Forum = {
   id: number;
   title: string;
   description?: string;
-  courseId: { id: number; title: string };
+  courseId?: { id: number; title: string } | null;
+  guidedProjectId?: { id: number; title: string | null } | null;
   userId: { id: string; name: string; role?: string | null };
   createdAt?: string;
   updatedAt?: string;
@@ -56,16 +57,62 @@ type PostReply = {
   updatedAt: string;
 };
 
+class ForumRequestError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'ForumRequestError';
+    this.status = status;
+  }
+}
+
 const fetcher = async (url: string) => {
   const res = await fetch(url);
-  if (!res.ok) return null;
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as {
+      error?: string;
+      message?: string;
+    } | null;
+    throw new ForumRequestError(
+      res.status,
+      body?.error ?? body?.message ?? 'No se pudo cargar el foro'
+    );
+  }
   try {
     return await res.json();
   } catch (err) {
     console.error('fetcher parse error', err);
-    return null;
+    throw new ForumRequestError(500, 'La respuesta del foro no es válida');
   }
 };
+
+async function getResponseError(response: Response, fallback: string) {
+  const body = (await response.json().catch(() => null)) as {
+    error?: string;
+    message?: string;
+  } | null;
+  return new ForumRequestError(
+    response.status,
+    body?.error ?? body?.message ?? fallback
+  );
+}
+
+function getPublishErrorMessage(error: unknown) {
+  if (!(error instanceof ForumRequestError)) {
+    return 'No se pudo publicar. Revisa tu conexión e intenta nuevamente.';
+  }
+  if (error.status === 403) {
+    return 'No tienes permiso para publicar en este foro.';
+  }
+  if (error.status === 404) {
+    return 'El foro ya no está disponible.';
+  }
+  if (error.status >= 500) {
+    return 'El servidor no pudo guardar la publicación. Intenta nuevamente.';
+  }
+  return error.message;
+}
 
 type CourseForumProps =
   | { courseId: number; guidedProjectId?: undefined }
@@ -94,6 +141,7 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
     {}
   );
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedForumId, setSelectedForumId] = useState<number | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -118,13 +166,36 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
     ? `/api/estudiantes/forums/by-course?courseId=${courseId}`
     : `/api/estudiantes/guided-projects/${guidedProjectId}/forums/by-project`;
 
-  const { data: forum, isLoading: forumLoading } = useSWR<Forum | null>(
+  const {
+    data: forumResponse,
+    error: forumError,
+    isLoading: forumLoading,
+  } = useSWR<Forum | Forum[] | null>(
     isSignedIn ? forumLookupUrl : null,
     fetcher
   );
 
+  const availableForums = useMemo(
+    () =>
+      Array.isArray(forumResponse)
+        ? forumResponse
+        : forumResponse
+          ? [forumResponse]
+          : [],
+    [forumResponse]
+  );
+
+  const forum = useMemo(
+    () =>
+      availableForums.find((item) => item.id === selectedForumId) ??
+      availableForums[0] ??
+      null,
+    [availableForums, selectedForumId]
+  );
+
   const {
     data: posts,
+    error: postsError,
     isLoading: postsLoading,
     mutate: mutatePosts,
   } = useSWR<Post[]>(
@@ -159,6 +230,31 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
     postIds ? `/api/forums/posts/postReplay?postIds=${postIds}` : null,
     fetcher
   );
+
+  const resetForumState = () => {
+    setNewPost('');
+    setSelectedImage(null);
+    setReplyDrafts({});
+    setReplyImages({});
+    setReplyingTo(null);
+    setEditingPostId(null);
+    setEditingReplyId(null);
+    setEditContent('');
+    setErrorMessage(null);
+    setShowMenuPostId(null);
+    setShowMenuReplyId(null);
+    setLikedPosts(new Set());
+    setPostLikes({});
+    setIsReplying({});
+    setSavingPostId(null);
+    setSavingReplyId(null);
+  };
+
+  const selectForum = (forumId: number) => {
+    if (forumId === forum?.id) return;
+    resetForumState();
+    setSelectedForumId(forumId);
+  };
 
   const handleImageSelect = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -230,17 +326,36 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
       let imageKey: string | null = null;
       if (selectedImage) {
         imageKey = await uploadImage(selectedImage);
+        if (!imageKey) {
+          setErrorMessage(
+            'No se pudo subir la imagen. Tu publicación se conservó para que vuelvas a intentar.'
+          );
+          return;
+        }
       }
 
-      await fetch(`/api/estudiantes/forums/${forum.id}/posts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newPost, imageKey }),
-      });
+      const response = await fetch(
+        `/api/estudiantes/forums/${forum.id}/posts`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newPost, imageKey }),
+        }
+      );
+      if (!response.ok) {
+        throw await getResponseError(
+          response,
+          'No se pudo guardar la publicación'
+        );
+      }
+
       setNewPost('');
       setSelectedImage(null);
       await mutatePosts();
       await mutateReplies();
+    } catch (error) {
+      console.error('Error publishing forum post:', error);
+      setErrorMessage(getPublishErrorMessage(error));
     } finally {
       setIsPublishing(false);
     }
@@ -494,6 +609,38 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
     );
   }
 
+  if (forumError) {
+    const status =
+      forumError instanceof ForumRequestError ? forumError.status : 500;
+    const contentLabel = courseId ? 'curso' : 'proyecto';
+    const contentTitle = courseId ? 'Curso' : 'Proyecto';
+    const accessDescription =
+      `Debes estar inscrito o ser parte del equipo del ${contentLabel} ` +
+      'para participar.';
+    const title =
+      status === 403
+        ? 'No tienes acceso a este foro'
+        : status === 404
+          ? `${contentTitle} o foro no encontrado`
+          : 'No se pudo cargar el foro';
+    const description =
+      status === 403
+        ? accessDescription
+        : status === 404
+          ? 'El contenido solicitado ya no está disponible.'
+          : 'Ocurrió un error al consultar los foros. Intenta nuevamente.';
+
+    return (
+      <div
+        className="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-8 text-center"
+        role="alert"
+      >
+        <h3 className="text-lg font-semibold text-red-300">{title}</h3>
+        <p className="mt-2 text-sm text-red-200/80">{description}</p>
+      </div>
+    );
+  }
+
   if (!forum?.id) {
     return (
       <div
@@ -559,7 +706,41 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
           {totalComments} comentarios · Comparte dudas y avances con tus
           compañeros
         </p>
+        <p className="mt-2 font-medium text-foreground">{forum.title}</p>
+        {forum.description && (
+          <p className="mt-1 text-sm text-[#94a3b8]">{forum.description}</p>
+        )}
       </div>
+
+      {availableForums.length > 1 && (
+        <div
+          className="flex gap-2 overflow-x-auto pb-1"
+          role="tablist"
+          aria-label="Foros del proyecto"
+        >
+          {availableForums.map((item) => {
+            const isSelected = item.id === forum.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                onClick={() => selectForum(item.id)}
+                disabled={isPublishing || uploadingImage}
+                className={cn(
+                  'shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors',
+                  isSelected
+                    ? 'border-[#22C4D3] bg-[#22C4D3]/15 text-[#22C4D3]'
+                    : 'border-[#1d283a] bg-[#061c37] text-[#94a3b8] hover:border-[#22C4D3]/50 hover:text-white'
+                )}
+              >
+                {item.title}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div
         className="
@@ -700,6 +881,30 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
       <div className="space-y-6">
         {postsLoading ? (
           <div className="text-sm text-[#94a3b8]">Cargando comentarios...</div>
+        ) : postsError ? (
+          <div
+            className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-6 text-center"
+            role="alert"
+          >
+            <p className="font-semibold text-red-300">
+              {postsError instanceof ForumRequestError &&
+              postsError.status === 403
+                ? 'No tienes acceso a las publicaciones'
+                : postsError instanceof ForumRequestError &&
+                    postsError.status === 404
+                  ? 'El foro no fue encontrado'
+                  : 'No se pudieron cargar las publicaciones'}
+            </p>
+            <p className="mt-1 text-sm text-red-200/80">
+              {postsError instanceof ForumRequestError &&
+              postsError.status === 403
+                ? 'Tu usuario no tiene permisos para consultar este foro.'
+                : postsError instanceof ForumRequestError &&
+                    postsError.status === 404
+                  ? 'Es posible que el foro haya sido eliminado.'
+                  : 'Ocurrió un error del servidor. Intenta nuevamente.'}
+            </p>
+          </div>
         ) : displayPosts && displayPosts.length > 0 ? (
           displayPosts.map((post) => {
             const postReplies =

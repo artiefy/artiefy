@@ -483,7 +483,10 @@ export default function AdminDashboard() {
 
   const fetchAllPrograms = useCallback(async () => {
     try {
-      const res = await fetch('/api/super-admin/programs');
+      // `GET /api/super-admin/programs` devuelve las MATERIAS de un programa y
+      // exige `?programId=`; el listado de programas vive en esta ruta, la misma
+      // que ya usa `fetchPrograms` más abajo.
+      const res = await fetch('/api/super-admin/programs/enrollInProgram');
       if (!res.ok) throw new Error('Error al obtener programas');
       const rawData: unknown = await res.json();
       if (!isValidProgramArray(rawData)) throw new Error('Datos inválidos');
@@ -3150,10 +3153,7 @@ export default function AdminDashboard() {
                 setNewAnuncio({
                   ...newAnuncio,
                   tipo_destinatario: e.target.value as
-                    | 'todos'
-                    | 'cursos'
-                    | 'programas'
-                    | 'custom',
+                    'todos' | 'cursos' | 'programas' | 'custom',
                 })
               }
             >
@@ -3965,9 +3965,7 @@ export default function AdminDashboard() {
                               setWaCustomRecurrence((prev) => ({
                                 ...prev,
                                 unit: e.target.value as
-                                  | 'days'
-                                  | 'weeks'
-                                  | 'months',
+                                  'days' | 'weeks' | 'months',
                               }))
                             }
                             className="

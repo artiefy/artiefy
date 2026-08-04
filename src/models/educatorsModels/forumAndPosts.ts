@@ -148,114 +148,95 @@ export async function getForumById(forumId: number): Promise<Foro | null> {
 
 //obtener foro por id de curso
 export async function getForumByCourseId(courseId: number) {
-  try {
-    const forum = await db
-      .select({
-        id: forums.id,
-        courseId: forums.courseId,
-        title: forums.title,
-        description: forums.description,
-        userId: forums.userId,
-        createdAt: forums.createdAt,
-        updatedAt: forums.updatedAt,
-        courseTitle: courses.title,
-        courseDescription: courses.description,
-        courseInstructor: courses.instructor,
-        courseCoverImageKey: courses.coverImageKey,
-        userName: users.name, // Unir con la tabla de usuarios para obtener el nombre del usuario
-        userRole: users.role,
-      })
-      .from(forums)
-      .leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
-      .leftJoin(users, eq(forums.userId, users.id)) // Unir con la tabla de usuarios
-      .where(eq(forums.courseId, courseId));
+  const forumRows = await db
+    .select({
+      id: forums.id,
+      courseId: forums.courseId,
+      title: forums.title,
+      description: forums.description,
+      userId: forums.userId,
+      createdAt: forums.createdAt,
+      updatedAt: forums.updatedAt,
+      courseTitle: courses.title,
+      courseDescription: courses.description,
+      courseInstructor: courses.instructor,
+      courseCoverImageKey: courses.coverImageKey,
+      userName: users.name,
+      userRole: users.role,
+    })
+    .from(forums)
+    .leftJoin(courses, eq(forums.courseId, courses.id))
+    .leftJoin(users, eq(forums.userId, users.id))
+    .where(eq(forums.courseId, courseId));
 
-    if (!forum || forum.length === 0) {
-      return null;
-    }
+  const forum = forumRows[0];
+  if (!forum) return null;
 
-    const forumData = forum[0];
-    if (!forumData) {
-      return null;
-    }
-
-    return {
-      id: forumData.id,
-      courseId: {
-        id: forumData.courseId,
-        title: forumData.courseTitle,
-        description: forumData.courseDescription,
-        instructor: forumData.courseInstructor,
-        coverImageKey: forumData.courseCoverImageKey,
-      },
-      title: forumData.title,
-      description: forumData.description ?? '',
-      userId: {
-        id: forumData.userId,
-        name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
-        role: forumData.userRole ?? null,
-      },
-      createdAt: forumData.createdAt,
-      updatedAt: forumData.updatedAt,
-    };
-  } catch (error: unknown) {
-    console.error(error);
-    return null;
-  }
+  return {
+    id: forum.id,
+    courseId: {
+      id: forum.courseId,
+      title: forum.courseTitle,
+      description: forum.courseDescription,
+      instructor: forum.courseInstructor,
+      coverImageKey: forum.courseCoverImageKey,
+    },
+    title: forum.title,
+    description: forum.description ?? '',
+    userId: {
+      id: forum.userId,
+      name: forum.userName ?? '',
+      role: forum.userRole ?? null,
+    },
+    createdAt: forum.createdAt,
+    updatedAt: forum.updatedAt,
+  };
 }
 
-// Obtener foro por id de proyecto guiado (equivalente a getForumByCourseId)
+// Obtener todos los foros de un proyecto guiado en orden de creación.
+export async function getForumsByGuidedProjectId(guidedProjectId: number) {
+  const forumRows = await db
+    .select({
+      id: forums.id,
+      guidedProjectId: forums.guidedProjectId,
+      title: forums.title,
+      description: forums.description,
+      userId: forums.userId,
+      createdAt: forums.createdAt,
+      updatedAt: forums.updatedAt,
+      projectTitle: guidedProjects.title,
+      projectCoverImageKey: guidedProjects.coverImageKey,
+      userName: users.name,
+      userRole: users.role,
+    })
+    .from(forums)
+    .leftJoin(guidedProjects, eq(forums.guidedProjectId, guidedProjects.id))
+    .leftJoin(users, eq(forums.userId, users.id))
+    .where(eq(forums.guidedProjectId, guidedProjectId))
+    .orderBy(forums.createdAt, forums.id);
+
+  return forumRows.map((forum) => ({
+    id: forum.id,
+    guidedProjectId: {
+      id: forum.guidedProjectId,
+      title: forum.projectTitle,
+      coverImageKey: forum.projectCoverImageKey,
+    },
+    title: forum.title,
+    description: forum.description ?? '',
+    userId: {
+      id: forum.userId,
+      name: forum.userName ?? '',
+      role: forum.userRole ?? null,
+    },
+    createdAt: forum.createdAt,
+    updatedAt: forum.updatedAt,
+  }));
+}
+
 export async function getForumByGuidedProjectId(guidedProjectId: number) {
-  try {
-    const forum = await db
-      .select({
-        id: forums.id,
-        guidedProjectId: forums.guidedProjectId,
-        title: forums.title,
-        description: forums.description,
-        userId: forums.userId,
-        createdAt: forums.createdAt,
-        updatedAt: forums.updatedAt,
-        projectTitle: guidedProjects.title,
-        projectCoverImageKey: guidedProjects.coverImageKey,
-        userName: users.name,
-        userRole: users.role,
-      })
-      .from(forums)
-      .leftJoin(guidedProjects, eq(forums.guidedProjectId, guidedProjects.id))
-      .leftJoin(users, eq(forums.userId, users.id))
-      .where(eq(forums.guidedProjectId, guidedProjectId));
-
-    if (!forum || forum.length === 0) {
-      return null;
-    }
-
-    const forumData = forum[0];
-    if (!forumData) {
-      return null;
-    }
-
-    return {
-      id: forumData.id,
-      guidedProjectId: {
-        id: forumData.guidedProjectId,
-        title: forumData.projectTitle,
-        coverImageKey: forumData.projectCoverImageKey,
-      },
-      title: forumData.title,
-      description: forumData.description ?? '',
-      userId: {
-        id: forumData.userId,
-        name: forumData.userName ?? '',
-        role: forumData.userRole ?? null,
-      },
-      createdAt: forumData.createdAt,
-      updatedAt: forumData.updatedAt,
-    };
-  } catch (error: unknown) {
-    console.error(error);
-    return null;
-  }
+  const projectForums = await getForumsByGuidedProjectId(guidedProjectId);
+  return projectForums[0] ?? null;
 }
 
 // Obtener foros por id de usuario

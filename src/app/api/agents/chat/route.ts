@@ -14,9 +14,15 @@ import {
 interface AgentChatRequestBody {
   message?: unknown;
   projectId?: unknown;
-  agent?: unknown;
   activityId?: unknown;
 }
+
+/** Specialists the orchestrator can hand a message to. */
+const AGENT_IDS = ['artie', 'tutor', 'coach'] as const;
+type AgentId = (typeof AGENT_IDS)[number];
+
+const isAgentId = (value: unknown): value is AgentId =>
+  typeof value === 'string' && AGENT_IDS.includes(value as AgentId);
 
 /** Identifies an anonymous visitor so their free allowance can be tracked. */
 const ANON_COOKIE = 'artiefy_agent_anon';
@@ -159,8 +165,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const agent =
-    body.agent === 'coach' || body.agent === 'tutor' ? body.agent : 'artie';
   const projectId = Number(body.projectId);
   const activityId = Number(body.activityId);
   const hasProjectContext = Number.isFinite(projectId) && projectId > 0;
@@ -217,7 +221,9 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         [AUTH_HEADER]: AUTH_VALUE,
       },
-      body: JSON.stringify({ message, sessionId, agent, context }),
+      // No agent is requested: the orchestrator picks the specialist from what
+      // the learner is asking for, and reports back which one answered.
+      body: JSON.stringify({ message, sessionId, context }),
       signal: AbortSignal.timeout(60_000),
     });
 
@@ -233,7 +239,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = (await response.json()) as { reply?: string };
+    const data = (await response.json()) as { reply?: string; agent?: string };
     const reply = typeof data.reply === 'string' ? data.reply : '';
 
     if (!reply) {
@@ -244,8 +250,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Falls back to the orchestrator itself when the workflow answered without
+    // delegating, so the client always gets a valid agent to display.
+    const agent: AgentId = isAgentId(data.agent) ? data.agent : 'artie';
+
     return withAnonCookie(
-      NextResponse.json({ reply, sessionId, quota: toQuotaPayload(quota) })
+      NextResponse.json({
+        reply,
+        agent,
+        sessionId,
+        quota: toQuotaPayload(quota),
+      })
     );
   } catch (error) {
     console.error('Error calling n8n agents webhook:', error);
