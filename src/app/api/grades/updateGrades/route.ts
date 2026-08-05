@@ -17,8 +17,6 @@ interface UpdateGradesRequest {
   finalGrade: number;
 }
 
-export const dynamic = 'force-dynamic';
-
 export async function POST(request: NextRequest) {
   try {
     const data = (await request.json()) as UpdateGradesRequest;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
@@ -103,6 +104,7 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
+  const router = useRouter();
   const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -570,7 +572,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
 
       toast.success('Programa eliminado exitosamente');
       // Redirect to programs list
-      window.location.href = '/dashboard/super-admin/programs';
+      router.push('/dashboard/super-admin/programs');
     } catch (error) {
       toast.error('Error al eliminar el programa');
       console.error('Error:', error);

@@ -7,10 +7,6 @@ import { sql } from 'drizzle-orm';
 import { env } from '~/env';
 import { db } from '~/server/db';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 async function getEmbedding(input: string): Promise<number[]> {
   const res = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',

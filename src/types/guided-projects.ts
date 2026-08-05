@@ -64,6 +64,7 @@ export interface GuidedProject {
   // Progress
   porcentajecompletado?: number;
   enrolled?: boolean;
+  canAccessContent?: boolean;
 }
 
 export interface GuidedObjective {
@@ -74,8 +75,8 @@ export interface GuidedObjective {
   orderIndex: number;
   coverImageKey: string | null;
   coverVideoKey: string | null;
-  resourceKey: string | null;
-  resourceNames: string | null;
+  resourceKey?: string | null;
+  resourceNames?: string | null;
   guidedProjectId: number;
   isEnabled: boolean;
   createdAt: Date;

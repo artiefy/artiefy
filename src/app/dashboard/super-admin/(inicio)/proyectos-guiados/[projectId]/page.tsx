@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 
+import { auth } from '@clerk/nextjs/server';
+
 import { GuidedProjectAdminTabs } from '~/components/super-admin/layout/GuidedProjectAdminTabs';
 import {
   Breadcrumb,
@@ -10,13 +12,18 @@ import {
 } from '~/components/super-admin/ui/breadcrumb';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export default async function GuidedProjectDetailPage({
   params,
 }: {
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const project = await getGuidedProjectById(projectId);
+  const { userId } = await auth();
+  const project = await getGuidedProjectById(projectId, userId);
 
   if (!project) {
     notFound();

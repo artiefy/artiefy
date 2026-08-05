@@ -861,20 +861,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 className="
                   grid grid-cols-1 gap-2
                   sm:grid-cols-2 sm:gap-4
-                  lg:grid-cols-4
+                  lg:grid-cols-3
                 "
               >
-                <Button
-                  className="
-                    w-full bg-green-400 text-white
-                    hover:bg-green-500
-                    sm:w-auto
-                  "
-                >
-                  <Link href={`./${course.id}/ver/${course.id}`}>
-                    Visualizar curso
-                  </Link>
-                </Button>
                 <Button
                   onClick={handleEditCourse}
                   className={`

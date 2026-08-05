@@ -1,26 +1,63 @@
 'use client';
 
-import { type CSSProperties, useMemo, useState } from 'react';
-
 import {
-  ArrowLeftRight,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import Link from 'next/link';
+
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import {
+  AlignLeft,
   Brain,
   ChevronDown,
   ChevronRight,
   CircleCheck,
   FolderKanban,
-  History,
   type LucideIcon,
   Play,
+  Plus,
   Rocket,
   Send,
   Sparkles,
   Target,
+  Trash2,
   X,
 } from 'lucide-react';
 
+gsap.registerPlugin(useGSAP);
+
 /** Artiefy brand cyan. The floating launcher keeps it for every agent. */
 const LAUNCHER_COLOR = '#22C4D3';
+
+/** Below this width the panel behaves as a full-screen bottom sheet. */
+const BOTTOM_SHEET_QUERY = '(max-width: 767px)';
+
+/** Drag distance, in px, past which releasing the handle dismisses the sheet. */
+const DISMISS_THRESHOLD = 120;
+
+/** Single shared quick action shown above the composer for every agent. */
+const QUICK_ACTIONS = ['Hablar con un asesor'];
+
+/**
+ * Opening menu. Each option is sent as a plain message: the orchestrator reads
+ * the intent and hands the conversation to the right specialist on its own.
+ */
+const WELCOME_OPTIONS = [
+  'Quiero aprender algo nuevo',
+  'Quiero desarrollar y crear una nueva idea o proyecto',
+  'Quiero conocer qué puedo hacer en Artiefy',
+];
+
+/** Chat history lives in the browser: the chat API stores no conversations. */
+const HISTORY_STORAGE_KEY = 'artiefy.agent-chat.history';
+const MAX_STORED_CONVERSATIONS = 20;
 
 export type AgentId = 'artie' | 'tutor' | 'coach';
 
@@ -28,11 +65,8 @@ interface AgentDefinition {
   id: AgentId;
   name: string;
   badge: string;
-  tagline: string;
   color: string;
   icon: LucideIcon;
-  emptyState: string;
-  chips: string[];
 }
 
 const AGENTS: Record<AgentId, AgentDefinition> = {
@@ -40,34 +74,22 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
     id: 'artie',
     name: 'Artie',
     badge: 'Guía',
-    tagline: 'Tu guía principal en Artiefy',
     color: 'rgb(34, 196, 211)',
     icon: Sparkles,
-    emptyState:
-      'Tu guía principal en Artiefy. Pregúntame sobre cursos, proyectos, planes o cómo moverte por la plataforma.',
-    chips: ['Cursos', 'Proyectos', 'Planes', 'Hablar con un asesor'],
   },
   tutor: {
     id: 'tutor',
     name: 'Tutor',
     badge: 'Enseñanza',
-    tagline: 'Tutor personalizado de habilidades',
     color: 'rgb(251, 189, 35)',
     icon: Brain,
-    emptyState:
-      'Busco dentro del material de todos los cursos de Artiefy para responderte con fuentes reales.',
-    chips: ['¿Qué cursos hay de IA?', '¿Qué temas cubre?', 'Recomiéndame uno'],
   },
   coach: {
     id: 'coach',
     name: 'Coach',
     badge: 'Proyectos',
-    tagline: 'Mentor para tus proyectos',
     color: 'rgb(50, 200, 180)',
     icon: Rocket,
-    emptyState:
-      'Mentor de tus proyectos guiados. Te acompaño paso a paso en la actividad que tengas activa.',
-    chips: ['¿Por dónde empiezo?', 'Estoy trabado', '¿Qué sigue?'],
   },
 };
 
@@ -102,6 +124,58 @@ interface ChatMessage {
   time: string;
 }
 
+type AgentQuotaTier = 'anon' | 'free' | 'premium';
+
+interface AgentQuotaPayload {
+  tier: AgentQuotaTier;
+  limit: number;
+  remaining: number;
+  resetsDaily: boolean;
+}
+
+interface AgentQuotaNotice {
+  title: string;
+  body: string;
+  primary: { label: string; href: string } | null;
+  secondary: { label: string; href: string } | null;
+}
+
+/** Friendly, sales-forward copy shown when an allowance runs out. */
+function buildQuotaNotice(quota: AgentQuotaPayload): AgentQuotaNotice {
+  if (quota.tier === 'premium') {
+    return {
+      title: 'Llegaste a tus mensajes de hoy',
+      body: `Tu plan incluye ${quota.limit} mensajes diarios con nuestros agentes. El cupo se renueva mañana y seguimos donde lo dejamos.`,
+      primary: null,
+      secondary: null,
+    };
+  }
+
+  if (quota.tier === 'free') {
+    return {
+      title: 'Se te acabaron los mensajes de prueba',
+      body: `Aprovechaste los ${quota.limit} mensajes de tu prueba gratis, y se nota que le estás sacando jugo. Con Premium tienes 50 mensajes al día con Artie, el Tutor y el Coach, más todos los cursos, para que nada te frene.`,
+      primary: { label: 'Quiero Premium', href: '/planes' },
+      secondary: null,
+    };
+  }
+
+  return {
+    title: 'Se te acabaron los mensajes gratis',
+    body: `Ya usaste los ${quota.limit} mensajes de cortesía. Crea tu cuenta y estrena 10 días de Premium, o pásate a Premium y conversa hasta 50 veces al día con nuestros agentes.`,
+    primary: { label: 'Quiero Premium', href: '/planes' },
+    secondary: { label: 'Crear cuenta gratis', href: '/sign-up' },
+  };
+}
+
+interface StoredConversation {
+  id: string;
+  agent: AgentId;
+  title: string;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
 function formatTime(date: Date) {
   return date.toLocaleTimeString('es-CO', {
     hour: '2-digit',
@@ -109,10 +183,16 @@ function formatTime(date: Date) {
   });
 }
 
+function formatDay(timestamp: number) {
+  return new Date(timestamp).toLocaleDateString('es-CO', {
+    day: '2-digit',
+    month: 'short',
+  });
+}
+
 export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [agentId, setAgentId] = useState<AgentId>(project ? 'coach' : 'artie');
-  const [isSwitcherOpen, setIsSwitcherOpen] = useState(false);
   const [isTreeOpen, setIsTreeOpen] = useState(true);
   const [expandedObjectives, setExpandedObjectives] = useState<number[]>([]);
   const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
@@ -121,9 +201,182 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [history, setHistory] = useState<StoredConversation[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [quotaNotice, setQuotaNotice] = useState<AgentQuotaNotice | null>(null);
+  const hasLoadedHistory = useRef(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
+  /** Pointer Y where the current handle drag started; null when not dragging. */
+  const dragStartY = useRef<number | null>(null);
 
   const agent = AGENTS[agentId];
   const AgentIcon = agent.icon;
+
+  /**
+   * Entrance. On small screens the panel is an Apple-style bottom sheet: it
+   * slides up over a fading backdrop. From `md` up it stays the corner popover
+   * and only gets a short fade, so the desktop layout is untouched.
+   */
+  useGSAP(
+    () => {
+      if (!isOpen || !panelRef.current) return;
+
+      const mm = gsap.matchMedia();
+
+      mm.add(BOTTOM_SHEET_QUERY, () => {
+        gsap
+          .timeline()
+          .fromTo(
+            backdropRef.current,
+            { autoAlpha: 0 },
+            { autoAlpha: 1, duration: 0.25, ease: 'power1.out' },
+            0
+          )
+          .from(
+            panelRef.current,
+            { yPercent: 100, duration: 0.45, ease: 'power3.out' },
+            0
+          );
+      });
+
+      mm.add(`not all and ${BOTTOM_SHEET_QUERY}`, () => {
+        gsap.from(panelRef.current, {
+          autoAlpha: 0,
+          y: 12,
+          duration: 0.2,
+          ease: 'power2.out',
+        });
+      });
+
+      return () => {
+        mm.revert();
+        // The drag and exit tweens below are created after this hook runs, so
+        // they live outside the context and need killing by hand.
+        gsap.killTweensOf([panelRef.current, backdropRef.current]);
+      };
+    },
+    { scope: rootRef, dependencies: [isOpen], revertOnUpdate: true }
+  );
+
+  /** Plays the exit animation first, then unmounts the panel. */
+  const closePanel = () => {
+    const panel = panelRef.current;
+
+    if (!panel || !window.matchMedia(BOTTOM_SHEET_QUERY).matches) {
+      setIsOpen(false);
+      return;
+    }
+
+    gsap
+      .timeline({ onComplete: () => setIsOpen(false) })
+      .to(panel, { yPercent: 100, y: 0, duration: 0.3, ease: 'power2.in' }, 0)
+      .to(backdropRef.current, { autoAlpha: 0, duration: 0.3 }, 0);
+  };
+
+  // Drag the grab handle down to dismiss, the way a native sheet behaves.
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!panelRef.current) return;
+    dragStartY.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStartY.current === null || !panelRef.current) return;
+    // Only downward drags move the sheet; pulling up does nothing.
+    gsap.set(panelRef.current, {
+      y: Math.max(0, event.clientY - dragStartY.current),
+    });
+  };
+
+  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStartY.current === null || !panelRef.current) return;
+
+    const travelled = Math.max(0, event.clientY - dragStartY.current);
+    dragStartY.current = null;
+
+    if (travelled > DISMISS_THRESHOLD) {
+      closePanel();
+      return;
+    }
+
+    gsap.to(panelRef.current, { y: 0, duration: 0.25, ease: 'power2.out' });
+  };
+
+  // Restore the locally stored conversations once, on mount.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as StoredConversation[];
+      if (Array.isArray(parsed)) setHistory(parsed);
+    } catch {
+      // Corrupt or unavailable storage: start with an empty history.
+    }
+  }, []);
+
+  // Keep the open conversation mirrored into the history list. Only exchanges
+  // that got an answer are stored, so a blocked message leaves nothing behind.
+  useEffect(() => {
+    if (!conversationId) return;
+    if (!messages.some((message) => message.role === 'agent')) return;
+
+    const firstUserMessage = messages.find(
+      (message) => message.role === 'user'
+    );
+    const entry: StoredConversation = {
+      id: conversationId,
+      agent: agentId,
+      title: firstUserMessage?.text.slice(0, 60) ?? 'Nueva conversación',
+      updatedAt: Date.now(),
+      messages,
+    };
+
+    setHistory((prev) =>
+      [entry, ...prev.filter((item) => item.id !== conversationId)].slice(
+        0,
+        MAX_STORED_CONVERSATIONS
+      )
+    );
+  }, [messages, conversationId, agentId]);
+
+  // Persist on every change except the very first render, which would
+  // overwrite stored history before the load effect above has run.
+  useEffect(() => {
+    if (!hasLoadedHistory.current) {
+      hasLoadedHistory.current = true;
+      return;
+    }
+    try {
+      window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch {
+      // Storage full or blocked: history stays in memory for this session.
+    }
+  }, [history]);
+
+  const startNewConversation = () => {
+    setMessages([]);
+    setConversationId(null);
+    setDraft('');
+    setIsHistoryOpen(false);
+  };
+
+  const openConversation = (conversation: StoredConversation) => {
+    setAgentId(conversation.agent);
+    setMessages(conversation.messages);
+    setConversationId(conversation.id);
+    setIsHistoryOpen(false);
+  };
+
+  const deleteConversation = (id: string) => {
+    setHistory((prev) => prev.filter((item) => item.id !== id));
+    if (conversationId === id) {
+      setMessages([]);
+      setConversationId(null);
+    }
+  };
 
   const { totalActivities, completedActivities, currentActivity } =
     useMemo(() => {
@@ -178,13 +431,19 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       objective.id === currentActivity?.objective.id);
 
   const sendMessage = async (text: string) => {
-    if (!text || isSending) return;
+    if (!text || isSending || quotaNotice) return;
 
     const now = new Date();
+    const userMessageId = `${now.getTime()}-user`;
+
+    if (!conversationId) {
+      setConversationId(`conv-${now.getTime()}`);
+    }
+
     setMessages((prev) => [
       ...prev,
       {
-        id: `${now.getTime()}-user`,
+        id: userMessageId,
         role: 'user',
         agent: agentId,
         text,
@@ -208,16 +467,35 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
 
       const data = (await response.json()) as {
         reply?: string;
+        agent?: AgentId;
         error?: string;
+        quota?: AgentQuotaPayload;
       };
+
+      // Allowance exhausted: drop the optimistic message — it never reached
+      // the agent — and show the upgrade notice instead of a reply.
+      if (response.status === 429 && data.quota) {
+        setMessages((prev) =>
+          prev.filter((message) => message.id !== userMessageId)
+        );
+        setDraft(text);
+        setQuotaNotice(buildQuotaNotice(data.quota));
+        return;
+      }
+
       const replyTime = new Date();
+      // The orchestrator decides who answers, so the badge follows the reply
+      // instead of whatever the previous turn happened to be.
+      const answeringAgent =
+        data.agent && AGENTS[data.agent] ? data.agent : agentId;
+      setAgentId(answeringAgent);
 
       setMessages((prev) => [
         ...prev,
         {
           id: `${replyTime.getTime()}-agent`,
           role: 'agent',
-          agent: agentId,
+          agent: answeringAgent,
           text:
             data.reply ??
             data.error ??
@@ -242,13 +520,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     }
   };
 
+  // `js-floating-launcher` lets globals.css lift the launcher above the fixed
+  // mobile bottom nav on small screens.
   if (!isOpen) {
     return (
       <button
         type="button"
         aria-label="Abrir chat con Artie"
         onClick={() => setIsOpen(true)}
-        className="fixed right-6 bottom-6 z-60 flex size-14 items-center justify-center rounded-full transition-transform hover:scale-105"
+        className="js-floating-launcher fixed right-6 bottom-6 z-60 flex size-14 items-center justify-center rounded-full transition-transform hover:scale-105"
         style={{
           background: `linear-gradient(135deg, ${LAUNCHER_COLOR}, rgba(34, 196, 211, 0.65))`,
           boxShadow: '0 4px 24px rgba(34, 196, 211, 0.35)',
@@ -261,15 +541,42 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
 
   return (
     <div
-      className="fixed right-6 bottom-6 z-60 flex w-[440px] max-w-[calc(100vw-48px)] flex-col"
-      style={{ height: 'min(70vh, 620px)', borderRadius: 20 }}
+      ref={rootRef}
+      className="
+        js-agent-chat-panel fixed inset-0 z-60
+        md:inset-auto md:right-6 md:bottom-6 md:h-[min(70dvh,620px)]
+        md:w-[440px] md:max-w-[calc(100vw-48px)]
+      "
     >
+      {/* Sheet backdrop. Tapping it dismisses, like a native bottom sheet. */}
       <div
-        className="holo-glass relative flex h-full flex-col overflow-hidden rounded-[20px]"
+        ref={backdropRef}
+        aria-hidden="true"
+        onClick={closePanel}
+        className="absolute inset-0 bg-black/60 md:hidden"
+      />
+
+      <div
+        ref={panelRef}
+        className="
+          holo-glass absolute inset-0 flex flex-col overflow-hidden rounded-none
+          md:relative md:inset-auto md:h-full md:rounded-[20px]
+        "
         style={{
           boxShadow: `rgba(4, 6, 11, 0.6) 0px 8px 40px, ${agent.color} 0px 0px 1px`,
         }}
       >
+        {/* Grab handle: drag it down to dismiss. Bottom-sheet sizes only. */}
+        <div
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="flex shrink-0 touch-none justify-center py-2.5 md:hidden"
+        >
+          <span className="h-1 w-10 rounded-full bg-white/25" />
+        </div>
+
         {/* Header */}
         <div
           className="relative border-b px-4 py-3"
@@ -279,57 +586,61 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               'linear-gradient(135deg, rgba(34, 196, 211, 0.06), rgba(124, 59, 237, 0.03), transparent)',
           }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex size-10 items-center justify-center rounded-xl"
-                style={{
-                  background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}14)`,
-                }}
-              >
-                <AgentIcon className="size-5" style={{ color: agent.color }} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {agent.name}
-                  </h3>
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                    style={{
-                      backgroundColor: `${agent.color}1f`,
-                      color: agent.color,
-                    }}
-                  >
-                    {agent.badge}
-                  </span>
-                  <span className="size-2 animate-pulse rounded-full bg-green-500" />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="Historial de chats"
+              aria-expanded={isHistoryOpen}
+              onClick={() => setIsHistoryOpen((prev) => !prev)}
+              className="
+                flex size-9 shrink-0 items-center justify-center rounded-full
+                border transition-colors hover:bg-white/[0.08]
+              "
+              style={{
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              }}
+            >
+              <AlignLeft className="size-4 text-muted-foreground" />
+            </button>
+
+            <div className="flex min-w-0 flex-1 flex-col items-center">
+              <div className="flex items-center gap-2">
+                <h3 className="truncate text-sm font-semibold text-foreground">
+                  {agent.name}
+                </h3>
+                <span
+                  className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                  style={{
+                    backgroundColor: `${agent.color}1f`,
+                    color: agent.color,
+                  }}
+                >
+                  {agent.badge}
+                </span>
+                <span className="size-2 animate-pulse rounded-full bg-green-500" />
+                <div
+                  className="flex size-8 shrink-0 items-center justify-center rounded-xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}14)`,
+                  }}
+                >
+                  <AgentIcon
+                    className="size-4"
+                    style={{ color: agent.color }}
+                  />
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Guía de Artiefy
-                </p>
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                Guía de Artiefy
+              </p>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                aria-label="Historial de chats"
-                className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-              >
-                <History className="size-4 text-muted-foreground" />
-              </button>
-              <button
-                type="button"
-                aria-label="Cambiar agente"
-                onClick={() => setIsSwitcherOpen((prev) => !prev)}
-                className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-              >
-                <ArrowLeftRight className="size-4 text-muted-foreground" />
-              </button>
+
+            <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 aria-label="Cerrar chat"
-                onClick={() => setIsOpen(false)}
+                onClick={closePanel}
                 className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
               >
                 <X className="size-4 text-muted-foreground" />
@@ -338,62 +649,93 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           </div>
         </div>
 
-        {/* Agent switcher */}
-        {isSwitcherOpen && (
-          <div className="holo-glass absolute top-16 right-4 left-4 z-[71] space-y-1 rounded-xl p-2">
-            <p className="px-3 py-1.5 text-[11px] font-medium tracking-wider text-muted-foreground uppercase">
-              Cambiar agente
-            </p>
-            {(Object.keys(AGENTS) as AgentId[]).map((id) => {
-              const option = AGENTS[id];
-              const OptionIcon = option.icon;
-              const isCurrent = id === agentId;
-
-              return (
+        {/* Chat history */}
+        {isHistoryOpen && (
+          <div className="holo-glass absolute inset-0 z-[72] flex flex-col">
+            <div
+              className="flex items-center justify-between border-b px-4 py-3"
+              style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
+            >
+              <h3 className="text-sm font-semibold text-foreground">
+                Historial de chats
+              </h3>
+              <div className="flex items-center gap-1">
                 <button
-                  key={id}
                   type="button"
-                  onClick={() => {
-                    setAgentId(id);
-                    setIsSwitcherOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all ${
-                    isCurrent ? 'bg-white/[0.06]' : 'hover:bg-white/[0.04]'
-                  }`}
+                  aria-label="Nueva conversación"
+                  onClick={startNewConversation}
+                  className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
                 >
-                  <div
-                    className="flex size-9 shrink-0 items-center justify-center rounded-lg"
-                    style={{
-                      background: `linear-gradient(135deg, ${option.color}33, ${option.color}0d)`,
-                    }}
-                  >
-                    <OptionIcon
-                      className="size-4"
-                      style={{ color: option.color }}
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">
-                        {option.name}
-                      </span>
-                      <span
-                        className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style={{
-                          backgroundColor: `${option.color}1f`,
-                          color: option.color,
-                        }}
-                      >
-                        {option.badge}
-                      </span>
-                    </div>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {option.tagline}
-                    </p>
-                  </div>
+                  <Plus className="size-4 text-muted-foreground" />
                 </button>
-              );
-            })}
+                <button
+                  type="button"
+                  aria-label="Cerrar historial"
+                  onClick={() => setIsHistoryOpen(false)}
+                  className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+                >
+                  <X className="size-4 text-muted-foreground" />
+                </button>
+              </div>
+            </div>
+
+            <div className="scrollbar-minimal flex-1 overflow-y-auto p-3">
+              {history.length === 0 ? (
+                <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  Todavía no tienes conversaciones guardadas. Escríbele a un
+                  agente y aparecerán aquí.
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {history.map((conversation) => {
+                    const conversationAgent = AGENTS[conversation.agent];
+                    const ConversationIcon = conversationAgent.icon;
+
+                    return (
+                      <li
+                        key={conversation.id}
+                        className="flex items-center gap-1 rounded-xl px-1 transition-colors hover:bg-white/[0.04]"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openConversation(conversation)}
+                          className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5 text-left"
+                        >
+                          <div
+                            className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                            style={{
+                              background: `${conversationAgent.color}26`,
+                            }}
+                          >
+                            <ConversationIcon
+                              className="size-4"
+                              style={{ color: conversationAgent.color }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-foreground">
+                              {conversation.title}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {conversationAgent.name} ·{' '}
+                              {formatDay(conversation.updatedAt)}
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Eliminar ${conversation.title}`}
+                          onClick={() => deleteConversation(conversation.id)}
+                          className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+                        >
+                          <Trash2 className="size-3.5 text-muted-foreground" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </div>
         )}
 
@@ -610,11 +952,29 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                 <AgentIcon className="size-8" style={{ color: agent.color }} />
               </div>
               <h4 className="mb-2 font-semibold text-foreground">
-                Chatea con {agent.name}
+                ¡Hola! Qué gusto saludarte
               </h4>
               <p className="mb-5 max-w-[260px] text-sm text-muted-foreground">
-                {agent.emptyState}
+                ¿En qué te ayudo hoy? Dime qué prefieres y yo te ayudo.
               </p>
+              <div className="flex w-full max-w-[280px] flex-col gap-2">
+                {WELCOME_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => void sendMessage(option)}
+                    disabled={isSending}
+                    className="rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition-all hover:scale-[1.02] disabled:opacity-40"
+                    style={{
+                      borderColor: `${agent.color}33`,
+                      color: agent.color,
+                      backgroundColor: `${agent.color}14`,
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="flex-1 space-y-3 p-4">
@@ -697,61 +1057,117 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           )}
         </div>
 
-        {/* Composer */}
-        <div
-          className="space-y-2.5 border-t p-3"
-          style={{ borderColor: 'rgba(255, 255, 255, 0.06)' }}
-        >
-          <div className="scrollbar-minimal flex gap-2 overflow-x-auto px-1 pb-1">
-            {agent.chips.map((chip) => (
+        {/* Upgrade notice: replaces the composer once the allowance is spent */}
+        {quotaNotice ? (
+          <div className="p-3">
+            <div
+              className="rounded-2xl border p-4 text-center"
+              style={{
+                borderColor: `${LAUNCHER_COLOR}40`,
+                background: `linear-gradient(135deg, ${LAUNCHER_COLOR}1f, ${LAUNCHER_COLOR}08)`,
+              }}
+            >
+              <div
+                className="mx-auto mb-3 flex size-11 items-center justify-center rounded-2xl"
+                style={{ background: `${LAUNCHER_COLOR}26` }}
+              >
+                <Sparkles
+                  className="size-5"
+                  style={{ color: LAUNCHER_COLOR }}
+                />
+              </div>
+              <h4 className="mb-1.5 text-sm font-semibold text-foreground">
+                {quotaNotice.title}
+              </h4>
+              <p className="mb-4 text-xs leading-relaxed text-muted-foreground">
+                {quotaNotice.body}
+              </p>
+              {quotaNotice.primary && (
+                <Link
+                  href={quotaNotice.primary.href}
+                  className="
+                    flex w-full items-center justify-center rounded-xl px-4
+                    py-2.5 text-sm font-semibold transition-transform
+                    hover:scale-[1.02]
+                  "
+                  style={{
+                    backgroundColor: LAUNCHER_COLOR,
+                    color: 'rgb(8, 12, 22)',
+                  }}
+                >
+                  {quotaNotice.primary.label}
+                </Link>
+              )}
+              {quotaNotice.secondary && (
+                <Link
+                  href={quotaNotice.secondary.href}
+                  className="
+                    mt-2.5 block text-xs font-medium text-muted-foreground
+                    underline-offset-4 hover:underline
+                  "
+                >
+                  {quotaNotice.secondary.label}
+                </Link>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Composer */
+          <div className="space-y-2.5 p-3">
+            <div className="scrollbar-minimal flex gap-2 overflow-x-auto px-1 pb-1">
+              {QUICK_ACTIONS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => void sendMessage(chip)}
+                  disabled={isSending}
+                  className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:scale-[1.03] disabled:opacity-40"
+                  style={{
+                    borderColor: `${agent.color}33`,
+                    color: agent.color,
+                    backgroundColor: `${agent.color}14`,
+                  }}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    void sendMessage(draft.trim());
+                  }
+                }}
+                placeholder={
+                  isSending
+                    ? `${agent.name} está pensando...`
+                    : 'Escribe tu mensaje...'
+                }
+                aria-label="Mensaje de chat"
+                className="flex-1 rounded-xl border bg-holo-surface2/60 px-4 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none"
+                style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}
+              />
               <button
-                key={chip}
                 type="button"
-                onClick={() => void sendMessage(chip)}
-                disabled={isSending}
-                className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all hover:scale-[1.03] disabled:opacity-40"
+                onClick={() => void sendMessage(draft.trim())}
+                disabled={!draft.trim() || isSending}
+                aria-label="Enviar mensaje"
+                className="flex size-10 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
                 style={{
-                  borderColor: `${agent.color}33`,
-                  color: agent.color,
-                  backgroundColor: `${agent.color}14`,
+                  backgroundColor: agent.color,
+                  color: 'rgb(8, 12, 22)',
                 }}
               >
-                {chip}
+                <Send className="size-4" />
               </button>
-            ))}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  void sendMessage(draft.trim());
-                }
-              }}
-              placeholder={
-                isSending
-                  ? `${agent.name} está pensando...`
-                  : 'Escribe tu mensaje...'
-              }
-              aria-label="Mensaje de chat"
-              className="flex-1 rounded-xl border bg-holo-surface2/60 px-4 py-2.5 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:outline-none"
-              style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}
-            />
-            <button
-              type="button"
-              onClick={() => void sendMessage(draft.trim())}
-              disabled={!draft.trim() || isSending}
-              aria-label="Enviar mensaje"
-              className="flex size-10 items-center justify-center rounded-xl transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40"
-              style={{ backgroundColor: agent.color, color: 'rgb(8, 12, 22)' }}
-            >
-              <Send className="size-4" />
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

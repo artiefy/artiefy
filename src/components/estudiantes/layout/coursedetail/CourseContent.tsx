@@ -73,9 +73,6 @@ interface CourseContentProps {
   } | null;
 }
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 const MEETING_TIME_ZONE = 'America/Bogota';
 
 const toSafeDate = (value?: string | number | Date | null) => {

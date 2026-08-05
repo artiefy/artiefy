@@ -7,9 +7,6 @@ import Footer from '~/components/estudiantes/layout/Footer';
 import MyCoursesStudent from '~/components/estudiantes/layout/MyCoursesStudent';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 export default function MisCoursesPage() {
   return (
     <>

@@ -6,8 +6,6 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { project_drafts } from '~/server/db/schema';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   const user = await currentUser();
   if (!user?.id)

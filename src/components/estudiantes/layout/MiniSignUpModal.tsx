@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useAuth, useSignUp } from '@clerk/nextjs';
+import { useAuth, useClerk, useSignIn, useSignUp } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 import { Check, X } from 'lucide-react';
@@ -147,6 +147,26 @@ const getSignUpEmail = (signUpResource: unknown) => {
   return '';
 };
 
+const OAUTH_PROVIDERS: {
+  strategy: OAuthStrategy;
+  label: string;
+  Icon: (props: React.HTMLAttributes<SVGElement>) => React.JSX.Element;
+}[] = [
+  { strategy: 'oauth_google', label: 'Google', Icon: Icons.google },
+  { strategy: 'oauth_facebook', label: 'Facebook', Icon: Icons.facebook },
+  { strategy: 'oauth_github', label: 'GitHub', Icon: Icons.gitHub },
+];
+
+// A half-completed login leaves a stale Clerk session in the browser; the
+// next OAuth attempt then fails with one of these codes until it is cleared.
+const STALE_SESSION_ERROR_CODES = new Set([
+  'session_exists',
+  'identifier_already_signed_in',
+]);
+
+const hasStaleSessionError = (errors: ClerkAPIError[]) =>
+  errors.some((error) => STALE_SESSION_ERROR_CODES.has(error.code));
+
 const createOAuthPassword = () => {
   const bytes = new Uint8Array(12);
   globalThis.crypto.getRandomValues(bytes);
@@ -164,6 +184,12 @@ interface MiniSignUpModalProps {
   autoStartOAuthStrategy?: OAuthStrategy | null;
   onAutoStartOAuthHandled?: () => void;
   onSwitchToLogin?: () => void;
+  /**
+   * `modal` renders the dialog overlay used across the student pages.
+   * `page` renders the same flow inline, without overlay or close button, so
+   * the /sign-up route can reuse it instead of Clerk's prebuilt <SignUp />.
+   */
+  variant?: 'modal' | 'page';
 }
 
 export default function MiniSignUpModal({
@@ -174,8 +200,12 @@ export default function MiniSignUpModal({
   autoStartOAuthStrategy = null,
   onAutoStartOAuthHandled,
   onSwitchToLogin,
+  variant = 'modal',
 }: MiniSignUpModalProps) {
+  const isPageVariant = variant === 'page';
   const { signUp } = useSignUp();
+  const { signIn } = useSignIn();
+  const { signOut } = useClerk();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -194,6 +224,9 @@ export default function MiniSignUpModal({
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
+    null
+  );
 
   useEffect(() => {
     if (!isOpen || !autoStartOAuthStrategy) return;
@@ -294,6 +327,49 @@ export default function MiniSignUpModal({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // OAuth sign-up. Clerk routes an unknown OAuth account through the sign-up
+  // flow, so the same `signIn.sso` entry point covers both cases; the missing
+  // fields step below finishes the registration when Clerk asks for it.
+  const signUpWith = async (strategy: OAuthStrategy) => {
+    if (!signIn || loadingProvider) return;
+
+    try {
+      setErrors(undefined);
+      setLoadingProvider(strategy);
+      signIn.reset();
+
+      const startSso = () =>
+        signIn.sso({
+          strategy,
+          redirectCallbackUrl: '/sign-up/sso-callback',
+          redirectUrl: redirectUrl || '/',
+          ...(strategy === 'oauth_google'
+            ? { oidcPrompt: 'select_account' }
+            : {}),
+        });
+
+      let { error } = await startSso();
+
+      if (error && hasStaleSessionError(toClerkApiErrors(error))) {
+        // Clear the stale session left by a half-completed login and retry
+        // the OAuth redirect once, instead of forcing the user to wipe
+        // browser cookies manually.
+        await signOut(async () => {
+          const retry = await startSso();
+          error = retry.error;
+        });
+      }
+
+      if (error) {
+        setLoadingProvider(null);
+        setErrors(toClerkApiErrors(error));
+      }
+    } catch (err) {
+      setLoadingProvider(null);
+      setErrors(toClerkApiErrors(err));
+    }
+  };
 
   const validateSignUpInputs = (
     fname: string,
@@ -924,55 +1000,71 @@ export default function MiniSignUpModal({
 
   return (
     <div
-      className="
-        pointer-events-auto fixed inset-0 z-[1300] flex items-center
-        justify-center bg-black/50
-      "
+      className={
+        isPageVariant
+          ? 'flex w-full justify-center'
+          : `
+            pointer-events-auto fixed inset-0 z-[1300] flex items-center
+            justify-center bg-black/50
+          `
+      }
     >
       <div
-        role="dialog"
-        className="
-          data-[state=open]:animate-in
-          data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-          data-[state=open]:fade-in-0
-          data-[state=closed]:zoom-out-95
-          data-[state=open]:zoom-in-95
-          data-[state=closed]:slide-out-to-left-1/2
-          data-[state=closed]:slide-out-to-top-[48%]
-          data-[state=open]:slide-in-from-left-1/2
-          data-[state=open]:slide-in-from-top-[48%]
-          fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-[-50%]
-          gap-4 overflow-hidden rounded-[32px] border border-border/50
-          bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200
-          sm:max-w-md
-        "
+        role={isPageVariant ? undefined : 'dialog'}
+        className={
+          isPageVariant
+            ? `
+              relative z-10 grid w-full max-w-lg gap-4 overflow-hidden
+              rounded-[32px] border border-border/50 bg-background/95 p-8
+              shadow-lg backdrop-blur-xl
+              sm:max-w-md
+            `
+            : `
+              data-[state=open]:animate-in
+              data-[state=closed]:animate-out data-[state=closed]:fade-out-0
+              data-[state=open]:fade-in-0
+              data-[state=closed]:zoom-out-95
+              data-[state=open]:zoom-in-95
+              data-[state=closed]:slide-out-to-left-1/2
+              data-[state=closed]:slide-out-to-top-[48%]
+              data-[state=open]:slide-in-from-left-1/2
+              data-[state=open]:slide-in-from-top-[48%]
+              fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg
+              translate-[-50%] gap-4 overflow-hidden rounded-[32px] border
+              border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl
+              duration-200
+              sm:max-w-md
+            `
+        }
         tabIndex={-1}
-        style={{ pointerEvents: 'auto' }}
+        style={isPageVariant ? undefined : { pointerEvents: 'auto' }}
       >
-        <button
-          onClick={onClose}
-          className="
-            absolute top-4 right-4 rounded-full p-2 text-muted-foreground
-            transition-colors
-            hover:bg-accent hover:text-accent-foreground
-          "
-          aria-label="Cerrar"
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+        {!isPageVariant && (
+          <button
+            onClick={onClose}
+            className="
+              absolute top-4 right-4 rounded-full p-2 text-muted-foreground
+              transition-colors
+              hover:bg-accent hover:text-accent-foreground
+            "
+            aria-label="Cerrar"
           >
-            <path
-              d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z"
-              fill="currentColor"
-              fillRule="evenodd"
-              clipRule="evenodd"
-            />
-          </svg>
-        </button>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 15 15"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z"
+                fill="currentColor"
+                fillRule="evenodd"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        )}
 
         {/* Decorative background elements */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -1406,6 +1498,48 @@ export default function MiniSignUpModal({
               )}
             </button>
           </form>
+        )}
+
+        {isPageVariant && !pendingVerification && !isOAuthCompletionFlow && (
+          <>
+            <div className="relative my-2">
+              <div className="h-px w-full shrink-0 bg-border/50" />
+              <span
+                className="
+                  absolute top-1/2 left-1/2 -translate-1/2 bg-background px-3
+                  text-xs text-muted-foreground
+                "
+              >
+                o continúa con
+              </span>
+            </div>
+            <div className="flex justify-center gap-4">
+              {OAUTH_PROVIDERS.map(({ strategy, label, Icon }) => (
+                <button
+                  key={strategy}
+                  type="button"
+                  onClick={() => void signUpWith(strategy)}
+                  className="
+                    inline-flex size-12 items-center justify-center rounded-full
+                    border border-border/50 bg-background transition-all
+                    hover:border-primary/50 hover:bg-muted/50
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0
+                  "
+                  disabled={isSubmitting || Boolean(loadingProvider)}
+                  aria-label={`Continuar con ${label}`}
+                >
+                  {loadingProvider === strategy ? (
+                    <Icons.spinner className="size-5" />
+                  ) : (
+                    <Icon className="size-5" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
         )}
 
         {onSwitchToLogin && (

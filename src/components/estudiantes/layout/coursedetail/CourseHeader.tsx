@@ -72,8 +72,6 @@ interface GradeSummaryType {
   }[];
 }
 
-export const revalidate = 3600;
-
 interface ExtendedCourse extends Course {
   progress?: number;
   finalGrade?: number;
@@ -1088,8 +1086,7 @@ export function CourseHeader({
     const subscriptionStatus = user?.publicMetadata
       ?.subscriptionStatus as string;
     const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-      | string
-      | undefined;
+      string | undefined;
     const isSubscriptionExpired =
       subscriptionStatus !== 'active' ||
       (subscriptionEndDate && new Date(subscriptionEndDate) < new Date());

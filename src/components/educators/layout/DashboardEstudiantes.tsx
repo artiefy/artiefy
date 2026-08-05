@@ -607,7 +607,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           );
           tiempoEnCurso = `${diffDays} días`;
         }
-
         return {
           ...user,
           firstName: user.firstName ?? 'Nombre no disponible',

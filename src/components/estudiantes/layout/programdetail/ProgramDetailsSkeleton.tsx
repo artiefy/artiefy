@@ -13,7 +13,7 @@ export function ProgramDetailsSkeleton() {
         className="
           mx-auto max-w-7xl pb-4
           md:pb-6
-          lg:pb-8
+          lg:pt-24 lg:pb-8
         "
       >
         <Card className="overflow-hidden p-0">

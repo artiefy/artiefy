@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
@@ -83,6 +84,7 @@ export function ProgramHeader({
   isLoadingEnrollments,
 }: ProgramHeaderProps) {
   const { user, isSignedIn } = useUser();
+  const router = useRouter();
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
@@ -310,8 +312,7 @@ export function ProgramHeader({
   // Verificar plan Premium y fecha de vencimiento
   const isPremium = user?.publicMetadata?.planType === 'Premium';
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | null;
+    string | null;
   const isSubscriptionValid =
     isPremium &&
     (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
@@ -617,7 +618,7 @@ export function ProgramHeader({
 
     const currentPath = `/estudiantes/programas/${program.id}`;
     const returnUrl = encodeURIComponent(currentPath);
-    window.location.href = `/sign-in?redirect_url=${returnUrl}`;
+    router.push(`/sign-in?redirect_url=${returnUrl}`);
   };
 
   const handleEnrollClick = async () => {
@@ -819,7 +820,7 @@ export function ProgramHeader({
     <>
       <div
         className="
-          relative rounded-2xl border border-border/50 bg-card/80 p-6 shadow-xl
+          relative rounded-2xl border border-border/50 bg-card p-6 shadow-xl
           shadow-black/20 backdrop-blur-sm
           md:p-8
         "
@@ -1170,10 +1171,7 @@ export function ProgramHeader({
               onValueChange={(value) =>
                 setActiveTab(
                   value as
-                    | 'cursos'
-                    | 'en-vivo'
-                    | 'certificacion'
-                    | 'resultado-final'
+                    'cursos' | 'en-vivo' | 'certificacion' | 'resultado-final'
                 )
               }
               className="w-full"

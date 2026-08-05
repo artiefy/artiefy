@@ -29,22 +29,38 @@ const nextConfig: NextConfig = {
     ];
   },
   reactCompiler: false,
-  cacheComponents: false,
+  cacheComponents: true,
   expireTime: 3600,
   experimental: {
-    // `useTypeScriptCli: true` makes `next build` run the project-local `tsc`
-    // (TypeScript 7) instead of loading the TypeScript JavaScript compiler
-    // API. It shipped in 16.3.0-canary.79 and is NOT in 16.2.11: the key is
-    // absent from `ExperimentalConfig`, so it fails the typecheck and Next
-    // logs "Unrecognized key(s) in object" and ignores it. Re-enable after
-    // upgrading to a release that includes vercel/next.js#95639.
+    // Next.js 16.3 turned `useTypeScriptCli` on by default, which makes
+    // `next build` shell out to the `tsc` binary owned by the `typescript`
+    // package. This project aliases `typescript` to
+    // `@typescript/typescript6`, whose binary is named `tsc6`, so the CLI
+    // checker finds no `tsc` there and aborts the build claiming TypeScript
+    // is not installed. Opting out restores the in-process JavaScript
+    // compiler API, which the aliased TypeScript 6 does provide and which
+    // also produces better Next.js code frames.
+    //
+    // Type checking still runs on TypeScript 7: `node_modules/.bin/tsc`
+    // resolves to `@typescript/native`, so `npm run check` and
+    // `npm run typecheck` get the ~10x faster native compiler. The
+    // `typescript` package has to stay on 6 because typescript-eslint needs
+    // the JavaScript compiler API that TypeScript 7 does not expose.
+    useTypeScriptCli: false,
+    // Server Actions are stable since Next.js 14; only these tuning options
+    // still live under `experimental`.
     serverActions: {
-      bodySizeLimit: '100mb',
-      allowedOrigins: [
-        'https://artiefy.com',
-        'https://accounts.artiefy.com',
-        'http://localhost:3000',
-      ],
+      // Applies to Server Action requests only, never to Route Handlers.
+      // File uploads go through `src/app/api/**` with S3 presigned URLs, so
+      // this only has to cover serialized action arguments. Next's default
+      // is 1MB; 5MB leaves headroom for the largest payloads without
+      // opening a cheap resource-exhaustion vector.
+      bodySizeLimit: '5mb',
+      // `allowedOrigins` is intentionally omitted: same-origin requests are
+      // always allowed, and the app is not served behind a reverse proxy
+      // that rewrites the host. If one is ever added, list bare hosts here
+      // (`['artiefy.com', '*.artiefy.com']`) — Next compares them against
+      // `new URL(origin).host`, so entries with a protocol never match.
     },
   },
   images: {
@@ -62,10 +78,12 @@ const nextConfig: NextConfig = {
       new URL('https://img.clerk.com/**'),
       new URL('https://assets.example.com/**'),
     ],
-    localPatterns: [
-      { pathname: '/api/image-proxy', search: '?url=*' },
-      { pathname: '/**' },
-    ],
+    // `localPatterns` is an OR list, so a catch-all entry subsumes every
+    // narrower one. Local images live at the root of `public/`, so the
+    // catch-all is required. `/api/image-proxy` is not restricted here
+    // because it validates its own `url` param against the allowed S3
+    // origins and bucket key (see `src/app/api/image-proxy/route.ts`).
+    localPatterns: [{ pathname: '/**' }],
     qualities: [70, 75, 85, 100],
     maximumRedirects: 3,
     dangerouslyAllowLocalIP: false,

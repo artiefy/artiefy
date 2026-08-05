@@ -9,8 +9,6 @@ import {
   updateTicketState,
 } from '~/models/educatorsModels/ticketsModels';
 
-export const dynamic = 'force-dynamic';
-
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 

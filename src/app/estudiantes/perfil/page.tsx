@@ -5,6 +5,10 @@ import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnro
 import { getMyProfile } from '~/server/actions/estudiantes/profile/profileActions';
 import { getEnrolledPrograms } from '~/server/actions/estudiantes/programs/getEnrolledPrograms';
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export default async function ProfilePage() {
   const profile = await getMyProfile();
 

@@ -1,15 +1,42 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 import { env } from '~/env';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
+import {
+  type AgentQuotaState,
+  consumeAgentQuota,
+  refundAgentQuota,
+  resolveAgentQuotaTier,
+} from '~/server/agents/agentChatQuota';
 
 interface AgentChatRequestBody {
   message?: unknown;
   projectId?: unknown;
-  agent?: unknown;
   activityId?: unknown;
+}
+
+/** Specialists the orchestrator can hand a message to. */
+const AGENT_IDS = ['artie', 'tutor', 'coach'] as const;
+type AgentId = (typeof AGENT_IDS)[number];
+
+const isAgentId = (value: unknown): value is AgentId =>
+  typeof value === 'string' && AGENT_IDS.includes(value as AgentId);
+
+/** Identifies an anonymous visitor so their free allowance can be tracked. */
+const ANON_COOKIE = 'artiefy_agent_anon';
+const ANON_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+function toQuotaPayload(state: AgentQuotaState) {
+  return {
+    tier: state.tier,
+    limit: state.limit,
+    remaining: state.remaining,
+    resetsDaily: state.resetsDaily,
+  };
 }
 
 /**
@@ -99,9 +126,29 @@ export async function POST(request: NextRequest) {
   }
 
   const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-  }
+
+  // Anonymous visitors get their own allowance, tracked with a long-lived
+  // cookie. Clearing cookies resets it — this is a funnel gate, not a hard
+  // security boundary.
+  const existingAnonId = request.cookies.get(ANON_COOKIE)?.value;
+  const anonId = userId
+    ? null
+    : existingAnonId && UUID_PATTERN.test(existingAnonId)
+      ? existingAnonId
+      : crypto.randomUUID();
+
+  const withAnonCookie = (response: NextResponse) => {
+    if (anonId) {
+      response.cookies.set(ANON_COOKIE, anonId, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: request.nextUrl.protocol === 'https:',
+        path: '/',
+        maxAge: ANON_COOKIE_MAX_AGE,
+      });
+    }
+    return response;
+  };
 
   let body: AgentChatRequestBody;
   try {
@@ -118,15 +165,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const agent =
-    body.agent === 'coach' || body.agent === 'tutor' ? body.agent : 'artie';
   const projectId = Number(body.projectId);
   const activityId = Number(body.activityId);
+  const hasProjectContext = Number.isFinite(projectId) && projectId > 0;
+
+  // Guided-project context is personal data, so it always requires a session.
+  if (hasProjectContext && !userId) {
+    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+  }
 
   let context = '';
-  let sessionId = `${userId}:artie`;
+  let sessionId = userId ? `${userId}:artie` : `anon:${anonId}:artie`;
 
-  if (Number.isFinite(projectId) && projectId > 0) {
+  if (hasProjectContext && userId) {
     const project = await getGuidedProjectById(projectId, userId);
 
     // Enrollment gate: the agents only ever see projects the learner owns.
@@ -144,6 +195,25 @@ export async function POST(request: NextRequest) {
     sessionId = `${userId}:project:${projectId}`;
   }
 
+  // Plan metadata is not in the session token yet, so it is read from Clerk.
+  const tier = userId
+    ? resolveAgentQuotaTier((await currentUser())?.publicMetadata)
+    : 'anon';
+
+  const quota = await consumeAgentQuota(tier, userId ?? anonId!);
+
+  if (!quota.allowed) {
+    return withAnonCookie(
+      NextResponse.json(
+        {
+          error: 'Alcanzaste el límite de mensajes con el asistente',
+          quota: toQuotaPayload(quota),
+        },
+        { status: 429 }
+      )
+    );
+  }
+
   try {
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
@@ -151,7 +221,9 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         [AUTH_HEADER]: AUTH_VALUE,
       },
-      body: JSON.stringify({ message, sessionId, agent, context }),
+      // No agent is requested: the orchestrator picks the specialist from what
+      // the learner is asking for, and reports back which one answered.
+      body: JSON.stringify({ message, sessionId, context }),
       signal: AbortSignal.timeout(60_000),
     });
 
@@ -159,25 +231,40 @@ export async function POST(request: NextRequest) {
       console.error(
         `n8n agents webhook responded ${response.status}: ${await response.text()}`
       );
+      // The attempt never reached the agent, so it should not be charged.
+      await refundAgentQuota(quota.key);
       return NextResponse.json(
         { error: 'El asistente no está disponible en este momento' },
         { status: 502 }
       );
     }
 
-    const data = (await response.json()) as { reply?: string };
+    const data = (await response.json()) as { reply?: string; agent?: string };
     const reply = typeof data.reply === 'string' ? data.reply : '';
 
     if (!reply) {
+      await refundAgentQuota(quota.key);
       return NextResponse.json(
         { error: 'El asistente respondió vacío' },
         { status: 502 }
       );
     }
 
-    return NextResponse.json({ reply, sessionId });
+    // Falls back to the orchestrator itself when the workflow answered without
+    // delegating, so the client always gets a valid agent to display.
+    const agent: AgentId = isAgentId(data.agent) ? data.agent : 'artie';
+
+    return withAnonCookie(
+      NextResponse.json({
+        reply,
+        agent,
+        sessionId,
+        quota: toQuotaPayload(quota),
+      })
+    );
   } catch (error) {
     console.error('Error calling n8n agents webhook:', error);
+    await refundAgentQuota(quota.key);
     return NextResponse.json(
       { error: 'No pudimos contactar al asistente' },
       { status: 502 }

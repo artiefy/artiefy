@@ -1521,10 +1521,10 @@ export default function CourseDetails({
   const mobileCourseTitleLength = course.title.trim().length;
   const mobileCourseTitleSizeClass =
     mobileCourseTitleLength > 70
-      ? 'text-xl leading-snug sm:text-2xl'
+      ? 'text-base leading-snug sm:text-2xl'
       : mobileCourseTitleLength > 42
-        ? 'text-2xl leading-tight sm:text-3xl'
-        : 'text-[1.7rem] leading-tight sm:text-3xl';
+        ? 'text-lg leading-snug sm:text-3xl'
+        : 'text-xl leading-tight sm:text-3xl';
 
   // --- NUEVO LAYOUT VISUAL ---
   return (
@@ -1540,26 +1540,11 @@ export default function CourseDetails({
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
           <div
             className="
-              relative rounded-2xl border p-2 shadow-xl shadow-black/20
-              backdrop-blur-sm
+              relative rounded-2xl border border-border/50 bg-card p-2 shadow-xl
+              shadow-black/20 backdrop-blur-sm
               md:p-8
             "
-            style={{
-              backgroundColor: '#010b17',
-              borderColor: '#061c37cc',
-              backgroundImage: coverImageUrl
-                ? `url(${coverImageUrl})`
-                : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center center',
-            }}
           >
-            <div
-              className="
-                absolute inset-0 rounded-2xl bg-gradient-to-r from-background
-                via-background/95 to-background/80
-              "
-            ></div>
             <div className="relative z-10 space-y-6">
               {/* 
                 Layout adaptativo según inscripción:
@@ -1573,15 +1558,6 @@ export default function CourseDetails({
                 `}
               >
                 <div className="space-y-3 lg:hidden">
-                  <h1
-                    className={`
-                      font-display max-w-full font-bold text-balance
-                      break-words text-foreground
-                      ${mobileCourseTitleSizeClass}
-                    `}
-                  >
-                    {course.title}
-                  </h1>
                   {courseTypeLabel && (
                     <span
                       className="
@@ -1597,6 +1573,15 @@ export default function CourseDetails({
                       {courseTypeLabel}
                     </span>
                   )}
+                  <h1
+                    className={`
+                      font-display max-w-full font-bold text-balance
+                      break-words text-foreground
+                      ${mobileCourseTitleSizeClass}
+                    `}
+                  >
+                    {course.title}
+                  </h1>
                 </div>
                 {/* Mini tarjeta estática para móviles: mismo contenido y estilo que el CTA lateral de escritorio */}
                 <div className="lg:hidden">

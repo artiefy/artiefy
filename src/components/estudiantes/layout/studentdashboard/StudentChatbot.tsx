@@ -163,13 +163,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     height: 500,
   });
   // Responsive: dimensiones seguras para móviles (teclado táctil)
-  const [viewportWidth, _setViewportWidth] = useState<number>(
+  const [viewportWidth, setViewportWidth] = useState<number>(
     typeof window !== 'undefined' ? window.innerWidth : 0
   );
-  const [, _setViewportHeight] = useState<number>(
-    typeof window !== 'undefined' ? window.innerHeight : 0
-  );
-  const [mobileViewportBase, _setMobileViewportBase] = useState<number>(() =>
+  const [mobileViewportBase, setMobileViewportBase] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
   // Hook centralizado para gestionar la altura del teclado en móviles
@@ -182,6 +179,10 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
     typeof window !== 'undefined' ? window.innerHeight : 0
   );
   const searchRequestInProgress = useRef(false);
+  const isKeyboardOpenRef = useRef(isKeyboardOpen);
+  useEffect(() => {
+    isKeyboardOpenRef.current = isKeyboardOpen;
+  }, [isKeyboardOpen]);
 
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -2258,6 +2259,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         width: isMobile ? window.innerWidth : 500,
         height: window.innerHeight,
       });
+      // Keep the mobile panel measurements in sync with rotation / resize.
+      // The soft keyboard is handled separately by useKeyboardViewport, so only
+      // grow the base height and never shrink it while the keyboard is open.
+      setViewportWidth(window.innerWidth);
+      setMobileViewportBase((prev) =>
+        isKeyboardOpenRef.current ? prev : window.innerHeight
+      );
     };
 
     if (typeof window !== 'undefined') {
@@ -2404,7 +2412,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       queueOrSaveUserMessage('🛠 Soporte Técnico');
       if (!isSignedIn) {
         const currentUrl = encodeURIComponent(window.location.href);
-        window.location.href = `/sign-in?redirect_url=${currentUrl}&action=create_ticket`;
+        router.push(`/sign-in?redirect_url=${currentUrl}&action=create_ticket`);
       } else {
         setIsOpen(false);
         window.dispatchEvent(
@@ -3159,7 +3167,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const mainFloatingButtonStyle: React.CSSProperties = !isDesktop
     ? {
         ...floatingButtonStyle,
-        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.5rem)',
+        // Keep the launcher clear of the fixed mobile bottom nav. Must stay in
+        // sync with `.js-floating-launcher` in globals.css.
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.25rem)',
       }
     : floatingButtonStyle;
   const shouldRenderSupportButton =
@@ -3697,7 +3707,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 const currentUrl = encodeURIComponent(
                                   window.location.href
                                 );
-                                window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                                router.push(
+                                  `/sign-in?redirect_url=${currentUrl}`
+                                );
                               }}
                               className={`
                                 mt-3 rounded-lg bg-background px-4 py-2 text-sm
@@ -3768,7 +3780,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                     const currentUrl = encodeURIComponent(
                                       window.location.href
                                     );
-                                    window.location.href = `/sign-in?redirect_url=${currentUrl}`;
+                                    router.push(
+                                      `/sign-in?redirect_url=${currentUrl}`
+                                    );
                                   }}
                                   className={`
                                     rounded-lg bg-gradient-to-r from-[#3AF4EF]

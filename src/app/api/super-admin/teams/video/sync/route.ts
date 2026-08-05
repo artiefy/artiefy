@@ -12,8 +12,6 @@ import { classMeetings } from '~/server/db/schema';
 
 import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web';
 
-export const runtime = 'nodejs';
-
 interface VideoIdxItem {
   meetingId: string;
   videoKey: string;

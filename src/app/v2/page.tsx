@@ -1,4 +1,5 @@
 import { type Metadata } from 'next';
+import { cacheLife } from 'next/cache';
 import { notFound } from 'next/navigation';
 
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
@@ -9,11 +10,25 @@ import NeuralBackground from '~/components/v2/NeuralBackground';
 import { StickySearchBar } from '~/components/v2/StickySearchBar';
 import { Testimonials } from '~/components/v2/Testimonials';
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export const metadata: Metadata = {
   title: 'Artiefy - Transformamos ideas en realidades',
   description:
     'Descubre nuestros cursos y potencia tus conocimientos con ciencia y tecnología.',
 };
+
+// Reading the clock during a prerender is non-deterministic, so Next.js refuses
+// to bake it into the static shell. Caching the read keeps the footer year in
+// the shell and refreshes it once a day, which is enough for a copyright line.
+async function CopyrightYear() {
+  'use cache';
+  cacheLife('days');
+
+  return <>{new Date().getFullYear()}</>;
+}
 
 export default function V2LandingPage() {
   if (process.env.NEXT_PUBLIC_SHOW_V2_LANDING !== 'true') {
@@ -43,8 +58,7 @@ export default function V2LandingPage() {
 
         {/* Footer Placeholder */}
         <footer className="border-t border-white/10 bg-black/50 py-8 text-center text-sm text-slate-400 backdrop-blur-md">
-          &copy; {new Date().getFullYear()} Artiefy. Todos los derechos
-          reservados.
+          &copy; <CopyrightYear /> Artiefy. Todos los derechos reservados.
         </footer>
       </div>
     </div>

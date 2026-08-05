@@ -5,11 +5,13 @@ import { notFound } from 'next/navigation';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { getCollaboratorPublicDetails } from '~/components/estudiantes/proyectos/projectSocialData';
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 interface ColaboradorDetallePageProps {
   params: Promise<{ userId: string }>;
 }
-
-export const dynamic = 'force-dynamic';
 
 export default async function ColaboradorDetallePage({
   params,

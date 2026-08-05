@@ -9,6 +9,7 @@ import React, {
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import {
   BookOpen,
@@ -91,8 +92,7 @@ const CATEGORY_FILTER_PREFIX = 'category:' as const;
 type CategoryStudentContentFilter = `${typeof CATEGORY_FILTER_PREFIX}${number}`;
 
 type StudentContentFilter =
-  | StaticStudentContentFilter
-  | CategoryStudentContentFilter;
+  StaticStudentContentFilter | CategoryStudentContentFilter;
 
 type StudentContentFilterItem = {
   icon: React.ComponentType<{ className?: string }>;
@@ -169,6 +169,7 @@ export default function StudentDetails({
   initialCourses: Course[];
   initialPrograms: Program[];
 }) {
+  const router = useRouter();
   const [courses] = useState<Course[]>(initialCourses);
   // Keep the server-provided program order for SSR and the first client
   // render (Math.random() inside a useState initializer runs independently
@@ -731,10 +732,10 @@ export default function StudentDetails({
                           courses={previewCourses}
                           programs={previewPrograms}
                           onSelectCourse={(courseId: number) => {
-                            window.location.href = `/estudiantes/cursos/${courseId}`;
+                            router.push(`/estudiantes/cursos/${courseId}`);
                           }}
                           onSelectProgram={(programId: string | number) => {
-                            window.location.href = `/estudiantes/programas/${programId}`;
+                            router.push(`/estudiantes/programas/${programId}`);
                           }}
                         />
                       </Suspense>

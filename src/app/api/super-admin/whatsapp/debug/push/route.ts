@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { pushInbox } from '../../_inbox';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
 export async function POST(req: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json(

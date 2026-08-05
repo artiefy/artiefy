@@ -68,6 +68,12 @@ export const env = createEnv({
     N8N_AGENTS_WEBHOOK_URL: z.url().optional(),
     N8N_AGENTS_AUTH_HEADER: z.string().min(1).optional(),
     N8N_AGENTS_AUTH_VALUE: z.string().min(1).optional(),
+    // Project text generation webhook. All three are optional so the proxy keeps
+    // working with the existing NEXT_PUBLIC_* URLs until the webhook is locked
+    // down in n8n; only then do the header vars need to be set.
+    N8N_PROJECTS_WEBHOOK_URL: z.url().optional(),
+    N8N_PROJECTS_AUTH_HEADER: z.string().min(1).optional(),
+    N8N_PROJECTS_AUTH_VALUE: z.string().min(1).optional(),
 
     ESP32_BASE_URL: z.url().optional(),
     ESP32_API_KEY: z.string().optional(),
@@ -156,6 +162,9 @@ export const env = createEnv({
     N8N_AGENTS_WEBHOOK_URL: process.env.N8N_AGENTS_WEBHOOK_URL,
     N8N_AGENTS_AUTH_HEADER: process.env.N8N_AGENTS_AUTH_HEADER,
     N8N_AGENTS_AUTH_VALUE: process.env.N8N_AGENTS_AUTH_VALUE,
+    N8N_PROJECTS_WEBHOOK_URL: process.env.N8N_PROJECTS_WEBHOOK_URL,
+    N8N_PROJECTS_AUTH_HEADER: process.env.N8N_PROJECTS_AUTH_HEADER,
+    N8N_PROJECTS_AUTH_VALUE: process.env.N8N_PROJECTS_AUTH_VALUE,
 
     ESP32_BASE_URL: process.env.ESP32_BASE_URL,
     ESP32_API_KEY: process.env.ESP32_API_KEY,

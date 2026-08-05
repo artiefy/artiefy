@@ -46,6 +46,7 @@ import { IoPlayOutline } from 'react-icons/io5';
 import { MdErrorOutline } from 'react-icons/md';
 import { toast } from 'sonner';
 
+import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
 import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
 import {
   GuidedObjectivesAccordion,
@@ -68,7 +69,12 @@ import { plansPersonas } from '~/types/plans';
 import type { GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
 
-type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro';
+type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro' | 'comentarios';
+
+interface RatingSummary {
+  count: number;
+  average: number;
+}
 
 interface GuidedProjectDetailsProps {
   project: GuidedProject;
@@ -195,6 +201,9 @@ const FAQ_ITEMS = [
 // hardcoded value, since plan pricing isn't exposed as a shared constant).
 const PREMIUM_DISPLAY_PRICE = 124900;
 
+// The enrolled-students stat is only shown above this many students.
+const MIN_STUDENTS_COUNT_TO_SHOW = 10;
+
 export function GuidedProjectDetails({
   project,
   initialIsEnrolled = false,
@@ -204,6 +213,12 @@ export function GuidedProjectDetails({
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [activePill, setActivePill] = useState<NavKey>('actividades');
+  // Live rating from real student comments; the stored `project.rating` column
+  // is a seeded value, so it must not drive the stars on its own.
+  const [ratingSummary, setRatingSummary] = useState<RatingSummary>({
+    count: 0,
+    average: 0,
+  });
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
@@ -270,6 +285,11 @@ export function GuidedProjectDetails({
       key: 'foro',
       label: 'Foro',
       icon: <MessageSquare className="size-4 shrink-0" />,
+    },
+    {
+      key: 'comentarios',
+      label: 'Comentarios',
+      icon: <Star className="size-4 shrink-0" />,
     },
   ];
 
@@ -339,6 +359,7 @@ export function GuidedProjectDetails({
         toast.success(result.message);
         setIsEnrolled(true);
         setActivePill('actividades');
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -413,16 +434,67 @@ export function GuidedProjectDetails({
     () => project.objectives ?? [],
     [project.objectives]
   );
+  const canAccessContent = project.canAccessContent === true || isEnrolled;
   const totalActivities = useMemo(
     () => objectives.reduce((acc, o) => acc + (o.activities?.length ?? 0), 0),
     [objectives]
   );
+
+  // Session resources are stored as two comma-separated, index-aligned columns:
+  // `resourceKey` holds an S3 key or a full URL, `resourceNames` its label.
+  const resourcesByObjective = useMemo(() => {
+    const buildS3Resource = (key: string) => {
+      const trimmed = key.trim();
+      if (!trimmed) return undefined;
+      const normalized = trimmed.toLowerCase();
+      if (normalized === 'none' || normalized === 'null') return undefined;
+      if (/^https?:\/\//i.test(trimmed)) return trimmed;
+      const base = process.env.NEXT_PUBLIC_AWS_S3_URL?.replace(/\/$/, '') ?? '';
+      return `${base}/${trimmed.replace(/^\/+/, '')}`;
+    };
+
+    return objectives
+      .map((objective, objectiveIndex) => {
+        const keys = (objective.resourceKey ?? '')
+          .split(',')
+          .map((key) => key.trim())
+          .filter(Boolean);
+        const names = (objective.resourceNames ?? '').split(',');
+
+        const resources = keys.flatMap((key, index) => {
+          const url = buildS3Resource(key);
+          if (!url) return [];
+
+          const isExternal = /^https?:\/\//i.test(key);
+          const providedName = names[index]?.trim();
+          const fallbackName = isExternal
+            ? key
+            : (key.split('/').pop() ?? 'Recurso');
+
+          return [
+            {
+              id: `${objective.id}-${index}`,
+              url,
+              name: providedName ? providedName : fallbackName,
+              isExternal,
+            },
+          ];
+        });
+
+        return { objective, objectiveIndex, resources };
+      })
+      .filter((entry) => entry.resources.length > 0);
+  }, [objectives]);
+  // Stars only show once real students have rated the project.
   const ratingValue =
-    typeof project.rating === 'number' && project.rating > 0
-      ? project.rating
+    ratingSummary.count > 0 && ratingSummary.average > 0
+      ? ratingSummary.average
       : null;
+  // The student count only shows once the project has real traction, so a
+  // freshly published project never advertises a near-empty classroom.
   const studentsCount =
-    typeof project.studentsCount === 'number' && project.studentsCount > 0
+    typeof project.studentsCount === 'number' &&
+    project.studentsCount > MIN_STUDENTS_COUNT_TO_SHOW
       ? project.studentsCount
       : null;
   const contentHours =
@@ -491,6 +563,65 @@ export function GuidedProjectDetails({
     'rounded-2xl border border-[#1d283a] bg-[#061c37] p-6 md:p-8';
   const sectionIconClass =
     'flex size-8 items-center justify-center rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/15 text-[#22C4D3]';
+
+  const renderResources = () => {
+    if (resourcesByObjective.length === 0) {
+      return renderComingSoon(
+        'Este proyecto todavía no tiene recursos publicados.'
+      );
+    }
+
+    if (!canAccessContent) {
+      return renderComingSoon(
+        'Inscríbete en el proyecto para acceder a sus recursos.'
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {resourcesByObjective.map(
+          ({ objective, objectiveIndex, resources }) => (
+            <section key={objective.id} className={sectionClass}>
+              <div className="mb-4 flex items-center gap-2">
+                <div className={sectionIconClass}>
+                  <FileBox className="size-4" />
+                </div>
+                <h3 className="font-semibold text-foreground">
+                  Sesión {objectiveIndex + 1} · {objective.title}
+                </h3>
+              </div>
+              <ul className="space-y-2">
+                {resources.map((resource) => (
+                  <li key={resource.id}>
+                    <a
+                      href={resource.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-xl border border-[#1d283a] bg-[#010b17] px-4 py-3 transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/[0.06]"
+                    >
+                      <div className={sectionIconClass}>
+                        {resource.isExternal ? (
+                          <Globe className="size-4" />
+                        ) : (
+                          <Package className="size-4" />
+                        )}
+                      </div>
+                      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
+                        {resource.name}
+                      </span>
+                      <span className="shrink-0 text-xs text-[#94A3B8]">
+                        {resource.isExternal ? 'Enlace' : 'Archivo'}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        )}
+      </div>
+    );
+  };
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -1171,7 +1302,9 @@ export function GuidedProjectDetails({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
+      {/* `lg:pt-24` clears the fixed header on large screens, the same offset the
+          course detail uses; without it the header covers the breadcrumb. */}
+      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8 lg:pt-24">
         <GuidedProjectBreadcrumb title={project.title} />
 
         {/* Aviso de suscripción expirada: mismo mensaje y misma validación que
@@ -1195,20 +1328,7 @@ export function GuidedProjectDetails({
           </div>
         )}
 
-        <div
-          className="relative rounded-2xl border p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
-          style={{
-            backgroundColor: '#010b17',
-            borderColor: '#061c37cc',
-            backgroundImage: coverImageUrl
-              ? `url(${coverImageUrl})`
-              : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center center',
-          }}
-        >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80" />
-
+        <div className="relative rounded-2xl border border-border/50 bg-card p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8">
           <div className="relative z-10 space-y-6">
             <div
               className={`grid grid-cols-1 gap-8 ${isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'}`}
@@ -1221,7 +1341,7 @@ export function GuidedProjectDetails({
                     Proyecto Guiado
                   </span>
                 </div>
-                <h1 className="font-display max-w-full text-2xl leading-tight font-bold text-balance break-words text-foreground sm:text-3xl">
+                <h1 className="font-display max-w-full text-lg leading-snug font-bold text-balance break-words text-foreground sm:text-2xl">
                   {project.title}
                 </h1>
                 {(project.subtitle ?? project.description) && (
@@ -1272,22 +1392,6 @@ export function GuidedProjectDetails({
                     <div className="hidden lg:block lg:space-y-4">
                       {renderStatsAndChips()}
                     </div>
-                    {isSubscriptionValid && hasValidPlan && (
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium ${
-                          userPlanType === 'Premium'
-                            ? 'border-amber-500/40 text-amber-400'
-                            : 'border-blue-500/40 text-blue-400'
-                        }`}
-                      >
-                        {userPlanType === 'Premium' ? (
-                          <FaCrown className="size-3" />
-                        ) : (
-                          <FaStar className="size-3" />
-                        )}
-                        Plan {userPlanType} Activo
-                      </span>
-                    )}
                   </div>
 
                   {/* Desktop CTA Card (only when enrolled) */}
@@ -1418,9 +1522,7 @@ export function GuidedProjectDetails({
                     hidden={activePill !== 'recursos'}
                     tabIndex={0}
                   >
-                    {renderComingSoon(
-                      'Los recursos del proyecto estarán disponibles pronto.'
-                    )}
+                    {renderResources()}
                   </div>
                   <div
                     id={`guided-project-${project.id}-foro-panel`}
@@ -1430,6 +1532,19 @@ export function GuidedProjectDetails({
                     tabIndex={0}
                   >
                     <CourseForum guidedProjectId={project.id} />
+                  </div>
+                  <div
+                    id={`guided-project-${project.id}-comentarios-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-comentarios-tab`}
+                    hidden={activePill !== 'comentarios'}
+                    tabIndex={0}
+                  >
+                    <CourseComments
+                      guidedProjectId={project.id}
+                      isEnrolled={isEnrolled}
+                      onRatingSummaryChange={setRatingSummary}
+                    />
                   </div>
                 </div>
               </div>

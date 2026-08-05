@@ -5,8 +5,6 @@ import { desc, eq, ilike, or, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { accessLogs, users } from '~/server/db/schema';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);

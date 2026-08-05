@@ -18,8 +18,6 @@ import { createUser, getUserById } from '~/models/educatorsModels/userModels'; /
 import { db } from '~/server/db';
 import { courseCourseTypes, courses, materias } from '~/server/db/schema';
 
-export const dynamic = 'force-dynamic';
-
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 

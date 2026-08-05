@@ -10,6 +10,7 @@ import {
   userObjectiveProgress,
   users,
 } from '~/server/db/schema';
+import { getGuidedProjectContentAccess } from '~/server/services/guided-projects/guidedForumAccess';
 
 import type {
   GuidedObjective,
@@ -67,6 +68,14 @@ export async function getGuidedProjectById(
       return null;
     }
 
+    const contentAccess = userId
+      ? await getGuidedProjectContentAccess({
+          projectId: parsedProjectId,
+          userId,
+        })
+      : null;
+    const canAccessContent = contentAccess?.success ?? false;
+
     const instructorRows = await db
       .select({
         id: users.id,
@@ -114,6 +123,7 @@ export async function getGuidedProjectById(
     const transformedObjectives: GuidedObjective[] = project.objectives
       .sort((a, b) => a.orderIndex - b.orderIndex)
       .map((objective) => {
+        const { resourceKey, resourceNames, ...publicObjective } = objective;
         const objectiveProgress = userObjectivesProgressData.find(
           (progress) => progress.objectiveId === objective.id
         );
@@ -148,7 +158,8 @@ export async function getGuidedProjectById(
           }) ?? [];
 
         return {
-          ...objective,
+          ...publicObjective,
+          ...(canAccessContent ? { resourceKey, resourceNames } : {}),
           isLocked: !objective.isEnabled,
           isCompleted: objectiveProgress?.isCompleted ?? false,
           userProgress: objectiveProgress?.progress ?? 0,
@@ -213,7 +224,9 @@ export async function getGuidedProjectById(
       prerequisites: project.prerequisites,
       techStack: project.techStack,
       deliverablesDescription: project.deliverablesDescription,
-      studentsCount: project.studentsCount,
+      // Real enrolled students, not the seeded `students_count` column, so the
+      // stat shown on the detail page reflects actual enrollments.
+      studentsCount: project.enrollments.length,
       contentHours: project.contentHours,
       repositoryUrl: project.repositoryUrl,
       certificateDescription: project.certificateDescription,
@@ -227,9 +240,10 @@ export async function getGuidedProjectById(
       objectives: transformedObjectives,
       porcentajecompletado,
       enrolled: isUserEnrolled,
+      canAccessContent,
     } as GuidedProject;
   } catch (error) {
     console.error('Error fetching guided project:', error);
-    return null;
+    throw error;
   }
 }

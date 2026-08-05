@@ -493,13 +493,19 @@ body.no-chrome {
     body.has-bottom-nav
     .js-floating-launcher,
   html:not(.mobile-bottom-cta-visible) body.has-bottom-nav .ticket-button {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 6.25rem);
   }
 
   html:not(.mobile-bottom-cta-visible)
     body.has-bottom-nav
     .js-support-floating-launcher {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 9.75rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 10.75rem);
+  }
+
+  /* Agent (Artie) chat panel: on phones it goes full screen, so it has to sit
+     above the fixed bottom bar instead of being lifted around it. */
+  .js-agent-chat-panel {
+    z-index: 2147483001;
   }
 }
 

@@ -3,8 +3,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
-export const dynamic = 'force-dynamic';
-
 interface PaymentData {
   email_buyer: string;
   state_pol: string;

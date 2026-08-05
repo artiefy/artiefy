@@ -12,8 +12,6 @@ import {
 } from '~/models/super-adminModels/courseModelsSuperAdmin';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
-export const dynamic = 'force-dynamic';
-
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 

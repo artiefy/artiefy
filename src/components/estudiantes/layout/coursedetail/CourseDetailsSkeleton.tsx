@@ -9,7 +9,7 @@ export function CourseDetailsSkeleton() {
           mx-auto -mt-6 max-w-7xl px-4 py-2
           sm:-mt-0
           md:px-6 md:py-8
-          lg:px-8
+          lg:px-8 lg:pt-24
         "
       >
         {/* Breadcrumb Skeleton */}

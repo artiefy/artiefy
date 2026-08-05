@@ -11,8 +11,6 @@ import { formatScoreNumber } from '~/utils/formatScore';
 
 import type { ActivityResults, SavedAnswer } from '~/types';
 
-export const dynamic = 'force-dynamic';
-
 interface SaveAnswersRequest {
   activityId: number;
   userId: string;
