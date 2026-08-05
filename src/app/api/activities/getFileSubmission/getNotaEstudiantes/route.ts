@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
+import { sendActivityGradeEmail } from '~/lib/emails/gradeNotification';
 import { db } from '~/server/db';
 import {
   activities,
@@ -214,6 +215,8 @@ export async function POST(request: NextRequest) {
     };
 
     await redis.set(submissionKey, submission, { ex: 60 * 60 * 24 * 30 });
+
+    await sendActivityGradeEmail({ activityId, userId, grade });
 
     return NextResponse.json({ success: true, grade });
   } catch {

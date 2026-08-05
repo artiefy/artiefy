@@ -239,6 +239,7 @@ export const nivel = pgTable('nivel', {
 export const courses = pgTable('courses', {
   id: serial('id').primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
+  subtitle: varchar('subtitle', { length: 255 }),
   description: text('description'),
   coverImageKey: text('cover_image_key').default(sql`NULL`), // Changed from .default(null)
   coverVideoCourseKey: text('cover_video_course_key').default(sql`NULL`),
@@ -2427,6 +2428,9 @@ export const guidedObjectiveActivities = pgTable(
     lastUpdated: timestamp('last_updated').defaultNow().notNull(),
     instructionVideoKey: text('instruction_video_key'), // 👈 video del botón "Instrucción"
     instructionText: text('instruction_text'), // 👈 texto de instrucciones
+    // System prompt que entrena al agente de IA de esta actividad. Se pega
+    // manualmente o se genera con IA desde el panel de administración.
+    agentSystemPrompt: text('agent_system_prompt'),
   }
 );
 

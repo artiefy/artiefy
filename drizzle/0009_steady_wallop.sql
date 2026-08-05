@@ -1,0 +1,1 @@
+ALTER TABLE "courses" ADD COLUMN "subtitle" varchar(255);

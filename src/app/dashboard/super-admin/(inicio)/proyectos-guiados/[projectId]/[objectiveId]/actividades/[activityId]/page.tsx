@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 
 import {
   BookOpen,
+  Bot,
   ClipboardList,
   Download,
   MessageSquare,
+  Sparkles,
   Trash2,
-  Trophy,
-  Users,
   VideoOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -48,10 +48,7 @@ import type {
 
 type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
 type EditableQuestion = (
-  | Question
-  | VerdaderoOFlaso
-  | Completado
-  | QuestionFilesSubida
+  Question | VerdaderoOFlaso | Completado | QuestionFilesSubida
 ) & { tipo: TipoPregunta };
 
 interface PorcentajeResponse {
@@ -87,18 +84,7 @@ interface Activity {
   revisada: boolean | null;
   instructionVideoKey: string | null;
   instructionText: string | null;
-}
-
-interface StudentProgress {
-  userId: string;
-  userName: string | null;
-  userEmail: string | null;
-  progress: number;
-  isCompleted: boolean;
-  revisada: boolean | null;
-  attemptCount: number | null;
-  finalGrade: number | null;
-  lastAttemptAt: string | null;
+  agentSystemPrompt: string | null;
 }
 
 export default function GuidedActivityDetailPage({
@@ -117,15 +103,13 @@ export default function GuidedActivityDetailPage({
   const [project, setProject] = useState<GuidedProject | null>(null);
   const [objective, setObjective] = useState<Objective | null>(null);
   const [activity, setActivity] = useState<Activity | null>(null);
-  const [students, setStudents] = useState<StudentProgress[]>([]);
 
   const [loading, setLoading] = useState(true);
-  const [loadingStudents, setLoadingStudents] = useState(false);
 
-  const [gradeDrafts, setGradeDrafts] = useState<
-    Record<string, { finalGrade: string; revisada: boolean }>
-  >({});
-  const [savingUserId, setSavingUserId] = useState<string | null>(null);
+  const [agentPromptDraft, setAgentPromptDraft] = useState('');
+  const [promptInstructions, setPromptInstructions] = useState('');
+  const [savingPrompt, setSavingPrompt] = useState(false);
+  const [generatingPrompt, setGeneratingPrompt] = useState(false);
 
   // Instrucción (video + texto) de la actividad
   const [editingInstruction, setEditingInstruction] = useState(false);
@@ -155,18 +139,9 @@ export default function GuidedActivityDetailPage({
   const router = useRouter();
   const activityIdNumber = activityId ? parseInt(activityId) : null;
 
-  type DetailTab = 'instruccion' | 'contenido' | 'calificaciones' | 'recursos';
+  type DetailTab = 'instruccion' | 'contenido' | 'prompt' | 'recursos';
   const [activeDetailTab, setActiveDetailTab] =
     useState<DetailTab>('instruccion');
-
-  useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      window.location.hash === '#estudiantes'
-    ) {
-      setActiveDetailTab('calificaciones');
-    }
-  }, []);
 
   useEffect(() => {
     void params.then((p) => {
@@ -191,7 +166,9 @@ export default function GuidedActivityDetailPage({
       if (objectiveRes.ok)
         setObjective((await objectiveRes.json()) as Objective);
       if (activityRes.ok) {
-        setActivity((await activityRes.json()) as Activity);
+        const activityData = (await activityRes.json()) as Activity;
+        setActivity(activityData);
+        setAgentPromptDraft(activityData.agentSystemPrompt ?? '');
       } else {
         toast.error('No se pudo cargar la actividad');
       }
@@ -203,40 +180,9 @@ export default function GuidedActivityDetailPage({
     }
   }, [projectId, objectiveId, activityId]);
 
-  const fetchStudents = useCallback(async () => {
-    if (!projectId || !objectiveId || !activityId) return;
-    setLoadingStudents(true);
-    try {
-      const response = await fetch(
-        `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities/${activityId}/progress`
-      );
-      if (!response.ok) throw new Error('Error al cargar estudiantes');
-      const data = (await response.json()) as StudentProgress[];
-      setStudents(Array.isArray(data) ? data : []);
-      setGradeDrafts(
-        Object.fromEntries(
-          (Array.isArray(data) ? data : []).map((s) => [
-            s.userId,
-            {
-              finalGrade: s.finalGrade != null ? String(s.finalGrade) : '',
-              revisada: s.revisada ?? false,
-            },
-          ])
-        )
-      );
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al cargar el progreso de los estudiantes');
-      setStudents([]);
-    } finally {
-      setLoadingStudents(false);
-    }
-  }, [projectId, objectiveId, activityId]);
-
   useEffect(() => {
     void fetchContext();
-    void fetchStudents();
-  }, [fetchContext, fetchStudents]);
+  }, [fetchContext]);
 
   // Las actividades de tipo archivo solo tienen un formulario fijo
   useEffect(() => {
@@ -378,45 +324,56 @@ export default function GuidedActivityDetailPage({
     }
   };
 
-  const handleSaveGrade = async (userId: string) => {
+  const handleSavePrompt = async () => {
     if (!projectId || !objectiveId || !activityId) return;
-    const draft = gradeDrafts[userId];
-    if (!draft) return;
-
-    const parsedGrade =
-      draft.finalGrade.trim() === '' ? undefined : Number(draft.finalGrade);
-    if (parsedGrade !== undefined && Number.isNaN(parsedGrade)) {
-      toast.error('La nota debe ser un número válido');
-      return;
-    }
-
-    setSavingUserId(userId);
+    setSavingPrompt(true);
     try {
       const response = await fetch(
-        `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities/${activityId}/progress`,
+        `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities?id=${activityId}`,
         {
-          method: 'PATCH',
+          method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            finalGrade: parsedGrade,
-            revisada: draft.revisada,
-          }),
+          body: JSON.stringify({ agentSystemPrompt: agentPromptDraft }),
         }
       );
-      if (!response.ok) {
-        const errorData = (await response.json()) as { error?: string };
-        throw new Error(errorData.error ?? 'Error al guardar');
-      }
-      toast.success('Calificación guardada');
-      await fetchStudents();
+      if (!response.ok) throw new Error('Error al guardar');
+      toast.success('Prompt guardado');
+      setActivity((prev) =>
+        prev ? { ...prev, agentSystemPrompt: agentPromptDraft } : prev
+      );
     } catch (error) {
       console.error('Error:', error);
-      toast.error(
-        error instanceof Error ? error.message : 'Error al guardar la nota'
-      );
+      toast.error('Error al guardar el prompt');
     } finally {
-      setSavingUserId(null);
+      setSavingPrompt(false);
+    }
+  };
+
+  const handleGeneratePrompt = async () => {
+    if (!projectId || !objectiveId || !activityId) return;
+    if (!promptInstructions.trim()) {
+      toast.error('Escribe qué quieres que haga el agente antes de generar');
+      return;
+    }
+    setGeneratingPrompt(true);
+    try {
+      const response = await fetch(
+        `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities/${activityId}/generate-prompt`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInstructions: promptInstructions }),
+        }
+      );
+      if (!response.ok) throw new Error('Error al generar el prompt');
+      const data = (await response.json()) as { prompt: string };
+      setAgentPromptDraft(data.prompt);
+      toast.success('Prompt generado, revísalo antes de guardar');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al generar el prompt con IA');
+    } finally {
+      setGeneratingPrompt(false);
     }
   };
 
@@ -557,12 +514,8 @@ export default function GuidedActivityDetailPage({
         {(
           [
             { key: 'instruccion', label: 'Instrucción', icon: BookOpen },
-            { key: 'contenido', label: 'Contenido', icon: ClipboardList },
-            {
-              key: 'calificaciones',
-              label: `Calificaciones (${students.length})`,
-              icon: Trophy,
-            },
+            { key: 'contenido', label: 'Actividad', icon: ClipboardList },
+            { key: 'prompt', label: 'Prompt', icon: Bot },
             { key: 'recursos', label: 'Recursos', icon: Download },
           ] as { key: DetailTab; label: string; icon: typeof BookOpen }[]
         ).map((tab) => {
@@ -905,129 +858,56 @@ export default function GuidedActivityDetailPage({
         )}
       </div>
 
-      <div hidden={activeDetailTab !== 'calificaciones'}>
-        <div
-          id="estudiantes"
-          className="relative z-10 mb-6 flex scroll-mt-24 items-center justify-between"
-        >
-          <h2 className="text-2xl font-bold text-white">
-            Estudiantes{' '}
-            <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
-              {students.length}
-            </span>
+      {activeDetailTab === 'prompt' && (
+        <Card className="relative z-10 mb-10 border-2 border-cyan-500/20 bg-slate-800 p-4 shadow-xl sm:p-6">
+          <h2 className="mb-1 text-lg font-bold text-white">
+            Prompt del agente
           </h2>
-        </div>
+          <p className="mb-4 text-sm text-white/60">
+            Pega el system prompt que entrenará al agente de esta actividad, o
+            descríbele a la IA qué quieres que haga y genera uno a partir de
+            eso.
+          </p>
 
-        {loadingStudents ? (
-          <div className="relative z-10 flex items-center gap-3 text-white/60">
-            <div className="size-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-            Cargando estudiantes...
+          <div className="mb-4 rounded-xl border border-cyan-500/20 bg-white/5 p-4">
+            <label className="mb-2 block text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+              ¿Qué quieres que haga el agente?
+            </label>
+            <textarea
+              value={promptInstructions}
+              onChange={(e) => setPromptInstructions(e.target.value)}
+              rows={3}
+              placeholder="Ej: que guíe al estudiante paso a paso para crear el repositorio, sin darle la solución directa, y que valide que entregó el link y las capturas pedidas."
+              className="w-full rounded-lg border border-cyan-500/30 bg-white/5 px-3 py-2 text-sm text-white transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void handleGeneratePrompt()}
+              disabled={generatingPrompt}
+              className="mt-3 gap-2 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10"
+            >
+              <Sparkles className="size-4" />
+              {generatingPrompt ? 'Generando...' : 'Generar con IA'}
+            </Button>
           </div>
-        ) : students.length === 0 ? (
-          <div className="relative z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-800/50 p-16 text-center">
-            <Users className="size-10 text-white/30" />
-            <p className="text-sm text-white/50">
-              Aún no hay estudiantes con progreso registrado en esta actividad.
-            </p>
-          </div>
-        ) : (
-          <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {students.map((student) => {
-              const draft = gradeDrafts[student.userId] ?? {
-                finalGrade: '',
-                revisada: false,
-              };
-              return (
-                <Card
-                  key={student.userId}
-                  className="border-2 border-cyan-500/20 bg-slate-800/80 p-5 shadow-lg"
-                >
-                  <div className="mb-3 flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-white">
-                        {student.userName ?? 'Sin nombre'}
-                      </p>
-                      <p className="text-xs text-white/50">
-                        {student.userEmail ?? student.userId}
-                      </p>
-                    </div>
-                    <Badge
-                      className={`shrink-0 text-[11px] ${
-                        student.isCompleted
-                          ? 'border-green-500/50 bg-green-500/20 text-green-300'
-                          : 'border-yellow-500/50 bg-yellow-500/20 text-yellow-300'
-                      }`}
-                    >
-                      {student.isCompleted ? 'Completado' : 'En progreso'}
-                    </Badge>
-                  </div>
 
-                  <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-white/70">
-                    <p>Progreso: {Math.round(student.progress * 100)}%</p>
-                    <p>Intentos: {student.attemptCount ?? 0}</p>
-                    <p className="col-span-2">
-                      Último intento:{' '}
-                      {student.lastAttemptAt
-                        ? new Date(student.lastAttemptAt).toLocaleString(
-                            'es-ES'
-                          )
-                        : 'N/A'}
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                      Nota final
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={draft.finalGrade}
-                      onChange={(e) =>
-                        setGradeDrafts((prev) => ({
-                          ...prev,
-                          [student.userId]: {
-                            ...draft,
-                            finalGrade: e.target.value,
-                          },
-                        }))
-                      }
-                      placeholder="Ej: 4.5"
-                      className="w-full rounded-lg border border-cyan-500/30 bg-white/5 px-3 py-2 text-sm text-white transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none"
-                    />
-                    <label className="flex items-center gap-2 text-xs text-white/70">
-                      <input
-                        type="checkbox"
-                        checked={draft.revisada}
-                        onChange={(e) =>
-                          setGradeDrafts((prev) => ({
-                            ...prev,
-                            [student.userId]: {
-                              ...draft,
-                              revisada: e.target.checked,
-                            },
-                          }))
-                        }
-                      />
-                      Revisada
-                    </label>
-                    <Button
-                      size="sm"
-                      onClick={() => handleSaveGrade(student.userId)}
-                      disabled={savingUserId === student.userId}
-                      className="w-full bg-cyan-500 text-white hover:bg-cyan-600"
-                    >
-                      {savingUserId === student.userId
-                        ? 'Guardando...'
-                        : 'Guardar calificación'}
-                    </Button>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </div>
+          <textarea
+            value={agentPromptDraft}
+            onChange={(e) => setAgentPromptDraft(e.target.value)}
+            rows={14}
+            placeholder="Eres un asistente que ayuda a los estudiantes con..."
+            className="w-full rounded-lg border border-cyan-500/30 bg-white/5 px-3 py-2 font-mono text-sm text-white transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none"
+          />
+          <Button
+            onClick={() => void handleSavePrompt()}
+            disabled={savingPrompt}
+            className="mt-4 bg-cyan-500 text-white hover:bg-cyan-600"
+          >
+            {savingPrompt ? 'Guardando...' : 'Guardar prompt'}
+          </Button>
+        </Card>
+      )}
 
       <div className="relative z-10 mt-10 rounded-2xl border border-cyan-500/20 bg-slate-800 p-6">
         <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-white">

@@ -734,6 +734,7 @@ export async function updateMultipleUserStatus(
 export interface CourseData {
   id?: number;
   title: string;
+  subtitle?: string | null;
   description?: string | null; // 🔹 Permitir `null` y hacerla opcional
   coverImageKey: string | null; // 🔹 Permitir `null` y hacerla opcional
   categoryid: number;
@@ -788,6 +789,7 @@ export async function getCourses(
         .select({
           id: courses.id,
           title: courses.title,
+          subtitle: courses.subtitle,
           description: courses.description,
           categoryid: courses.categoryid,
           modalidadesid: courses.modalidadesid,
@@ -963,6 +965,7 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
 
     const updateData = {
       title: courseData.title,
+      subtitle: courseData.subtitle ?? null,
       description: courseData.description ?? null,
       coverImageKey: courseData.coverImageKey ?? null,
       coverVideoCourseKey: courseData.coverVideoCourseKey ?? null,
@@ -1097,10 +1100,7 @@ export async function updateUserInClerk({
     const newMetadata = {
       ...(user.publicMetadata ?? {}),
       role: (role || 'estudiante') as
-        | 'admin'
-        | 'educador'
-        | 'super-admin'
-        | 'estudiante',
+        'admin' | 'educador' | 'super-admin' | 'estudiante',
       // normaliza planType a uno permitido
       planType:
         planType && ['none', 'Pro', 'Premium', 'Enterprise'].includes(planType)
@@ -1124,10 +1124,7 @@ export async function updateUserInClerk({
       .set({
         name: `${firstName} ${lastName}`,
         role: (role || 'estudiante') as
-          | 'estudiante'
-          | 'educador'
-          | 'admin'
-          | 'super-admin',
+          'estudiante' | 'educador' | 'admin' | 'super-admin',
         subscriptionStatus: normalizedStatus,
         planType:
           planType &&

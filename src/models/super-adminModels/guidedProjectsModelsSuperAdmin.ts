@@ -48,6 +48,7 @@ export interface GuidedProject {
   repositoryUrl?: string | null;
   certificateDescription?: string | null;
   faqItems?: { question: string; answer: string }[] | null;
+  agentSystemPrompt?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -84,6 +85,7 @@ export interface GuidedActivity {
   lastUpdated: Date;
   instructionVideoKey: string | null;
   instructionText: string | null;
+  agentSystemPrompt?: string | null;
 }
 
 // ========== GUIDED PROJECTS CRUD ==========
@@ -502,6 +504,8 @@ export const updateGuidedActivity = async (
     updateData.instructionVideoKey = data.instructionVideoKey;
   if (data.instructionText !== undefined)
     updateData.instructionText = data.instructionText;
+  if (data.agentSystemPrompt !== undefined)
+    updateData.agentSystemPrompt = data.agentSystemPrompt;
 
   updateData.lastUpdated = new Date();
 

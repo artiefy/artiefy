@@ -916,6 +916,15 @@ export function GuidedProjectAdminTabs({
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href={`/estudiantes/proyectos-guiados/${project.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#22C4D3]/30 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-[#22C4D3]/10 md:text-sm"
+          >
+            <Eye className="size-3.5 text-[#22C4D3]" />
+            Ver como estudiante
+          </Link>
           <button
             type="button"
             onClick={() => setEditProjectOpen(true)}

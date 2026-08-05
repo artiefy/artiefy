@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { eq, sql } from 'drizzle-orm';
 
+import { sendActivityGradeEmail } from '~/lib/emails/gradeNotification';
 import { db } from '~/server/db';
 import {
   activities,
@@ -121,6 +122,8 @@ export async function POST(request: NextRequest) {
 					updated_at = EXCLUDED.updated_at
 			`);
     }
+
+    await sendActivityGradeEmail({ activityId, userId, grade: finalGrade });
 
     return NextResponse.json({ success: true });
   } catch {

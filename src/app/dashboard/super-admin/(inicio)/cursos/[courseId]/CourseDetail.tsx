@@ -67,6 +67,7 @@ import '~/styles/course-detail-system.css';
 interface Course {
   id: number;
   title: string;
+  subtitle?: string | null;
   description: string;
   categoryid: string;
   categoryName?: string;
@@ -342,6 +343,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
   const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
   const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
+  const [editSubtitle, setEditSubtitle] = useState(''); // Nuevo estado para el subtítulo del curso a editar
   const [editDescription, setEditDescription] = useState(''); // Nuevo estado para la descripción del curso
   const [editCategory, setEditCategory] = useState(0); // Nuevo estado para la categoría del curso
   const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
@@ -1382,7 +1384,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     espacios: number | null,
     certificationTypeId: number | null,
     idTypesCourses?: number | null,
-    visibility?: boolean
+    visibility?: boolean,
+    subtitle = ''
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -1443,6 +1446,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
       const payload = {
         title,
+        subtitle,
         description,
         coverImageKey,
         coverVideoCourseKey: coverVideoCourseKey ?? null,
@@ -1556,6 +1560,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const handleEditCourse = () => {
     if (!course) return;
     setEditTitle(course.title);
+    setEditSubtitle(course.subtitle ?? '');
     setEditDescription(course.description);
     setEditCategory(parseInt(course.categoryid));
     setEditModalidad(parseInt(course.modalidadesid));
@@ -6092,7 +6097,8 @@ text-[#94A3B8]
             espacios,
             certificationTypeId,
             idTypesCourses,
-            visibility
+            visibility,
+            subtitle
           ) =>
             handleUpdateCourse(
               id,
@@ -6116,11 +6122,13 @@ text-[#94A3B8]
               espacios,
               certificationTypeId,
               idTypesCourses,
-              visibility
+              visibility,
+              subtitle
             )
           }
           editingCourseId={course.id}
           title={editTitle}
+          subtitle={editSubtitle}
           description={editDescription}
           categoryid={editCategory}
           modalidadesid={editModalidad}
@@ -6129,6 +6137,7 @@ text-[#94A3B8]
           parametros={editParametros}
           rating={editRating}
           setTitle={setEditTitle}
+          setSubtitle={setEditSubtitle}
           setDescription={setEditDescription}
           setModalidadesid={(value: number | number[]) =>
             setEditModalidad(

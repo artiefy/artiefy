@@ -39,6 +39,7 @@ interface VideoData {
 
 interface PutRequestBody {
   title?: string;
+  subtitle?: string;
   description?: string;
   coverImageKey?: string;
   coverVideoCourseKey?: string;
@@ -507,6 +508,7 @@ export async function PUT(
     // Create update data object with type checking
     const updateData = {
       title: data.title,
+      subtitle: data.subtitle,
       description: data.description,
       coverImageKey: data.coverImageKey,
       coverVideoCourseKey: data.coverVideoCourseKey,

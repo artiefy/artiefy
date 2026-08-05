@@ -502,12 +502,21 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     activityId: number,
     grade: number
   ) => {
+    console.log('[saveGrade] enviando', { userId, activityId, grade });
     try {
-      await fetch('/api/activities/getFileSubmission/getNotaEstudiantes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, activityId, grade }),
-      });
+      const res = await fetch(
+        '/api/activities/getFileSubmission/getNotaEstudiantes',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, activityId, grade }),
+        }
+      );
+      console.log(
+        '[saveGrade] respuesta',
+        res.status,
+        await res.clone().text()
+      );
     } catch (err) {
       console.error('Error guardando la nota', err);
     }

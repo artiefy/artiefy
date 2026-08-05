@@ -275,7 +275,8 @@ export default function Page() {
     espacios: number | null,
     certificationTypeId: number | null,
     idTypesCourses: number | null,
-    visibility: boolean
+    visibility: boolean,
+    subtitle = ''
   ) => {
     console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
@@ -353,6 +354,7 @@ export default function Page() {
 
         const updatePayload = {
           title,
+          subtitle: subtitle ?? '',
           description: description ?? '',
           coverImageKey: coverImageKey ?? '',
           coverVideoCourseKey,
@@ -403,6 +405,7 @@ export default function Page() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title,
+            subtitle,
             description,
             coverImageKey,
             coverVideoCourseKey,
@@ -523,6 +526,7 @@ export default function Page() {
     setEditingCourse({
       id: 0,
       title: '',
+      subtitle: '',
       description: '',
       categoryid: 0,
       modalidadesid: 0,
@@ -554,6 +558,11 @@ export default function Page() {
   // Manejo del título del curso en el modal si no es null
   const setTitle = (title: string) => {
     setEditingCourse((prev) => (prev ? { ...prev, title } : prev));
+  };
+
+  // Manejo del subtítulo del curso en el modal si no es null
+  const setSubtitle = (subtitle: string) => {
+    setEditingCourse((prev) => (prev ? { ...prev, subtitle } : prev));
   };
 
   // Manejo de la descripción del curso en el modal si no es null
@@ -917,6 +926,8 @@ export default function Page() {
             editingCourseId={editingCourse?.id ?? null}
             title={editingCourse?.title ?? ''}
             setTitle={setTitle}
+            subtitle={editingCourse?.subtitle ?? ''}
+            setSubtitle={setSubtitle}
             description={editingCourse?.description ?? ''}
             setDescription={setDescription}
             categoryid={editingCourse?.categoryid ?? 0}

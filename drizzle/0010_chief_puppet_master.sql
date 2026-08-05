@@ -1,0 +1,1 @@
+ALTER TABLE "guided_objective_activities" ADD COLUMN "agent_system_prompt" text;
