@@ -708,17 +708,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
                 </button>
               )}
-              <div
-                className={cn(
-                  'flex items-center gap-2 rounded-full',
-                  shouldShowText &&
-                    `
-                    liquid-glass mobile-header-floating-control
-                    !bg-[#01152d]/55 py-1 pr-3 pl-1 !backdrop-blur-2xl
-                    !backdrop-saturate-150
-                  `
-                )}
-              >
+              <div className="flex items-center gap-2 rounded-full">
                 <div
                   className="
                     flex size-8 shrink-0 items-center justify-center
@@ -750,13 +740,13 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
               </div>
               <div
                 className="
-                  liquid-glass mobile-header-floating-control rounded-full
-                  !bg-[#01152d]/55 py-1 pr-3 pl-1 !backdrop-blur-2xl
-                  !backdrop-saturate-150
+                  liquid-glass mobile-header-floating-control flex
+                  items-center justify-center rounded-full !bg-[#01152d]/55
+                  py-1 pr-3 pl-1 !backdrop-blur-2xl !backdrop-saturate-150
                 "
               >
                 <UserButton
-                  showName
+                  showName={!isMobile}
                   appearance={{
                     elements: {
                       userButtonBox: '!flex-row-reverse',

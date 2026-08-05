@@ -229,6 +229,8 @@ export async function getGuidedProjectById(
       studentsCount: project.enrollments.length,
       contentHours: project.contentHours,
       repositoryUrl: project.repositoryUrl,
+      certificateDescription: project.certificateDescription,
+      faqItems: project.faqItems,
       slug: project.slug,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,

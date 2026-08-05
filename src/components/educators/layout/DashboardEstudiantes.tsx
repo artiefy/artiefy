@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import { Dialog } from '@headlessui/react';
 import {
@@ -25,6 +25,7 @@ import {
 import { Bar } from 'react-chartjs-2';
 import { toast } from 'sonner';
 
+import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -395,14 +396,13 @@ function MobileUserCard({
 const DashboardEstudiantes: React.FC<LessonsListProps> = ({
   courseId,
   selectedColor: _selectedColor,
-  onCrearActividad,
+  // El popup de creación rápida reemplazó la navegación a newActivity que
+  // dependía de este callback; se conserva en la interfaz por compatibilidad
+  // con quien ya lo pasa (CourseDetail de educadores).
+  onCrearActividad: _onCrearActividad,
 }) => {
-  const pathname = usePathname();
   const router = useRouter();
   void router;
-
-  const isSuperAdmin = pathname?.includes('/dashboard/super-admin/') ?? false;
-  const handleCrearActividad = onCrearActividad ?? (() => {});
 
   // ─── State ─────────────────────────────────────────────────────────────────
   const [users, setUsers] = useState<User[]>([]);
@@ -427,6 +427,22 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
   const [studentsToRemove, setStudentsToRemove] = useState<User[]>([]);
   const [removingStudent, setRemovingStudent] = useState(false);
+
+  const [quickActivityOpen, setQuickActivityOpen] = useState(false);
+  const [quickActivityParametro, setQuickActivityParametro] = useState<{
+    id: number;
+    name: string;
+    peso: number;
+  } | null>(null);
+
+  const openQuickActivity = (activity: Activity) => {
+    setQuickActivityParametro({
+      id: activity.parametroId,
+      name: activity.parametro,
+      peso: activity.parametroPeso,
+    });
+    setQuickActivityOpen(true);
+  };
 
   const USERS_PER_PAGE = 10;
 
@@ -567,42 +583,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     }
   };
 
-  const navigateToNewActivity = async (
-    parametroId: number,
-    numberOfActivities?: number
-  ) => {
-    const basePath = isSuperAdmin ? 'super-admin' : 'educadores';
-    console.log(
-      '[NAVIGATE] Intentando crear actividad para parámetro:',
-      parametroId
-    );
-    try {
-      const res = await fetch(
-        `/api/educadores/actividades/sugerido?parametroId=${parametroId}`
-      );
-      const data = await res.json();
-      console.log('[NAVIGATE] Respuesta del endpoint sugerido:', data);
-      if (
-        data.porcentajeSugerido === null ||
-        data.porcentajeSugerido === undefined
-      ) {
-        console.warn(
-          '[NAVIGATE] No se puede crear actividad: parámetro lleno o sin sugerencia.'
-        );
-        alert(
-          'No se puede crear una nueva actividad: el parámetro ya está lleno o no tiene sugerencia.'
-        );
-        return;
-      }
-      router.push(
-        `/dashboard/${basePath}/cursos/${courseId}/newActivity?parametroId=${parametroId}&porcentajeSugerido=${data.porcentajeSugerido}`
-      );
-    } catch (err) {
-      console.error('[NAVIGATE] Error al consultar sugerencia:', err);
-      alert('Error al consultar el porcentaje sugerido.');
-    }
-  };
-
   // ─── Data Fetching ─────────────────────────────────────────────────────────
 
   const fetchEnrolledUsers = useCallback(async (courseId: number) => {
@@ -627,7 +607,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           );
           tiempoEnCurso = `${diffDays} días`;
         }
-
         return {
           ...user,
           firstName: user.firstName ?? 'Nombre no disponible',
@@ -1018,9 +997,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                 font-bold text-white
                                 hover:bg-green-700
                               "
-                              onClick={() =>
-                                handleCrearActividad(activity.parametroId)
-                              }
+                              onClick={() => openQuickActivity(activity)}
                             >
                               + Crear
                             </button>
@@ -1150,12 +1127,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                   "
                                 />
                                 <button
-                                  onClick={() =>
-                                    navigateToNewActivity(
-                                      activity.parametroId,
-                                      activity.numberOfActivities
-                                    )
-                                  }
+                                  onClick={() => openQuickActivity(activity)}
                                   className="
                                     rounded bg-green-600 px-2 py-1 text-xs
                                     text-white
@@ -1308,6 +1280,18 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           )}
         </div>
       </div>
+
+      {quickActivityParametro && (
+        <ModalFormActivityQuick
+          open={quickActivityOpen}
+          onOpenChange={setQuickActivityOpen}
+          courseId={courseId}
+          parametroId={quickActivityParametro.id}
+          parametroName={quickActivityParametro.name}
+          parametroPeso={quickActivityParametro.peso}
+          onSuccess={() => void fetchEnrolledUsers(courseId)}
+        />
+      )}
     </>
   );
 };

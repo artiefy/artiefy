@@ -9,6 +9,7 @@ import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 import ViewFiles from '~/components/educators/layout/ViewFiles';
+import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,6 +82,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   const [error, setError] = useState<string | null>(null); // Estado de error
   const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado del color
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
+  const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false); // Estado del modal de crear actividad
+  const [activitiesRefreshKey, setActivitiesRefreshKey] = useState(0); // Fuerza el remount/refetch de la lista de actividades
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores predefinidos
 
   // Obtener el id del curso
@@ -613,8 +616,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             </div>
 
             <div className="flex w-full justify-center">
-              <Link
-                href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
+              <button
+                type="button"
+                onClick={() => setIsCreateActivityOpen(true)}
                 className="
                   cursor-pointer justify-center rounded-lg border-transparent
                   bg-green-400 p-2 text-white
@@ -622,12 +626,13 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 "
               >
                 Crear actividad
-              </Link>
+              </button>
             </div>
           </Card>
         </div>
         <div>
           <ListActividadesEducator
+            key={activitiesRefreshKey}
             lessonId={lessons.id}
             courseId={courseIdNumber ?? 0}
             coverImageKey={lessons.coverImageKey}
@@ -635,6 +640,13 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           />
         </div>
       </div>
+      <ModalFormActivityQuick
+        open={isCreateActivityOpen}
+        onOpenChange={setIsCreateActivityOpen}
+        courseId={courseIdNumber ?? 0}
+        presetLessonId={lessons.id}
+        onSuccess={() => setActivitiesRefreshKey((k) => k + 1)}
+      />
       <ModalFormLessons
         isOpen={isEditModalOpen}
         onCloseAction={() => {

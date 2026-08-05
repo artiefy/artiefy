@@ -1,5 +1,12 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,7 +21,6 @@ import {
   Mic,
   Music,
   ThumbsUp,
-  Users,
   Video,
   X,
 } from 'lucide-react';
@@ -436,6 +442,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   void showStickyCard;
   // Ref para el contenedor de tabs con scroll horizontal
   const tabsRef = useRef<HTMLDivElement>(null);
+  // Arrastrar (mouse o touch) para desplazar los tabs, vía Pointer Events —
+  // unifica mouse y dedo en móvil sin depender del scroll táctil nativo.
+  const tabsDragStateRef = useRef({
+    hasDragged: false,
+    isDragging: false,
+    pointerId: null as number | null,
+    scrollLeft: 0,
+    startX: 0,
+  });
 
   // Estado para el modal de búsqueda de curso
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
@@ -2220,17 +2235,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     return (aMs || 0) - (bMs || 0);
   });
 
-  const sectionClass =
-    'rounded-2xl border border-[#1d283a] bg-[#061c37] p-6 md:p-8';
-  const sectionIconClass =
-    'flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]';
-
   // Portada + acciones — reutilizado en móvil (bajo el hero) y en desktop
   // (columna lateral sticky), igual que en GuidedProjectAdminTabs.
   const renderCoverAndActions = () =>
     course && (
       <div className="relative overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37]">
-        <div className="card-premium group relative aspect-video w-full overflow-hidden">
+        <div className="card-premium group relative aspect-[2/1] w-full overflow-hidden">
           <div
             className="
               absolute inset-0 z-10 bg-gradient-to-t from-black/50
@@ -2243,7 +2253,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
             alt={course.title}
             width={400}
-            height={225}
+            height={200}
             className="
               size-full object-cover transition-transform duration-500
               group-hover:scale-110
@@ -2253,7 +2263,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 p-5">
+        <div className="grid grid-cols-2 gap-2 p-4">
           <Button
             onClick={handleEnrollAndRedirect}
             className="btn-primary w-full"
@@ -2512,14 +2522,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               "
             >
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 rounded-full border border-[#22C4D3]/40 bg-[#22C4D3]/15 px-3 py-1.5 text-[#22C4D3]">
-                  <span className="text-sm">📚</span>
-                  <span className="text-xs font-semibold tracking-wide uppercase">
-                    Curso
-                  </span>
-                </div>
-
-                <h1 className="font-display text-3xl leading-tight font-bold text-white md:text-4xl lg:text-5xl">
+                <h1 className="font-display text-2xl leading-tight font-bold text-white md:text-3xl lg:text-4xl">
                   {course.title}
                 </h1>
 
@@ -2592,45 +2595,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="mt-6 lg:hidden">{renderCoverAndActions()}</div>
             </div>
           </div>
-        </div>
 
-        {/* Portada + acciones fijas (sticky) en desktop, junto al hero */}
-        <div className="hidden lg:block">
-          <div className="sticky top-6">{renderCoverAndActions()}</div>
-        </div>
-      </div>
-
-      <div className="mt-6 space-y-6">
-        <section className={sectionClass}>
-          <div className="mb-4 flex items-center gap-2">
-            <div className={sectionIconClass}>
-              <Users className="size-4" />
-            </div>
-            <h2 className="text-xl font-bold text-white">
-              Instructores Asignados
-            </h2>
-          </div>
-
-          {/* Instructores actuales mostrados como burbujas */}
-          <div className="mb-4 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto pb-1">
             {currentInstructors.length > 0 ? (
               currentInstructors.map((instructorId) => {
                 const educator = educators.find((e) => e.id === instructorId);
                 return (
-                  <div
+                  <span
                     key={instructorId}
-                    className="
-                          flex items-center gap-2 rounded-full border
-                          border-[#22C4D3]/30 bg-[#22C4D3]/10 px-4 py-2
-                          text-sm text-white
-                        "
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white"
                   >
-                    <span className="font-semibold text-white">
-                      {educator?.name || instructorId}
-                    </span>
+                    {educator?.name ?? instructorId}
                     <button
                       onClick={async () => {
-                        // Remover instructor
                         const newInstructors = currentInstructors.filter(
                           (id) => id !== instructorId
                         );
@@ -2670,37 +2647,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         }
                       }}
                       disabled={isUpdating}
-                      className="
-                            rounded-full text-white/40 transition-colors
-                            hover:text-red-400
-                            disabled:opacity-50
-                          "
+                      className="text-white/40 transition-colors hover:text-red-400 disabled:opacity-50"
                     >
                       ✕
                     </button>
-                  </div>
+                  </span>
                 );
               })
             ) : (
-              <p className="text-sm text-white/50">
-                No hay instructores asignados
-              </p>
+              <span className="shrink-0 text-xs whitespace-nowrap text-white/50">
+                Sin instructores asignados
+              </span>
             )}
-          </div>
 
-          {/* Dropdown para agregar instructor */}
-          <div className="flex gap-2">
             <select
               value={selectedInstructor}
               onChange={(e) => setSelectedInstructor(e.target.value)}
-              className="
-                    flex-1 rounded-lg border border-[#22C4D3]/30 bg-[#061c37]
-                    px-3 py-2 text-sm text-white
-                    focus:border-[#22C4D3] focus:outline-none
-                  "
               disabled={isUpdating}
+              className="shrink-0 rounded-full border border-[#22C4D3]/40 bg-[#061c37] px-3 py-1.5 text-xs text-white focus:border-[#22C4D3] focus:outline-none disabled:opacity-50"
             >
-              <option value="">Seleccionar instructor...</option>
+              <option value="">Agregar instructor...</option>
               {educators
                 .filter((educator) => !currentInstructors.includes(educator.id))
                 .map((educator) => (
@@ -2753,18 +2719,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 }
               }}
               disabled={isUpdating || !selectedInstructor}
-              className="
-                    rounded-lg bg-[#22C4D3] px-4 py-2 text-sm font-semibold
-                    text-white transition-colors
-                    hover:bg-cyan-600
-                    disabled:opacity-50
-                  "
+              className="shrink-0 rounded-full bg-[#22C4D3] px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
             >
               {isUpdating ? '...' : '+ Agregar'}
             </button>
           </div>
-        </section>
+        </div>
+
+        {/* Portada + acciones fijas (sticky) en desktop, junto al hero */}
+        <div className="hidden lg:block">
+          <div className="sticky top-6">{renderCoverAndActions()}</div>
+        </div>
       </div>
+
       {loading ? (
         <LoadingCourses />
       ) : (
@@ -2826,15 +2793,65 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                 <div
                   ref={tabsRef}
+                  onClickCapture={(event: ReactMouseEvent<HTMLDivElement>) => {
+                    if (!tabsDragStateRef.current.hasDragged) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    tabsDragStateRef.current.hasDragged = false;
+                  }}
+                  onPointerCancel={(
+                    event: ReactPointerEvent<HTMLDivElement>
+                  ) => {
+                    const container = event.currentTarget;
+                    const dragState = tabsDragStateRef.current;
+                    if (
+                      dragState.pointerId !== null &&
+                      container.hasPointerCapture(dragState.pointerId)
+                    ) {
+                      container.releasePointerCapture(dragState.pointerId);
+                    }
+                    dragState.isDragging = false;
+                    dragState.pointerId = null;
+                  }}
+                  onPointerDown={(event: ReactPointerEvent<HTMLDivElement>) => {
+                    if (!event.isPrimary || event.button !== 0) return;
+                    const container = event.currentTarget;
+                    tabsDragStateRef.current.isDragging = true;
+                    tabsDragStateRef.current.hasDragged = false;
+                    tabsDragStateRef.current.pointerId = event.pointerId;
+                    tabsDragStateRef.current.startX = event.clientX;
+                    tabsDragStateRef.current.scrollLeft = container.scrollLeft;
+                  }}
+                  onPointerMove={(event: ReactPointerEvent<HTMLDivElement>) => {
+                    const dragState = tabsDragStateRef.current;
+                    if (!dragState.isDragging) return;
+                    const deltaX = event.clientX - dragState.startX;
+                    if (!dragState.hasDragged && Math.abs(deltaX) > 8) {
+                      dragState.hasDragged = true;
+                    }
+                    if (!dragState.hasDragged) return;
+                    event.preventDefault();
+                    event.currentTarget.scrollLeft =
+                      dragState.scrollLeft - deltaX;
+                  }}
+                  onPointerUp={() => {
+                    const dragState = tabsDragStateRef.current;
+                    dragState.isDragging = false;
+                    dragState.pointerId = null;
+                  }}
                   className="
-                    flex scrollbar-none gap-2 overflow-x-auto scroll-smooth px-8
-                    py-2
+                    flex cursor-grab scrollbar-none gap-2 overflow-x-auto
+                    scroll-smooth px-8 py-2
+                    active:cursor-grabbing
                     md:gap-3
                     lg:gap-4
                   "
                   style={{
-                    scrollbarWidth: 'none',
                     msOverflowStyle: 'none',
+                    scrollbarWidth: 'none',
+                    touchAction: 'pan-y',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
                   }}
                 >
                   <button

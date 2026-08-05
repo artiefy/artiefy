@@ -2351,6 +2351,14 @@ export const guidedProjects = pgTable('guided_projects', {
   studentsCount: integer('students_count').default(0),
   contentHours: integer('content_hours').default(0),
   repositoryUrl: text('repository_url'),
+  // Descripción de la constancia verificable, editable por proyecto. Si es
+  // null, la UI muestra el párrafo genérico por defecto.
+  certificateDescription: text('certificate_description'),
+  // Preguntas frecuentes editables por proyecto. Si está vacío, la UI
+  // muestra el FAQ genérico por defecto (mismo para todos los proyectos).
+  faqItems: jsonb('faq_items')
+    .$type<{ question: string; answer: string }[]>()
+    .default(sql`'[]'::jsonb`),
   slug: varchar('slug', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

@@ -138,8 +138,6 @@ const Page: React.FC = () => {
 
   // Subida de documento: campos visibles de una al elegir el tipo, para
   // adjuntar el primer documento en el mismo paso de creación.
-  const [docPregunta, setDocPregunta] = useState('');
-  const [docCriterios, setDocCriterios] = useState('');
   const [docArchivo, setDocArchivo] = useState<File | null>(null);
   const [docImagen, setDocImagen] = useState<File | null>(null);
 
@@ -678,7 +676,7 @@ const Page: React.FC = () => {
       // documento (visibles de una al elegir el tipo), se suben junto con
       // la creación de la actividad, en el mismo clic de "Crear".
       if (!isEditing && formData.type === '1') {
-        if (docPregunta || docCriterios || docArchivo || docImagen) {
+        if (docArchivo || docImagen) {
           try {
             const archivoKey = docArchivo
               ? await uploadFileToS3(docArchivo)
@@ -692,8 +690,8 @@ const Page: React.FC = () => {
                 activityId: actividadId,
                 questionsFilesSubida: {
                   id: crypto.randomUUID(),
-                  text: docPregunta,
-                  parametros: docCriterios,
+                  text: '',
+                  parametros: '',
                   pesoPregunta: 0,
                   archivoKey,
                   portadaKey,
@@ -1205,42 +1203,6 @@ const Page: React.FC = () => {
                   >
                     Documento a subir
                   </h3>
-
-                  <div className="space-y-2">
-                    <label className="block font-bold text-[#22C4D3]">
-                      Pregunta
-                    </label>
-                    <textarea
-                      className="
-                        w-full rounded-lg border border-[#1d283a]/40
-                        bg-[#1e2939] p-3 text-white shadow-md outline-none
-                        placeholder:text-[#00BDD8]
-                        focus:border focus:border-[#22C4D3]
-                        focus:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
-                      "
-                      placeholder="Digite aquí la descripción del trabajo"
-                      value={docPregunta}
-                      onChange={(e) => setDocPregunta(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block font-bold text-[#22C4D3]">
-                      Criterios de evaluación
-                    </label>
-                    <textarea
-                      className="
-                        w-full rounded-lg border border-[#1d283a]/40
-                        bg-[#1e2939] p-3 text-white shadow-md outline-none
-                        placeholder:text-[#00BDD8]
-                        focus:border focus:border-[#22C4D3]
-                        focus:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
-                      "
-                      placeholder="Parámetros de evaluación"
-                      value={docCriterios}
-                      onChange={(e) => setDocCriterios(e.target.value)}
-                    />
-                  </div>
 
                   <div className="space-y-2">
                     <label className="block font-bold text-[#22C4D3]">

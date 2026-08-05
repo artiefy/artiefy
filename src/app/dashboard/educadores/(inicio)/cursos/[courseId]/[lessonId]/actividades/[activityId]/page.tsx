@@ -30,7 +30,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
-import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import VerRespuestasArchivos from '~/components/educators/VerRespuestasArchivos';
 import {
@@ -89,16 +88,9 @@ interface PorcentajeResponse {
   };
 }
 
-const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
-  if (!hexcolor.startsWith('#')) return 'white'; // Colores no-hex (oklch, rgb, etc.) asumen fondo oscuro
-  hexcolor = hexcolor.replace('#', '');
-  const r = parseInt(hexcolor.substr(0, 2), 16);
-  const g = parseInt(hexcolor.substr(2, 2), 16);
-  const b = parseInt(hexcolor.substr(4, 2), 16);
-  const yiq = (r * 29 + g * 587 + b * 14) / 1000;
-  return yiq >= 128 ? 'black' : 'white';
-};
+// Color pasado a SeleccionActi (sin relación con el fondo de la página, que
+// ahora es fijo, igual que en CourseDetail).
+const SELECCION_COLOR = 'oklch(19% 0.0542 252.35)';
 
 const Page: React.FC = () => {
   const params = useParams(); // Obtener los parametros de la URL
@@ -110,33 +102,13 @@ const Page: React.FC = () => {
   const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>('oklch(19% 0.0542 252.35)'); // Estado del color
-  const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores rápidos
-
-  const handlePredefinedColorChange = (v: string) => {
-    setColor(v);
-    localStorage.setItem(`selectedColor_${courseIdNumber}`, v);
-  };
-
-  type ColorChangeEvent = React.ChangeEvent<
-    HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-  >;
-
-  const handleCustomColorChange = (e: ColorChangeEvent) => {
-    const v = e.currentTarget.value;
-    setColor(v);
-    localStorage.setItem(`selectedColor_${courseIdNumber}`, v);
-  };
   const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
   const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
 
   type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
 
   type EditableQuestion = (
-    | Question
-    | VerdaderoOFlaso
-    | Completado
-    | QuestionFilesSubida
+    Question | VerdaderoOFlaso | Completado | QuestionFilesSubida
   ) & {
     tipo: TipoPregunta;
   };
@@ -234,20 +206,6 @@ const Page: React.FC = () => {
         });
     }
   }, [actividadIdNumber]);
-
-  // Guardar el color seleccionado en el localStorage
-  useEffect(() => {
-    const savedColor = localStorage.getItem(`selectedColor_${courseIdNumber}`);
-    if (savedColor) {
-      setColor(savedColor);
-    }
-  }, [courseIdNumber]);
-
-  useEffect(() => {
-    if (actividad?.type.id === 1) {
-      setQuestions(['ARCHIVO']);
-    }
-  }, [actividad]);
 
   useEffect(() => {
     if (actividadIdNumber !== null) {
@@ -374,327 +332,282 @@ const Page: React.FC = () => {
       <div className="text-center text-xl">No se encontró la actividad.</div>
     );
 
+  // Imagen de la lección — reutilizada en móvil (bajo el hero) y en desktop
+  // (columna lateral sticky), igual que en CourseDetail y en Clase.
+  const renderMedia = () => (
+    <div
+      className="
+        relative overflow-hidden rounded-2xl border border-[#1d283a]
+        bg-[#061c37] p-4
+        sm:p-6
+      "
+    >
+      <Image
+        src={
+          actividad.lesson.coverImageKey
+            ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
+            : `/favicon.ico`
+        }
+        alt="Imagen de la lección"
+        width={400}
+        height={400}
+        className="mx-auto h-auto w-full rounded-lg object-cover shadow-lg"
+      />
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Link
+          href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
+          className="
+            w-full rounded-lg bg-[#22C4D3] px-2 py-1.5 text-center text-xs
+            text-white
+            transition-colors duration-200
+            hover:bg-cyan-600
+          "
+        >
+          Realizar Actividad
+        </Link>
+
+        <Link
+          href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
+          className="
+            w-full rounded-lg bg-[#22C4D3] px-2 py-1.5 text-center text-xs
+            text-white
+            transition-colors duration-200
+            hover:bg-cyan-600
+          "
+        >
+          Editar Actividad
+        </Link>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              className="
+                col-span-2 w-full rounded-lg border border-red-600
+                bg-red-600 px-2 py-1.5 text-xs text-white
+                transition-colors duration-200
+                hover:bg-white hover:text-red-600
+              "
+            >
+              Eliminar
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Se eliminará permanentemente
+                la actividad
+                <span className="font-bold">
+                  {' '}
+                  {actividad?.name}, del tipo: {actividad?.type?.name}
+                </span>{' '}
+                y todos los datos asociados a este.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAct}
+                className="
+                  rounded-lg border border-red-600 bg-red-600 px-4 py-2
+                  text-white transition-colors duration-200
+                  hover:border-red-700 hover:bg-transparent
+                  hover:text-red-700
+                "
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </div>
+  );
+
   return (
-    <>
-      <Breadcrumb className="mt-8">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
-              "
-              href="/dashboard/super-admin"
-            >
-              Cursos
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
-              "
-              href="/dashboard/super-admin/cursos"
-            >
-              Lista de cursos
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
-              "
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
-            >
-              Detalles curso
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
-              className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
-              "
-            >
-              Lección
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href="#"
-              onClick={() => window.history.back()}
-              className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
-              "
-            >
-              Creación de actividad
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="group relative h-auto w-full">
+    <div
+      className="
+        relative min-h-screen w-full overflow-hidden px-1 py-2
+        md:px-3 md:py-4
+      "
+      style={{
+        backgroundColor: 'rgb(25, 45, 80)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+      }}
+    >
+      {/* Overlay oscuro para mejorar legibilidad */}
+      <div
+        className="
+          pointer-events-none absolute inset-0 bg-gradient-to-br from-black/50
+          via-[#1a2d4a]/30 to-black/50
+        "
+      />
+      {/* Fondo decorativo con patrón */}
+      <div className="pointer-events-none absolute inset-0 opacity-20">
         <div
           className="
-            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-            duration-500
-            group-hover:opacity-100
+            absolute -top-40 -right-40 size-80 rounded-full bg-green-500
+            blur-3xl
           "
         />
         <div
           className="
-            relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg
-            border border-gray-200 p-4 shadow-lg
-            sm:p-6
-            lg:p-8
+            absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500
+            blur-3xl
           "
-          style={{ backgroundColor: color, color: getContrastYIQ(color) }}
-        >
-          <div
-            className="
-              mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl
-              font-semibold
-              sm:text-3xl
-              md:grid-cols-2 md:text-3xl
-            "
-          >
-            <h2
-              className="
-                flex flex-col text-2xl font-extrabold text-primary
-                sm:text-3xl
-                md:text-4xl
-              "
-            >
-              Actividad: <b>{actividad.name}</b>
-            </h2>
-            <h3
-              className="
-                text-base text-primary
-                sm:text-lg
-                md:mr-8 md:text-xl
-                lg:mr-24
-              "
-            >
-              Perteneciente a la clase: {actividad.lesson?.title}
-            </h3>
-          </div>
-          {/* Selector de color del contenedor */}
-          <div className="mb-4 flex flex-wrap items-center gap-3">
-            <span className="text-sm font-medium">Color de fondo:</span>
+        />
+      </div>
 
-            {/* Color personalizado */}
-            <input
-              type="color"
-              value={color}
-              onChange={handleCustomColorChange}
-              className="h-8 w-10 cursor-pointer rounded border p-0"
-              aria-label="Elegir color de fondo"
-            />
-
-            {/* Atajos de colores predefinidos */}
-            <div className="flex items-center gap-2">
-              {predefinedColors.map((c) => (
-                <Button
-                  key={c}
-                  type="button"
-                  onClick={() => handlePredefinedColorChange(c)}
-                  style={{ backgroundColor: c }}
-                  className="size-8 rounded border"
-                  title={c}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div
-            className="
-              my-4 grid grid-cols-1 gap-6
-              md:grid-cols-2
-              lg:grid-cols-2
-            "
-          >
-            <div
-              className="
-                space-y-5 text-base
-                sm:text-lg
-              "
-            >
-              <p className="font-semibold">
-                Del docente:{' '}
-                <Badge
-                  variant="outline"
-                  className="
-                    ml-1 w-fit border-primary bg-background text-primary
-                    hover:bg-black/70
-                  "
-                >
-                  {actividad.lesson?.courseInstructorName ??
-                    actividad.lesson.courseInstructor}
-                </Badge>
-              </p>
-              <p className="font-semibold">
-                Tipo de actividad:{' '}
-                <b className="text-primary">{actividad.type?.name}</b>
-              </p>
-              <p className="font-semibold">
-                Permite: <b>{actividad.type?.description}</b>
-              </p>
-              <p
+      <div className="relative z-10">
+        <Breadcrumb className="animate-slideInDown mb-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
                 className="
-                  w-full font-semibold
-                  sm:w-11/12
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
+                "
+                href="/dashboard/super-admin"
+              >
+                Cursos
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
+                "
+                href="/dashboard/super-admin/cursos"
+              >
+                Lista de cursos
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
+                "
+                href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+              >
+                Detalles curso
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
+                className="
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
                 "
               >
-                Descripción de la actividad:{' '}
-                <b className="block">{actividad.description}.</b>
-              </p>
-              <p className="font-semibold">
-                ¿La actividad es calificable?:{' '}
-                <Badge
-                  variant="outline"
-                  className="
-                    ml-1 w-fit border-primary bg-background text-primary
-                    hover:bg-black/70
-                  "
-                >
-                  {actividad.revisada ? 'Si' : 'No'}.
-                </Badge>
-              </p>
-              <p className="font-semibold">
-                Fecha máxima de entrega:{' '}
-                <Badge
-                  variant="outline"
-                  className="
-                    ml-1 w-fit border-primary bg-background text-primary
-                    hover:bg-black/70
-                  "
-                >
-                  {actividad.fechaMaximaEntrega
-                    ? new Date(actividad.fechaMaximaEntrega).toLocaleString()
-                    : 'No tiene fecha máxima de entrega'}
-                  .
-                </Badge>
-              </p>
-            </div>
-            <div className="flex items-center justify-center">
-              <div className="text-center">
-                <Image
-                  src={
-                    actividad.lesson.coverImageKey
-                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
-                      : `/favicon.ico`
-                  }
-                  alt="Imagen de la lección"
-                  width={400}
-                  height={400}
-                  className="
-                    h-auto w-full max-w-xs rounded-lg object-cover shadow-md
-                    sm:max-w-sm
-                    md:max-w-md
-                  "
-                />
+                Lección
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                href="#"
+                onClick={() => window.history.back()}
+                className="text-white/60"
+              >
+                Creación de actividad
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+          <div className="lg:col-span-2">
+            <div
+              className="
+                relative overflow-hidden rounded-2xl border border-[#1d283a]
+                bg-[#061c37] p-4 shadow-2xl
+                sm:p-8
+              "
+            >
+              <div className="mb-6 space-y-3">
+                <h2 className="font-display text-2xl leading-tight font-bold text-white sm:text-3xl md:text-4xl">
+                  Actividad: <b>{actividad.name}</b>
+                </h2>
+                <p className="text-base text-white/70 sm:text-lg">
+                  Perteneciente a la clase: {actividad.lesson?.title}
+                </p>
               </div>
+
+              <div
+                className="
+                  grid grid-cols-1 gap-4 text-sm
+                  sm:grid-cols-2 sm:text-base
+                "
+              >
+                <p className="font-semibold text-white">
+                  Del docente:{' '}
+                  <span className="ml-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
+                    {actividad.lesson?.courseInstructorName ??
+                      actividad.lesson.courseInstructor}
+                  </span>
+                </p>
+                <p className="font-semibold text-white">
+                  Tipo de actividad:{' '}
+                  <b className="text-[#22C4D3]">{actividad.type?.name}</b>
+                </p>
+                <p className="font-semibold text-white sm:col-span-2">
+                  Permite: <b>{actividad.type?.description}</b>
+                </p>
+                <p className="font-semibold text-white sm:col-span-2">
+                  Descripción de la actividad:{' '}
+                  <b className="block">{actividad.description}.</b>
+                </p>
+                <p className="font-semibold text-white">
+                  ¿La actividad es calificable?:{' '}
+                  <span className="ml-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
+                    {actividad.revisada ? 'Si' : 'No'}.
+                  </span>
+                </p>
+                <p className="font-semibold text-white">
+                  Fecha máxima de entrega:{' '}
+                  <span className="ml-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white">
+                    {actividad.fechaMaximaEntrega
+                      ? new Date(actividad.fechaMaximaEntrega).toLocaleString()
+                      : 'No tiene fecha máxima de entrega'}
+                    .
+                  </span>
+                </p>
+              </div>
+
+              <div className="mt-6 lg:hidden">{renderMedia()}</div>
             </div>
           </div>
-          <div
-            className="
-              mx-auto flex w-full flex-col flex-wrap justify-center gap-3
-              sm:flex-row sm:justify-evenly
-              md:gap-6
-            "
-          >
-            <Link
-              href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="
-                w-full rounded-lg bg-blue-500 px-4 py-2 text-center text-white
-                transition-colors duration-200
-                hover:bg-blue-600
-                sm:w-auto
-              "
-            >
-              Realizar Actividad
-            </Link>
-
-            <Link
-              href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="
-                w-full rounded-lg bg-blue-500 px-4 py-2 text-center text-white
-                transition-colors duration-200
-                hover:bg-blue-600
-                sm:w-auto
-              "
-            >
-              Editar Actividad
-            </Link>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  className="
-                    rounded-lg border border-red-600 bg-red-600 px-4 py-2
-                    text-white transition-colors duration-200
-                    hover:bg-white hover:text-red-600
-                  "
-                >
-                  Eliminar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará
-                    permanentemente la actividad
-                    <span className="font-bold">
-                      {' '}
-                      {actividad?.name}, del tipo: {actividad?.type?.name}
-                    </span>{' '}
-                    y todos los datos asociados a este.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAct}
-                    className="
-                      rounded-lg border border-red-600 bg-red-600 px-4 py-2
-                      text-white transition-colors duration-200
-                      hover:border-red-700 hover:bg-transparent
-                      hover:text-red-700
-                    "
-                  >
-                    Eliminar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          <div className="hidden lg:block">
+            <div className="sticky top-6">{renderMedia()}</div>
           </div>
+        </div>
 
+        <div
+          className="
+            relative mt-6 overflow-hidden rounded-2xl border
+            border-[#1d283a] bg-[#061c37] p-4 shadow-2xl
+            sm:p-8
+          "
+        >
           {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
           {actividad?.type.id === 1 ? (
             <div className="mt-8 space-y-6">
-              <div className="rounded-lg bg-background p-6 shadow-md">
+              <div className="rounded-2xl bg-[#061c37] shadow-md">
                 <div className="space-y-4">
                   {actividadIdNumber !== null && (
                     <>
-                      <div className="rounded-lg border border-gray-200 bg-white">
-                        <div className="rounded-lg bg-blue-50 p-4">
-                          <h2
-                            className="
-                              text-center text-2xl font-bold text-gray-800
-                            "
-                          >
+                      <div className="overflow-hidden rounded-2xl border border-[#1d283a]">
+                        <div className="rounded-t-2xl bg-gradient-to-r from-[#01142B] to-[#22C4D3]/10 p-4">
+                          <h2 className="bg-gradient-to-r from-[#22C4D3] to-white bg-clip-text text-center text-lg font-semibold text-transparent sm:text-xl">
                             Gestión de Archivos y Calificaciones
                           </h2>
-                          <p className="text-center text-sm text-black">
+                          <p className="mt-1 text-center text-xs text-white/60 sm:text-sm">
                             En esta sección puedes gestionar los archivos
                             subidos por los estudiantes y asignar
                             calificaciones.
@@ -704,14 +617,6 @@ const Page: React.FC = () => {
                           activityId={actividadIdNumber.toString()}
                         />
                       </div>
-                      {questions.includes('ARCHIVO') && (
-                        <FormActCompletado
-                          activityId={actividadIdNumber}
-                          onSubmit={handleFormSubmit}
-                          onCancel={handleCancel}
-                        />
-                      )}
-
                       {editingQuestion?.tipo === 'ARCHIVO' &&
                         'parametros' in editingQuestion && (
                           <FormActCompletado
@@ -724,7 +629,7 @@ const Page: React.FC = () => {
 
                       <div
                         className="
-                          rounded-lg border border-gray-200 bg-white p-6
+                          rounded-2xl border border-[#1d283a] bg-[#061c37] p-6
                         "
                       >
                         <QuestionSubidaList
@@ -754,15 +659,10 @@ const Page: React.FC = () => {
           ) : actividad?.type.id === 2 ? (
             <>
               <SeleccionActi
-                selectedColor={color}
+                selectedColor={SELECCION_COLOR}
                 onSelectChange={setSelectedActivityType}
               />
-              <div
-                className={`
-                  mt-2 text-center text-sm
-                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
-                `}
-              >
+              <div className="mt-2 text-center text-sm text-white">
                 <p>
                   <strong>Porcentaje usado por tipo de pregunta:</strong>
                 </p>
@@ -783,13 +683,13 @@ const Page: React.FC = () => {
 
               {selectedActivityType && (
                 <Button
-                  className={`
-                    mx-auto mb-4 w-full border border-slate-300 bg-transparent
-                    hover:bg-gray-300/20
+                  className="
+                    mx-auto mb-4 w-full border border-[#22C4D3]/30
+                    bg-transparent text-white
+                    hover:bg-[#22C4D3]/10
                     sm:w-2/4
                     md:w-1/4
-                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
-                  `}
+                  "
                   onClick={handleAddQuestion}
                 >
                   Agregar Pregunta
@@ -892,7 +792,7 @@ const Page: React.FC = () => {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
