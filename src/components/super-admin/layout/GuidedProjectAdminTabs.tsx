@@ -457,6 +457,11 @@ export function GuidedProjectAdminTabs({
     prerequisitesList: splitLines(project.prerequisites),
     techStackList: splitTags(project.techStack),
     deliverablesList: splitLines(project.deliverablesDescription),
+    certificateDescription: project.certificateDescription ?? '',
+    faqList:
+      project.faqItems && project.faqItems.length > 0
+        ? project.faqItems
+        : FAQ_ITEMS.map((item) => ({ question: item.q, answer: item.a })),
     categoryId: project.categoryId,
     modalidadId: project.modalidadId,
     instructorIds:
@@ -1350,16 +1355,37 @@ export function GuidedProjectAdminTabs({
                     <Award className="size-3.5" />
                     CONSTANCIA VERIFICABLE
                   </div>
-                  <h2 className="font-display mb-3 text-xl font-bold text-white md:text-2xl">
+                  <h2 className="font-display mb-3 flex items-center gap-1.5 text-xl font-bold text-white md:text-2xl">
                     Termina con una{' '}
                     <span className="text-[#22C4D3]">Constancia</span> que
                     puedes mostrar
+                    {educatorMode && <Pencil className="size-3.5" />}
                   </h2>
-                  <p className="mb-6 leading-relaxed text-white/70">
-                    Al completar el proyecto recibes una constancia publicada en
-                    la WEB y verificable. No es un PDF más: es una página en
-                    línea con tu producto funcionando, tu código y tu demo.
-                  </p>
+                  {educatorMode ? (
+                    <textarea
+                      value={editState.certificateDescription}
+                      onChange={(e) =>
+                        setEditState((s) => ({
+                          ...s,
+                          certificateDescription: e.target.value,
+                        }))
+                      }
+                      onBlur={() =>
+                        savePatch({
+                          certificateDescription:
+                            editState.certificateDescription,
+                        })
+                      }
+                      rows={3}
+                      placeholder="Al completar el proyecto recibes una constancia publicada en la WEB y verificable..."
+                      className="mb-6 w-full max-w-[760px] rounded-lg border border-[#22C4D3]/30 bg-[#04101f] p-2 text-sm text-white outline-none focus:border-[#22C4D3]"
+                    />
+                  ) : (
+                    <p className="mb-6 leading-relaxed text-white/70">
+                      {project.certificateDescription ||
+                        'Al completar el proyecto recibes una constancia publicada en la WEB y verificable. No es un PDF más: es una página en línea con tu producto funcionando, tu código y tu demo.'}
+                    </p>
+                  )}
                   <div className="rounded-xl border border-[#22C4D3]/30 bg-[#04101f] p-5">
                     <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[#22C4D3]">
                       <Award className="size-3.5" />
@@ -1779,47 +1805,149 @@ export function GuidedProjectAdminTabs({
                   </div>
                 </section>
 
-                {/* Preguntas frecuentes — contenido genérico */}
+                {/* Preguntas frecuentes — editable por proyecto, con fallback genérico */}
                 <section className={sectionClass}>
                   <div className="mb-4 flex items-center gap-2">
                     <div className={sectionIconClass}>
                       <HelpCircle className="size-4" />
                     </div>
-                    <h2 className="text-xl font-bold text-white">
+                    <h2 className="flex items-center gap-1.5 text-xl font-bold text-white">
                       Preguntas frecuentes
+                      {educatorMode && <Pencil className="size-3.5" />}
                     </h2>
                   </div>
-                  <div className="space-y-2">
-                    {FAQ_ITEMS.map((item, idx) => {
-                      const isOpen = openFaqIndex === idx;
-                      return (
+                  {educatorMode ? (
+                    <div className="space-y-3">
+                      {editState.faqList.map((item, idx) => (
                         <div
-                          key={item.q}
-                          className="overflow-hidden rounded-lg border border-white/10"
+                          key={idx}
+                          className="space-y-2 rounded-lg border border-white/10 p-3"
                         >
-                          <button
-                            type="button"
-                            onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                            className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-white/5"
-                          >
-                            <span className="text-sm font-semibold text-white">
-                              {item.q}
-                            </span>
-                            <ChevronDown
-                              className={`size-4 shrink-0 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                          <div className="flex items-start gap-2">
+                            <input
+                              type="text"
+                              value={item.question}
+                              onChange={(e) =>
+                                setEditState((s) => ({
+                                  ...s,
+                                  faqList: s.faqList.map((f, i) =>
+                                    i === idx
+                                      ? { ...f, question: e.target.value }
+                                      : f
+                                  ),
+                                }))
+                              }
+                              onBlur={() =>
+                                savePatch({
+                                  faqItems: editState.faqList.filter(
+                                    (f) => f.question.trim() && f.answer.trim()
+                                  ),
+                                })
+                              }
+                              placeholder="Pregunta"
+                              className="w-full rounded-lg border border-[#22C4D3]/30 bg-[#04101f] p-2 text-sm font-semibold text-white outline-none focus:border-[#22C4D3]"
                             />
-                          </button>
-                          {isOpen && (
-                            <div className="border-t border-white/10 bg-[#04101f] p-4">
-                              <p className="text-sm leading-relaxed text-white/70">
-                                {item.a}
-                              </p>
-                            </div>
-                          )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const next = editState.faqList.filter(
+                                  (_, i) => i !== idx
+                                );
+                                setEditState((s) => ({ ...s, faqList: next }));
+                                void savePatch({
+                                  faqItems: next.filter(
+                                    (f) => f.question.trim() && f.answer.trim()
+                                  ),
+                                });
+                              }}
+                              aria-label="Eliminar pregunta"
+                              className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 p-2 text-red-400 transition hover:bg-red-500/20"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                          <textarea
+                            value={item.answer}
+                            onChange={(e) =>
+                              setEditState((s) => ({
+                                ...s,
+                                faqList: s.faqList.map((f, i) =>
+                                  i === idx
+                                    ? { ...f, answer: e.target.value }
+                                    : f
+                                ),
+                              }))
+                            }
+                            onBlur={() =>
+                              savePatch({
+                                faqItems: editState.faqList.filter(
+                                  (f) => f.question.trim() && f.answer.trim()
+                                ),
+                              })
+                            }
+                            rows={2}
+                            placeholder="Respuesta"
+                            className="w-full rounded-lg border border-[#22C4D3]/30 bg-[#04101f] p-2 text-sm text-white outline-none focus:border-[#22C4D3]"
+                          />
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditState((s) => ({
+                            ...s,
+                            faqList: [
+                              ...s.faqList,
+                              { question: '', answer: '' },
+                            ],
+                          }))
+                        }
+                        className="rounded-lg border border-[#22C4D3]/30 bg-white/5 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#22C4D3]/10"
+                      >
+                        + Agregar pregunta
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {(project.faqItems && project.faqItems.length > 0
+                        ? project.faqItems
+                        : FAQ_ITEMS.map((item) => ({
+                            question: item.q,
+                            answer: item.a,
+                          }))
+                      ).map((item, idx) => {
+                        const isOpen = openFaqIndex === idx;
+                        return (
+                          <div
+                            key={item.question}
+                            className="overflow-hidden rounded-lg border border-white/10"
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenFaqIndex(isOpen ? null : idx)
+                              }
+                              className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-white/5"
+                            >
+                              <span className="text-sm font-semibold text-white">
+                                {item.question}
+                              </span>
+                              <ChevronDown
+                                className={`size-4 shrink-0 text-white/50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                              />
+                            </button>
+                            {isOpen && (
+                              <div className="border-t border-white/10 bg-[#04101f] p-4">
+                                <p className="text-sm leading-relaxed text-white/70">
+                                  {item.answer}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </section>
 
                 {!educatorMode &&

@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import ViewFiles from '~/components/educators/layout/ViewFiles';
+import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
-import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
-import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { Label } from '~/components/educators/ui/label';
 import ListActividadesEducator from '~/components/super-admin/layout/ListActividades';
 import ModalFormLessons from '~/components/super-admin/modals/ModalFormLessons';
 import {
@@ -61,18 +59,11 @@ interface Lessons {
   updatedAt: string;
 }
 
-// Función para obtener el contraste del color
-const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
-  hexcolor = hexcolor.replace('#', '');
-  const r = parseInt(hexcolor.substr(0, 2), 16);
-  const g = parseInt(hexcolor.substr(2, 2), 16);
-  const b = parseInt(hexcolor.substr(4, 2), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? 'black' : 'white';
-};
+// Color fijo que iguala la tarjeta de CourseDetail, usado como prop para
+// ViewFiles/ListActividadesEducator (solo comprueban si es '#FFFFFF').
+const THEME_COLOR = '#061c37';
 
-const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
+const Page: React.FC<{ selectedColor: string }> = () => {
   const router = useRouter(); // Hook para manejar la navegación
   const params = useParams(); // Hook para obtener los parámetros de la URL
   const courseId = params?.courseId ?? null; // Obtener el id del curso
@@ -81,26 +72,16 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Copia local para el modal de edición (evita que el modal pierda estado)
   const [modalLesson, setModalLesson] = useState<Lessons | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
+  const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false); // Estado del modal de crear actividad
+  const [activitiesRefreshKey, setActivitiesRefreshKey] = useState(0); // Fuerza el remount/refetch de la lista de actividades
 
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado del color
   const hasLoadedLessonRef = useRef(false);
-  const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores predefinidos
 
   // Obtener el id del curso
   const courseIdString = Array.isArray(courseId) ? courseId[0] : courseId;
   const courseIdNumber = courseIdString ? parseInt(courseIdString) : null; // Convertir a número
-
-  // Obtener el color guardado en el localStorage
-  useEffect(() => {
-    const savedColor = localStorage.getItem(
-      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`
-    );
-    if (savedColor) {
-      setColor(savedColor);
-    }
-  }, [courseId]);
 
   // Solo actualiza la copia local cuando se abre el modal, nunca mientras está abierto
   useEffect(() => {
@@ -110,15 +91,6 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     // No actualices modalLesson si el modal ya está abierto
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditModalOpen]);
-
-  // Función para cambiar el color predefinido
-  const handlePredefinedColorChange = (newColor: string) => {
-    setColor(newColor);
-    localStorage.setItem(
-      `selectedColor_${Array.isArray(courseId) ? courseId[0] : courseId}`,
-      newColor
-    );
-  };
 
   // Función para obtener las lecciones
   const fetchLessons = useCallback(async (lessonsIdNumber: number) => {
@@ -349,21 +321,171 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Si no hay lecciones, mostrar el mensaje de error
   if (!lessons) return <div>No se encontró la leccion.</div>;
 
+  // Imagen o video + descarga — reutilizado en móvil (bajo el hero) y en
+  // desktop (columna lateral sticky), igual que en CourseDetail. Solo se
+  // muestra uno: si hay video real (coverVideoKey distinto de 'none', el
+  // sentinel que usa el formulario de clases cuando no se sube video), se
+  // prioriza el video; si no, la imagen de portada.
+  const hasVideo = !!lessons.coverVideoKey && lessons.coverVideoKey !== 'none';
+
+  const renderMedia = () => (
+    <div
+      className="
+        relative overflow-hidden rounded-2xl border border-[#1d283a]
+        bg-[#061c37] p-4
+        sm:p-6
+      "
+    >
+      {hasVideo ? (
+        <video
+          className="aspect-video h-auto w-full rounded-lg object-cover"
+          controls
+          aria-label={`Video de ${lessons.title}`}
+        >
+          <source
+            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
+            type="video/mp4"
+          />
+          Tu navegador no soporta la reproducción de videos.
+        </video>
+      ) : (
+        <Image
+          src={
+            lessons.coverImageKey
+              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`
+              : `/favicon.ico`
+          }
+          alt={lessons.title}
+          width={300}
+          height={300}
+          className="mx-auto h-auto w-full rounded-lg object-contain"
+          priority
+          quality={75}
+        />
+      )}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button
+          className="
+            w-full border-transparent bg-green-400 px-2 py-1.5 text-xs
+            text-white
+            hover:bg-green-500
+          "
+        >
+          <Link
+            href={`./${lessons.id}/verClase/${lessons.id}`}
+            className="w-full"
+          >
+            👁️ Ver clase
+          </Link>
+        </Button>
+        <Button
+          onClick={() => setIsEditModalOpen(true)}
+          className="
+            w-full border-yellow-500 bg-yellow-500 px-2 py-1.5 text-xs
+            text-white
+            hover:bg-yellow-600
+          "
+        >
+          Editar clase
+        </Button>
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              className="
+                w-full border-red-600 bg-red-600 px-2 py-1.5 text-xs
+                text-white
+                hover:border-red-600 hover:bg-white hover:text-red-600
+              "
+            >
+              🗑️ Eliminar
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Se eliminará permanentemente
+                la clase
+                <span className="font-bold"> {lessons.title}</span> y todos los
+                datos asociados a este.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleDelete(lessons.id.toString())}
+                className="
+                  border-red-600 bg-red-600 text-white
+                  hover:border-red-700 hover:bg-transparent
+                  hover:text-red-700
+                "
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <a
+          href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
+          download
+          className="
+            inline-block w-full rounded-lg bg-primary px-2 py-1.5 text-center
+            text-xs font-medium text-black transition duration-300
+            hover:bg-[#00A5C0]
+          "
+        >
+          📄 Descargar transcripción (.txt)
+        </a>
+      </div>
+    </div>
+  );
+
   // Renderizar la página
   return (
     <>
       <div
         className="
-          container mx-auto mt-2 h-auto w-full rounded-lg bg-background
+          relative min-h-screen w-full overflow-hidden px-1 py-2
+          md:px-3 md:py-4
         "
+        style={{
+          backgroundColor: 'rgb(25, 45, 80)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+        }}
       >
-        <Breadcrumb className="mt-12">
+        {/* Overlay oscuro para mejorar legibilidad */}
+        <div
+          className="
+            pointer-events-none absolute inset-0 bg-gradient-to-br
+            from-black/50 via-[#1a2d4a]/30 to-black/50
+          "
+        />
+        {/* Fondo decorativo con patrón */}
+        <div className="pointer-events-none absolute inset-0 opacity-20">
+          <div
+            className="
+              absolute -top-40 -right-40 size-80 rounded-full bg-green-500
+              blur-3xl
+            "
+          />
+          <div
+            className="
+              absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500
+              blur-3xl
+            "
+          />
+        </div>
+
+        <Breadcrumb className="animate-slideInDown relative z-10 mb-8">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="
-                  text-primary
-                  hover:text-gray-300
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
                 "
                 href="/dashboard/super-admin"
               >
@@ -374,8 +496,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="
-                  text-primary
-                  hover:text-gray-300
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
                 "
                 href="/dashboard/super-admin/cursos"
               >
@@ -386,8 +508,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="
-                  text-primary
-                  hover:text-gray-300
+                  text-[#22C4D3] transition-colors duration-300
+                  hover:text-[#22C4D3]
                 "
                 href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
               >
@@ -396,170 +518,45 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink
-                href={``}
-                className="
-                  text-primary
-                  hover:text-gray-300
-                "
-              >
+              <BreadcrumbLink href={``} className="text-white/60">
                 Detalles de la clase: {lessons.title}
               </BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <div className="group relative h-auto w-full">
-          <div
-            className="
-              absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
-              transition duration-500
-              group-hover:opacity-100
-            "
-          />
-          <Card
-            className={`
-              relative mt-5 border-transparent bg-black p-5
-              ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
-            `}
-            style={{
-              backgroundColor: color,
-              color: getContrastYIQ(color),
-            }}
-          >
-            <CardHeader
-              className="
-                p-4
-                sm:p-6
-              "
-            >
-              <CardTitle
-                className={`
-                  text-xl font-bold text-primary
-                  sm:text-2xl
-                  md:text-3xl
-                `}
-              >
-                Clase: {lessons.title}
-              </CardTitle>
-              {/* Add color selection buttons */}
-              <div className="mt-4 flex flex-col gap-3">
-                <Label
-                  className={`
-                    text-sm font-semibold
-                    sm:text-base
-                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
-                  `}
-                >
-                  🎨 Seleccione el color deseado
-                </Label>
-                <div className="flex flex-wrap gap-2">
-                  {predefinedColors.map((predefinedColor) => (
-                    <Button
-                      key={predefinedColor}
-                      style={{ backgroundColor: predefinedColor }}
-                      className={`
-                        size-10 rounded-lg border-2 transition-all duration-300
-                        hover:scale-110
-                        sm:size-12
-                        ${
-                          color === predefinedColor
-                            ? 'ring-2 ring-primary ring-offset-2'
-                            : ''
-                        }
-                      `}
-                      onClick={() =>
-                        handlePredefinedColorChange(predefinedColor)
-                      }
-                      title={`Cambiar tema a ${predefinedColor}`}
-                    />
-                  ))}
-                </div>
-              </div>
-            </CardHeader>
-            <div
-              className="
-                grid grid-cols-1 gap-4
-                md:grid-cols-2 md:gap-6
-                lg:gap-8
-              "
-            >
-              {/* Columna izquierda - Imagen */}
+        <div className="relative z-10">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+            <div className="lg:col-span-2">
               <div
                 className="
-                  relative order-2 flex w-full items-center justify-center
-                  md:order-1
+                  relative overflow-hidden rounded-2xl border
+                  border-[#1d283a] bg-[#061c37] p-4 shadow-2xl
+                  sm:p-8
                 "
               >
-                <Image
-                  src={
-                    lessons.coverImageKey
-                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverImageKey}`
-                      : `/favicon.ico`
-                  }
-                  alt={lessons.title}
-                  width={300}
-                  height={300}
-                  className="
-                    mx-auto h-auto w-full max-w-sm rounded-lg object-contain
-                  "
-                  priority
-                  quality={75}
-                />
-              </div>
-              {/* Columna derecha - Video y botón */}
-              <div
-                className="
-                  relative order-1 flex w-full flex-col gap-4
-                  md:order-2
-                "
-              >
-                <div>
-                  {lessons.coverVideoKey ? (
-                    <video
-                      className="
-                        aspect-video h-auto w-full rounded-lg object-cover
-                      "
-                      controls
-                      aria-label={`Video de ${lessons.title}`}
-                    >
-                      <source
-                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lessons.coverVideoKey}`}
-                        type="video/mp4"
-                      />
-                      Tu navegador no soporta la reproducción de videos.
-                    </video>
-                  ) : (
-                    <>
-                      <h4 className="hidden">No hay videos por el momento!.</h4>
-                      <Image
-                        src={'/NoHayVideos.jpg'}
-                        className="
-                          mx-auto h-auto w-full rounded-lg object-cover
-                        "
-                        alt="No hay imagen o video disponible actualmente"
-                        width={400}
-                        height={300}
-                        quality={75}
-                      />
-                    </>
-                  )}
-                </div>
-                {/* Botón de descarga */}
-                <a
-                  href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
-                  download
-                  className="
-                    inline-block rounded-lg bg-primary px-4 py-2 text-center
-                    text-sm font-medium text-black transition duration-300
-                    hover:bg-[#00A5C0]
-                    sm:px-6 sm:py-3 sm:text-base
-                  "
-                >
-                  📄 Descargar transcripción (.txt)
-                </a>
+                <h1 className="font-display text-2xl leading-tight font-bold text-white md:text-3xl lg:text-4xl">
+                  Clase: {lessons.title}
+                </h1>
+                {lessons.description && (
+                  <p className="mt-4 max-w-2xl text-base text-[#94A3B8]">
+                    {lessons.description}
+                  </p>
+                )}
+                <div className="mt-6 lg:hidden">{renderMedia()}</div>
               </div>
             </div>
+            <div className="hidden lg:block">
+              <div className="sticky top-6">{renderMedia()}</div>
+            </div>
+          </div>
+
+          <div
+            className="
+              relative overflow-hidden rounded-2xl border border-[#1d283a]
+              bg-[#061c37] p-4 shadow-2xl
+              sm:p-8
+            "
+          >
             {/* Zona de los files */}
             <div
               className="
@@ -567,79 +564,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 sm:mt-8
               "
             >
-              <ViewFiles lessonId={lessons.id} selectedColor={color} />
-            </div>
-            <div
-              className="
-                mt-4 flex flex-col justify-center gap-3 px-2 py-4
-                sm:flex-row sm:justify-evenly sm:px-3 sm:py-6
-              "
-            >
-              <Button
-                className={`
-                  w-full border-transparent bg-green-400 px-3 py-2 text-sm
-                  text-white
-                  hover:bg-green-500
-                  sm:w-auto sm:px-6 sm:py-2.5 sm:text-base
-                `}
-              >
-                <Link
-                  href={`./${lessons.id}/verClase/${lessons.id}`}
-                  className="w-full"
-                >
-                  👁️ Ver clase
-                </Link>
-              </Button>
-              <Button
-                onClick={() => setIsEditModalOpen(true)}
-                className="
-                  w-full border-yellow-500 bg-yellow-500 px-3 py-2 text-sm
-                  text-white
-                  hover:bg-yellow-600
-                  sm:w-auto sm:px-6 sm:py-2.5 sm:text-base
-                "
-              >
-                Editar clase
-              </Button>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className="
-                      w-full border-red-600 bg-red-600 px-3 py-2 text-sm
-                      text-white
-                      hover:border-red-600 hover:bg-white hover:text-red-600
-                      sm:w-auto sm:px-6 sm:py-2.5 sm:text-base
-                    "
-                  >
-                    🗑️ Eliminar
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Esta acción no se puede deshacer. Se eliminará
-                      permanentemente la clase
-                      <span className="font-bold"> {lessons.title}</span> y
-                      todos los datos asociados a este.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => handleDelete(lessons.id.toString())}
-                      className="
-                        border-red-600 bg-red-600 text-white
-                        hover:border-red-700 hover:bg-transparent
-                        hover:text-red-700
-                      "
-                    >
-                      Eliminar
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <ViewFiles lessonId={lessons.id} selectedColor={THEME_COLOR} />
             </div>
             <div
               className="
@@ -647,13 +572,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 sm:mt-8
               "
             >
-              <div
-                className={`
-                  pb-4
-                  sm:pb-6
-                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
-                `}
-              >
+              <div className="pb-4 text-white sm:pb-6">
                 <h2
                   className="
                     mb-6 text-xl font-bold
@@ -666,124 +585,42 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 {/* Grid de información principal */}
                 <div
                   className="
-                    mb-6 grid grid-cols-1 gap-6
-                    md:grid-cols-2
-                    lg:grid-cols-4
+                    grid grid-cols-1 gap-6
+                    md:grid-cols-3
                   "
                 >
                   <div className="space-y-2">
-                    <h3
-                      className={`
-                        text-xs font-semibold tracking-wide uppercase
-                        md:text-sm
-                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                      `}
-                    >
-                      📚 Clase
-                    </h3>
-                    <h1
-                      className="
-                        text-lg font-bold text-primary
-                        sm:text-xl
-                      "
-                    >
-                      {lessons.title}
-                    </h1>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h3
-                      className={`
-                        text-xs font-semibold tracking-wide uppercase
-                        md:text-sm
-                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                      `}
-                    >
+                    <h3 className="text-xs font-bold tracking-wider text-[#22C4D3] uppercase md:text-sm">
                       📂 Categoría
                     </h3>
-                    <Badge
-                      variant="outline"
-                      className="
-                        w-fit border-primary bg-background text-xs text-primary
-                        hover:bg-black/70
-                        sm:text-sm
-                      "
-                    >
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white sm:text-sm">
                       {lessons.course?.categoryName ??
                         lessons.course?.categoryId ??
                         'N/A'}
-                    </Badge>
+                    </span>
                   </div>
 
                   <div className="space-y-2">
-                    <h3
-                      className={`
-                        text-xs font-semibold tracking-wide uppercase
-                        md:text-sm
-                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                      `}
-                    >
+                    <h3 className="text-xs font-bold tracking-wider text-[#22C4D3] uppercase md:text-sm">
                       👨‍🏫 Educador
                     </h3>
-                    <Badge
-                      variant="outline"
-                      className="
-                        w-fit border-primary bg-background text-xs text-primary
-                        hover:bg-black/70
-                        sm:text-sm
-                      "
-                    >
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white sm:text-sm">
                       {lessons.course?.instructorName ??
                         lessons.course?.instructor ??
                         'N/A'}
-                    </Badge>
+                    </span>
                   </div>
 
                   <div className="space-y-2">
-                    <h3
-                      className={`
-                        text-xs font-semibold tracking-wide uppercase
-                        md:text-sm
-                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                      `}
-                    >
+                    <h3 className="text-xs font-bold tracking-wider text-[#22C4D3] uppercase md:text-sm">
                       🎓 Modalidad
                     </h3>
-                    <Badge
-                      variant="outline"
-                      className="
-                        w-fit border-primary bg-background text-xs text-primary
-                        hover:bg-black/70
-                        sm:text-sm
-                      "
-                    >
+                    <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#22C4D3]/40 px-3 py-1.5 text-xs font-medium text-white sm:text-sm">
                       {lessons.course?.modalidadName ??
                         lessons.course?.modalidadId ??
                         'N/A'}
-                    </Badge>
+                    </span>
                   </div>
-                </div>
-
-                {/* Descripción */}
-                <div className="space-y-3">
-                  <h3
-                    className={`
-                      text-xs font-semibold tracking-wide uppercase
-                      md:text-sm
-                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                    `}
-                  >
-                    📝 Descripción
-                  </h3>
-                  <p
-                    className={`
-                      text-justify text-sm leading-relaxed
-                      sm:text-base
-                      ${color === '#FFFFFF' ? 'text-black/90' : 'text-white/90'}
-                    `}
-                  >
-                    {lessons.description}
-                  </p>
                 </div>
               </div>
             </div>
@@ -794,8 +631,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 sm:mt-8
               "
             >
-              <Link
-                href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
+              <button
+                type="button"
+                onClick={() => setIsCreateActivityOpen(true)}
                 className="
                   w-full cursor-pointer justify-center rounded-lg
                   border-transparent bg-green-400 px-4 py-2 text-center text-sm
@@ -805,19 +643,27 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 "
               >
                 ➕Crear actividad
-              </Link>
+              </button>
             </div>
-          </Card>
+          </div>
         </div>
-        <div>
+        <div className="relative z-10 mt-6">
           <ListActividadesEducator
+            key={activitiesRefreshKey}
             lessonId={lessons.id}
             courseId={courseIdNumber ?? 0}
             coverImageKey={lessons.coverImageKey}
-            selectedColor={color}
+            selectedColor={THEME_COLOR}
           />
         </div>
       </div>
+      <ModalFormActivityQuick
+        open={isCreateActivityOpen}
+        onOpenChange={setIsCreateActivityOpen}
+        courseId={courseIdNumber ?? 0}
+        presetLessonId={lessons.id}
+        onSuccess={() => setActivitiesRefreshKey((k) => k + 1)}
+      />
       <ModalFormLessons
         isOpen={isEditModalOpen}
         onCloseAction={() => {

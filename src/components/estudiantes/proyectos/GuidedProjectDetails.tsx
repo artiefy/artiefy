@@ -615,11 +615,8 @@ export function GuidedProjectDetails({
           puedes mostrar
         </h2>
         <p className="mb-6 leading-relaxed text-[#94A3B8]">
-          Al completar el proyecto recibes una constancia publicada en la WEB y
-          verificable. No es un PDF más: es una página en línea con tu producto
-          funcionando, tu código y tu demo. Un link que puedes poner en tu CV y
-          tu LinkedIn para que cualquier reclutador compruebe lo que
-          construiste.
+          {project.certificateDescription ||
+            'Al completar el proyecto recibes una constancia publicada en la WEB y verificable. No es un PDF más: es una página en línea con tu producto funcionando, tu código y tu demo. Un link que puedes poner en tu CV y tu LinkedIn para que cualquier reclutador compruebe lo que construiste.'}
         </p>
         <div className="rounded-xl border border-[#22C4D3]/30 bg-[#061c37] p-5">
           <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[#22C4D3]">
@@ -963,11 +960,17 @@ export function GuidedProjectDetails({
           <h2 className="text-xl font-bold text-white">Preguntas frecuentes</h2>
         </div>
         <div className="space-y-2">
-          {FAQ_ITEMS.map((item, idx) => {
+          {(project.faqItems && project.faqItems.length > 0
+            ? project.faqItems
+            : FAQ_ITEMS.map((item) => ({
+                question: item.q,
+                answer: item.a,
+              }))
+          ).map((item, idx) => {
             const isOpen = openFaqIndex === idx;
             return (
               <div
-                key={item.q}
+                key={item.question}
                 className="overflow-hidden rounded-lg border border-[#1d283a]"
               >
                 <button
@@ -976,7 +979,7 @@ export function GuidedProjectDetails({
                   className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-white/5"
                 >
                   <span className="text-sm font-semibold text-white">
-                    {item.q}
+                    {item.question}
                   </span>
                   <ChevronDown
                     className={`size-4 shrink-0 text-[#94A3B8] transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -985,7 +988,7 @@ export function GuidedProjectDetails({
                 {isOpen && (
                   <div className="border-t border-[#1d283a] bg-[#061c37] p-4">
                     <p className="text-sm leading-relaxed text-[#94A3B8]">
-                      {item.a}
+                      {item.answer}
                     </p>
                   </div>
                 )}

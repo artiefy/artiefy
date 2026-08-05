@@ -46,6 +46,8 @@ export interface GuidedProject {
   studentsCount?: number | null;
   contentHours?: number | null;
   repositoryUrl?: string | null;
+  certificateDescription?: string | null;
+  faqItems?: { question: string; answer: string }[] | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -239,6 +241,8 @@ export const getGuidedProjectById = async (id: number) => {
       studentsCount: guidedProjects.studentsCount,
       contentHours: guidedProjects.contentHours,
       repositoryUrl: guidedProjects.repositoryUrl,
+      certificateDescription: guidedProjects.certificateDescription,
+      faqItems: guidedProjects.faqItems,
       createdAt: guidedProjects.createdAt,
       updatedAt: guidedProjects.updatedAt,
     })

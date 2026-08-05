@@ -47,6 +47,8 @@ export interface GuidedProject {
   studentsCount: number | null;
   contentHours: number | null;
   repositoryUrl?: string | null;
+  certificateDescription?: string | null;
+  faqItems?: { question: string; answer: string }[] | null;
   slug: string | null;
   createdAt: Date;
   updatedAt: Date;

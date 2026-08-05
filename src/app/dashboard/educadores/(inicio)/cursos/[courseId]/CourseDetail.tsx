@@ -16,7 +16,6 @@ import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
 import {
   CornerDownLeft,
-  FileText,
   ImageIcon,
   Mic,
   Music,
@@ -429,6 +428,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
   const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [materias, setMaterias] = useState<Materia[]>([]);
   const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
@@ -2486,7 +2486,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </h1>
 
                     {course.description && (
-                      <p className="max-w-2xl text-base text-[#94A3B8]">
+                      <p
+                        onClick={() => setIsDescriptionExpanded((v) => !v)}
+                        className={`
+                          max-w-2xl cursor-pointer text-base text-[#94A3B8]
+                          transition-all
+                          hover:text-white
+                          ${isDescriptionExpanded ? '' : 'line-clamp-1'}
+                        `}
+                        title={
+                          isDescriptionExpanded
+                            ? 'Clic para contraer'
+                            : 'Clic para ver la descripción completa'
+                        }
+                      >
                         {course.description}
                       </p>
                     )}
@@ -2545,20 +2558,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
 
               <div className="mt-6 space-y-6">
-                <section className={sectionClass}>
-                  <div className="mb-3 flex items-center gap-2">
-                    <div className={sectionIconClass}>
-                      <FileText className="size-4" />
-                    </div>
-                    <h2 className="text-xl font-bold text-white">
-                      Descripción
-                    </h2>
-                  </div>
-                  <p className="text-sm leading-relaxed text-[#94A3B8]">
-                    {course.description || 'Sin descripción'}
-                  </p>
-                </section>
-
                 <section className={sectionClass}>
                   <div className="mb-4 flex items-center gap-2">
                     <div className={sectionIconClass}>
@@ -2997,7 +2996,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 className="
                               group relative overflow-hidden rounded-2xl
                               border-2 border-[#22C4D3]/30 bg-gradient-to-br
-                              from-[#04101f] via-[#04101f] to-[#04101f]/30 p-8
+                              from-[#061c37] via-[#061c37] to-[#04101f]/30 p-8
                               shadow-xl transition-all duration-300
                               hover:border-[#22C4D3]/60 hover:shadow-2xl
                               hover:shadow-[#22C4D3]/20
@@ -3152,7 +3151,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 className="
                               group relative overflow-hidden rounded-2xl
                               border-2 border-[#22C4D3]/30 bg-gradient-to-br
-                              from-[#04101f] via-[#04101f] to-[#04101f]/30 p-8
+                              from-[#061c37] via-[#061c37] to-[#04101f]/30 p-8
                               shadow-xl transition-all duration-300
                               hover:border-[#22C4D3]/60 hover:shadow-2xl
                               hover:shadow-[#22C4D3]/20
@@ -3385,9 +3384,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     <div
                                       className="
                                     rounded-lg border border-dashed
-                                    border-[#22C4D3]/30 bg-[#04101f]/50 p-3
+                                    border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                     text-center transition
-                                    hover:border-[#22C4D3] hover:bg-[#04101f]
+                                    hover:border-[#22C4D3] hover:bg-[#061c37]
                                   "
                                     >
                                       <div className="text-lg">□</div>
@@ -3413,9 +3412,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     <div
                                       className="
                                     rounded-lg border border-dashed
-                                    border-[#22C4D3]/30 bg-[#04101f]/50 p-3
+                                    border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                     text-center transition
-                                    hover:border-[#22C4D3] hover:bg-[#04101f]
+                                    hover:border-[#22C4D3] hover:bg-[#061c37]
                                   "
                                     >
                                       <div className="text-lg">📄</div>
@@ -3487,7 +3486,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     <div
                                       className="
                                     rounded-xl border border-dashed
-                                    border-white/20 bg-[#04101f]/30 p-8
+                                    border-white/20 bg-[#061c37]/30 p-8
                                     text-center
                                   "
                                     >
@@ -3590,7 +3589,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               {/* Columna derecha - Contenido del foro */}
                               <div
                                 className="
-                              rounded-xl border border-white/10 bg-[#04101f]/50
+                              rounded-xl border border-white/10 bg-[#061c37]/50
                               p-6
                             "
                               >
@@ -3723,7 +3722,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         rows={3}
                                         className="
                                       mb-3 w-full resize-none rounded-lg border
-                                      border-[#22C4D3]/20 bg-[#04101f] px-3 py-2
+                                      border-[#22C4D3]/20 bg-[#061c37] px-3 py-2
                                       text-sm text-white
                                       placeholder:text-white/30
                                       focus:border-[#22C4D3] focus:outline-none
@@ -3747,10 +3746,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           <div
                                             className="
                                           rounded-lg border border-dashed
-                                          border-[#22C4D3]/30 bg-[#04101f]/50 p-3
+                                          border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                           text-center transition
                                           hover:border-[#22C4D3]
-                                          hover:bg-[#04101f]
+                                          hover:bg-[#061c37]
                                         "
                                           >
                                             <div className="text-lg">□</div>
@@ -3782,10 +3781,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                             <div
                                               className="
                                             rounded-lg border border-dashed
-                                            border-[#22C4D3]/30 bg-[#04101f]/50
+                                            border-[#22C4D3]/30 bg-[#061c37]/50
                                             p-3 text-center transition
                                             hover:border-[#22C4D3]
-                                            hover:bg-[#04101f]
+                                            hover:bg-[#061c37]
                                           "
                                             >
                                               <div className="text-lg">♪</div>
@@ -3822,7 +3821,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               className="
                                             absolute right-0 bottom-full z-50
                                             mb-2 w-80 rounded-lg border
-                                            border-[#22C4D3]/30 bg-[#04101f] p-4
+                                            border-[#22C4D3]/30 bg-[#061c37] p-4
                                             shadow-lg
                                           "
                                             >
@@ -3838,10 +3837,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     setShowAudioRecorder(false);
                                                   }}
                                                   className="
-                                                w-full rounded-lg bg-blue-600
+                                                w-full rounded-lg bg-[#22C4D3]
                                                 px-3 py-2 text-sm font-medium
                                                 text-white transition-colors
-                                                hover:bg-blue-700
+                                                hover:bg-cyan-600
                                               "
                                                 >
                                                   📁 Subir archivo
@@ -3891,10 +3890,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           <div
                                             className="
                                           rounded-lg border border-dashed
-                                          border-[#22C4D3]/30 bg-[#04101f]/50 p-3
+                                          border-[#22C4D3]/30 bg-[#061c37]/50 p-3
                                           text-center transition
                                           hover:border-[#22C4D3]
-                                          hover:bg-[#04101f]
+                                          hover:bg-[#061c37]
                                         "
                                           >
                                             <div className="text-lg">▶</div>
@@ -3987,7 +3986,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         <div
                                           className="
                                         rounded-2xl border border-dashed
-                                        border-white/10 bg-[#04101f]/30 p-8
+                                        border-white/10 bg-[#061c37]/30 p-8
                                         text-center
                                       "
                                         >
@@ -5276,7 +5275,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         className="
                                       group rounded-2xl border
                                       border-[#22C4D3]/30 bg-gradient-to-br
-                                      from-[#04101f] via-[#04101f]/30
+                                      from-[#061c37] via-[#04101f]/30
                                       to-[#04101f]/30 p-6 shadow-xl
                                       transition-all duration-300
                                       hover:scale-[1.03] hover:border-[#22C4D3]
@@ -5376,7 +5375,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       <div
                                         className="
                                       relative w-full max-w-2xl rounded-2xl
-                                      border border-[#22C4D3]/40 bg-[#04101f] p-4
+                                      border border-[#22C4D3]/40 bg-[#061c37] p-4
                                       shadow-2xl
                                       sm:p-8
                                     "
@@ -5799,9 +5798,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   className="
-                            rounded-lg bg-blue-500 px-3 py-1.5
-                            text-sm font-semibold text-white
-                            transition hover:bg-blue-400
+                            rounded-lg border border-[#1d283a] bg-[#0d2a4d]
+                            px-3 py-1.5 text-sm font-semibold text-white
+                            transition hover:bg-[#0d2a4d]/70
                           "
                                                 >
                                                   👁 Ver
@@ -5999,10 +5998,10 @@ text-[#94A3B8]
                                                 <a
                                                   href={`/dashboard/educadores/cursos/${courseIdNumber}/${act.lessonsId}/actividades/${act.id}`}
                                                   className="
-  rounded-lg bg-blue-500 px-3 py-1.5
+  rounded-lg border border-[#1d283a] bg-[#0d2a4d] px-3 py-1.5
   text-sm font-semibold text-white
   transition
-  hover:bg-blue-400
+  hover:bg-[#0d2a4d]/70
 "
                                                 >
                                                   👁 Ver
