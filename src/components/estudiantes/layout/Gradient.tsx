@@ -1,5 +1,3 @@
-export const dynamic = 'force-static';
-
 const SmoothGradient = () => {
   return (
     <div className="absolute inset-0 size-full overflow-hidden">

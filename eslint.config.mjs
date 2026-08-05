@@ -122,6 +122,32 @@ export default defineConfig([
       'no-unused-vars': 'off',
     },
   },
+  {
+    // Cache Components guardrail.
+    //
+    // Modules under `src/server/**` and `src/models/**` are the shared data
+    // layer: the same functions back student pages, dashboard pages, the PayU
+    // thank-you page, cron jobs and webhooks. A `use cache` directive placed
+    // here would cache every one of those callers at once, including the ones
+    // that must always read live data.
+    //
+    // The worst case is not stale content but stale authorization: caching a
+    // helper such as `isCourseOwnedByEducator` would keep serving a revoked
+    // educator's permission from cache.
+    //
+    // Cache at the call site instead — see `src/app/estudiantes/_cache/`.
+    files: ['src/server/**/*.{ts,tsx}', 'src/models/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'ExpressionStatement > Literal[value=/^use cache/]',
+          message:
+            'Do not use `use cache` in the shared data layer: these modules are also consumed by API routes, cron jobs and webhooks. Wrap the call in a cached function at the call site (see src/app/estudiantes/_cache/).',
+        },
+      ],
+    },
+  },
   globalIgnores(
     [
       '**/node_modules/**',

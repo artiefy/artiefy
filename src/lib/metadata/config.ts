@@ -1,5 +1,3 @@
-import { headers } from 'next/headers';
-
 import type { Metadata } from 'next';
 
 // sharedOpenGraph solo debe usarse en páginas generales, no en cursos dinámicos
@@ -16,11 +14,21 @@ const sharedOpenGraph = {
   type: 'website',
 };
 
-// Solo usar x-invoke-path para obtener el pathname actual
+// `x-invoke-path` was a Next.js internal header that no longer exists: it
+// appears nowhere in `next/dist` on Next 16, and nothing in this repo sets it.
+// The lookup has therefore always fallen through to '/', which is why
+// `getMetadataForRoute` below has only ever returned its `case '/'` branch.
+//
+// Reading it was not free. `headers()` is runtime data and this runs inside the
+// ROOT layout's `generateMetadata`, so it blocked metadata prerendering for
+// every route in the app (`blocking-prerender-metadata-runtime`). Returning the
+// constant keeps the output identical and unblocks the prerender.
+//
+// Follow-up: the `/estudiantes` and `/planes` branches are unreachable. Per-route
+// metadata belongs in each route's own `generateMetadata` — a root layout cannot
+// know the pathname by design.
 export async function getCurrentPath() {
-  const headersList = await headers();
-  const pathname = headersList.get('x-invoke-path') ?? '/';
-  return pathname;
+  return '/';
 }
 
 // Common metadata that can be reused

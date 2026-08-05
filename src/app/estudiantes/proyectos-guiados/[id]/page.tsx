@@ -11,10 +11,6 @@ import Footer from '~/components/estudiantes/layout/Footer';
 import { GuidedProjectDetails } from '~/components/estudiantes/proyectos/GuidedProjectDetails';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
 
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
 interface PageParams {
   id: string;
 }
@@ -103,21 +99,23 @@ export async function generateMetadata(
   }
 }
 
-export default async function Page({ params }: { params: PageParams }) {
-  const { id } = await Promise.resolve(params);
-
+// `params` is forwarded as a promise instead of awaited here, so the shell
+// (background, footer, skeleton) prerenders without waiting for the route
+// parameter to resolve.
+export default function Page({ params }: { params: Promise<PageParams> }) {
   return (
     <div className="pt-0">
       <Suspense fallback={<CourseDetailsSkeleton />}>
-        <ProjectContent id={id} />
+        <ProjectContent params={params} />
       </Suspense>
       <Footer />
     </div>
   );
 }
 
-async function ProjectContent({ id }: { id: string }) {
+async function ProjectContent({ params }: { params: Promise<PageParams> }) {
   try {
+    const { id } = await params;
     const projectId = Number(id);
     if (isNaN(projectId)) {
       notFound();

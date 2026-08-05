@@ -5,13 +5,10 @@ import { notFound } from 'next/navigation';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { ProgramDetailsSkeleton } from '~/components/estudiantes/layout/programdetail/ProgramDetailsSkeleton';
-import { getProgramById } from '~/server/actions/estudiantes/programs/getProgramById';
+
+import { getCachedProgramById } from '../../_cache/programs';
 
 import ProgramDetails from './ProgramDetails';
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,7 +25,7 @@ export async function generateMetadata(
   try {
     // Seguir la convención de Next.js: `params` es una Promise
     const { id } = await params;
-    const program = await getProgramById(id);
+    const program = await getCachedProgramById(id);
 
     if (!program) {
       return {
@@ -112,7 +109,7 @@ export default function Page({ params }: PageProps) {
 
 async function ProgramContent({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const program = await getProgramById(id);
+  const program = await getCachedProgramById(id);
 
   if (!program) {
     notFound();
