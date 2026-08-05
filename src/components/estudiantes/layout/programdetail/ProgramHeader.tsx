@@ -820,7 +820,7 @@ export function ProgramHeader({
     <>
       <div
         className="
-          relative rounded-2xl border border-border/50 bg-card/80 p-6 shadow-xl
+          relative rounded-2xl border border-border/50 bg-card p-6 shadow-xl
           shadow-black/20 backdrop-blur-sm
           md:p-8
         "

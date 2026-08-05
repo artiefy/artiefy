@@ -365,31 +365,170 @@ Si existe:
 
 # PARTE II — CONFIGURACIÓN PARA AGENTES DE IA
 
-## 8. Crear o actualizar `AGENTS.md`
+## 8. Crear, sincronizar o actualizar `AGENTS.md`
 
-Next.js incluye documentación correspondiente a la versión instalada dentro de `node_modules/next/dist/docs/`.
+Next.js incluye documentación correspondiente a la versión instalada dentro de:
 
-Crea `AGENTS.md` en la raíz si no existe. Si existe, conserva las instrucciones del proyecto y agrega una sección administrada para Next.js.
+```text
+node_modules/next/dist/docs/
+```
 
-Plantilla recomendada:
+La guía oficial de agentes de Next.js utiliza una sección administrada delimitada por estos comentarios:
+
+```md
+<!-- BEGIN:nextjs-agent-rules -->
+<!-- END:nextjs-agent-rules -->
+```
+
+El contenido **dentro** de esos marcadores puede cambiar cuando Next.js actualice sus instrucciones oficiales. Por lo tanto, el agente no debe limitarse a crear el bloque una sola vez: debe comprobarlo y sincronizarlo con la guía oficial o con la documentación incluida en la versión instalada.
+
+Documentación oficial:
+
+- https://nextjs.org/docs/app/guides/ai-agents
+
+### Bloque oficial actual
+
+Mantén este texto exactamente dentro de la sección administrada, salvo que la documentación correspondiente a la versión instalada publique uno más reciente:
 
 ```md
 <!-- BEGIN:nextjs-agent-rules -->
 
-# Reglas de Next.js para agentes
+# Next.js: ALWAYS read docs before coding
 
-Antes de modificar código de Next.js:
-
-1. Busca y lee la documentación relevante dentro de `node_modules/next/dist/docs/`.
-2. Usa esa documentación como fuente principal porque coincide con la versión instalada.
-3. No apliques APIs antiguas basándote únicamente en conocimiento previo.
-4. Revisa los tipos y la configuración real del repositorio.
-5. Ejecuta lint, comprobación de tipos, pruebas y build después de los cambios.
+Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/`. Your training data is outdated — the docs are the source of truth.
 
 <!-- END:nextjs-agent-rules -->
 ```
 
-Puedes agregar reglas propias fuera de los marcadores.
+La sección oficial es intencionalmente mínima. No la traduzcas, amplíes ni mezcles con reglas particulares del repositorio. Coloca todas las instrucciones propias fuera de los marcadores.
+
+### Algoritmo obligatorio de sincronización
+
+Al trabajar sobre un repositorio existente:
+
+1. Busca `AGENTS.md` en la raíz.
+2. Consulta primero la guía de agentes incluida en `node_modules/next/dist/docs/` y, como respaldo, la URL oficial.
+3. Obtén el bloque oficial más reciente delimitado por:
+   - `<!-- BEGIN:nextjs-agent-rules -->`
+   - `<!-- END:nextjs-agent-rules -->`
+4. Si ambos marcadores existen una sola vez:
+   - conserva exactamente los marcadores;
+   - reemplaza únicamente el contenido comprendido entre ellos;
+   - preserva byte por byte, cuando sea posible, todo el contenido anterior y posterior.
+5. Si `AGENTS.md` existe pero no contiene los marcadores:
+   - conserva todo su contenido;
+   - agrega el bloque administrado oficial en una sección separada.
+6. Si `AGENTS.md` no existe:
+   - créalo con el bloque oficial;
+   - agrega después las reglas específicas del proyecto, fuera de la sección administrada.
+7. Si existen bloques duplicados:
+   - conserva un único bloque oficial;
+   - combina cuidadosamente las reglas personalizadas fuera de él;
+   - no elimines instrucciones propias por deduplicar la sección de Next.js.
+8. Si falta uno de los dos marcadores o están invertidos:
+   - trata el archivo como estructura dañada;
+   - corrige los marcadores sin descartar contenido;
+   - informa la reparación.
+9. No reemplaces el archivo completo para actualizar una sola sección.
+10. La operación debe ser idempotente: ejecutarla dos veces debe producir el mismo resultado.
+
+### Ejemplo de actualización segura
+
+Antes:
+
+```md
+# Reglas de mi empresa
+
+- Usar pnpm.
+- No desplegar automáticamente.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# Instrucción antigua de Next.js
+
+Texto anterior.
+
+<!-- END:nextjs-agent-rules -->
+
+## Pruebas
+
+- Ejecutar pnpm test.
+```
+
+Después:
+
+```md
+# Reglas de mi empresa
+
+- Usar pnpm.
+- No desplegar automáticamente.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# Next.js: ALWAYS read docs before coding
+
+Before any Next.js work, find and read the relevant doc in `node_modules/next/dist/docs/`. Your training data is outdated — the docs are the source of truth.
+
+<!-- END:nextjs-agent-rules -->
+
+## Pruebas
+
+- Ejecutar pnpm test.
+```
+
+Observa que solo cambió el contenido administrado. Las reglas propias permanecieron intactas.
+
+### Comprobación programática opcional
+
+El agente puede usar un script temporal para reemplazar exclusivamente el bloque. El script no debe conservarse en el repositorio salvo que el proyecto quiera automatizar esta sincronización.
+
+```js
+import fs from 'node:fs';
+
+const file = 'AGENTS.md';
+const begin = '<!-- BEGIN:nextjs-agent-rules -->';
+const end = '<!-- END:nextjs-agent-rules -->';
+
+const managedBlock = `${begin}
+
+# Next.js: ALWAYS read docs before coding
+
+Before any Next.js work, find and read the relevant doc in \`node_modules/next/dist/docs/\`. Your training data is outdated — the docs are the source of truth.
+
+${end}`;
+
+const current = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+
+const start = current.indexOf(begin);
+const finish = current.indexOf(end);
+
+let next;
+
+if (start >= 0 && finish > start) {
+  next =
+    current.slice(0, start) + managedBlock + current.slice(finish + end.length);
+} else if (start === -1 && finish === -1) {
+  next = current.trimEnd()
+    ? `${current.trimEnd()}\n\n${managedBlock}\n`
+    : `${managedBlock}\n`;
+} else {
+  throw new Error(
+    'AGENTS.md contiene marcadores nextjs-agent-rules incompletos o dañados'
+  );
+}
+
+if (next !== current) {
+  fs.writeFileSync(file, next, 'utf8');
+}
+```
+
+Después de aplicar la sincronización:
+
+```bash
+git diff -- AGENTS.md
+```
+
+Confirma que el diff solo modificó el bloque administrado o agregó el bloque sin eliminar reglas existentes.
 
 ### Reglas de proyecto sugeridas para `AGENTS.md`
 
@@ -1593,7 +1732,7 @@ La tarea se considera terminada solo si:
 - [ ] Node.js cumple los requisitos.
 - [ ] El lockfile es coherente.
 - [ ] El diff de dependencias fue revisado.
-- [ ] `AGENTS.md` apunta a la documentación instalada.
+- [ ] El bloque administrado de `AGENTS.md` está sincronizado con las instrucciones oficiales de la versión instalada.
 - [ ] `.mcp.json` es válido si fue configurado.
 - [ ] Turbopack funciona o la incompatibilidad está documentada.
 - [ ] No quedan configuraciones antiguas incompatibles.

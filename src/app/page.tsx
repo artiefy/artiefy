@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
+import Link, { useLinkStatus } from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
@@ -44,11 +45,32 @@ const TourComponent = dynamic(() =>
   )
 );
 
+function StartNowButtonContent() {
+  const { pending } = useLinkStatus();
+
+  return (
+    <div className="flex w-full items-center justify-center">
+      {pending ? (
+        <Icons.spinner style={{ width: '35px', height: '35px' }} />
+      ) : (
+        <>
+          <span className="inline-block skew-x-[15deg]">COMIENZA YA</span>
+          <FaArrowRight
+            className="
+              ml-2 inline-block skew-x-[15deg] animate-bounce-right
+              transition-transform duration-500
+            "
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
   const [showAnuncio, setShowAnuncio] = useState(false);
   const [, setShowChatbot] = useState<boolean>(false);
   void showAnuncio;
@@ -139,21 +161,14 @@ export default function HomePage() {
 
     if (!privilegedDashboardRoute) return;
 
-    setLoading(true);
     router.replace(privilegedDashboardRoute);
   }, [_isSignedIn, isLoaded, router, userRole]);
 
   const handlePostAuthAction = useCallback(() => {
     if (postAuthAction !== 'dashboard') return;
     setPostAuthAction(null);
-    setLoading(true);
     router.push(getDashboardRouteByRole(userRole));
   }, [postAuthAction, router, userRole]);
-
-  const handleStartNowClick = useCallback(() => {
-    setLoading(true);
-    router.push(dashboardRoute);
-  }, [dashboardRoute, router]);
 
   // Listener para cerrar completamente el chatbot desde dentro (evento global)
   useEffect(() => {
@@ -187,6 +202,7 @@ export default function HomePage() {
             </p>
             <div>
               <Button
+                asChild
                 className={
                   'join-button relative skew-x-[-20deg] rounded-none border ' +
                   'border-primary bg-primary py-8 text-2xl font-semibold ' +
@@ -199,25 +215,10 @@ export default function HomePage() {
                   transition: '0.5s',
                   width: '250px',
                 }}
-                onClick={handleStartNowClick}
               >
-                <div className="flex w-full items-center justify-center">
-                  {loading ? (
-                    <Icons.spinner style={{ width: '35px', height: '35px' }} />
-                  ) : (
-                    <>
-                      <span className="inline-block skew-x-[15deg]">
-                        COMIENZA YA
-                      </span>
-                      <FaArrowRight
-                        className="
-                          ml-2 inline-block skew-x-[15deg] animate-bounce-right
-                          transition-transform duration-500
-                        "
-                      />
-                    </>
-                  )}
-                </div>
+                <Link href={dashboardRoute}>
+                  <StartNowButtonContent />
+                </Link>
               </Button>
             </div>
           </section>
@@ -252,7 +253,6 @@ export default function HomePage() {
           setShowLoginModal(false);
           setOauthError(null);
           setPostAuthAction(null);
-          setLoading(false);
         }}
         onLoginSuccess={() => {
           setShowLoginModal(false);
@@ -271,7 +271,6 @@ export default function HomePage() {
         onClose={() => {
           setShowSignUpModal(false);
           setPostAuthAction(null);
-          setLoading(false);
         }}
         onSignUpSuccess={() => {
           setShowSignUpModal(false);
