@@ -45,24 +45,64 @@ const TourComponent = dynamic(() =>
   )
 );
 
+// How long the pending indicator may run before the label comes back. The
+// destination is a dashboard route that still opts out of instant validation,
+// so a slow navigation is normal; a navigation that never settles is not.
+const PENDING_INDICATOR_TIMEOUT_MS = 6000;
+
 function StartNowButtonContent() {
   const { pending } = useLinkStatus();
+  const [showSpinner, setShowSpinner] = useState(false);
 
+  useEffect(() => {
+    if (!pending) {
+      setShowSpinner(false);
+      return;
+    }
+
+    setShowSpinner(true);
+
+    // With Cache Components this route is kept mounted through <Activity>
+    // rather than unmounted on navigation, so a `pending` that never settles
+    // survives the user leaving and coming back, and used to strand the button
+    // on a spinner. Bounding the indicator guarantees the label returns.
+    const timeout = setTimeout(
+      () => setShowSpinner(false),
+      PENDING_INDICATOR_TIMEOUT_MS
+    );
+
+    return () => clearTimeout(timeout);
+  }, [pending]);
+
+  // The label stays mounted and only fades. Swapping it out for the spinner
+  // shifts layout and makes any stuck pending state render an unreadable
+  // button, which is exactly what the Link docs advise against.
   return (
-    <div className="flex w-full items-center justify-center">
-      {pending ? (
+    <div className="relative flex w-full items-center justify-center">
+      <span
+        className={`
+          flex items-center transition-opacity duration-200
+          ${showSpinner ? 'opacity-0' : 'opacity-100'}
+        `}
+      >
+        <span className="inline-block skew-x-[15deg]">COMIENZA YA</span>
+        <FaArrowRight
+          className="
+            ml-2 inline-block skew-x-[15deg] animate-bounce-right
+            transition-transform duration-500
+          "
+        />
+      </span>
+      <span
+        aria-hidden
+        className={`
+          pointer-events-none absolute inset-0 flex items-center justify-center
+          transition-opacity duration-200
+          ${showSpinner ? 'opacity-100' : 'opacity-0'}
+        `}
+      >
         <Icons.spinner style={{ width: '35px', height: '35px' }} />
-      ) : (
-        <>
-          <span className="inline-block skew-x-[15deg]">COMIENZA YA</span>
-          <FaArrowRight
-            className="
-              ml-2 inline-block skew-x-[15deg] animate-bounce-right
-              transition-transform duration-500
-            "
-          />
-        </>
-      )}
+      </span>
     </div>
   );
 }
