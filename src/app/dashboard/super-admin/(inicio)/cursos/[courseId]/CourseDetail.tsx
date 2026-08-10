@@ -20,7 +20,9 @@ import {
   ImageIcon,
   Mic,
   Music,
+  Search,
   ThumbsUp,
+  UserPlus,
   Video,
   X,
 } from 'lucide-react';
@@ -414,9 +416,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Add these new states after the existing states
   const [educators, setEducators] = useState<Educator[]>([]);
-  const [selectedInstructor, setSelectedInstructor] = useState<string>('');
+  const [_selectedInstructor, setSelectedInstructor] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [currentInstructors, setCurrentInstructors] = useState<string[]>([]);
+  const [isAddInstructorModalOpen, setIsAddInstructorModalOpen] =
+    useState(false);
+  const [addInstructorSearch, setAddInstructorSearch] = useState('');
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -1667,7 +1672,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   };
 
   // Verificar si se está cargando
-  if (loading) {
+  // (el modal de instructores hace su propio fetchCourse en segundo plano;
+  // no debe taparse a sí mismo con la pantalla de carga)
+  if (loading && !isAddInstructorModalOpen) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
         <div className="size-32 rounded-full border-y-2 border-primary">
@@ -1751,8 +1758,75 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
   };
 
+  const handleAddInstructor = async (educatorId: string) => {
+    try {
+      setIsUpdating(true);
+      const newInstructors = [...currentInstructors, educatorId];
+
+      const response = await fetch('/api/super-admin/courses/instructors', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: course.id,
+          instructors: newInstructors,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al agregar instructor');
+      }
+
+      setCurrentInstructors(newInstructors);
+      toast.success('Instructor agregado');
+      setAddInstructorSearch('');
+    } catch (error) {
+      console.error(error);
+      toast.error('Error al agregar instructor');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRemoveInstructor = async (educatorId: string) => {
+    const newInstructors = currentInstructors.filter((id) => id !== educatorId);
+    if (newInstructors.length === 0) {
+      toast.error('Debe haber al menos un instructor');
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      const response = await fetch('/api/super-admin/courses/instructors', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          courseId: course.id,
+          instructors: newInstructors,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar instructores');
+      }
+
+      setCurrentInstructors(newInstructors);
+      toast.success('Instructor removido');
+    } catch (error) {
+      console.error(error);
+      toast.error('Error al remover instructor');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   // Add this before the return statement
-  if (isUpdating) {
+  // (el modal de instructores maneja su propio estado de carga para no
+  // taparse a sí mismo con el loader de pantalla completa)
+  if (isUpdating && !isAddInstructorModalOpen) {
     return <FullscreenLoader />;
   }
   const _EducatorsList: React.FC<{
@@ -2665,71 +2739,169 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </span>
             )}
 
-            <select
-              value={selectedInstructor}
-              onChange={(e) => setSelectedInstructor(e.target.value)}
-              disabled={isUpdating}
-              className="shrink-0 rounded-full border border-[#22C4D3]/40 bg-[#061c37] px-3 py-1.5 text-xs text-white focus:border-[#22C4D3] focus:outline-none disabled:opacity-50"
-            >
-              <option value="">Agregar instructor...</option>
-              {educators
-                .filter((educator) => !currentInstructors.includes(educator.id))
-                .map((educator) => (
-                  <option key={educator.id} value={educator.id}>
-                    {educator.name}
-                  </option>
-                ))}
-            </select>
             <button
-              onClick={async () => {
-                if (!selectedInstructor) {
-                  toast.error('Selecciona un instructor');
-                  return;
-                }
-
-                try {
-                  setIsUpdating(true);
-                  const newInstructors = [
-                    ...currentInstructors,
-                    selectedInstructor,
-                  ];
-
-                  const response = await fetch(
-                    '/api/super-admin/courses/instructors',
-                    {
-                      method: 'PUT',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        courseId: course.id,
-                        instructors: newInstructors,
-                      }),
-                    }
-                  );
-
-                  if (!response.ok) {
-                    throw new Error('Error al agregar instructor');
-                  }
-
-                  setCurrentInstructors(newInstructors);
-                  setSelectedInstructor('');
-                  toast.success('Instructor agregado');
-                  await fetchCourse();
-                } catch (error) {
-                  console.error(error);
-                  toast.error('Error al agregar instructor');
-                } finally {
-                  setIsUpdating(false);
-                }
-              }}
-              disabled={isUpdating || !selectedInstructor}
-              className="shrink-0 rounded-full bg-[#22C4D3] px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+              type="button"
+              onClick={() => setIsAddInstructorModalOpen(true)}
+              disabled={isUpdating}
+              className="shrink-0 rounded-full border border-[#22C4D3]/40 bg-[#22C4D3]/10 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#22C4D3] transition-colors hover:bg-[#22C4D3]/20 disabled:opacity-50"
             >
-              {isUpdating ? '...' : '+ Agregar'}
+              + Agregar instructor
             </button>
           </div>
         </div>
+
+        {isAddInstructorModalOpen && (
+          <Portal>
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+              onClick={() => {
+                setIsAddInstructorModalOpen(false);
+                setAddInstructorSearch('');
+              }}
+            >
+              <div
+                className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0b1f3d]/95 shadow-2xl ring-1 shadow-black/50 ring-[#22C4D3]/20"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-[#22C4D3]/15 to-transparent px-5 py-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex size-8 items-center justify-center rounded-full bg-[#22C4D3]/20 text-[#22C4D3]">
+                      <UserPlus className="size-4" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">
+                        Agregar instructor
+                      </h3>
+                      <p className="text-xs text-white/50">
+                        Busca y selecciona un educador
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddInstructorModalOpen(false);
+                      setAddInstructorSearch('');
+                    }}
+                    className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+
+                <div className="px-5 pb-3">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40" />
+                    <input
+                      type="text"
+                      autoFocus
+                      value={addInstructorSearch}
+                      onChange={(e) => setAddInstructorSearch(e.target.value)}
+                      placeholder="Buscar por nombre o correo..."
+                      className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pr-3 pl-9 text-sm text-white placeholder:text-white/40 focus:border-[#22C4D3]/60 focus:ring-2 focus:ring-[#22C4D3]/20 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {currentInstructors.length > 0 && (
+                  <div className="px-5 pb-3">
+                    <p className="mb-2 text-xs font-semibold tracking-wide text-white/40 uppercase">
+                      Instructores actuales
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentInstructors.map((instructorId) => {
+                        const educator = educators.find(
+                          (e) => e.id === instructorId
+                        );
+                        return (
+                          <span
+                            key={instructorId}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 py-1 pr-1.5 pl-3 text-xs font-medium text-white"
+                          >
+                            {educator?.name ?? instructorId}
+                            <button
+                              type="button"
+                              disabled={isUpdating}
+                              onClick={() =>
+                                void handleRemoveInstructor(instructorId)
+                              }
+                              className="rounded-full p-0.5 text-white/50 transition-colors hover:bg-white/10 hover:text-red-400 disabled:opacity-50"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex-1 space-y-1 overflow-y-auto px-3 pb-3">
+                  {(() => {
+                    const availableEducators = educators.filter(
+                      (educator) => !currentInstructors.includes(educator.id)
+                    );
+                    const filteredEducators = availableEducators.filter(
+                      (educator) =>
+                        Boolean(
+                          educator.name &&
+                          normalizeSearch(educator.name).includes(
+                            normalizeSearch(addInstructorSearch)
+                          )
+                        ) ||
+                        Boolean(
+                          educator.email &&
+                          normalizeSearch(educator.email).includes(
+                            normalizeSearch(addInstructorSearch)
+                          )
+                        )
+                    );
+
+                    if (availableEducators.length === 0) {
+                      return (
+                        <p className="p-6 text-center text-sm text-white/40">
+                          No hay más educadores disponibles
+                        </p>
+                      );
+                    }
+
+                    if (filteredEducators.length === 0) {
+                      return (
+                        <p className="p-6 text-center text-sm text-white/40">
+                          No se encontraron educadores
+                        </p>
+                      );
+                    }
+
+                    return filteredEducators.map((educator) => (
+                      <button
+                        key={educator.id}
+                        type="button"
+                        disabled={isUpdating}
+                        onClick={() => void handleAddInstructor(educator.id)}
+                        className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-white/10 disabled:opacity-50"
+                      >
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#22C4D3]/20 text-sm font-semibold text-[#22C4D3]">
+                          {(educator.name ?? '?').charAt(0).toUpperCase()}
+                        </span>
+                        <span className="min-w-0">
+                          <p className="truncate text-sm font-medium text-white">
+                            {educator.name}
+                          </p>
+                          {educator.email && (
+                            <p className="truncate text-xs text-white/50">
+                              {educator.email}
+                            </p>
+                          )}
+                        </span>
+                      </button>
+                    ));
+                  })()}
+                </div>
+              </div>
+            </div>
+          </Portal>
+        )}
 
         {/* Portada + acciones fijas (sticky) en desktop, junto al hero */}
         <div className="hidden lg:block">
@@ -2743,7 +2915,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         courseIdNumber !== null && (
           <div
             className="
-              relative z-10 -mx-1 mt-16 space-y-8 px-1
+              relative z-10 -mx-1 mt-4 space-y-8 px-1
               md:-mx-3 md:px-3
             "
           >
@@ -2979,35 +3151,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       "
                     >
                       3
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('grabadas')}
-                    className={`
-                      rounded-full px-4 py-2 font-semibold whitespace-nowrap
-                      transition-all duration-300
-                      ${
-                        activeTab === 'grabadas'
-                          ? `
-                            bg-[#22C4D3]/15 text-[#22C4D3]
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-[#22C4D3]/40
-                          `
-                          : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
-                      }
-                    `}
-                  >
-                    Clases grabadas{' '}
-                    <span
-                      className="
-                        ml-2 inline-block rounded-full bg-[#22C4D3] px-2 py-0.5
-                        text-xs font-bold text-[#04101f]
-                      "
-                    >
-                      {meetingsForList.length}
                     </span>
                   </button>
                   <button
@@ -3413,25 +3556,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       courseId={courseIdNumber}
                       selectedColor={selectedColor}
                     />
-                  </div>
-                )}
-                {/* Clases Grabadas Tab */}
-                {activeTab === 'grabadas' && (
-                  <div
-                    className="
-                      animate-in fade-in -mx-1 px-1 duration-500
-                      md:-mx-3 md:px-3
-                    "
-                  >
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      Clases Grabadas ({meetingsForList.length})
-                    </h2>
-                    <div className="space-y-4">
-                      <ScheduledMeetingsList
-                        meetings={meetingsForList}
-                        color={selectedColor}
-                      />
-                    </div>
                   </div>
                 )}
                 {/* Foros Tab */}
