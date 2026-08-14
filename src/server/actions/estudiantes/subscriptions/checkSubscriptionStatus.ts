@@ -9,12 +9,61 @@ type SubscriptionData = {
   planType?: string | null;
 } | null;
 
+/** Remembers, per browser, which day a recipient was already notified. */
+const EMAIL_SENT_STORAGE_PREFIX = 'artiefy-subscription-email-sent';
+
+/** Collapses the concurrent calls a single mount storm produces in one tab. */
+const inFlightRecipients = new Set<string>();
+
+const normalizeRecipient = (recipient: string) =>
+  recipient.trim().toLowerCase();
+
+const currentDayKey = () =>
+  new Date().toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+
+const storageKeyFor = (recipient: string) =>
+  `${EMAIL_SENT_STORAGE_PREFIX}:${normalizeRecipient(recipient)}`;
+
+/**
+ * Browser-side half of the once-a-day rule. The subscription banner re-runs
+ * this check on every navigation, so this skips the round trip entirely.
+ * `claimDailySubscriptionEmail` on the server stays authoritative for other
+ * devices, other tabs and cleared storage.
+ */
+function wasNotifiedToday(recipient: string) {
+  if (typeof window === 'undefined') return false;
+  try {
+    const storedDay = window.localStorage.getItem(storageKeyFor(recipient));
+    return storedDay === currentDayKey();
+  } catch {
+    // Blocked storage (private mode): let the server-side claim decide.
+    return false;
+  }
+}
+
+function markNotifiedToday(recipient: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(storageKeyFor(recipient), currentDayKey());
+  } catch {
+    // Nothing to do — the server-side claim already prevents duplicates.
+  }
+}
+
 async function sendEmailNotification(data: {
   to: string;
   userName: string;
   expirationDate: string;
   timeLeft: string;
+  kind: 'reminder' | 'expired';
 }) {
+  const recipient = normalizeRecipient(data.to);
+  if (!recipient) return false;
+  if (wasNotifiedToday(recipient) || inFlightRecipients.has(recipient)) {
+    return false;
+  }
+
+  inFlightRecipients.add(recipient);
   try {
     const response = await fetch('/api/email/subscription', {
       method: 'POST',
@@ -23,10 +72,15 @@ async function sendEmailNotification(data: {
       },
       body: JSON.stringify(data),
     });
+    // A skipped send still answers 200: the day is spent either way, so the
+    // local flag must be set to stop further attempts from this browser.
+    if (response.ok) markNotifiedToday(recipient);
     return response.ok;
   } catch (error) {
     console.error('Error sending email:', error);
     return false;
+  } finally {
+    inFlightRecipients.delete(recipient);
   }
 }
 
@@ -98,18 +152,18 @@ export async function checkSubscriptionStatus(
 
   const planName = subscriptionData.planType ?? 'Plan actual';
 
-  // Notificación por correo para 7 días, 3 días y el mismo día
+  // Notificación por correo en la cuenta regresiva. `diffDays === 0` queda
+  // fuera a propósito: con la fecha ya cumplida el aviso que corresponde es el
+  // de "expirada" que está más abajo, y antes se enviaban los dos el mismo día.
   if (isActive) {
-    if ([7, 3, 1, 0].includes(diffDays)) {
+    if ([7, 3, 1].includes(diffDays)) {
       if (userEmail) {
         await sendEmailNotification({
           to: userEmail,
           userName: userName ?? '',
           expirationDate: format(endDate, 'dd/MM/yyyy'),
-          timeLeft:
-            diffDays > 0
-              ? `${diffDays} día${diffDays === 1 ? '' : 's'}`
-              : 'hoy',
+          timeLeft: `${diffDays} día${diffDays === 1 ? '' : 's'}`,
+          kind: 'reminder',
         });
       }
     }
@@ -158,6 +212,7 @@ export async function checkSubscriptionStatus(
         userName: userName ?? '',
         expirationDate: format(endDate, 'dd/MM/yyyy'),
         timeLeft: 'hoy',
+        kind: 'expired',
       });
     }
     return {
