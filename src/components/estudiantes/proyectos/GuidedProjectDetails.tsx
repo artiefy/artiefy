@@ -1437,7 +1437,7 @@ export function GuidedProjectDetails({
                     type="button"
                     aria-label="Anterior"
                     onClick={() => scrollNav('left')}
-                    className="absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card"
+                    className="absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card md:hidden"
                   >
                     <ChevronLeft className="size-4" />
                   </button>
@@ -1445,7 +1445,11 @@ export function GuidedProjectDetails({
                     ref={carouselRef}
                     role="tablist"
                     aria-label="Secciones del proyecto guiado"
-                    className="flex [scrollbar-width:none] items-center gap-2 overflow-x-auto px-10"
+                    className="
+                      flex [scrollbar-width:none] items-center gap-2
+                      overflow-x-auto px-10
+                      md:flex-wrap md:gap-2.5 md:overflow-visible md:px-0
+                    "
                   >
                     {navItems.map((item, index) => {
                       const isActive = activePill === item.key;
@@ -1483,7 +1487,7 @@ export function GuidedProjectDetails({
                     type="button"
                     aria-label="Siguiente"
                     onClick={() => scrollNav('right')}
-                    className="absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card"
+                    className="absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card md:hidden"
                   >
                     <ChevronRight className="size-4" />
                   </button>
