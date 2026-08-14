@@ -57,6 +57,20 @@
       "when": 1785783305970,
       "tag": "0008_volatile_vertigo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785960078118,
+      "tag": "0009_steady_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785961461012,
+      "tag": "0010_chief_puppet_master",
+      "breakpoints": true
     }
   ]
 }

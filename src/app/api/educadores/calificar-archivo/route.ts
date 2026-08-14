@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
+import { sendActivityGradeEmail } from '~/lib/emails/gradeNotification';
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
 
@@ -105,6 +106,12 @@ export async function POST(request: Request) {
       .execute();
 
     console.log('✅ Resultado del update:', resultUpdate);
+
+    await sendActivityGradeEmail({
+      activityId: Number(activityId),
+      userId,
+      grade,
+    });
 
     return NextResponse.json({
       success: true,

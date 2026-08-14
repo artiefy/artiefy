@@ -2880,40 +2880,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           </button>
                           <button
                             onClick={(e) => {
-                              console.log('✅ CLICK grabadas', {
-                                defaultPrevented: e.defaultPrevented,
-                              });
-                              setActiveTab('grabadas');
-                            }}
-                            className={`
-                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
-                          transition-all duration-300
-                          ${
-                            activeTab === 'grabadas'
-                              ? `
-                                bg-[#22C4D3]/15 text-[#22C4D3]
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-[#22C4D3]/40
-                              `
-                              : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
-                          }
-                        `}
-                          >
-                            Clases grabadas{' '}
-                            <span
-                              className="
-                            ml-2 inline-block rounded-full bg-[#22C4D3] px-2
-                            py-0.5 text-xs font-bold text-[#04101f]
-                          "
-                            >
-                              {meetingsForList.length}
-                            </span>
-                          </button>
-                          <button
-                            onClick={(e) => {
                               console.log('✅ CLICK foros', {
                                 defaultPrevented: e.defaultPrevented,
                               });
@@ -3300,20 +3266,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 );
                               }}
                             />
-                          </div>
-                        )}
-                        {/* Clases Grabadas Tab */}
-                        {activeTab === 'grabadas' && (
-                          <div className="animate-in fade-in duration-500">
-                            <h2 className="mb-6 text-2xl font-bold text-white">
-                              Clases Grabadas ({meetingsForList.length})
-                            </h2>
-                            <div className="space-y-4">
-                              <ScheduledMeetingsList
-                                meetings={meetingsForList}
-                                color={selectedColor}
-                              />
-                            </div>
                           </div>
                         )}
                         {/* Foros Tab */}

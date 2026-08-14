@@ -248,6 +248,7 @@ export const getCourseById = async (courseId: number) => {
       .select({
         id: courses.id,
         title: courses.title,
+        subtitle: courses.subtitle,
         description: courses.description,
         coverImageKey: courses.coverImageKey,
         categoryid: courses.categoryid,
@@ -495,6 +496,7 @@ export const updateCourse = async (
   courseId: number,
   updateData: {
     title?: string;
+    subtitle?: string;
     description?: string;
     coverImageKey?: string;
     categoryid?: number;
@@ -556,10 +558,7 @@ export const updateCourse = async (
     // Luego forzar visibility explícitamente:
     if ('visibility' in rest) {
       cleanedData.visibility = rest.visibility as
-        | string
-        | number
-        | boolean
-        | null;
+        string | number | boolean | null;
     }
 
     console.log('📝 [updateCourse] cleanedData (sin undefined):', cleanedData);

@@ -59,12 +59,15 @@ interface CourseFormProps {
     espacios: number | null,
     certificationTypeId: number | null,
     idTypesCoursesParam: number | null,
-    visibility: boolean
+    visibility: boolean,
+    subtitle: string
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
   title: string;
   setTitle: (title: string) => void;
+  subtitle?: string;
+  setSubtitle?: (subtitle: string) => void;
   description: string;
   setDescription: (description: string) => void;
   categoryid: number;
@@ -151,6 +154,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   editingCourseId,
   title,
   setTitle,
+  subtitle = '',
+  setSubtitle,
   description,
   setDescription,
   rating,
@@ -939,7 +944,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         selectedSpaceId ? Number(selectedSpaceId) : null,
         localCertificationTypeId,
         localIdTypesCourses, // ✅ usar estado local en lugar del prop
-        localVisibility // ✅ agregar visibility
+        localVisibility, // ✅ agregar visibility
+        subtitle
       );
 
       console.log('📤 Enviando al onSubmitAction:', {
@@ -982,6 +988,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     switch (field) {
       case 'title':
         setTitle(value as string);
+        break;
+      case 'subtitle':
+        setSubtitle?.(value as string);
         break;
       case 'description':
         setDescription(value as string);
@@ -1088,6 +1097,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       });
 
       setTitle(title);
+      setSubtitle?.(subtitle);
       setDescription(description);
       setCategoryid(categoryid);
       setLocalCategoryid(categoryid); // ✅ sincronizar estado local
@@ -1105,6 +1115,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   }, [
     editingCourseId,
     title,
+    subtitle,
     description,
     categoryid,
     modalidadesid,
@@ -1139,6 +1150,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   useEffect(() => {
     if (isOpen && !editingCourseId) {
       setTitle('');
+      setSubtitle?.('');
       setDescription('');
       setCategoryid(0);
       setLocalCategoryid(0); // ✅ también reiniciar estado local
@@ -1486,6 +1498,30 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       Este campo es obligatorio.
                     </p>
                   )}
+                </div>
+                <div>
+                  <label
+                    htmlFor="subtitle"
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Subtítulo
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Subtítulo"
+                    value={subtitle}
+                    onChange={(e) =>
+                      handleFieldChange('subtitle', e.target.value)
+                    }
+                    className="
+                      mt-1 w-full rounded border border-primary p-2 text-sm
+                      text-white outline-none
+                      md:text-base
+                    "
+                  />
                 </div>
                 <div>
                   <label

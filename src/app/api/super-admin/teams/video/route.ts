@@ -49,6 +49,7 @@ async function getGraphToken() {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params.toString(),
+      signal: AbortSignal.timeout(10_000),
     }
   );
 
@@ -135,7 +136,13 @@ export async function GET(req: Request) {
   }
 
   // 1) Token MS Graph
-  const token = await getGraphToken();
+  let token: string | undefined;
+  try {
+    token = await getGraphToken();
+  } catch (err: unknown) {
+    console.error('❌ Timeout u error obteniendo token de Graph:', errMsg(err));
+    return NextResponse.json({ error: 'Auth Graph' }, { status: 504 });
+  }
   if (!token) {
     console.error('❌ No pude obtener token de Graph');
     return NextResponse.json({ error: 'Auth Graph' }, { status: 500 });

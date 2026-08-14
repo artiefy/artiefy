@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as {
       title: string;
+      subtitle?: string;
       description: string;
       coverImageKey?: string;
       coverVideoCourseKey?: string;
@@ -132,6 +133,7 @@ export async function POST(request: NextRequest) {
 
     const {
       title,
+      subtitle = '',
       description,
       coverImageKey = '',
       coverVideoCourseKey = undefined,
@@ -179,6 +181,7 @@ export async function POST(request: NextRequest) {
 
     const courseValues = {
       title,
+      subtitle,
       description,
       coverImageKey,
       coverVideoCourseKey,
