@@ -42,6 +42,7 @@ import {
   CardHeader,
 } from '~/components/estudiantes/ui/card';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { useCourseGradeSummary } from '~/hooks/useCourseGradeSummary';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type GradesApiResponse } from '~/lib/utils2';
 import { getCourseCommentCounts } from '~/server/actions/estudiantes/comment/courseCommentActions';
@@ -60,17 +61,6 @@ import '~/styles/certificadobutton2.css';
 import '~/styles/gradesbutton.css';
 import '~/styles/paybutton2.css';
 import '~/styles/priceindividual.css';
-
-interface GradeSummaryType {
-  finalGrade: number;
-  courseCompleted?: boolean;
-  parameters: {
-    name: string;
-    grade: number;
-    weight: number;
-    activities: { id: number; name: string; grade: number }[];
-  }[];
-}
 
 interface ExtendedCourse extends Course {
   progress?: number;
@@ -1239,12 +1229,12 @@ export function CourseHeader({
   // --- NUEVO: Estado para forumId ---
   const [forumId, setForumId] = useState<number | null>(null);
 
-  // Grade history modal state
+  // Grade history modal state. The summary itself is live: it comes from the
+  // shared SWR cache, so the modal keeps updating while it is open instead of
+  // freezing on whatever the click-time fetch returned.
   const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
-  const [gradeSummary, setGradeSummary] = useState<GradeSummaryType | null>(
-    null
-  );
-  const [_isGradeSummaryLoading, setIsGradeSummaryLoading] = useState(false);
+  const { gradeSummary, isLoading: isGradeSummaryLoading } =
+    useCourseGradeSummary(course.id, localIsEnrolled ? user?.id : null);
 
   // --- NUEVO: Obtener forumId por curso ---
   useEffect(() => {
@@ -2053,29 +2043,22 @@ export function CourseHeader({
               {localIsEnrolled && (
                 <div className="mt-2 mb-0 flex w-full justify-end sm:-mt-1 sm:mb-3">
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       if (!user?.id) {
                         toast.error(
                           'Debes iniciar sesión para ver tu historial de notas'
                         );
                         return;
                       }
-                      try {
-                        setIsGradeSummaryLoading(true);
-                        const res = await fetch(
-                          `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
+                      if (!gradeSummary) {
+                        toast.info(
+                          isGradeSummaryLoading
+                            ? 'Cargando tus notas...'
+                            : 'Todavía no hay notas para este curso'
                         );
-                        if (!res.ok)
-                          throw new Error('Error fetching grade summary');
-                        const data = (await res.json()) as GradeSummaryType;
-                        setGradeSummary(data);
-                        setIsGradeHistoryOpen(true);
-                      } catch (e) {
-                        console.error('Failed to load grade summary', e);
-                        toast.error('No se pudo cargar el historial de notas');
-                      } finally {
-                        setIsGradeSummaryLoading(false);
+                        return;
                       }
+                      setIsGradeHistoryOpen(true);
                     }}
                     disabled={!isSignedIn}
                     className={`
@@ -2165,29 +2148,22 @@ export function CourseHeader({
                   "
                 >
                   <button
-                    onClick={async () => {
+                    onClick={() => {
                       if (!user?.id) {
                         toast.error(
                           'Debes iniciar sesión para ver tu historial de notas'
                         );
                         return;
                       }
-                      try {
-                        setIsGradeSummaryLoading(true);
-                        const res = await fetch(
-                          `/api/grades/summary?courseId=${course.id}&userId=${user.id}`
+                      if (!gradeSummary) {
+                        toast.info(
+                          isGradeSummaryLoading
+                            ? 'Cargando tus notas...'
+                            : 'Todavía no hay notas para este curso'
                         );
-                        if (!res.ok)
-                          throw new Error('Error fetching grade summary');
-                        const data = (await res.json()) as GradeSummaryType;
-                        setGradeSummary(data);
-                        setIsGradeHistoryOpen(true);
-                      } catch (e) {
-                        console.error('Failed to load grade summary', e);
-                        toast.error('No se pudo cargar el historial de notas');
-                      } finally {
-                        setIsGradeSummaryLoading(false);
+                        return;
                       }
+                      setIsGradeHistoryOpen(true);
                     }}
                     disabled={!isSignedIn}
                     className={`

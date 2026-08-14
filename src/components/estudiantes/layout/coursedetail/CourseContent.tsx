@@ -52,25 +52,6 @@ interface CourseContentProps {
   isSignedIn: boolean;
   classMeetings?: import('~/types').ClassMeeting[]; // <-- Añade classMeetings aquí
   viewMode?: 'live' | 'recorded';
-  gradeSummary?: {
-    finalGrade: number;
-    courseCompleted?: boolean;
-    hasParameters?: boolean;
-    isFullyGraded?: boolean;
-    totalParameterActivities?: number;
-    gradedParameterActivities?: number;
-    ungradedParameterActivities?: number;
-    parameters: {
-      name: string;
-      grade: number;
-      weight: number;
-      activities: {
-        id: number;
-        name: string;
-        grade: number;
-      }[];
-    }[];
-  } | null;
 }
 
 const MEETING_TIME_ZONE = 'America/Bogota';
@@ -237,7 +218,6 @@ export function CourseContent({
   isSignedIn,
   classMeetings = [],
   viewMode = 'live',
-  gradeSummary,
 }: CourseContentProps) {
   // --- Clases grabadas y en vivo ---
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);

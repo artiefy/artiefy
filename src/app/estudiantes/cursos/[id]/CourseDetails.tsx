@@ -44,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
+import { useCourseGradeSummary } from '~/hooks/useCourseGradeSummary';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
 import { sortLessons } from '~/utils/lessonSorting';
@@ -94,26 +95,6 @@ const NAV_KEYS: NavKey[] = [
 
 const isNavKey = (value: string): value is NavKey =>
   (NAV_KEYS as string[]).includes(value);
-
-type CourseGradeSummary = {
-  finalGrade: number;
-  courseCompleted?: boolean;
-  hasParameters?: boolean;
-  isFullyGraded?: boolean;
-  totalParameterActivities?: number;
-  gradedParameterActivities?: number;
-  ungradedParameterActivities?: number;
-  parameters: {
-    name: string;
-    grade: number;
-    weight: number;
-    activities: {
-      id: number;
-      name: string;
-      grade: number;
-    }[];
-  }[];
-};
 
 type RatingSummary = {
   count: number;
@@ -210,23 +191,13 @@ export default function CourseDetails({
   const { mutate } = useSWRConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Resumen de calificaciones en tiempo real: SWR re-valida al volver a la
-  // pestaña y hace polling cada 5s, así la nota del estudiante se actualiza
-  // sola cuando el educador la califica (sin recargar la página).
-  const gradeSummaryKey =
-    isSignedIn && userId && course.id
-      ? `/api/grades/summary?courseId=${course.id}&userId=${userId}`
-      : null;
-  const { data: gradeSummaryData } = useSWR<CourseGradeSummary>(
-    gradeSummaryKey,
-    swrFetcher<CourseGradeSummary>,
-    {
-      refreshInterval: 5000,
-      revalidateOnFocus: true,
-      keepPreviousData: true,
-    }
+  // Resumen de calificaciones en tiempo real. El hook comparte clave y caché
+  // con el header del curso y con el detalle de la clase, así que las tres
+  // vistas se actualizan juntas con una sola petición en vuelo.
+  const { gradeSummary } = useCourseGradeSummary(
+    course.id,
+    isSignedIn ? userId : null
   );
-  const gradeSummary = gradeSummaryData ?? null;
   const userMetadata = user?.publicMetadata as UserMetadata | undefined;
   const enrollmentAuthHint = useMemo(
     () => ({
@@ -2753,7 +2724,6 @@ export default function CourseDetails({
                             isSignedIn={!!isSignedIn}
                             classMeetings={classMeetings}
                             viewMode={viewMode}
-                            gradeSummary={gradeSummary}
                           />
                         ) : (
                           renderAccessGuard('grabadas')
@@ -2967,7 +2937,6 @@ export default function CourseDetails({
                           isSignedIn={!!isSignedIn}
                           classMeetings={classMeetings}
                           viewMode={viewMode}
-                          gradeSummary={gradeSummary}
                         />
                       )}
                     </div>

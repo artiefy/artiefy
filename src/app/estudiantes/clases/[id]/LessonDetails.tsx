@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
-import useSWR from 'swr';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import { LessonActivityModal } from '~/components/estudiantes/layout/lessondetail/LessonActivityModal';
@@ -23,6 +22,7 @@ import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonR
 import LessonTopNavBar from '~/components/estudiantes/layout/lessondetail/LessonTopNavBar';
 import LessonTranscription from '~/components/estudiantes/layout/lessondetail/LessonTranscription';
 import { NextLessonModal } from '~/components/estudiantes/layout/lessondetail/NextLessonModal';
+import { useCourseGradeSummary } from '~/hooks/useCourseGradeSummary';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonPlaybackPosition } from '~/server/actions/estudiantes/progress/updateLessonPlaybackPosition';
@@ -46,53 +46,6 @@ import { useMediaQuery } from '~/utils/useMediaQuery';
 import '~/styles/arrowactivity.css';
 
 const SUBSCRIPTION_REQUIRED_TOAST_ID = 'lesson-subscription-required';
-
-// Add interface for API response
-interface GradeSummaryResponse {
-  finalGrade: number;
-  isCompleted: boolean;
-  parameters: {
-    name: string;
-    grade: number;
-    weight: number;
-    activities: {
-      id: number;
-      name: string;
-      grade: number;
-    }[];
-  }[];
-}
-
-// Update CourseGradeSummary interface to match GradeHistory requirements
-interface CourseGradeSummary {
-  finalGrade: number;
-  courseCompleted?: boolean;
-  hasParameters?: boolean;
-  isFullyGraded?: boolean;
-  totalParameterActivities?: number;
-  gradedParameterActivities?: number;
-  ungradedParameterActivities?: number;
-  parameters: {
-    name: string;
-    grade: number;
-    weight: number;
-    activities: {
-      id: number;
-      name: string;
-      grade: number;
-    }[];
-  }[];
-}
-
-const gradeSummaryFetcher = async (
-  url: string
-): Promise<GradeSummaryResponse> => {
-  const response = await fetch(url, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`Error fetching ${url}: ${response.status}`);
-  }
-  return (await response.json()) as GradeSummaryResponse;
-};
 
 interface LessonDetailsProps {
   lesson: LessonWithProgress;
@@ -155,31 +108,14 @@ export default function LessonDetails({
     }))
   );
 
-  // Resumen de calificaciones en tiempo real: SWR revalida al volver a la
-  // pestaña y hace polling cada 5s, así la nota se actualiza sola cuando el
-  // educador califica o cuando el alumno termina una actividad, sin recargar.
-  // Mismo intervalo y misma clave que usa el detalle del curso, para que
-  // ambas vistas compartan caché de SWR.
-  const gradeSummaryKey =
-    lesson.courseId && userId
-      ? `/api/grades/summary?courseId=${lesson.courseId}&userId=${userId}`
-      : null;
+  // Resumen de calificaciones en tiempo real. Misma clave y misma caché que el
+  // detalle del curso: al volver de una clase la nota ya está actualizada y no
+  // se dispara una segunda petición.
   const {
-    data: gradeSummaryData,
+    gradeSummary,
     isLoading: isGradesLoading,
-    mutate: mutateGradeSummary,
-  } = useSWR<GradeSummaryResponse>(gradeSummaryKey, gradeSummaryFetcher, {
-    refreshInterval: 5000,
-    revalidateOnFocus: true,
-    keepPreviousData: true,
-  });
-  const gradeSummary: CourseGradeSummary | null = gradeSummaryData
-    ? {
-        finalGrade: gradeSummaryData.finalGrade ?? 0,
-        courseCompleted: gradeSummaryData.isCompleted ?? false,
-        parameters: gradeSummaryData.parameters ?? [],
-      }
-    : null;
+    refreshGradeSummary: mutateGradeSummary,
+  } = useCourseGradeSummary(lesson.courseId, userId);
   // Tabs state for content navigation
   const [activeTab, setActiveTab] = useState<TabType>('transcription');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
