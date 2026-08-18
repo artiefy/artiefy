@@ -225,7 +225,6 @@ export default async function GuidedActivityPage({ params }: PageProps) {
         projectTitle={project.title}
         currentObjectiveId={currentObjective.id}
         objectiveTitle={currentObjective.title}
-        objectiveDescription={currentObjective.description}
         activity={{
           id: activity.id,
           name: activity.name,

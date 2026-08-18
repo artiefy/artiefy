@@ -58,7 +58,6 @@ interface GuidedActivityDetailsProps {
   projectTitle: string;
   currentObjectiveId: number;
   objectiveTitle: string;
-  objectiveDescription: string | null;
   activity: {
     id: number;
     name: string;
@@ -235,7 +234,6 @@ export function GuidedActivityDetails({
   projectTitle,
   currentObjectiveId,
   objectiveTitle,
-  objectiveDescription,
   activity,
   coverImageUrl,
   instructionVideoKey,
@@ -244,13 +242,11 @@ export function GuidedActivityDetails({
   objectives,
   progress,
 }: GuidedActivityDetailsProps) {
-  // La introducción solo puede ser la pestaña inicial si tiene contenido;
+  // La instrucción solo puede ser la pestaña inicial si tiene contenido;
   // si no, se abre directamente en Actividad para no mostrar un panel vacío.
-  const hasIntroductionContent =
-    Boolean(objectiveDescription?.trim()) ||
-    Boolean(activity.instructionText?.trim());
+  const hasInstructionContent = Boolean(activity.instructionText?.trim());
   const [activeTab, setActiveTab] = useState<ActivityTab>(
-    hasIntroductionContent ? 'introduction' : 'activity'
+    hasInstructionContent ? 'introduction' : 'activity'
   );
   const [isDesktopSyllabusOpen, setIsDesktopSyllabusOpen] = useState(true);
   const [isMobileSyllabusOpen, setIsMobileSyllabusOpen] = useState(false);
@@ -606,6 +602,11 @@ export function GuidedActivityDetails({
               <h1 className="text-2xl font-bold text-foreground md:text-3xl">
                 {activity.name}
               </h1>
+              {activity.description?.trim() && (
+                <p className="mt-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground md:text-base">
+                  {activity.description}
+                </p>
+              )}
             </div>
 
             <div className="border-b border-border/50">
@@ -634,7 +635,7 @@ export function GuidedActivityDetails({
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   )}
                 >
-                  Introducción
+                  Instrucción
                 </button>
                 <button
                   ref={(node) => {
@@ -688,39 +689,20 @@ export function GuidedActivityDetails({
               hidden={activeTab !== 'introduction'}
               className="py-6"
             >
-              {hasIntroductionContent ? (
+              {hasInstructionContent ? (
                 <div className="rounded-xl border border-border/50 bg-card/40 p-5">
-                  {objectiveDescription?.trim() && (
-                    <div>
-                      <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                        Objetivo
-                      </p>
-                      <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                        {objectiveDescription}
-                      </p>
-                    </div>
-                  )}
-                  {activity.instructionText?.trim() && (
-                    <div
-                      className={cn(
-                        objectiveDescription?.trim() &&
-                          'mt-5 border-t border-border/40 pt-5'
-                      )}
-                    >
-                      <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                        Instrucción
-                      </p>
-                      <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                        {activity.instructionText}
-                      </p>
-                    </div>
-                  )}
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Instrucción
+                  </p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                    {activity.instructionText}
+                  </p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/50 bg-card/30 p-8 text-center text-muted-foreground">
                   <FileText className="size-8" aria-hidden="true" />
                   <p className="text-sm">
-                    Esta actividad no tiene una introducción registrada.
+                    Esta actividad no tiene una instrucción registrada.
                   </p>
                 </div>
               )}

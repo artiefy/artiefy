@@ -900,10 +900,14 @@ export default function LessonDetails({
                 />
               </div>
 
-              {/* Content Tabs Navigation */}
+              {/* Content Tabs Navigation.
+                  Mismo `px` + `mx-auto max-w-6xl` que LessonPlayer para que las
+                  pestañas y su panel queden alineados con el video y el título
+                  en pantallas anchas. */}
               <div
                 className={`
                   w-full px-4
+                  lg:px-8
                   ${
                     lesson.coverVideoKey === 'none'
                       ? `
@@ -914,74 +918,83 @@ export default function LessonDetails({
                   }
                 `}
               >
-                <LessonContentTabs
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                  transcriptionCount={transcription.length}
-                  resourcesCount={resourcesCount}
-                  activitiesCount={activities.length}
-                />
+                <div className="mx-auto max-w-6xl">
+                  <LessonContentTabs
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    transcriptionCount={transcription.length}
+                    resourcesCount={resourcesCount}
+                    activitiesCount={activities.length}
+                  />
 
-                {/* Tab Content */}
-                <div
-                  className="mt-2 rounded-xl border border-border p-4"
-                  style={{ backgroundColor: '#061c37cc' }}
-                >
-                  {activeTab === 'transcription' && (
-                    <LessonTranscription
-                      transcription={transcription}
-                      isLoading={isLoadingTranscription}
-                      currentTime={currentTime}
-                    />
-                  )}
-
-                  {activeTab === 'resources' && (
-                    <LessonResource
-                      lessonId={lesson.id}
-                      onCountChange={setResourcesCount}
-                    />
-                  )}
-
-                  {activeTab === 'activities' && (
-                    <LessonActivities
-                      activities={activities}
-                      isVideoCompleted={
-                        lesson.coverVideoKey === 'none'
-                          ? true
-                          : isVideoCompleted
-                      }
-                      isActivityCompleted={isActivityCompleted}
-                      handleActivityCompletion={handleActivityCompletion}
-                      userId={userId}
-                      courseId={lesson.courseId}
-                      lessonId={lesson.id}
-                      isLastLesson={isLastLesson(lessonsState, lesson.id)}
-                      isLastActivity={isLastActivity(
-                        lessonsState,
-                        activities,
-                        lesson
-                      )}
-                      lessons={lessonsState}
-                      activityModalId={activityModalId}
-                      lessonCoverVideoKey={lesson.coverVideoKey}
-                    />
-                  )}
-
-                  {activeTab === 'grades' && (
-                    <div>
-                      <LessonGrades
-                        finalGrade={gradeSummary?.finalGrade ?? null}
-                        isLoading={isGradesLoading}
+                  {/* Tab Content */}
+                  <div
+                    className="mt-2 rounded-xl border border-border p-4"
+                    style={{ backgroundColor: '#061c37cc' }}
+                  >
+                    {activeTab === 'transcription' && (
+                      <LessonTranscription
+                        transcription={transcription}
+                        isLoading={isLoadingTranscription}
+                        currentTime={currentTime}
                       />
-                      <LessonGradeHistoryInline gradeSummary={gradeSummary} />
-                    </div>
-                  )}
+                    )}
+
+                    {activeTab === 'resources' && (
+                      <LessonResource
+                        lessonId={lesson.id}
+                        onCountChange={setResourcesCount}
+                      />
+                    )}
+
+                    {activeTab === 'activities' && (
+                      <LessonActivities
+                        activities={activities}
+                        isVideoCompleted={
+                          lesson.coverVideoKey === 'none'
+                            ? true
+                            : isVideoCompleted
+                        }
+                        isActivityCompleted={isActivityCompleted}
+                        handleActivityCompletion={handleActivityCompletion}
+                        userId={userId}
+                        courseId={lesson.courseId}
+                        lessonId={lesson.id}
+                        isLastLesson={isLastLesson(lessonsState, lesson.id)}
+                        isLastActivity={isLastActivity(
+                          lessonsState,
+                          activities,
+                          lesson
+                        )}
+                        lessons={lessonsState}
+                        activityModalId={activityModalId}
+                        lessonCoverVideoKey={lesson.coverVideoKey}
+                      />
+                    )}
+
+                    {activeTab === 'grades' && (
+                      <div>
+                        <LessonGrades
+                          finalGrade={gradeSummary?.finalGrade ?? null}
+                          isLoading={isGradesLoading}
+                        />
+                        <LessonGradeHistoryInline gradeSummary={gradeSummary} />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Comments Section */}
-              <div className="mt-4 w-full px-4 pb-4">
-                <LessonComments lessonId={lesson.id} />
+              <div
+                className="
+                  mt-4 w-full px-4 pb-4
+                  lg:px-8
+                "
+              >
+                <div className="mx-auto max-w-6xl">
+                  <LessonComments lessonId={lesson.id} />
+                </div>
               </div>
             </>
           )}
