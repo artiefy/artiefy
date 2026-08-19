@@ -23,6 +23,7 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import ListActividadesEducator from '~/components/super-admin/layout/ListActividades';
 import ModalFormLessons from '~/components/super-admin/modals/ModalFormLessons';
+import { TranscribeVideoButton } from '~/components/super-admin/transcriptions/TranscriptionButtons';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -427,8 +428,14 @@ const Page: React.FC<{ selectedColor: string }> = () => {
           </AlertDialogContent>
         </AlertDialog>
 
+        <TranscribeVideoButton
+          type="lesson"
+          contentId={lessons.id}
+          label="Transcribir esta clase"
+        />
+
         <a
-          href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
+          href={`/api/super-admin/transcriptions/download?type=lesson&contentId=${lessons.id}`}
           download
           className="
             inline-block w-full rounded-lg bg-primary px-2 py-1.5 text-center

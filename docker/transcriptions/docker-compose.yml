@@ -1,0 +1,29 @@
+services:
+  transcriptions:
+    build: .
+    image: artiefy-transcriptions:latest
+    container_name: artiefy-transcriptions
+    restart: unless-stopped
+    ports:
+      # Solo escucha en localhost: el trafico publico entra por el reverse
+      # proxy (nginx/traefik) con HTTPS. No expongas 8000 directo a internet.
+      - '127.0.0.1:8000:8000'
+    environment:
+      TRANSCRIBE_API_KEY: ${TRANSCRIBE_API_KEY:?falta TRANSCRIBE_API_KEY}
+      WHISPER_MODEL: ${WHISPER_MODEL:-small}
+      WHISPER_COMPUTE_TYPE: ${WHISPER_COMPUTE_TYPE:-int8}
+      WHISPER_DEVICE: ${WHISPER_DEVICE:-cpu}
+      WHISPER_LANGUAGE: ${WHISPER_LANGUAGE:-es}
+      DOWNLOAD_TIMEOUT: ${DOWNLOAD_TIMEOUT:-600}
+    volumes:
+      # Persiste el modelo descargado y el estado de los jobs entre reinicios.
+      - transcriptions-data:/data
+    deploy:
+      resources:
+        limits:
+          # Ajusta segun el plan del VPS. 'small' int8 necesita ~1 GB;
+          # 'medium' necesita ~2.5 GB.
+          memory: 3G
+
+volumes:
+  transcriptions-data:
