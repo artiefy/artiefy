@@ -87,7 +87,8 @@ export function NotificationSubscription() {
     const checkStatus = async () => {
       const status = await checkSubscriptionStatus(
         subscriptionData,
-        user.primaryEmailAddress?.emailAddress
+        user.primaryEmailAddress?.emailAddress,
+        user.firstName ?? undefined
       );
 
       if (status?.shouldNotify) {

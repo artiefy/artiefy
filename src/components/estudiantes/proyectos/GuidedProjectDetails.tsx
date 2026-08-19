@@ -1223,6 +1223,28 @@ export function GuidedProjectDetails({
     </>
   );
 
+  // Chip de estado sobre la portada: solo existe mientras la inscripción está
+  // activa, y conserva el mismo disparador del diálogo de cancelación.
+  const renderSubscribedBadge = () => {
+    if (!isEnrolled || !isSubscriptionValid || !hasValidPlan) return null;
+
+    return (
+      <div className="absolute top-3 right-3 z-30 inline-flex items-center gap-1.5 rounded-full border border-[#10b9814d] bg-[#061c37]/85 py-1 pr-1 pl-2.5 text-xs font-semibold text-emerald-400 shadow-lg backdrop-blur-sm">
+        <FaCheck className="size-3" aria-hidden="true" />
+        Suscrito
+        <button
+          type="button"
+          aria-label="Cancelar suscripción al proyecto guiado"
+          onClick={() => setShowUnenrollDialog(true)}
+          disabled={isUnenrolling}
+          className="group rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"
+        >
+          <FaTimes className="size-3 text-emerald-400 transition-colors group-hover:text-red-500" />
+        </button>
+      </div>
+    );
+  };
+
   const renderCtaButton = (extraClass = '') => {
     if (!isEnrolled) {
       return (
@@ -1231,11 +1253,7 @@ export function GuidedProjectDetails({
           disabled={isEnrolling}
           className={`flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-base font-semibold text-[#080c16] transition hover:bg-[#1fb0be] disabled:opacity-50 ${extraClass}`}
         >
-          {isEnrolling
-            ? 'Inscribiendo...'
-            : !isSubscriptionValid || !hasValidPlan
-              ? 'Ver Planes'
-              : 'Empezar Proyecto Ahora'}
+          {isEnrolling ? 'Inscribiendo...' : 'Empezar Proyecto Guiado'}
         </button>
       );
     }
@@ -1253,25 +1271,6 @@ export function GuidedProjectDetails({
 
     return (
       <div className={`space-y-2 ${extraClass}`}>
-        <div className="group relative">
-          <button
-            type="button"
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 transition-all hover:bg-[#10b9814d] disabled:opacity-50"
-          >
-            <FaCheck className="size-5" style={{ color: 'rgb(52 211 153)' }} />
-            Suscrito
-          </button>
-          <button
-            type="button"
-            aria-label="Cancelar suscripción al proyecto guiado"
-            onClick={() => setShowUnenrollDialog(true)}
-            disabled={isUnenrolling}
-            className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
-          >
-            <FaTimes className="size-4 text-emerald-400 transition-colors group-hover:text-red-500" />
-          </button>
-        </div>
-
         <button
           type="button"
           onClick={handleContinueProject}
@@ -1360,11 +1359,14 @@ export function GuidedProjectDetails({
                       {renderCoverMedia('100vw')}
                     </div>
                   </AspectRatio>
+                  {renderSubscribedBadge()}
                   <div className="relative z-20 space-y-5 p-5">
                     {renderCtaButton()}
-                    <p className="text-center text-xs text-[#94A3B8]">
-                      Incluido en tu suscripción anual o cómpralo individual
-                    </p>
+                    {!isEnrolled && (
+                      <p className="text-center text-xs text-[#94A3B8]">
+                        Incluido en tu suscripción anual o cómpralo individual
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1403,28 +1405,14 @@ export function GuidedProjectDetails({
                             {renderCoverMedia('340px')}
                           </div>
                         </AspectRatio>
+                        {renderSubscribedBadge()}
                         <div className="relative z-20 space-y-5 p-5">
                           <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-sm font-medium text-primary">
                             <FaProjectDiagram className="size-3.5" />
                             <span>Proyecto Guiado</span>
                           </div>
 
-                          {isSubscriptionValid && hasValidPlan && (
-                            <p className="inline-flex items-center gap-2 text-sm font-medium text-[#22C4D3]">
-                              Incluido en tu plan {userPlanType?.toUpperCase()}
-                              {userPlanType === 'Premium' ? (
-                                <FaCrown className="size-4 text-amber-400" />
-                              ) : (
-                                <FaStar className="size-4 text-blue-400" />
-                              )}
-                            </p>
-                          )}
-
                           {renderCtaButton()}
-                          <p className="text-center text-xs text-[#94A3B8]">
-                            Incluido en tu suscripción anual o cómpralo
-                            individual
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -1437,7 +1425,7 @@ export function GuidedProjectDetails({
                     type="button"
                     aria-label="Anterior"
                     onClick={() => scrollNav('left')}
-                    className="absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card"
+                    className="absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card md:hidden"
                   >
                     <ChevronLeft className="size-4" />
                   </button>
@@ -1445,7 +1433,11 @@ export function GuidedProjectDetails({
                     ref={carouselRef}
                     role="tablist"
                     aria-label="Secciones del proyecto guiado"
-                    className="flex [scrollbar-width:none] items-center gap-2 overflow-x-auto px-10"
+                    className="
+                      flex [scrollbar-width:none] items-center gap-2
+                      overflow-x-auto px-10
+                      md:flex-wrap md:gap-2.5 md:overflow-visible md:px-0
+                    "
                   >
                     {navItems.map((item, index) => {
                       const isActive = activePill === item.key;
@@ -1483,7 +1475,7 @@ export function GuidedProjectDetails({
                     type="button"
                     aria-label="Siguiente"
                     onClick={() => scrollNav('right')}
-                    className="absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card"
+                    className="absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card md:hidden"
                   >
                     <ChevronRight className="size-4" />
                   </button>

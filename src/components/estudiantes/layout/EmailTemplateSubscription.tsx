@@ -1,21 +1,41 @@
+/** `expired` is sent once the access is already gone, `reminder` before that. */
+export type SubscriptionEmailKind = 'reminder' | 'expired';
+
 export interface EmailTemplateProps {
   to: string;
   userName: string;
   expirationDate: string;
   timeLeft: string;
+  kind?: SubscriptionEmailKind;
 }
 
 interface TemplateProps {
   userName: string;
   expirationDate: string;
   timeLeft: string;
+  kind?: SubscriptionEmailKind;
 }
 
 export function EmailTemplateSubscription({
   userName,
   expirationDate,
   timeLeft,
+  kind = 'reminder',
 }: TemplateProps): string {
+  const isExpired = kind === 'expired';
+
+  const headline = isExpired
+    ? 'Tu suscripción <span style="color:#3B82F6;">Artiefy</span> ha expirado.'
+    : 'Tu suscripción <span style="color:#3B82F6;">Artiefy</span> está por vencer.';
+
+  const body = isExpired
+    ? '<span style="color:#3B82F6;font-weight:600;">Renueva para recuperar el acceso a tus cursos.</span>'
+    : timeLeft === 'hoy'
+      ? '<span style="color:#3B82F6;font-weight:600;">¡Hoy es el último día!</span>'
+      : `Quedan <span style='color:#3B82F6;font-weight:600;'>${timeLeft}</span> para renovar tu acceso.`;
+
+  const dateLabel = isExpired ? 'Expiró el' : 'Fecha de expiración';
+
   return `
     <html>
       <head>
@@ -61,17 +81,13 @@ export function EmailTemplateSubscription({
               />
               <h1 style="color:#01142B;font-size:2.2rem;font-weight:700;margin-bottom:16px;">¡Hola${userName ? `, ${userName}` : ''}!</h1>
               <p style="color:#01142B;font-size:1.3rem;font-weight:600;margin-bottom:24px;">
-                Tu suscripción <span style="color:#3B82F6;">Artiefy</span> está por vencer.
+                ${headline}
               </p>
               <p style="color:#01142B;font-size:1.1rem;margin-bottom:24px;">
-                ${
-                  timeLeft === 'hoy'
-                    ? '<span style="color:#3B82F6;font-weight:600;">¡Hoy es el último día!</span>'
-                    : `Quedan <span style='color:#3B82F6;font-weight:600;'>${timeLeft}</span> para renovar tu acceso.`
-                }
+                ${body}
               </p>
               <p style="color:#01142B;font-size:1rem;margin-bottom:32px;">
-                Fecha de expiración: <span style="color:#3B82F6;font-weight:600;">${expirationDate}</span>
+                ${dateLabel}: <span style="color:#3B82F6;font-weight:600;">${expirationDate}</span>
               </p>
               <a href="https://artiefy.com/planes" style="
                 display:inline-block;

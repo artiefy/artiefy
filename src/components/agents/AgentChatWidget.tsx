@@ -65,6 +65,7 @@ interface AgentDefinition {
   id: AgentId;
   name: string;
   badge: string;
+  /** Hex, always 6 digits: alpha suffixes are appended to it (`${color}1f`). */
   color: string;
   icon: LucideIcon;
 }
@@ -74,21 +75,21 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
     id: 'artie',
     name: 'Artie',
     badge: 'Guía',
-    color: 'rgb(34, 196, 211)',
+    color: LAUNCHER_COLOR,
     icon: Sparkles,
   },
   tutor: {
     id: 'tutor',
     name: 'Tutor',
     badge: 'Enseñanza',
-    color: 'rgb(251, 189, 35)',
+    color: '#FBBD23',
     icon: Brain,
   },
   coach: {
     id: 'coach',
     name: 'Coach',
     badge: 'Proyectos',
-    color: 'rgb(50, 200, 180)',
+    color: '#32C8B4',
     icon: Rocket,
   },
 };
@@ -586,7 +587,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               'linear-gradient(135deg, rgba(34, 196, 211, 0.06), rgba(124, 59, 237, 0.03), transparent)',
           }}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               aria-label="Historial de chats"
@@ -604,13 +605,36 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               <AlignLeft className="size-4 text-muted-foreground" />
             </button>
 
-            <div className="flex min-w-0 flex-1 flex-col items-center">
-              <div className="flex items-center gap-2">
-                <h3 className="truncate text-sm font-semibold text-foreground">
+            {/* Agent identity: avatar with a live dot, then name and role. */}
+            <div className="relative shrink-0">
+              <div
+                className="flex size-9 items-center justify-center rounded-xl"
+                style={{
+                  background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}14)`,
+                  boxShadow: `inset 0 0 0 1px ${agent.color}33`,
+                }}
+              >
+                <AgentIcon className="size-4" style={{ color: agent.color }} />
+              </div>
+              <span
+                aria-hidden
+                className="
+                  absolute -right-0.5 -bottom-0.5 size-2.5 animate-pulse
+                  rounded-full bg-green-500 ring-2 ring-black/40
+                "
+              />
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col text-left">
+              <div className="flex min-w-0 items-center gap-2">
+                <h3 className="truncate text-sm leading-tight font-semibold text-foreground">
                   {agent.name}
                 </h3>
                 <span
-                  className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                  className="
+                    shrink-0 rounded-full px-2 py-0.5 text-[10px] leading-none
+                    font-medium
+                  "
                   style={{
                     backgroundColor: `${agent.color}1f`,
                     color: agent.color,
@@ -618,34 +642,23 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                 >
                   {agent.badge}
                 </span>
-                <span className="size-2 animate-pulse rounded-full bg-green-500" />
-                <div
-                  className="flex size-8 shrink-0 items-center justify-center rounded-xl"
-                  style={{
-                    background: `linear-gradient(135deg, ${agent.color}40, ${agent.color}14)`,
-                  }}
-                >
-                  <AgentIcon
-                    className="size-4"
-                    style={{ color: agent.color }}
-                  />
-                </div>
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="truncate text-[11px] leading-tight text-muted-foreground">
                 Guía de Artiefy
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1">
-              <button
-                type="button"
-                aria-label="Cerrar chat"
-                onClick={closePanel}
-                className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-              >
-                <X className="size-4 text-muted-foreground" />
-              </button>
-            </div>
+            <button
+              type="button"
+              aria-label="Cerrar chat"
+              onClick={closePanel}
+              className="
+                shrink-0 rounded-lg p-2 transition-colors
+                hover:bg-white/[0.06]
+              "
+            >
+              <X className="size-4 text-muted-foreground" />
+            </button>
           </div>
         </div>
 
@@ -659,24 +672,14 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               <h3 className="text-sm font-semibold text-foreground">
                 Historial de chats
               </h3>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  aria-label="Nueva conversación"
-                  onClick={startNewConversation}
-                  className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-                >
-                  <Plus className="size-4 text-muted-foreground" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Cerrar historial"
-                  onClick={() => setIsHistoryOpen(false)}
-                  className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-                >
-                  <X className="size-4 text-muted-foreground" />
-                </button>
-              </div>
+              <button
+                type="button"
+                aria-label="Cerrar historial"
+                onClick={() => setIsHistoryOpen(false)}
+                className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+              >
+                <X className="size-4 text-muted-foreground" />
+              </button>
             </div>
 
             <div className="scrollbar-minimal flex-1 overflow-y-auto p-3">
@@ -736,6 +739,24 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                 </ul>
               )}
             </div>
+
+            {/* Floating action: starting a new chat is the primary intent here. */}
+            <button
+              type="button"
+              aria-label="Nueva conversación"
+              onClick={startNewConversation}
+              className="
+                absolute right-4 bottom-4 flex size-12 items-center
+                justify-center rounded-full transition-transform
+                hover:scale-105 active:scale-95
+              "
+              style={{
+                background: `linear-gradient(135deg, ${agent.color}, ${agent.color}bf)`,
+                boxShadow: `0 10px 24px -8px ${agent.color}99`,
+              }}
+            >
+              <Plus className="size-5 text-[#04121b]" />
+            </button>
           </div>
         )}
 
