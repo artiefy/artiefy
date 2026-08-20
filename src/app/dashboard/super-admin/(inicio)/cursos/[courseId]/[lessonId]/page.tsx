@@ -113,8 +113,12 @@ const Page: React.FC<{ selectedColor: string }> = () => {
         // Obtener datos del curso para traer nombres completos
         if (data.course?.id) {
           try {
+            // Timeout corto: esta llamada solo trae nombres para mostrar, y
+            // la ruta puede tardar minutos por su integracion con Teams. Sin
+            // esto, la clase nunca termina de cargar.
             const courseResponse = await fetch(
-              `/api/educadores/courses/${data.course.id}`
+              `/api/educadores/courses/${data.course.id}`,
+              { signal: AbortSignal.timeout(6000) }
             );
             if (courseResponse.ok) {
               const courseData = (await courseResponse.json()) as {

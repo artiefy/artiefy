@@ -71,7 +71,7 @@ export async function GET(request: Request) {
     ? transcription
         .map(
           (item) =>
-            `${formatTime(item.start)} ${item.text} ${formatTime(item.end)}`
+            `${formatTime(item.start)} - ${item.text} - ${formatTime(item.end)}`
         )
         .join('\n')
     : String(transcription);

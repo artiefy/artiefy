@@ -6,7 +6,7 @@
 import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { documentEmbeddings } from '~/server/db/schema/embeddings';
+import { documentEmbeddings } from '~/server/db/schema';
 
 import { DocumentWithEmbedding } from './processor';
 
@@ -29,24 +29,48 @@ export interface DatabaseSearchResult {
 }
 
 /**
+ * Dueño de un embedding: o un curso, o un proyecto guiado. Nunca los dos.
+ * La base lo garantiza con el CHECK `document_embeddings_owner_check`.
+ */
+export type EmbeddingOwner =
+  { type: 'course'; id: number } | { type: 'project'; id: number };
+
+/**
+ * Acepta el formato viejo (solo el id del curso) para no romper a los
+ * llamadores que ya existen.
+ */
+function normalizeOwner(
+  owner: string | number | EmbeddingOwner
+): EmbeddingOwner {
+  if (typeof owner === 'string' || typeof owner === 'number') {
+    return { type: 'course', id: Number(owner) };
+  }
+  return owner;
+}
+
+/**
  * Guarda documentos con embeddings en la base de datos
  *
- * @param courseId - ID del curso
+ * @param owner - Curso (id suelto o `{type:'course'}`) o proyecto guiado
  * @param documents - Documentos procesados con embeddings
  * @returns Número de documentos guardados
  */
 export async function saveDocumentEmbeddings(
-  courseId: string,
+  owner: string | number | EmbeddingOwner,
   documents: DocumentWithEmbedding[]
 ): Promise<number> {
   if (documents.length === 0) {
     return 0;
   }
 
+  const { type, id } = normalizeOwner(owner);
+  const isCourse = type === 'course';
+
   try {
     // Preparar datos para inserción
     const valuesToInsert = documents.map((doc) => ({
-      courseId,
+      courseId: isCourse ? id : null,
+      projectId: isCourse ? null : id,
       content: doc.content,
       // Convertir array a string en formato PostgreSQL para vector
       embedding: JSON.stringify(doc.embedding),
@@ -63,13 +87,23 @@ export async function saveDocumentEmbeddings(
       const batch = valuesToInsert.slice(i, i + batchSize);
 
       // Usar SQL raw para insertar con casting correcto del vector
+      // El ON CONFLICT tiene que apuntar al índice parcial correspondiente:
+      // desde la migración 0011 los únicos son
+      //   UNIQUE (course_id, content, chunk_index)  WHERE course_id IS NOT NULL
+      //   UNIQUE (project_id, content, chunk_index) WHERE project_id IS NOT NULL
+      // Un ON CONFLICT sin la cláusula WHERE no encuentra el índice y falla.
+      const conflictTarget = isCourse
+        ? sql`(course_id, content, chunk_index) WHERE course_id IS NOT NULL`
+        : sql`(project_id, content, chunk_index) WHERE project_id IS NOT NULL`;
+
       await db.execute(sql`
-        INSERT INTO document_embeddings (course_id, content, embedding, metadata, source, chunk_index)
+        INSERT INTO document_embeddings (course_id, project_id, content, embedding, metadata, source, chunk_index)
         VALUES ${sql.join(
           batch.map(
             (doc) => sql`
               (
                 ${doc.courseId},
+                ${doc.projectId},
                 ${doc.content},
                 ${doc.embedding}::vector,
                 ${doc.metadata},
@@ -80,8 +114,8 @@ export async function saveDocumentEmbeddings(
           ),
           sql`, `
         )}
-        ON CONFLICT (course_id, content, chunk_index) 
-        DO UPDATE SET 
+        ON CONFLICT ${conflictTarget}
+        DO UPDATE SET
           embedding = EXCLUDED.embedding,
           metadata = EXCLUDED.metadata,
           updated_at = NOW()
@@ -110,14 +144,15 @@ export async function saveDocumentEmbeddings(
  * @returns Array de resultados ordenados por similitud
  */
 export async function searchDocumentEmbeddings(
-  courseId: number,
+  owner: number | EmbeddingOwner,
   queryEmbedding: number[],
   topK: number = 5,
   threshold: number = 0.5
 ): Promise<DatabaseSearchResult[]> {
   try {
-    // Convertir courseId a string para comparación en BD
-    const courseIdStr = String(courseId);
+    const { type, id } = normalizeOwner(owner);
+    const ownerFilter =
+      type === 'course' ? sql`course_id = ${id}` : sql`project_id = ${id}`;
 
     // Ejecutar query raw con Drizzle
     const results = (await db.execute(
@@ -130,7 +165,7 @@ export async function searchDocumentEmbeddings(
         course_id as "courseId",
         1 - (embedding <-> ${'[' + queryEmbedding.join(',') + ']'}::vector) as similarity
       FROM document_embeddings
-      WHERE course_id = ${courseIdStr}
+      WHERE ${ownerFilter}
       ORDER BY embedding <-> ${'[' + queryEmbedding.join(',') + ']'}::vector
       LIMIT ${topK}`
     )) as {
@@ -165,17 +200,25 @@ export async function searchDocumentEmbeddings(
 }
 
 /**
- * Obtiene todos los embeddings de un curso
+ * Obtiene todos los embeddings de un curso o de un proyecto guiado
  *
- * @param courseId - ID del curso
+ * @param owner - Curso (id suelto) o `{type:'project', id}`
  * @returns Array de documentos
  */
-export async function getCourseDocuments(courseId: string) {
+export async function getCourseDocuments(
+  owner: string | number | EmbeddingOwner
+) {
   try {
+    const { type, id } = normalizeOwner(owner);
+
     const results = await db
       .select()
       .from(documentEmbeddings)
-      .where(eq(documentEmbeddings.courseId, courseId));
+      .where(
+        type === 'course'
+          ? eq(documentEmbeddings.courseId, id)
+          : eq(documentEmbeddings.projectId, id)
+      );
 
     return results.map((row) => ({
       ...row,
@@ -198,14 +241,20 @@ export async function getCourseDocuments(courseId: string) {
  * @returns Número de documentos eliminados
  */
 export async function deleteCourseEmbeddings(
-  courseId: string
+  owner: string | number | EmbeddingOwner
 ): Promise<number> {
   try {
+    const { type, id } = normalizeOwner(owner);
+
     const result = await db
       .delete(documentEmbeddings)
-      .where(eq(documentEmbeddings.courseId, courseId));
+      .where(
+        type === 'course'
+          ? eq(documentEmbeddings.courseId, id)
+          : eq(documentEmbeddings.projectId, id)
+      );
 
-    console.log(`✅ Eliminados embeddings del curso ${courseId}`);
+    console.log(`✅ Eliminados embeddings de ${type} ${id}`);
     return result.rowCount || 0;
   } catch (error) {
     console.error('Error eliminando embeddings:', error);
@@ -216,8 +265,14 @@ export async function deleteCourseEmbeddings(
 /**
  * Obtiene estadísticas de embeddings
  */
-export async function getEmbeddingsStats(courseId: string) {
+export async function getEmbeddingsStats(
+  owner: string | number | EmbeddingOwner
+) {
   try {
+    const { type, id } = normalizeOwner(owner);
+    const ownerFilter =
+      type === 'course' ? sql`course_id = ${id}` : sql`project_id = ${id}`;
+
     const result = await db.execute(sql`
       SELECT 
         COUNT(*) as total_chunks,
@@ -225,7 +280,7 @@ export async function getEmbeddingsStats(courseId: string) {
         MIN(created_at) as first_created,
         MAX(updated_at) as last_updated
       FROM document_embeddings
-      WHERE course_id = ${courseId}
+      WHERE ${ownerFilter}
     `);
 
     if (!result.rows || result.rows.length === 0) {

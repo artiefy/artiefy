@@ -10,6 +10,7 @@ import { useUser } from '@clerk/nextjs';
 import {
   Award,
   BookOpen,
+  Brain,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
@@ -61,6 +62,7 @@ import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
+import { ProjectEmbeddingsGenerator } from '~/components/embeddings/ProjectEmbeddingsGenerator';
 import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
 import { ModalFormForum } from '~/components/super-admin/modals/ModalFormForum';
 import { ModalFormGuidedActivity } from '~/components/super-admin/modals/ModalFormGuidedActivity';
@@ -74,7 +76,13 @@ interface GuidedProjectAdminTabsProps {
   project: GuidedProject;
 }
 
-type TabKey = 'proyecto' | 'actividades' | 'recursos' | 'foro' | 'repositorio';
+type TabKey =
+  | 'proyecto'
+  | 'actividades'
+  | 'recursos'
+  | 'foro'
+  | 'repositorio'
+  | 'embeddings';
 
 const splitLines = (value: string | null | undefined): string[] =>
   (value ?? '')
@@ -844,6 +852,11 @@ export function GuidedProjectAdminTabs({
       key: 'repositorio',
       label: 'Repositorio',
       icon: <FaGithub className="size-4" />,
+    },
+    {
+      key: 'embeddings',
+      label: 'Embeddings',
+      icon: <Brain className="size-4" />,
     },
   ];
 
@@ -2631,6 +2644,15 @@ export function GuidedProjectAdminTabs({
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {activeTab === 'embeddings' && (
+              <div className="space-y-6">
+                <ProjectEmbeddingsGenerator
+                  projectId={project.id}
+                  projectTitle={project.title}
+                />
               </div>
             )}
           </div>

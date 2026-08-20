@@ -2179,10 +2179,16 @@ export const documentEmbeddings = pgTable(
     // ID único del documento
     id: serial('id').primaryKey(),
 
-    // ID del curso al que pertenece (para asociar embeddings a cursos)
-    courseId: integer('course_id')
-      .references(() => courses.id, { onDelete: 'cascade' })
-      .notNull(),
+    // Dueño del embedding. Es exactamente uno de los dos: o pertenece a un
+    // curso, o a un proyecto guiado. La base lo garantiza con el CHECK
+    // `document_embeddings_owner_check`.
+    courseId: integer('course_id').references(() => courses.id, {
+      onDelete: 'cascade',
+    }),
+
+    projectId: integer('project_id').references(() => guidedProjects.id, {
+      onDelete: 'cascade',
+    }),
 
     // Contenido del documento/chunk
     content: text('content').notNull(),
@@ -2208,15 +2214,16 @@ export const documentEmbeddings = pgTable(
       .notNull(),
   },
   (table) => [
-    // Índice para búsquedas por curso
+    // Índices para búsquedas por dueño
     index('document_embeddings_course_id_idx').on(table.courseId),
+    index('document_embeddings_project_id_idx').on(table.projectId),
 
-    // Índice único para evitar duplicados (mismo contenido en mismo curso)
-    unique('document_embeddings_unique').on(
-      table.courseId,
-      table.content,
-      table.chunkIndex
-    ),
+    // Los índices únicos son PARCIALES (uno por dueño) y viven en la
+    // migración 0011. No se declaran acá porque drizzle-kit no modela
+    // índices con cláusula WHERE: declararlos sin el filtro haría que un
+    // `generate` posterior intente reemplazarlos por uno global, que no
+    // sirve (en Postgres NULL nunca es igual a NULL, así que no evitaría
+    // duplicados en las filas de proyecto).
   ]
 );
 
@@ -2252,6 +2259,10 @@ export const documentEmbeddingsRelations = relations(
     course: one(courses, {
       fields: [documentEmbeddings.courseId],
       references: [courses.id],
+    }),
+    guidedProject: one(guidedProjects, {
+      fields: [documentEmbeddings.projectId],
+      references: [guidedProjects.id],
     }),
   })
 );

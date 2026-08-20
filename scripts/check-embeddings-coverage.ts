@@ -14,7 +14,7 @@ import { sql } from 'drizzle-orm';
 
 import { db } from '../src/server/db';
 import { courses } from '../src/server/db/schema';
-import { documentEmbeddings } from '../src/server/db/schema/embeddings';
+import { documentEmbeddings } from '../src/server/db/schema';
 
 async function main() {
   const allCourses = await db
