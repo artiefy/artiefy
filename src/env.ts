@@ -55,6 +55,12 @@ export const env = createEnv({
     CRON_SECRET: z.string().min(1),
     SKIP_ENV_VALIDATION: z.boolean().default(false),
 
+    // Servicio propio de transcripcion (Whisper en el VPS). Opcionales a
+    // proposito: si no estan configuradas la app arranca igual y solo falla la
+    // funcion de transcribir, con un mensaje claro.
+    TRANSCRIBE_API_URL: z.url().optional(),
+    TRANSCRIBE_API_KEY: z.string().min(1).optional(),
+
     N8N_BASE_URL: z.url().optional(),
     N8N_WEBHOOK_PATH: z.string().optional(),
     N8N_LICENSE_KEY: z.string().min(1),
@@ -151,6 +157,9 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     CRON_SECRET: process.env.CRON_SECRET,
     SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
+
+    TRANSCRIBE_API_URL: process.env.TRANSCRIBE_API_URL,
+    TRANSCRIBE_API_KEY: process.env.TRANSCRIBE_API_KEY,
 
     N8N_BASE_URL: process.env.N8N_BASE_URL,
     N8N_WEBHOOK_PATH: process.env.N8N_WEBHOOK_PATH,

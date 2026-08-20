@@ -8,29 +8,7 @@ import { eq, sql } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { documentEmbeddings } from '~/server/db/schema';
 
-import type { DocumentWithEmbedding } from './processor';
-
-/**
- * A qué pertenece un chunk. Cada fila de `document_embeddings` cuelga de un
- * curso o de un proyecto guiado, nunca de ambos, así que el scope decide tanto
- * la columna que se llena al indexar como el filtro al buscar.
- */
-export type EmbeddingScope =
-  { kind: 'course'; id: number } | { kind: 'project'; id: number };
-
-export const courseScope = (id: number | string): EmbeddingScope => ({
-  kind: 'course',
-  id: Number(id),
-});
-
-export const projectScope = (id: number | string): EmbeddingScope => ({
-  kind: 'project',
-  id: Number(id),
-});
-
-/** Columna a filtrar según el scope. */
-const scopeColumn = (scope: EmbeddingScope) =>
-  scope.kind === 'course' ? sql`course_id` : sql`project_id`;
+import { DocumentWithEmbedding } from './processor';
 
 /**
  * Interfaz para resultado de búsqueda en BD
@@ -47,51 +25,56 @@ export interface DatabaseSearchResult {
   };
   source: string;
   chunkIndex: number;
-  courseId: number | null;
-  projectId: number | null;
+  courseId: string;
+}
+
+/**
+ * Dueño de un embedding: o un curso, o un proyecto guiado. Nunca los dos.
+ * La base lo garantiza con el CHECK `document_embeddings_owner_check`.
+ */
+export type EmbeddingOwner =
+  { type: 'course'; id: number } | { type: 'project'; id: number };
+
+/**
+ * Acepta el formato viejo (solo el id del curso) para no romper a los
+ * llamadores que ya existen.
+ */
+function normalizeOwner(
+  owner: string | number | EmbeddingOwner
+): EmbeddingOwner {
+  if (typeof owner === 'string' || typeof owner === 'number') {
+    return { type: 'course', id: Number(owner) };
+  }
+  return owner;
 }
 
 /**
  * Guarda documentos con embeddings en la base de datos
  *
- * @param scope - Curso o proyecto guiado al que pertenecen los chunks
+ * @param owner - Curso (id suelto o `{type:'course'}`) o proyecto guiado
  * @param documents - Documentos procesados con embeddings
  * @returns Número de documentos guardados
  */
-export async function saveEmbeddingsForScope(
-  scope: EmbeddingScope,
+export async function saveDocumentEmbeddings(
+  owner: string | number | EmbeddingOwner,
   documents: DocumentWithEmbedding[]
 ): Promise<number> {
   if (documents.length === 0) {
     return 0;
   }
 
-  const courseId = scope.kind === 'course' ? scope.id : null;
-  const projectId = scope.kind === 'project' ? scope.id : null;
-
-  // Cada scope tiene su propio índice único, porque en Postgres los NULL son
-  // distintos entre sí y el índice del otro scope no restringe estas filas.
-  const conflictTarget =
-    scope.kind === 'course'
-      ? sql`(course_id, content, chunk_index)`
-      : sql`(project_id, content, chunk_index)`;
+  const { type, id } = normalizeOwner(owner);
+  const isCourse = type === 'course';
 
   try {
+    // Preparar datos para inserción
     const valuesToInsert = documents.map((doc) => ({
-      courseId,
-      projectId,
+      courseId: isCourse ? id : null,
+      projectId: isCourse ? null : id,
       content: doc.content,
       // Convertir array a string en formato PostgreSQL para vector
       embedding: JSON.stringify(doc.embedding),
-      // El scope va DENTRO de metadata además de en sus columnas: el filtro
-      // del nodo PGVector de n8n solo sabe mirar dentro del JSON de metadata,
-      // no las columnas sueltas. Como string, porque ese filtro compara texto.
-      metadata: JSON.stringify({
-        ...doc.metadata,
-        scope: scope.kind,
-        courseId: courseId === null ? null : String(courseId),
-        projectId: projectId === null ? null : String(projectId),
-      }),
+      metadata: JSON.stringify(doc.metadata),
       source: doc.metadata.source,
       chunkIndex: doc.chunkIndex,
     }));
@@ -104,6 +87,15 @@ export async function saveEmbeddingsForScope(
       const batch = valuesToInsert.slice(i, i + batchSize);
 
       // Usar SQL raw para insertar con casting correcto del vector
+      // El ON CONFLICT tiene que apuntar al índice parcial correspondiente:
+      // desde la migración 0011 los únicos son
+      //   UNIQUE (course_id, content, chunk_index)  WHERE course_id IS NOT NULL
+      //   UNIQUE (project_id, content, chunk_index) WHERE project_id IS NOT NULL
+      // Un ON CONFLICT sin la cláusula WHERE no encuentra el índice y falla.
+      const conflictTarget = isCourse
+        ? sql`(course_id, content, chunk_index) WHERE course_id IS NOT NULL`
+        : sql`(project_id, content, chunk_index) WHERE project_id IS NOT NULL`;
+
       await db.execute(sql`
         INSERT INTO document_embeddings (course_id, project_id, content, embedding, metadata, source, chunk_index)
         VALUES ${sql.join(
@@ -114,7 +106,7 @@ export async function saveEmbeddingsForScope(
                 ${doc.projectId},
                 ${doc.content},
                 ${doc.embedding}::vector,
-                ${doc.metadata}::jsonb,
+                ${doc.metadata},
                 ${doc.source},
                 ${doc.chunkIndex}
               )
@@ -130,6 +122,9 @@ export async function saveEmbeddingsForScope(
       `);
 
       inserted += batch.length;
+      console.log(
+        `✅ Insertados ${inserted}/${valuesToInsert.length} documentos`
+      );
     }
 
     return inserted;
@@ -140,79 +135,64 @@ export async function saveEmbeddingsForScope(
 }
 
 /**
- * Guarda embeddings de un curso.
+ * Busca documentos similares usando búsqueda vectorial
  *
- * @deprecated Usar `saveEmbeddingsForScope` con `courseScope(id)`.
- */
-export async function saveDocumentEmbeddings(
-  courseId: string | number,
-  documents: DocumentWithEmbedding[]
-): Promise<number> {
-  return saveEmbeddingsForScope(courseScope(courseId), documents);
-}
-
-/**
- * Busca documentos similares usando búsqueda vectorial dentro de un scope
- *
- * @param scope - Curso o proyecto guiado en el que buscar
+ * @param courseId - ID del curso
  * @param queryEmbedding - Vector de embedding de la query
  * @param topK - Número de resultados (default: 5)
- * @param threshold - Similitud mínima, de 0 a 1 (default: 0, sin filtrar).
- *   La versión anterior recibía este parámetro y NUNCA lo aplicaba; ahora sí,
- *   así que un llamador que mande 0.5 puede recibir menos resultados que antes.
+ * @param threshold - Similitud mínima (default: 0.5)
  * @returns Array de resultados ordenados por similitud
  */
-export async function searchEmbeddingsInScope(
-  scope: EmbeddingScope,
+export async function searchDocumentEmbeddings(
+  owner: number | EmbeddingOwner,
   queryEmbedding: number[],
-  topK = 5,
-  threshold = 0
+  topK: number = 5,
+  threshold: number = 0.5
 ): Promise<DatabaseSearchResult[]> {
   try {
-    const vector = `[${queryEmbedding.join(',')}]`;
+    const { type, id } = normalizeOwner(owner);
+    const ownerFilter =
+      type === 'course' ? sql`course_id = ${id}` : sql`project_id = ${id}`;
 
+    // Ejecutar query raw con Drizzle
     const results = (await db.execute(
-      sql`SELECT
+      sql`SELECT 
         id,
         content,
         metadata,
         source,
         chunk_index as "chunkIndex",
         course_id as "courseId",
-        project_id as "projectId",
-        1 - (embedding <-> ${vector}::vector) as similarity
+        1 - (embedding <-> ${'[' + queryEmbedding.join(',') + ']'}::vector) as similarity
       FROM document_embeddings
-      WHERE ${scopeColumn(scope)} = ${scope.id}
-      ORDER BY embedding <-> ${vector}::vector
+      WHERE ${ownerFilter}
+      ORDER BY embedding <-> ${'[' + queryEmbedding.join(',') + ']'}::vector
       LIMIT ${topK}`
     )) as {
-      rows: {
+      rows: Array<{
         id: number;
         content: string;
         metadata: string;
         source: string;
         chunkIndex: number;
-        courseId: number | null;
-        projectId: number | null;
+        courseId: string;
         similarity: number;
-      }[];
+      }>;
     };
 
-    return results.rows
-      .map((row) => ({
-        id: row.id,
-        content: row.content,
-        similarity: Number(row.similarity),
-        metadata:
-          typeof row.metadata === 'string'
-            ? (JSON.parse(row.metadata) as DatabaseSearchResult['metadata'])
-            : row.metadata,
-        source: row.source,
-        chunkIndex: row.chunkIndex,
-        courseId: row.courseId,
-        projectId: row.projectId,
-      }))
-      .filter((result) => result.similarity >= threshold);
+    // Convertir resultados a nuestra interfaz
+    return results.rows.map((row) => ({
+      id: row.id,
+      content: row.content,
+      similarity: Number(row.similarity),
+      metadata:
+        typeof row.metadata === 'string'
+          ? JSON.parse(row.metadata)
+          : row.metadata,
+      source: row.source,
+      chunkIndex: row.chunkIndex,
+      courseId: row.courseId,
+    }));
   } catch (error) {
     console.error('Error buscando embeddings:', error);
     throw error;
@@ -220,104 +200,87 @@ export async function searchEmbeddingsInScope(
 }
 
 /**
- * Busca dentro de un curso.
+ * Obtiene todos los embeddings de un curso o de un proyecto guiado
  *
- * @deprecated Usar `searchEmbeddingsInScope` con `courseScope(id)`.
+ * @param owner - Curso (id suelto) o `{type:'project', id}`
+ * @returns Array de documentos
  */
-export async function searchDocumentEmbeddings(
-  courseId: number | string,
-  queryEmbedding: number[],
-  topK = 5,
-  threshold = 0
-): Promise<DatabaseSearchResult[]> {
-  return searchEmbeddingsInScope(
-    courseScope(courseId),
-    queryEmbedding,
-    topK,
-    threshold
-  );
-}
-
-/**
- * Obtiene todos los embeddings de un curso o proyecto
- */
-export async function getScopeDocuments(scope: EmbeddingScope) {
+export async function getCourseDocuments(
+  owner: string | number | EmbeddingOwner
+) {
   try {
-    const column =
-      scope.kind === 'course'
-        ? documentEmbeddings.courseId
-        : documentEmbeddings.projectId;
+    const { type, id } = normalizeOwner(owner);
 
     const results = await db
       .select()
       .from(documentEmbeddings)
-      .where(eq(column, scope.id));
+      .where(
+        type === 'course'
+          ? eq(documentEmbeddings.courseId, id)
+          : eq(documentEmbeddings.projectId, id)
+      );
 
     return results.map((row) => ({
       ...row,
       metadata:
         typeof row.metadata === 'string'
-          ? (JSON.parse(row.metadata) as Record<string, unknown>)
+          ? JSON.parse(row.metadata)
           : row.metadata,
     }));
   } catch (error) {
-    console.error('Error obteniendo documentos del scope:', error);
+    console.error('Error obteniendo documentos del curso:', error);
     throw error;
   }
 }
 
-/** @deprecated Usar `getScopeDocuments` con `courseScope(id)`. */
-export async function getCourseDocuments(courseId: string | number) {
-  return getScopeDocuments(courseScope(courseId));
-}
-
 /**
- * Elimina todos los embeddings de un curso o proyecto
+ * Elimina todos los embeddings de un curso
  * (útil para regenerar)
  *
+ * @param courseId - ID del curso
  * @returns Número de documentos eliminados
  */
-export async function deleteScopeEmbeddings(
-  scope: EmbeddingScope
+export async function deleteCourseEmbeddings(
+  owner: string | number | EmbeddingOwner
 ): Promise<number> {
   try {
-    const column =
-      scope.kind === 'course'
-        ? documentEmbeddings.courseId
-        : documentEmbeddings.projectId;
+    const { type, id } = normalizeOwner(owner);
 
     const result = await db
       .delete(documentEmbeddings)
-      .where(eq(column, scope.id));
+      .where(
+        type === 'course'
+          ? eq(documentEmbeddings.courseId, id)
+          : eq(documentEmbeddings.projectId, id)
+      );
 
-    console.log(`✅ Eliminados embeddings de ${scope.kind} ${scope.id}`);
-    return result.rowCount ?? 0;
+    console.log(`✅ Eliminados embeddings de ${type} ${id}`);
+    return result.rowCount || 0;
   } catch (error) {
     console.error('Error eliminando embeddings:', error);
     throw error;
   }
 }
 
-/** @deprecated Usar `deleteScopeEmbeddings` con `courseScope(id)`. */
-export async function deleteCourseEmbeddings(
-  courseId: string | number
-): Promise<number> {
-  return deleteScopeEmbeddings(courseScope(courseId));
-}
-
 /**
- * Obtiene estadísticas de embeddings de un curso o proyecto
+ * Obtiene estadísticas de embeddings
  */
-export async function getScopeEmbeddingsStats(scope: EmbeddingScope) {
+export async function getEmbeddingsStats(
+  owner: string | number | EmbeddingOwner
+) {
   try {
+    const { type, id } = normalizeOwner(owner);
+    const ownerFilter =
+      type === 'course' ? sql`course_id = ${id}` : sql`project_id = ${id}`;
+
     const result = await db.execute(sql`
-      SELECT
+      SELECT 
         COUNT(*) as total_chunks,
         COUNT(DISTINCT source) as total_sources,
         MIN(created_at) as first_created,
         MAX(updated_at) as last_updated
       FROM document_embeddings
-      WHERE ${scopeColumn(scope)} = ${scope.id}
+      WHERE ${ownerFilter}
     `);
 
     if (!result.rows || result.rows.length === 0) {
@@ -352,18 +315,15 @@ export async function getScopeEmbeddingsStats(scope: EmbeddingScope) {
   }
 }
 
-/** @deprecated Usar `getScopeEmbeddingsStats` con `courseScope(id)`. */
-export async function getEmbeddingsStats(courseId: string | number) {
-  return getScopeEmbeddingsStats(courseScope(courseId));
-}
-
 /**
  * Limpia embeddings antiguos (más de X días)
  *
  * @param daysOld - Eliminar documentos más antiguos que esto (default: 30)
  * @returns Número de documentos eliminados
  */
-export async function cleanOldEmbeddings(daysOld = 30): Promise<number> {
+export async function cleanOldEmbeddings(
+  daysOld: number = 30
+): Promise<number> {
   try {
     const result = await db.execute(sql`
       DELETE FROM document_embeddings
@@ -371,7 +331,7 @@ export async function cleanOldEmbeddings(daysOld = 30): Promise<number> {
     `);
 
     console.log(`✅ Eliminados ${result.rowCount} embeddings antiguos`);
-    return result.rowCount ?? 0;
+    return result.rowCount || 0;
   } catch (error) {
     console.error('Error limpiando embeddings antiguos:', error);
     throw error;

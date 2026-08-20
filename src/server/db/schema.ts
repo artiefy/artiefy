@@ -2179,13 +2179,13 @@ export const documentEmbeddings = pgTable(
     // ID único del documento
     id: serial('id').primaryKey(),
 
-    // Curso al que pertenece. Nulo cuando el chunk es de un proyecto guiado:
-    // cada fila cuelga de uno de los dos, nunca de ambos.
+    // Dueño del embedding. Es exactamente uno de los dos: o pertenece a un
+    // curso, o a un proyecto guiado. La base lo garantiza con el CHECK
+    // `document_embeddings_owner_check`.
     courseId: integer('course_id').references(() => courses.id, {
       onDelete: 'cascade',
     }),
 
-    // Proyecto guiado al que pertenece. Nulo cuando el chunk es de un curso.
     projectId: integer('project_id').references(() => guidedProjects.id, {
       onDelete: 'cascade',
     }),
@@ -2196,10 +2196,8 @@ export const documentEmbeddings = pgTable(
     // Vector de embedding (1536 dimensiones para text-embedding-3-small)
     embedding: vector('embedding', { dimensions: 1536 }).notNull(),
 
-    // Metadatos (página, sección, autor, y el scope: courseId / projectId).
-    // jsonb y no text: el filtro de metadata del nodo PGVector de n8n usa
-    // operadores JSON (`->>`), que no existen sobre una columna de texto.
-    metadata: jsonb('metadata').default({}),
+    // Metadatos en JSON (página, sección, autor, etc.)
+    metadata: text('metadata').default('{}'), // JSON como string
 
     // Fuente del documento (PDF, DOCX, TXT, URL, etc.)
     source: text('source').notNull(),
@@ -2216,27 +2214,16 @@ export const documentEmbeddings = pgTable(
       .notNull(),
   },
   (table) => [
-    // Índice para búsquedas por curso
+    // Índices para búsquedas por dueño
     index('document_embeddings_course_id_idx').on(table.courseId),
-
-    // Índice para búsquedas por proyecto guiado
     index('document_embeddings_project_id_idx').on(table.projectId),
 
-    // Índice único para evitar duplicados (mismo contenido en mismo curso)
-    unique('document_embeddings_unique').on(
-      table.courseId,
-      table.content,
-      table.chunkIndex
-    ),
-
-    // El mismo control para proyectos. Hacen falta los dos: en Postgres los
-    // NULL son distintos entre sí, así que el índice de curso no restringe
-    // nada en las filas de proyecto (course_id nulo) ni al revés.
-    unique('document_embeddings_project_unique').on(
-      table.projectId,
-      table.content,
-      table.chunkIndex
-    ),
+    // Los índices únicos son PARCIALES (uno por dueño) y viven en la
+    // migración 0011. No se declaran acá porque drizzle-kit no modela
+    // índices con cláusula WHERE: declararlos sin el filtro haría que un
+    // `generate` posterior intente reemplazarlos por uno global, que no
+    // sirve (en Postgres NULL nunca es igual a NULL, así que no evitaría
+    // duplicados en las filas de proyecto).
   ]
 );
 
@@ -2273,7 +2260,7 @@ export const documentEmbeddingsRelations = relations(
       fields: [documentEmbeddings.courseId],
       references: [courses.id],
     }),
-    project: one(guidedProjects, {
+    guidedProject: one(guidedProjects, {
       fields: [documentEmbeddings.projectId],
       references: [guidedProjects.id],
     }),

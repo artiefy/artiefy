@@ -22,6 +22,10 @@
     "src/app/api/cron/whatsapp/route.ts": {
       "maxDuration": 60,
       "regions": ["iad1"]
+    },
+    "src/app/api/cron/transcriptions/route.ts": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
     }
   },
   "trailingSlash": false,
@@ -33,6 +37,10 @@
     {
       "path": "/api/cron/whatsapp",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/transcriptions",
+      "schedule": "*/5 * * * *"
     }
   ],
   "headers": [

@@ -89,3 +89,7 @@ pnpm-lock.yaml
 
 # Local audit reports
 security_best_practices_report.md
+
+# Exports temporales de transcripciones (generados al probar el servicio)
+/lesson-*.json
+/transcripcion-*.txt

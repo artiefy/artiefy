@@ -20,6 +20,7 @@ import { MdVideoLibrary } from 'react-icons/md';
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/super-admin/(inicio)/cursos/page';
+import { TranscribeCourseButton } from '~/components/super-admin/transcriptions/TranscriptionButtons';
 import { Switch } from '~/components/super-admin/ui/switch';
 
 import ModalFormLessons from '../modals/ModalFormLessons';
@@ -309,13 +310,16 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           </span>
           Clases del Curso
         </div>
-        <div
-          className="
-            inline-flex items-center rounded-full border border-primary/30
-            px-2.5 py-0.5 text-xs font-semibold text-primary
-          "
-        >
-          {lessons.length} clases
+        <div className="flex items-center gap-3">
+          <TranscribeCourseButton courseId={courseId} />
+          <div
+            className="
+              inline-flex items-center rounded-full border border-primary/30
+              px-2.5 py-0.5 text-xs font-semibold text-primary
+            "
+          >
+            {lessons.length} clases
+          </div>
         </div>
       </h2>
 
