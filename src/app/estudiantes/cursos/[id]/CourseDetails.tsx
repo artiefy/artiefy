@@ -45,6 +45,7 @@ import {
   DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { useCourseGradeSummary } from '~/hooks/useCourseGradeSummary';
+import { openAgentChatFor } from '~/lib/agents/agentChatBus';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
 import { sortLessons } from '~/utils/lessonSorting';
@@ -1116,6 +1117,12 @@ export default function CourseDetails({
         description: 'Ya tienes acceso al contenido del curso.',
       });
       setIsEnrolled(true);
+      // Meet the learner right after they get access: the chat opens on this
+      // course, so the first question already has the right context.
+      openAgentChatFor({
+        scope: { kind: 'course', id: courseId, title: course.title },
+        greeting: `¡Bienvenido a ${course.title}! Soy tu Tutor y conozco el contenido de este curso. ¿Quieres que te ayude a arrancar?`,
+      });
       setTotalStudents((prev) => (prev ?? 0) + 1);
       const enrollmentKey = `/api/estudiantes/courses/${courseId}/is-enrolled?userId=${encodeURIComponent(
         userId

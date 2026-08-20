@@ -2179,10 +2179,16 @@ export const documentEmbeddings = pgTable(
     // ID único del documento
     id: serial('id').primaryKey(),
 
-    // ID del curso al que pertenece (para asociar embeddings a cursos)
-    courseId: integer('course_id')
-      .references(() => courses.id, { onDelete: 'cascade' })
-      .notNull(),
+    // Curso al que pertenece. Nulo cuando el chunk es de un proyecto guiado:
+    // cada fila cuelga de uno de los dos, nunca de ambos.
+    courseId: integer('course_id').references(() => courses.id, {
+      onDelete: 'cascade',
+    }),
+
+    // Proyecto guiado al que pertenece. Nulo cuando el chunk es de un curso.
+    projectId: integer('project_id').references(() => guidedProjects.id, {
+      onDelete: 'cascade',
+    }),
 
     // Contenido del documento/chunk
     content: text('content').notNull(),
@@ -2190,8 +2196,10 @@ export const documentEmbeddings = pgTable(
     // Vector de embedding (1536 dimensiones para text-embedding-3-small)
     embedding: vector('embedding', { dimensions: 1536 }).notNull(),
 
-    // Metadatos en JSON (página, sección, autor, etc.)
-    metadata: text('metadata').default('{}'), // JSON como string
+    // Metadatos (página, sección, autor, y el scope: courseId / projectId).
+    // jsonb y no text: el filtro de metadata del nodo PGVector de n8n usa
+    // operadores JSON (`->>`), que no existen sobre una columna de texto.
+    metadata: jsonb('metadata').default({}),
 
     // Fuente del documento (PDF, DOCX, TXT, URL, etc.)
     source: text('source').notNull(),
@@ -2211,9 +2219,21 @@ export const documentEmbeddings = pgTable(
     // Índice para búsquedas por curso
     index('document_embeddings_course_id_idx').on(table.courseId),
 
+    // Índice para búsquedas por proyecto guiado
+    index('document_embeddings_project_id_idx').on(table.projectId),
+
     // Índice único para evitar duplicados (mismo contenido en mismo curso)
     unique('document_embeddings_unique').on(
       table.courseId,
+      table.content,
+      table.chunkIndex
+    ),
+
+    // El mismo control para proyectos. Hacen falta los dos: en Postgres los
+    // NULL son distintos entre sí, así que el índice de curso no restringe
+    // nada en las filas de proyecto (course_id nulo) ni al revés.
+    unique('document_embeddings_project_unique').on(
+      table.projectId,
       table.content,
       table.chunkIndex
     ),
@@ -2252,6 +2272,10 @@ export const documentEmbeddingsRelations = relations(
     course: one(courses, {
       fields: [documentEmbeddings.courseId],
       references: [courses.id],
+    }),
+    project: one(guidedProjects, {
+      fields: [documentEmbeddings.projectId],
+      references: [guidedProjects.id],
     }),
   })
 );

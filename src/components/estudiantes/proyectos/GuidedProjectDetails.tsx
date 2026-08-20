@@ -61,6 +61,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
+import { openAgentChatFor } from '~/lib/agents/agentChatBus';
 import { cn } from '~/lib/utils';
 import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollInGuidedProject';
 import { unenrollFromGuidedProject } from '~/server/actions/estudiantes/guided-projects/unenrollFromGuidedProject';
@@ -359,6 +360,12 @@ export function GuidedProjectDetails({
         toast.success(result.message);
         setIsEnrolled(true);
         setActivePill('actividades');
+        // Meet the learner right after they get access: the chat opens on this
+        // project, so the first question already has the right context.
+        openAgentChatFor({
+          scope: { kind: 'project', id: project.id, title: project.title },
+          greeting: `¡Listo! Soy tu Coach y te acompaño en "${project.title}". ¿Quieres que planeemos juntos la primera actividad?`,
+        });
         router.refresh();
       } else {
         toast.error(result.message);
