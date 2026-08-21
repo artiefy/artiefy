@@ -68,6 +68,7 @@ import { ModalFormForum } from '~/components/super-admin/modals/ModalFormForum';
 import { ModalFormGuidedActivity } from '~/components/super-admin/modals/ModalFormGuidedActivity';
 import { ModalFormGuidedObjective } from '~/components/super-admin/modals/ModalFormGuidedObjective';
 import { ModalGuidedProjectForm } from '~/components/super-admin/modals/ModalGuidedProjectForm';
+import { TranscribeProjectButton } from '~/components/super-admin/transcriptions/TranscriptionButtons';
 import { plansPersonas } from '~/types/plans';
 
 import type { GuidedProject } from '~/types';
@@ -2653,6 +2654,18 @@ export function GuidedProjectAdminTabs({
                   projectId={project.id}
                   projectTitle={project.title}
                 />
+
+                <div className="rounded-2xl border border-[#22C4D3]/30 bg-[#0b1f3d]/60 p-6">
+                  <h3 className="text-lg font-bold text-white">
+                    Transcripciones del proyecto
+                  </h3>
+                  <p className="mt-1 mb-4 text-sm text-white/60">
+                    Transcribe el video del proyecto, los de cada objetivo y los
+                    de instrucción de cada actividad. Se procesan en segundo
+                    plano, uno por vez.
+                  </p>
+                  <TranscribeProjectButton projectId={project.id} />
+                </div>
               </div>
             )}
           </div>

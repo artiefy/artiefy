@@ -30,6 +30,7 @@ import QuestionVOFList from '~/components/educators/layout/VerdaderoOFalseList';
 import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card } from '~/components/educators/ui/card';
+import { TranscribeVideoButton } from '~/components/super-admin/transcriptions/TranscriptionButtons';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -481,7 +482,23 @@ export default function GuidedActivityDetailPage({
               {activity.revisada ? 'Revisada' : 'Sin revisar'}
             </Badge>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {activityIdNumber !== null && activity.instructionVideoKey && (
+              <div className="flex w-48 flex-col gap-1.5">
+                <TranscribeVideoButton
+                  type="activity"
+                  contentId={activityIdNumber}
+                  label="Transcribir instrucción"
+                />
+                <a
+                  href={`/api/super-admin/transcriptions/download?type=activity&contentId=${activityIdNumber}`}
+                  download
+                  className="inline-block w-full rounded-lg border border-[#22C4D3]/40 px-2 py-1.5 text-center text-xs font-medium text-[#22C4D3] transition-colors hover:bg-[#22C4D3]/10"
+                >
+                  📄 Descargar transcripción
+                </a>
+              </div>
+            )}
             <Button
               size="sm"
               variant="outline"
