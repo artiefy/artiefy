@@ -36,6 +36,25 @@ const ANON_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+/**
+ * Tarjeta de bloqueo que el chat pinta en lugar del compositor. Tiene la misma
+ * forma que la de cuota agotada, así el widget la renderiza sin ramas nuevas.
+ */
+interface AccessNotice {
+  title: string;
+  body: string;
+  primary: { label: string; href: string } | null;
+  secondary: { label: string; href: string } | null;
+}
+
+/**
+ * Un muro cerrado no vende nada. Cada bloqueo explica qué falta y ofrece el
+ * camino más corto para desbloquearlo, que casi siempre es Premium.
+ */
+function accessDenied(status: number, notice: AccessNotice) {
+  return NextResponse.json({ error: notice.title, notice }, { status });
+}
+
 function toQuotaPayload(state: AgentQuotaState) {
   return {
     tier: state.tier,
@@ -209,7 +228,14 @@ export async function POST(request: NextRequest) {
   // Both describe what the learner is enrolled in, so both are personal data
   // and always require a session.
   if ((hasProjectContext || hasCourseContext) && !userId) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    return withAnonCookie(
+      accessDenied(401, {
+        title: 'Necesito saber quién eres',
+        body: 'Para acompañarte con tu curso o tu proyecto tengo que ver tu progreso, y para eso necesitas una cuenta. Créala gratis y estrenas 10 días de Premium.',
+        primary: { label: 'Crear cuenta gratis', href: '/sign-up' },
+        secondary: { label: 'Ya tengo cuenta', href: '/sign-in' },
+      })
+    );
   }
 
   let context = '';
@@ -220,10 +246,15 @@ export async function POST(request: NextRequest) {
 
     // Enrollment gate: the agents only ever see projects the learner owns.
     if (!project?.enrolled) {
-      return NextResponse.json(
-        { error: 'No estás inscrito en este proyecto' },
-        { status: 403 }
-      );
+      return accessDenied(403, {
+        title: 'Este proyecto guiado es Premium',
+        body: 'Los proyectos guiados vienen conmigo de mentor: te acompaño actividad por actividad hasta que lo termines. Necesitas un plan Pro o Premium activo para entrar.',
+        primary: { label: 'Quiero Premium', href: '/planes' },
+        secondary: {
+          label: 'Ver el proyecto',
+          href: `/estudiantes/proyectos-guiados/${projectId}`,
+        },
+      });
     }
 
     context = buildProjectContext(
@@ -235,10 +266,15 @@ export async function POST(request: NextRequest) {
     // Same rule as projects: the agents only ever discuss courses the learner
     // actually has.
     if (!(await isUserEnrolled(courseId, userId))) {
-      return NextResponse.json(
-        { error: 'No estás inscrito en este curso' },
-        { status: 403 }
-      );
+      return accessDenied(403, {
+        title: 'Todavía no estás en este curso',
+        body: 'Puedo resolverte lo que quieras del contenido de este curso, pero primero tienes que estar inscrito. Con Premium entras a todos sin pagarlos uno por uno.',
+        primary: { label: 'Quiero Premium', href: '/planes' },
+        secondary: {
+          label: 'Ver el curso',
+          href: `/estudiantes/cursos/${courseId}`,
+        },
+      });
     }
 
     context = await buildCourseContext(courseId);
