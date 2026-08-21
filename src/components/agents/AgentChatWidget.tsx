@@ -601,16 +601,25 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         agent?: AgentId;
         error?: string;
         quota?: AgentQuotaPayload;
+        notice?: AgentQuotaNotice;
       };
 
-      // Allowance exhausted: drop the optimistic message — it never reached
-      // the agent — and show the upgrade notice instead of a reply.
-      if (response.status === 429 && data.quota) {
+      // Blocked: no session, not enrolled, or allowance spent. In every case
+      // the message never reached the agent, so the optimistic bubble goes
+      // away and the draft comes back — the learner types nothing twice.
+      // What replaces the composer is the upgrade card, not an error line: a
+      // wall that only says "no" converts nobody.
+      const blockingNotice =
+        response.status === 429 && data.quota
+          ? buildQuotaNotice(data.quota)
+          : (data.notice ?? null);
+
+      if (blockingNotice) {
         setMessages((prev) =>
           prev.filter((message) => message.id !== userMessageId)
         );
         setDraft(text);
-        setQuotaNotice(buildQuotaNotice(data.quota));
+        setQuotaNotice(blockingNotice);
         return;
       }
 
