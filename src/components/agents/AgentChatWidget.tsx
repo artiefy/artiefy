@@ -30,6 +30,7 @@ import {
   Sparkles,
   Target,
   Trash2,
+  Users,
   X,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -76,6 +77,16 @@ const HISTORY_STORAGE_KEY = 'artiefy.agent-chat.history';
 const MAX_STORED_CONVERSATIONS = 20;
 
 export type AgentId = 'artie' | 'tutor' | 'coach';
+
+/** Order of the manual switcher: the orchestrator first, then the specialists. */
+const AGENT_ORDER: AgentId[] = ['artie', 'tutor', 'coach'];
+
+/** What each one is for, shown under its name in the switcher. */
+const AGENT_ROLES: Record<AgentId, string> = {
+  artie: 'Consultas generales',
+  tutor: 'Cursos',
+  coach: 'Proyectos guiados',
+};
 
 interface AgentDefinition {
   id: AgentId;
@@ -227,6 +238,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(false);
   const [history, setHistory] = useState<StoredConversation[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [quotaNotice, setQuotaNotice] = useState<AgentQuotaNotice | null>(null);
@@ -805,6 +817,20 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
 
             <button
               type="button"
+              aria-label="Cambiar de agente"
+              aria-expanded={isAgentMenuOpen}
+              title="Cambiar de agente"
+              onClick={() => setIsAgentMenuOpen((prev) => !prev)}
+              className="
+                shrink-0 rounded-lg p-2 transition-colors
+                hover:bg-white/[0.06]
+              "
+            >
+              <Users className="size-4 text-muted-foreground" />
+            </button>
+
+            <button
+              type="button"
               aria-label="Cerrar chat"
               onClick={dismissChat}
               className="
@@ -815,6 +841,66 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               <X className="size-4 text-muted-foreground" />
             </button>
           </div>
+
+          {/* Manual override. The orchestrator still routes on its own; this
+              just says who should take the next message. */}
+          {isAgentMenuOpen && (
+            <div
+              className="
+                holo-glass absolute top-full right-3 z-[75] mt-1 w-56
+                overflow-hidden rounded-xl border
+              "
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            >
+              {AGENT_ORDER.map((optionId) => {
+                const option = AGENTS[optionId];
+                const OptionIcon = option.icon;
+
+                return (
+                  <button
+                    key={optionId}
+                    type="button"
+                    onClick={() => {
+                      setAgentId(optionId);
+                      setIsAgentMenuOpen(false);
+                    }}
+                    className="
+                      flex w-full items-center gap-2.5 px-3 py-2.5 text-left
+                      transition-colors
+                      hover:bg-white/[0.06]
+                    "
+                  >
+                    <span
+                      className="
+                        flex size-7 shrink-0 items-center justify-center
+                        rounded-lg
+                      "
+                      style={{ background: `${option.color}26` }}
+                    >
+                      <OptionIcon
+                        className="size-3.5"
+                        style={{ color: option.color }}
+                      />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-foreground">
+                        {option.name}
+                      </span>
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {AGENT_ROLES[optionId]}
+                      </span>
+                    </span>
+                    {optionId === agentId && (
+                      <CircleCheck
+                        className="size-4 shrink-0"
+                        style={{ color: option.color }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Chat history */}

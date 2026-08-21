@@ -17,6 +17,7 @@ import { courses } from '~/server/db/schema';
 
 interface AgentChatRequestBody {
   message?: unknown;
+  agent?: unknown;
   projectId?: unknown;
   courseId?: unknown;
   activityId?: unknown;
@@ -192,6 +193,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Manual pick from the header switcher. It is a preference, not an order:
+  // the orchestrator still routes on its own when the ask clearly belongs to
+  // someone else.
+  const requestedAgent: AgentId = isAgentId(body.agent) ? body.agent : 'artie';
+
   const projectId = Number(body.projectId);
   const courseId = Number(body.courseId);
   const activityId = Number(body.activityId);
@@ -274,6 +280,7 @@ export async function POST(request: NextRequest) {
         message,
         sessionId,
         context,
+        agent: requestedAgent,
         courseId: hasCourseContext ? courseId : null,
         projectId: hasProjectContext ? projectId : null,
       }),
