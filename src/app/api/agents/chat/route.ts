@@ -1,8 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 import { env } from '~/env';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
 import {
   type AgentQuotaState,
@@ -10,10 +12,14 @@ import {
   refundAgentQuota,
   resolveAgentQuotaTier,
 } from '~/server/agents/agentChatQuota';
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 
 interface AgentChatRequestBody {
   message?: unknown;
+  agent?: unknown;
   projectId?: unknown;
+  courseId?: unknown;
   activityId?: unknown;
 }
 
@@ -108,6 +114,28 @@ function buildProjectContext(
   return lines.join('\n');
 }
 
+/**
+ * Course counterpart of `buildProjectContext`. Deliberately thin: it only
+ * names the course the learner asked about, which is enough for the agent to
+ * stay on topic. The course material itself reaches the agent through the
+ * retrieval step in the n8n workflow, not through this block.
+ */
+async function buildCourseContext(courseId: number): Promise<string> {
+  const course = await db.query.courses.findFirst({
+    where: eq(courses.id, courseId),
+    columns: { title: true, description: true },
+  });
+
+  if (!course) return '';
+
+  const lines = [`Curso: ${course.title}`];
+  if (course.description) {
+    lines.push(`Descripción: ${course.description}`);
+  }
+
+  return lines.join('\n');
+}
+
 export async function POST(request: NextRequest) {
   const {
     webhookUrl: WEBHOOK_URL,
@@ -165,12 +193,22 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Manual pick from the header switcher. It is a preference, not an order:
+  // the orchestrator still routes on its own when the ask clearly belongs to
+  // someone else.
+  const requestedAgent: AgentId = isAgentId(body.agent) ? body.agent : 'artie';
+
   const projectId = Number(body.projectId);
+  const courseId = Number(body.courseId);
   const activityId = Number(body.activityId);
   const hasProjectContext = Number.isFinite(projectId) && projectId > 0;
+  // A project always wins: a conversation is about one subject at a time.
+  const hasCourseContext =
+    !hasProjectContext && Number.isFinite(courseId) && courseId > 0;
 
-  // Guided-project context is personal data, so it always requires a session.
-  if (hasProjectContext && !userId) {
+  // Both describe what the learner is enrolled in, so both are personal data
+  // and always require a session.
+  if ((hasProjectContext || hasCourseContext) && !userId) {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   }
 
@@ -193,6 +231,19 @@ export async function POST(request: NextRequest) {
       Number.isFinite(activityId) && activityId > 0 ? activityId : null
     );
     sessionId = `${userId}:project:${projectId}`;
+  } else if (hasCourseContext && userId) {
+    // Same rule as projects: the agents only ever discuss courses the learner
+    // actually has.
+    if (!(await isUserEnrolled(courseId, userId))) {
+      return NextResponse.json(
+        { error: 'No estás inscrito en este curso' },
+        { status: 403 }
+      );
+    }
+
+    context = await buildCourseContext(courseId);
+    // Its own thread, so course questions never bleed into the general chat.
+    sessionId = `${userId}:course:${courseId}`;
   }
 
   // Plan metadata is not in the session token yet, so it is read from Clerk.
@@ -223,7 +274,16 @@ export async function POST(request: NextRequest) {
       },
       // No agent is requested: the orchestrator picks the specialist from what
       // the learner is asking for, and reports back which one answered.
-      body: JSON.stringify({ message, sessionId, context }),
+      // `courseId`/`projectId` are the retrieval scope: they tell the workflow
+      // which documents its RAG step may read. Both null is a general question.
+      body: JSON.stringify({
+        message,
+        sessionId,
+        context,
+        agent: requestedAgent,
+        courseId: hasCourseContext ? courseId : null,
+        projectId: hasProjectContext ? projectId : null,
+      }),
       signal: AbortSignal.timeout(60_000),
     });
 

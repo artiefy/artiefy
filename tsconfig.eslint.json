@@ -1,31 +1,38 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.json",
+  // Reduced project used only by eslint.cli.config.mjs for type-aware rules.
+  //
+  // It stays narrower than tsconfig.json on purpose: measured over
+  // src/app/dashboard it is faster than `projectService: true` (62s vs 78s),
+  // because the project service loads the full tsconfig instead of this set.
+  //
+  // Config files (next.config.ts, drizzle.config.ts, postcss.config.js,
+  // next-video.config.js) are intentionally absent: eslint.config.mjs already
+  // ignores `**/*.{config,conf}.{js,cjs,mjs,ts}`, so they are never linted and
+  // would only enlarge the program.
+  "include": [
+    "src/**/*",
+    // Ambient declarations. These must stay in the program: src/types/globals.d.ts
+    // declares the `Roles` union ('admin' | 'educador' | 'estudiante' |
+    // 'super-admin'). Excluding them made type-aware ESLint rules see `any`
+    // where `tsc --noEmit` sees real types, so lint and typecheck disagreed.
+    "next-env.d.ts",
+    "video.d.ts",
+    "test-embeddings.ts"
+  ],
   "exclude": [
     "node_modules",
-    ".agents",
-    ".github",
-    ".agents/**",
-    ".github/**",
-    "**/.agents/**",
-    "**/.github/**",
     ".next",
     "dist",
     "build",
+    "out",
     "public",
     "coverage",
     ".vercel",
-    "out",
     "generated",
-    "**/*.d.ts"
-  ],
-  "extends": "./tsconfig.json",
-  "include": [
-    "src/**/*",
-    "app/**/*",
-    "next-env.d.ts",
-    "next-video.config.js",
-    "postcss.config.js",
-    "drizzle.config.ts",
-    "video.d.ts",
-    "test-embeddings.ts"
+    "**/.agents/**",
+    "**/.claude/**",
+    "**/.github/**"
   ]
 }

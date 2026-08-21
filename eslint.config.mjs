@@ -16,8 +16,16 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 'latest',
       parserOptions: {
-        project: true,
-        tsconfigRootDir: import.meta.dirname,
+        // No `project` / `projectService` here on purpose.
+        //
+        // This config is the one the editor loads on every keystroke. Neither
+        // `eslint-config-next/typescript` (which is typescript-eslint's
+        // `recommended`, not `recommendedTypeChecked`) nor any rule below needs
+        // type information, so building a full TypeScript program here only
+        // bought editor lag.
+        //
+        // Type-aware rules live in `eslint.cli.config.mjs`, which points at
+        // `tsconfig.eslint.json` and runs on lint-staged, `npm run check` and CI.
         ecmaFeatures: {
           jsx: true,
         },
@@ -70,13 +78,11 @@ export default defineConfig([
       'react-hooks/immutability': 'off',
       'react-hooks/preserve-manual-memoization': 'off',
       'react-hooks/error-boundaries': 'off',
-      'react-hooks/rules-of-hooks': 'off',
-      'no-console': [
-        'off',
-        {
-          allow: ['warn', 'error'],
-        },
-      ],
+      // The core React rule: hooks must not be called conditionally, in loops,
+      // or outside a component. Breaking it corrupts hook state at runtime and
+      // no type-checker catches it. Keep this at 'error'.
+      'react-hooks/rules-of-hooks': 'error',
+      'no-console': 'off',
       'simple-import-sort/imports': [
         'warn',
         {
@@ -112,6 +118,25 @@ export default defineConfig([
       // pero compatible con formatters al guardar (Prettier + ESLint).
       'better-tailwindcss/enforce-consistent-line-wrapping': 'off',
       'react/display-name': 'off',
+    },
+  },
+  {
+    // Narrow, temporary carve-out for `react-hooks/rules-of-hooks`, which is
+    // 'error' everywhere else.
+    //
+    // This file holds `_EducatorsList` (around line 1832): a component that is
+    // defined but never rendered, kept on purpose in case it is needed again.
+    // The leading underscore silences `no-unused-vars`, but it also stops the
+    // name from reading as a React component, so the rule flags the `useState`
+    // calls inside it. The code is unreachable, so those two reports describe
+    // no real runtime risk.
+    //
+    // Scope is one file, not the project: every other component keeps the rule.
+    // Delete this block when `_EducatorsList` is removed or brought back into
+    // real use under a proper component name.
+    files: ['src/app/dashboard/super-admin/**/CourseDetail.tsx'],
+    rules: {
+      'react-hooks/rules-of-hooks': 'off',
     },
   },
   {

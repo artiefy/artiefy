@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  type ComponentType,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -20,7 +21,8 @@ import {
   ChevronRight,
   CircleCheck,
   FolderKanban,
-  type LucideIcon,
+  PictureInPicture,
+  PictureInPicture2,
   Play,
   Plus,
   Rocket,
@@ -28,8 +30,19 @@ import {
   Sparkles,
   Target,
   Trash2,
+  Users,
   X,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+
+import { ArtiefyMark } from '~/components/agents/ArtiefyMark';
+import { useDocumentPictureInPicture } from '~/hooks/useDocumentPictureInPicture';
+import {
+  type AgentChatScope,
+  GENERAL_SCOPE,
+  scopeBadge,
+  subscribeToAgentChat,
+} from '~/lib/agents/agentChatBus';
 
 gsap.registerPlugin(useGSAP);
 
@@ -41,6 +54,10 @@ const BOTTOM_SHEET_QUERY = '(max-width: 767px)';
 
 /** Drag distance, in px, past which releasing the handle dismisses the sheet. */
 const DISMISS_THRESHOLD = 120;
+
+/** Starting size of the floating picture-in-picture window, in CSS pixels. */
+const PIP_WIDTH = 400;
+const PIP_HEIGHT = 620;
 
 /** Single shared quick action shown above the composer for every agent. */
 const QUICK_ACTIONS = ['Hablar con un asesor'];
@@ -61,13 +78,24 @@ const MAX_STORED_CONVERSATIONS = 20;
 
 export type AgentId = 'artie' | 'tutor' | 'coach';
 
+/** Order of the manual switcher: the orchestrator first, then the specialists. */
+const AGENT_ORDER: AgentId[] = ['artie', 'tutor', 'coach'];
+
+/** What each one is for, shown under its name in the switcher. */
+const AGENT_ROLES: Record<AgentId, string> = {
+  artie: 'Consultas generales',
+  tutor: 'Cursos',
+  coach: 'Proyectos guiados',
+};
+
 interface AgentDefinition {
   id: AgentId;
   name: string;
   badge: string;
   /** Hex, always 6 digits: alpha suffixes are appended to it (`${color}1f`). */
   color: string;
-  icon: LucideIcon;
+  /** Lucide icons and the inline Artiefy mark both satisfy this. */
+  icon: ComponentType<{ className?: string; style?: CSSProperties }>;
 }
 
 const AGENTS: Record<AgentId, AgentDefinition> = {
@@ -76,7 +104,7 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
     name: 'Artie',
     badge: 'Guía',
     color: LAUNCHER_COLOR,
-    icon: Sparkles,
+    icon: ArtiefyMark,
   },
   tutor: {
     id: 'tutor',
@@ -175,6 +203,13 @@ interface StoredConversation {
   title: string;
   updatedAt: number;
   messages: ChatMessage[];
+  /** Absent on conversations stored before scopes existed. */
+  scope?: AgentChatScope;
+}
+
+/** Conversations saved before scopes existed are read back as general ones. */
+function readScope(conversation: StoredConversation): AgentChatScope {
+  return conversation.scope ?? GENERAL_SCOPE;
 }
 
 function formatTime(date: Date) {
@@ -203,15 +238,38 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isAgentMenuOpen, setIsAgentMenuOpen] = useState(false);
   const [history, setHistory] = useState<StoredConversation[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [quotaNotice, setQuotaNotice] = useState<AgentQuotaNotice | null>(null);
+
+  /**
+   * The scope the route itself implies. Guided project pages mount the widget
+   * with their project, so a chat opened there is already about that project.
+   */
+  const routeScope = useMemo<AgentChatScope>(
+    () =>
+      project
+        ? { kind: 'project', id: project.id, title: project.title }
+        : GENERAL_SCOPE,
+    [project]
+  );
+  const [scope, setScope] = useState<AgentChatScope>(routeScope);
+
   const hasLoadedHistory = useRef(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const backdropRef = useRef<HTMLDivElement | null>(null);
   /** Pointer Y where the current handle drag started; null when not dragging. */
   const dragStartY = useRef<number | null>(null);
+
+  const {
+    isSupported: canPopOut,
+    pipWindow,
+    open: openPopOut,
+    close: closePopOut,
+  } = useDocumentPictureInPicture(PIP_WIDTH, PIP_HEIGHT);
+  const isPoppedOut = pipWindow !== null;
 
   const agent = AGENTS[agentId];
   const AgentIcon = agent.icon;
@@ -277,6 +335,30 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       .to(backdropRef.current, { autoAlpha: 0, duration: 0.3 }, 0);
   };
 
+  /**
+   * Dismisses the chat wherever it currently lives. The sheet animation only
+   * exists in the page, so the floating window is torn down directly.
+   */
+  const dismissChat = () => {
+    if (isPoppedOut) {
+      closePopOut();
+      setIsOpen(false);
+      return;
+    }
+
+    closePanel();
+  };
+
+  /** Moves the panel between the page and the always-on-top window. */
+  const togglePopOut = () => {
+    if (isPoppedOut) {
+      closePopOut();
+      return;
+    }
+
+    void openPopOut();
+  };
+
   // Drag the grab handle down to dismiss, the way a native sheet behaves.
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!panelRef.current) return;
@@ -327,12 +409,20 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     const firstUserMessage = messages.find(
       (message) => message.role === 'user'
     );
+    // A scoped conversation is named after what it is about, so the history
+    // reads as a list of courses and projects instead of opening lines.
+    const title =
+      scope.kind === 'general'
+        ? (firstUserMessage?.text.slice(0, 60) ?? 'Nueva conversación')
+        : scope.title;
+
     const entry: StoredConversation = {
       id: conversationId,
       agent: agentId,
-      title: firstUserMessage?.text.slice(0, 60) ?? 'Nueva conversación',
+      title,
       updatedAt: Date.now(),
       messages,
+      scope,
     };
 
     setHistory((prev) =>
@@ -341,7 +431,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         MAX_STORED_CONVERSATIONS
       )
     );
-  }, [messages, conversationId, agentId]);
+  }, [messages, conversationId, agentId, scope]);
 
   // Persist on every change except the very first render, which would
   // overwrite stored history before the load effect above has run.
@@ -362,6 +452,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     setConversationId(null);
     setDraft('');
     setIsHistoryOpen(false);
+    setScope(routeScope);
   };
 
   const openConversation = (conversation: StoredConversation) => {
@@ -369,7 +460,40 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     setMessages(conversation.messages);
     setConversationId(conversation.id);
     setIsHistoryOpen(false);
+    setScope(readScope(conversation));
   };
+
+  /**
+   * Enrolling in a course or guided project anywhere in the app opens the chat
+   * on that subject. It always lands in a fresh conversation, so the new
+   * subject never gets mixed into whatever was already open.
+   */
+  useEffect(
+    () =>
+      subscribeToAgentChat(({ scope: requested, greeting }) => {
+        const now = new Date();
+        const specialist: AgentId =
+          requested.kind === 'project' ? 'coach' : 'tutor';
+
+        setScope(requested);
+        setAgentId(specialist);
+        setConversationId(`conv-${now.getTime()}`);
+        setMessages([
+          {
+            id: `${now.getTime()}-agent`,
+            role: 'agent',
+            agent: specialist,
+            text: greeting,
+            time: formatTime(now),
+          },
+        ]);
+        setDraft('');
+        setQuotaNotice(null);
+        setIsHistoryOpen(false);
+        setIsOpen(true);
+      }),
+    []
+  );
 
   const deleteConversation = (id: string) => {
     setHistory((prev) => prev.filter((item) => item.id !== id));
@@ -461,8 +585,14 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         body: JSON.stringify({
           message: text,
           agent: agentId,
-          projectId: project?.id,
-          activityId: activeActivityId,
+          projectId: scope.kind === 'project' ? scope.id : undefined,
+          courseId: scope.kind === 'course' ? scope.id : undefined,
+          // The activity tree only belongs to the project this route mounted;
+          // a project picked up from an enrollment elsewhere has none loaded.
+          activityId:
+            scope.kind === 'project' && scope.id === project?.id
+              ? activeActivityId
+              : undefined,
         }),
       });
 
@@ -540,7 +670,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     );
   }
 
-  return (
+  // The floating window is narrower than the `md` breakpoint, so the panel
+  // reuses its full-screen sheet layout there and fills the window edge to
+  // edge. Only the sheet-specific affordances are dropped.
+  const panel = (
     <div
       ref={rootRef}
       className="
@@ -550,12 +683,14 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       "
     >
       {/* Sheet backdrop. Tapping it dismisses, like a native bottom sheet. */}
-      <div
-        ref={backdropRef}
-        aria-hidden="true"
-        onClick={closePanel}
-        className="absolute inset-0 bg-black/60 md:hidden"
-      />
+      {!isPoppedOut && (
+        <div
+          ref={backdropRef}
+          aria-hidden="true"
+          onClick={closePanel}
+          className="absolute inset-0 bg-black/60 md:hidden"
+        />
+      )}
 
       <div
         ref={panelRef}
@@ -568,15 +703,17 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         }}
       >
         {/* Grab handle: drag it down to dismiss. Bottom-sheet sizes only. */}
-        <div
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          className="flex shrink-0 touch-none justify-center py-2.5 md:hidden"
-        >
-          <span className="h-1 w-10 rounded-full bg-white/25" />
-        </div>
+        {!isPoppedOut && (
+          <div
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className="flex shrink-0 touch-none justify-center py-2.5 md:hidden"
+          >
+            <span className="h-1 w-10 rounded-full bg-white/25" />
+          </div>
+        )}
 
         {/* Header */}
         <div
@@ -644,14 +781,58 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                 </span>
               </div>
               <p className="truncate text-[11px] leading-tight text-muted-foreground">
-                Guía de Artiefy
+                {scope.kind === 'general'
+                  ? 'Guía de Artiefy'
+                  : `${scopeBadge(scope)?.label} · ${scope.title}`}
               </p>
             </div>
+
+            {/* Only desktop Chromium and Firefox expose the floating window. */}
+            {canPopOut && (
+              <button
+                type="button"
+                aria-label={
+                  isPoppedOut
+                    ? 'Devolver el chat a la página'
+                    : 'Ver el chat en una ventana flotante'
+                }
+                title={
+                  isPoppedOut
+                    ? 'Devolver el chat a la página'
+                    : 'Ver el chat en una ventana flotante'
+                }
+                onClick={togglePopOut}
+                className="
+                  shrink-0 rounded-lg p-2 transition-colors
+                  hover:bg-white/[0.06]
+                "
+              >
+                {isPoppedOut ? (
+                  <PictureInPicture className="size-4 text-muted-foreground" />
+                ) : (
+                  <PictureInPicture2 className="size-4 text-muted-foreground" />
+                )}
+              </button>
+            )}
+
+            <button
+              type="button"
+              aria-label="Cambiar de agente"
+              aria-expanded={isAgentMenuOpen}
+              title="Cambiar de agente"
+              onClick={() => setIsAgentMenuOpen((prev) => !prev)}
+              className="
+                shrink-0 rounded-lg p-2 transition-colors
+                hover:bg-white/[0.06]
+              "
+            >
+              <Users className="size-4 text-muted-foreground" />
+            </button>
 
             <button
               type="button"
               aria-label="Cerrar chat"
-              onClick={closePanel}
+              onClick={dismissChat}
               className="
                 shrink-0 rounded-lg p-2 transition-colors
                 hover:bg-white/[0.06]
@@ -660,6 +841,66 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               <X className="size-4 text-muted-foreground" />
             </button>
           </div>
+
+          {/* Manual override. The orchestrator still routes on its own; this
+              just says who should take the next message. */}
+          {isAgentMenuOpen && (
+            <div
+              className="
+                holo-glass absolute top-full right-3 z-[75] mt-1 w-56
+                overflow-hidden rounded-xl border
+              "
+              style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}
+            >
+              {AGENT_ORDER.map((optionId) => {
+                const option = AGENTS[optionId];
+                const OptionIcon = option.icon;
+
+                return (
+                  <button
+                    key={optionId}
+                    type="button"
+                    onClick={() => {
+                      setAgentId(optionId);
+                      setIsAgentMenuOpen(false);
+                    }}
+                    className="
+                      flex w-full items-center gap-2.5 px-3 py-2.5 text-left
+                      transition-colors
+                      hover:bg-white/[0.06]
+                    "
+                  >
+                    <span
+                      className="
+                        flex size-7 shrink-0 items-center justify-center
+                        rounded-lg
+                      "
+                      style={{ background: `${option.color}26` }}
+                    >
+                      <OptionIcon
+                        className="size-3.5"
+                        style={{ color: option.color }}
+                      />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-foreground">
+                        {option.name}
+                      </span>
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {AGENT_ROLES[optionId]}
+                      </span>
+                    </span>
+                    {optionId === agentId && (
+                      <CircleCheck
+                        className="size-4 shrink-0"
+                        style={{ color: option.color }}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Chat history */}
@@ -693,6 +934,9 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                   {history.map((conversation) => {
                     const conversationAgent = AGENTS[conversation.agent];
                     const ConversationIcon = conversationAgent.icon;
+                    const badge = scopeBadge(readScope(conversation));
+                    const lastMessage =
+                      conversation.messages[conversation.messages.length - 1];
 
                     return (
                       <li
@@ -715,14 +959,34 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                               style={{ color: conversationAgent.color }}
                             />
                           </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm text-foreground">
-                              {conversation.title}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                              {conversationAgent.name} ·{' '}
-                              {formatDay(conversation.updatedAt)}
-                            </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <p className="truncate text-sm text-foreground">
+                                {conversation.title}
+                              </p>
+                              {badge && (
+                                <span
+                                  className="
+                                    shrink-0 rounded-full px-2 py-0.5
+                                    text-[10px] leading-none font-medium
+                                  "
+                                  style={{
+                                    backgroundColor: `${badge.color}1f`,
+                                    color: badge.color,
+                                  }}
+                                >
+                                  {badge.label}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex min-w-0 items-center gap-1.5">
+                              <p className="truncate text-[11px] text-muted-foreground">
+                                {lastMessage?.text ?? conversationAgent.name}
+                              </p>
+                              <span className="shrink-0 text-[11px] text-muted-foreground">
+                                {formatDay(conversation.updatedAt)}
+                              </span>
+                            </div>
                           </div>
                         </button>
                         <button
@@ -1192,6 +1456,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       </div>
     </div>
   );
+
+  // Popped out: the chat renders inside the always-on-top window instead of
+  // the page, so it stays visible while the user works in other apps.
+  return pipWindow ? createPortal(panel, pipWindow.document.body) : panel;
 }
 
 export default AgentChatWidget;

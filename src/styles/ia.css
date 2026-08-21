@@ -1,18 +1,11 @@
-.absolute {
-  position: absolute;
-}
-
-.inline-block {
-  display: inline-block;
-}
+/* Never declare bare `.absolute`, `.inline-block`, `.w-2` or any other Tailwind
+   utility name here: this file loads after the Tailwind chunk, so a duplicate
+   would win over every responsive variant of the same property (`md:relative`
+   stopped applying app-wide until those three were removed). */
 
 .loader {
   display: flex;
   margin: 0.25em 0;
-}
-
-.w-2 {
-  width: 0.5em;
 }
 
 .dash {
