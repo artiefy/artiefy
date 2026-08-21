@@ -74,7 +74,14 @@ export async function saveDocumentEmbeddings(
       content: doc.content,
       // Convertir array a string en formato PostgreSQL para vector
       embedding: JSON.stringify(doc.embedding),
-      metadata: JSON.stringify(doc.metadata),
+      // El dueño va también DENTRO de metadata, no solo en sus columnas: el
+      // nodo PGVector de n8n solo sabe filtrar por claves del JSON, y compara
+      // como texto. Sin esto el RAG no se puede acotar a un curso o proyecto.
+      metadata: JSON.stringify({
+        ...doc.metadata,
+        scope: type,
+        ...(isCourse ? { courseId: String(id) } : { projectId: String(id) }),
+      }),
       source: doc.metadata.source,
       chunkIndex: doc.chunkIndex,
     }));
