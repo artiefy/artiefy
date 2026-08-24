@@ -26,6 +26,10 @@
     "src/app/api/cron/transcriptions/route.ts": {
       "maxDuration": 60,
       "regions": ["iad1"]
+    },
+    "src/app/api/cron/embeddings/route.ts": {
+      "maxDuration": 300,
+      "regions": ["iad1"]
     }
   },
   "trailingSlash": false,
@@ -41,6 +45,10 @@
     {
       "path": "/api/cron/transcriptions",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/embeddings",
+      "schedule": "*/10 * * * *"
     }
   ],
   "headers": [

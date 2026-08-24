@@ -2,6 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   createGuidedActivity,
   deleteGuidedActivity,
@@ -78,6 +79,14 @@ export async function PUT(
 
     const data = await request.json();
     const activity = await updateGuidedActivity(parseInt(activityId), data);
+
+    // Si en esta edición llegó un video de instrucción, se encola su
+    // transcripción. No bloquea ni puede romper la respuesta.
+    const videoKey = (data as { instructionVideoKey?: string | null })
+      ?.instructionVideoKey;
+    if (videoKey) {
+      await autoTranscribe('activity', parseInt(activityId), videoKey);
+    }
 
     return Response.json(activity);
   } catch (error) {

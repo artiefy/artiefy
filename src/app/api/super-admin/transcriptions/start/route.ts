@@ -102,10 +102,19 @@ export async function POST(request: Request) {
         if (result) started++;
         else skipped++; // ya había un job en curso
       } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Error desconocido';
+        // Se registra además de devolverlo: sin esto, un fallo de conexión o
+        // de autenticación con el VPS queda invisible en los logs y la ruta
+        // parece haber funcionado (responde 200 con started: 0).
+        console.error(
+          `[TRANSCRIPCIÓN] Falló el encolado de ${video.type}:${video.contentId}:`,
+          message
+        );
         errors.push({
           type: video.type,
           contentId: video.contentId,
-          error: error instanceof Error ? error.message : 'Error desconocido',
+          error: message,
         });
       }
     }

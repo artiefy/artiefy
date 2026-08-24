@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { asc, eq } from 'drizzle-orm';
 
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   getLessonById,
   updateLesson,
@@ -148,6 +149,18 @@ export async function PUT(
     }
 
     const updatedLesson = await updateLesson(lessonId, updatePayload);
+
+    // Video de la clase recien subido o reemplazado -> se encola su
+    // transcripcion. `force` porque si cambiaron el video, la transcripcion
+    // vieja ya no corresponde. No bloquea ni puede romper la respuesta.
+    if (updatePayload.coverVideoKey) {
+      await autoTranscribe(
+        'lesson',
+        lessonId,
+        updatePayload.coverVideoKey,
+        true
+      );
+    }
 
     return new Response(JSON.stringify(updatedLesson), {
       status: 200,

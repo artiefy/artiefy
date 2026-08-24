@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import {
-  isTranscriptionServiceConfigured,
-  startTranscription,
-} from '~/lib/transcriptions/whisper-vps';
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import { updateLesson } from '~/models/educatorsModels/lessonsModels';
 
 export async function POST(req: Request) {
@@ -30,37 +27,14 @@ export async function POST(req: Request) {
     await updateLesson(lessonId, { coverVideoKey: key });
     console.log('[VIDEO_REGISTER] ✅ Lección actualizada con video');
 
-    // Encolar la transcripción en el servicio propio del VPS. El servicio
-    // descarga el video por su cuenta, así que aquí no hace falta verificar
-    // accesibilidad ni esperar: responde al instante y procesa en segundo
-    // plano. El cron `/api/cron/transcriptions` guarda el resultado.
-    let transcriptionQueued = false;
-
-    if (isTranscriptionServiceConfigured()) {
-      try {
-        const job = await startTranscription('lesson', lessonId, key);
-        transcriptionQueued = Boolean(job);
-        console.log(
-          '[VIDEO_REGISTER] 🎙️ Transcripción encolada:',
-          job?.jobId ?? 'ya existía un job en curso'
-        );
-      } catch (error) {
-        // Que falle la transcripción no debe invalidar el registro del video.
-        console.error(
-          '[VIDEO_REGISTER] ⚠️ No se pudo encolar la transcripción:',
-          error instanceof Error ? error.message : error
-        );
-      }
-    } else {
-      console.log(
-        '[VIDEO_REGISTER] ℹ️ Servicio de transcripción no configurado, se omite'
-      );
-    }
+    // Encolar la transcripción. El servicio del VPS descarga el video por su
+    // cuenta, así que esto responde al instante. `force` porque si se
+    // reemplazó el video, la transcripción vieja ya no corresponde.
+    await autoTranscribe('lesson', lessonId, key, true);
 
     return NextResponse.json({
       message: 'Video registrado correctamente',
       key,
-      transcriptionQueued,
     });
   } catch (error) {
     console.error(

@@ -28,6 +28,8 @@ interface StartResponse {
   skipped?: number;
   total?: number;
   error?: string;
+  /** Fallos por video. La ruta los devuelve acá en vez de tirar la petición. */
+  errors?: { type: string; contentId: number; error: string }[];
 }
 
 /** Cada cuánto se consulta el avance mientras hay jobs corriendo. */
@@ -114,6 +116,10 @@ export function TranscribeVideoButton({
           description:
             'Se procesa en segundo plano, puedes cerrar esta página.',
         });
+      } else if (data.errors?.length) {
+        // El servicio rechazó el encolado (VPS caído, clave mal, etc.).
+        // Mostrar el motivo real en vez de un mensaje genérico engañoso.
+        throw new Error(data.errors[0].error);
       } else {
         toast.info('No se inició nada', {
           description: 'No hay video o ya se está procesando.',
@@ -232,6 +238,10 @@ function TranscribeGroupButton({
         toast.success(`${data.started} video(s) en cola`, {
           description: 'Se procesan en segundo plano, uno por uno.',
         });
+      } else if (data.errors?.length) {
+        throw new Error(
+          `${data.errors.length} fallo(s): ${data.errors[0].error}`
+        );
       } else {
         toast.info('No había videos pendientes por transcribir');
       }

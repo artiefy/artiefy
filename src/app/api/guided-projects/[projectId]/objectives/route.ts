@@ -2,6 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   createGuidedObjective,
   deleteGuidedObjective,
@@ -89,6 +90,14 @@ export async function PUT(
     }
 
     const objective = await updateGuidedObjective(parseInt(objectiveId), data);
+
+    // Video de portada del objetivo recién subido -> se encola su
+    // transcripcion. No bloquea ni puede romper la respuesta.
+    const videoKey = (data as { coverVideoKey?: string | null })?.coverVideoKey;
+    if (videoKey) {
+      await autoTranscribe('objective', parseInt(objectiveId), videoKey);
+    }
+
     return Response.json(JSON.parse(JSON.stringify(objective)));
   } catch (error) {
     console.error('PUT error:', error);

@@ -6,7 +6,7 @@
  * agregar un tipo nuevo de contenido sea tocar solo este archivo.
  */
 
-import { eq } from 'drizzle-orm';
+import { eq, gte } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -263,4 +263,124 @@ export async function getSingleVideo(
     default:
       return null;
   }
+}
+
+/**
+ * Busca videos subidos o modificados recientemente que todavía no tienen
+ * transcripción, para encolarlos automáticamente.
+ *
+ * El filtro por fecha es deliberado: sin él, el primer barrido encolaría el
+ * catálogo histórico completo (cientos de videos = días de proceso en el VPS).
+ * Acá solo interesa lo que se acaba de subir.
+ */
+export async function findRecentVideos(
+  sinceHours = 24
+): Promise<VideoSource[]> {
+  const since = new Date(Date.now() - sinceHours * 60 * 60 * 1000);
+  const sources: VideoSource[] = [];
+
+  const recentLessons = await db
+    .select({
+      id: lessons.id,
+      title: lessons.title,
+      videoKey: lessons.coverVideoKey,
+    })
+    .from(lessons)
+    .where(gte(lessons.lastUpdated, since));
+
+  for (const row of recentLessons) {
+    if (row.videoKey) {
+      sources.push({
+        type: 'lesson',
+        contentId: row.id,
+        title: row.title,
+        videoKey: row.videoKey,
+      });
+    }
+  }
+
+  const recentMeetings = await db
+    .select({
+      id: classMeetings.id,
+      title: classMeetings.title,
+      videoKey: classMeetings.video_key,
+      videoKey2: classMeetings.video_key_2,
+      videoUrlExt: classMeetings.videoUrlExt,
+    })
+    .from(classMeetings)
+    .where(gte(classMeetings.createdAt, since));
+
+  for (const row of recentMeetings) {
+    const key = row.videoKey ?? row.videoKey2 ?? row.videoUrlExt;
+    if (key) {
+      sources.push({
+        type: 'meeting',
+        contentId: row.id,
+        title: row.title,
+        videoKey: key,
+      });
+    }
+  }
+
+  const recentProjects = await db
+    .select({
+      id: guidedProjects.id,
+      title: guidedProjects.title,
+      videoKey: guidedProjects.coverVideoKey,
+    })
+    .from(guidedProjects)
+    .where(gte(guidedProjects.updatedAt, since));
+
+  for (const row of recentProjects) {
+    if (row.videoKey) {
+      sources.push({
+        type: 'project',
+        contentId: row.id,
+        title: row.title,
+        videoKey: row.videoKey,
+      });
+    }
+  }
+
+  const recentObjectives = await db
+    .select({
+      id: guidedObjectives.id,
+      title: guidedObjectives.title,
+      videoKey: guidedObjectives.coverVideoKey,
+    })
+    .from(guidedObjectives)
+    .where(gte(guidedObjectives.updatedAt, since));
+
+  for (const row of recentObjectives) {
+    if (row.videoKey) {
+      sources.push({
+        type: 'objective',
+        contentId: row.id,
+        title: row.title,
+        videoKey: row.videoKey,
+      });
+    }
+  }
+
+  const recentActivities = await db
+    .select({
+      id: guidedObjectiveActivities.id,
+      name: guidedObjectiveActivities.name,
+      videoKey: guidedObjectiveActivities.instructionVideoKey,
+    })
+    .from(guidedObjectiveActivities)
+    .where(gte(guidedObjectiveActivities.lastUpdated, since));
+
+  for (const row of recentActivities) {
+    if (row.videoKey) {
+      sources.push({
+        type: 'activity',
+        contentId: row.id,
+        title: row.name,
+        videoKey: row.videoKey,
+      });
+    }
+  }
+
+  return sources;
 }

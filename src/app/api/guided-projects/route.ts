@@ -2,6 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   createGuidedProject,
   deleteGuidedProject,
@@ -73,6 +74,13 @@ export async function PUT(request: Request) {
 
     const data = await request.json();
     const project = await updateGuidedProject(parseInt(projectId), data);
+
+    // Video de portada del proyecto recien subido -> se encola su
+    // transcripcion. No bloquea ni puede romper la respuesta.
+    const videoKey = (data as { coverVideoKey?: string | null })?.coverVideoKey;
+    if (videoKey) {
+      await autoTranscribe('project', parseInt(projectId), videoKey);
+    }
 
     return Response.json(project);
   } catch (error) {
