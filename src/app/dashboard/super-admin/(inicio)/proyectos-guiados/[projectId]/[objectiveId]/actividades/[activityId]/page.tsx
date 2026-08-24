@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -9,6 +9,7 @@ import {
   Bot,
   ClipboardList,
   Download,
+  Link2,
   MessageSquare,
   Sparkles,
   Trash2,
@@ -31,6 +32,7 @@ import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card } from '~/components/educators/ui/card';
 import { TranscribeVideoButton } from '~/components/super-admin/transcriptions/TranscriptionButtons';
+import { TranscriptionDocument } from '~/components/super-admin/transcriptions/TranscriptionDocument';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,6 +40,12 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
+import {
+  downloadResource,
+  getResourceIcon,
+  type ParsedResource,
+  parseResources,
+} from '~/lib/guided-projects/resources';
 import { uploadFileToS3 } from '~/lib/uploadFileToS3';
 
 import type {
@@ -70,6 +78,10 @@ interface GuidedProject {
 interface Objective {
   id: number;
   title: string;
+  // Los recursos viven en el objetivo, no en la actividad: son el material
+  // de la sesión completa. Se guardan como listas separadas por coma.
+  resourceKey?: string | null;
+  resourceNames?: string | null;
 }
 
 interface Activity {
@@ -103,6 +115,20 @@ export default function GuidedActivityDetailPage({
 
   const [project, setProject] = useState<GuidedProject | null>(null);
   const [objective, setObjective] = useState<Objective | null>(null);
+
+  // Recursos de la sesión a la que pertenece esta actividad.
+  const objectiveResources = useMemo(
+    () => parseResources(objective?.resourceKey, objective?.resourceNames),
+    [objective?.resourceKey, objective?.resourceNames]
+  );
+
+  const handleDownloadResource = async (resource: ParsedResource) => {
+    const ok = await downloadResource(
+      `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${resource.key}`,
+      resource.name
+    );
+    if (!ok) toast.error('No se pudo descargar el archivo');
+  };
   const [activity, setActivity] = useState<Activity | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -530,7 +556,7 @@ export default function GuidedActivityDetailPage({
       <div className="relative z-10 mb-6 flex flex-wrap gap-2 rounded-2xl border border-cyan-500/20 bg-slate-900/60 p-2">
         {(
           [
-            { key: 'instruccion', label: 'Instrucción', icon: BookOpen },
+            { key: 'instruccion', label: 'Transcripción', icon: BookOpen },
             { key: 'contenido', label: 'Actividad', icon: ClipboardList },
             { key: 'prompt', label: 'Prompt', icon: Bot },
             { key: 'recursos', label: 'Recursos', icon: Download },
@@ -560,19 +586,21 @@ export default function GuidedActivityDetailPage({
         <Card className="relative z-10 mb-10 border-2 border-cyan-500/20 bg-slate-800 p-4 shadow-xl sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-white">
-              Texto e instrucciones
+              Transcripción del video
             </h2>
-            {!editingInstruction && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setEditingInstruction(true)}
-                className="border-white/20 text-white/70 hover:bg-white/10"
-              >
-                Editar instrucción
-              </Button>
-            )}
           </div>
+
+          {activityIdNumber !== null && activity.instructionVideoKey && (
+            <div className="mb-8">
+              <h2 className="mb-4 text-lg font-bold text-white">
+                Contenido del video
+              </h2>
+              <TranscriptionDocument
+                type="activity"
+                contentId={activityIdNumber}
+              />
+            </div>
+          )}
 
           {editingInstruction ? (
             <div className="space-y-4">
@@ -687,9 +715,78 @@ export default function GuidedActivityDetailPage({
 
       {/* Recursos */}
       {activeDetailTab === 'recursos' && (
-        <div className="relative z-10 mb-10 rounded-2xl border border-cyan-500/20 bg-slate-800 p-8 text-center text-white/50">
-          Los recursos de esta actividad estarán disponibles pronto.
-        </div>
+        <Card className="relative z-10 mb-10 border-2 border-cyan-500/20 bg-slate-800 p-4 shadow-xl sm:p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-white">Recursos</h2>
+            {objective && (
+              <p className="mt-1 text-xs text-white/50">
+                Material de la sesión &quot;{objective.title}&quot;
+              </p>
+            )}
+          </div>
+
+          {objectiveResources.length === 0 ? (
+            <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center">
+              <Download className="mx-auto mb-3 size-8 text-white/30" />
+              <p className="text-sm text-white/60">
+                Esta sesión todavía no tiene recursos cargados.
+              </p>
+              <p className="mt-1 text-xs text-white/40">
+                Se agregan desde la pestaña Recursos del proyecto guiado.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {objectiveResources.map((resource: ParsedResource) => {
+                if (resource.isLink) {
+                  return (
+                    <a
+                      key={resource.key}
+                      href={resource.key}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-center gap-3 rounded-lg border border-white/10 bg-[#061c37] p-3 text-left transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/5"
+                    >
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]">
+                        <Link2 className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm text-white/90 group-hover:text-white">
+                          {resource.name}
+                        </span>
+                        <span className="text-xs text-white/40">
+                          Clic para abrir
+                        </span>
+                      </span>
+                    </a>
+                  );
+                }
+
+                const ResourceIcon = getResourceIcon(resource.name);
+                return (
+                  <button
+                    key={resource.key}
+                    type="button"
+                    onClick={() => void handleDownloadResource(resource)}
+                    className="group flex items-center gap-3 rounded-lg border border-white/10 bg-[#061c37] p-3 text-left transition-colors hover:border-[#22C4D3]/40 hover:bg-[#22C4D3]/5"
+                  >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]">
+                      <ResourceIcon className="size-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm text-white/90 group-hover:text-white">
+                        {resource.name}
+                      </span>
+                      <span className="text-xs text-white/40">
+                        Clic para descargar
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Card>
       )}
 
       <div
