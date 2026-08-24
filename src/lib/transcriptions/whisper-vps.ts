@@ -323,20 +323,46 @@ export async function hasTranscription(
 export async function checkServiceHealth(): Promise<{
   configured: boolean;
   reachable: boolean;
+  authOk?: boolean;
+  s3Base?: string;
   detail?: unknown;
   error?: string;
 }> {
   if (!isTranscriptionServiceConfigured()) {
     return { configured: false, reachable: false };
   }
+
+  // `s3Base` se reporta porque si esta vacio, las URLs de video salen
+  // relativas y el VPS las rechaza con 400 antes de encolar nada.
+  const s3Base = S3_BASE || '(VACIO - falta NEXT_PUBLIC_AWS_S3_URL)';
+
+  let detail: unknown;
   try {
-    const health = await vpsRequest<unknown>('/health', { timeoutMs: 8000 });
-    return { configured: true, reachable: true, detail: health };
+    detail = await vpsRequest<unknown>('/health', { timeoutMs: 8000 });
   } catch (error) {
     return {
       configured: true,
       reachable: false,
+      s3Base,
       error: error instanceof Error ? error.message : 'Error desconocido',
     };
   }
+
+  // /health no exige la API key, asi que hay que probar contra un endpoint
+  // autenticado para saber si la clave es correcta. Un 404 significa que la
+  // clave paso (el job simplemente no existe); un 401 que esta mal.
+  let authOk = false;
+  try {
+    const { baseUrl, apiKey } = serviceConfig();
+    const res = await fetch(`${baseUrl}/jobs/__diagnostico__`, {
+      headers: { 'X-API-Key': apiKey },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+    });
+    authOk = res.status !== 401;
+  } catch {
+    authOk = false;
+  }
+
+  return { configured: true, reachable: true, authOk, s3Base, detail };
 }
