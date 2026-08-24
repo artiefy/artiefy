@@ -396,58 +396,64 @@ body.no-chrome {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Typing indicator for the agent chat. The colour comes from --dot-color,
-   which each agent sets inline, so the dots match whoever is answering. */
-.dots-container {
+/* Working indicator for the agent chat. The label rotates while the agent
+   works, so the learner reads what is happening instead of three dots. The
+   colour comes from --agent-color, which each agent sets inline. */
+.agent-thinking {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-.dots-container .dot {
-  height: 8px;
-  width: 8px;
+.agent-thinking__spinner {
+  height: 13px;
+  width: 13px;
+  flex-shrink: 0;
   border-radius: 9999px;
-  background-color: var(--dot-color, #22c4d3);
-  animation: agent-dot-pulse 1.4s infinite ease-in-out;
+  border: 2px solid
+    color-mix(in srgb, var(--agent-color, #22c4d3) 26%, transparent);
+  border-top-color: var(--agent-color, #22c4d3);
+  animation: agent-thinking-spin 0.7s linear infinite;
 }
 
-.dots-container .dot:nth-child(1) {
-  animation-delay: -0.32s;
+.agent-thinking__label {
+  background-image: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--agent-color, #22c4d3) 45%, transparent) 0%,
+    var(--agent-color, #22c4d3) 45%,
+    color-mix(in srgb, var(--agent-color, #22c4d3) 45%, transparent) 90%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: agent-thinking-shimmer 1.9s linear infinite;
 }
 
-.dots-container .dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes agent-dot-pulse {
-  0%,
-  100% {
-    transform: scale(0.8);
-    box-shadow: 0 0 0 0
-      color-mix(in srgb, var(--dot-color, #22c4d3) 55%, transparent);
+@keyframes agent-thinking-spin {
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  50% {
-    transform: scale(1.2);
-    box-shadow: 0 0 0 7px
-      color-mix(in srgb, var(--dot-color, #22c4d3) 0%, transparent);
+@keyframes agent-thinking-shimmer {
+  0% {
+    background-position: 180% 0;
+  }
+  100% {
+    background-position: -80% 0;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dots-container .dot {
-    animation: agent-dot-fade 1.4s infinite ease-in-out;
+  .agent-thinking__spinner {
+    animation: none;
   }
 
-  @keyframes agent-dot-fade {
-    0%,
-    100% {
-      opacity: 0.35;
-    }
-    50% {
-      opacity: 1;
-    }
+  .agent-thinking__label {
+    background-image: none;
+    color: var(--agent-color, #22c4d3);
+    animation: none;
   }
 }
 

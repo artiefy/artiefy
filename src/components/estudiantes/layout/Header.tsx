@@ -302,19 +302,28 @@ export function Header({
           <>
             <Show when="signed-out">
               <div className="flex items-center">
+                {/* Wide screens: a plain brand pill. Both variants call the
+                    same handler, which opens the modal on phones and routes to
+                    the sign-in page on desktop. */}
                 <Button
-                  asChild
                   className="
-                    ml-2 hidden h-9 items-center justify-center gap-2 rounded-md
-                    bg-primary px-3 text-sm font-medium whitespace-nowrap
-                    text-black transition-colors
-                    hover:bg-primary/90
+                    ml-2 hidden h-10 cursor-pointer items-center justify-center
+                    gap-2 rounded-full border border-primary bg-primary px-5
+                    text-sm font-semibold whitespace-nowrap text-background
+                    transition-all duration-200
+                    hover:bg-background hover:text-primary
+                    hover:shadow-[0_0_24px_2px_rgba(0,189,216,0.55)]
+                    active:scale-95
                     md:inline-flex
                   "
+                  type="button"
+                  onClick={handleOpenLoginModal}
                 >
-                  <Link href={desktopSignInHref}>Acceder</Link>
+                  <LogIn className="size-4" />
+                  Iniciar sesión
                 </Button>
 
+                {/* Phones keep the skewed neon treatment. */}
                 <Button
                   className="
                     relative skew-x-[-15deg] cursor-pointer rounded-none border
