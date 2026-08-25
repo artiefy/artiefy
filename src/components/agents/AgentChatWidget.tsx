@@ -14,6 +14,7 @@ import {
 
 import Link from 'next/link';
 
+import { useUser } from '@clerk/nextjs';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import {
@@ -240,8 +241,59 @@ const WELCOME_OPTIONS = [
   'Quiero conocer qué puedo hacer en Artiefy',
 ];
 
-/** Chat history lives in the browser: the chat API stores no conversations. */
-const HISTORY_STORAGE_KEY = 'artiefy.agent-chat.history';
+/**
+ * Chat history lives in the browser: the chat API stores no conversations.
+ * The key carries the account id, so two people sharing a device never read
+ * each other's chats — signed-out visitors get their own `anon` bucket.
+ */
+const HISTORY_STORAGE_PREFIX = 'artiefy.agent-chat.history';
+
+const historyStorageKeyFor = (userId: string | null) =>
+  `${HISTORY_STORAGE_PREFIX}.${userId ?? 'anon'}`;
+
+/** Stands in for a conversation id while the clear-all confirmation is open. */
+const CLEAR_ALL_ID = '__all__';
+
+/**
+ * The single, unscoped key every visitor shared before histories were split per
+ * account. Read once so nobody loses their chats on the way over, then dropped.
+ */
+const LEGACY_HISTORY_KEY = HISTORY_STORAGE_PREFIX;
+
+function readStoredHistory(key: string): StoredConversation[] {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as StoredConversation[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // Corrupt or unavailable storage: start with an empty history.
+    return [];
+  }
+}
+
+/**
+ * Loads one account's conversations, adopting the pre-split blob the first time
+ * a bucket would otherwise come up empty. The blob had no owner and was already
+ * readable by anyone on this browser profile, so claiming it exposes nothing
+ * new — and once claimed it is deleted, which is what ends the sharing.
+ */
+function loadHistoryFor(key: string): StoredConversation[] {
+  const stored = readStoredHistory(key);
+  if (stored.length > 0) return stored;
+
+  const legacy = readStoredHistory(LEGACY_HISTORY_KEY);
+  if (legacy.length === 0) return stored;
+
+  try {
+    window.localStorage.setItem(key, JSON.stringify(legacy));
+    window.localStorage.removeItem(LEGACY_HISTORY_KEY);
+  } catch {
+    // Storage blocked: the list still loads, it just is not migrated yet.
+  }
+
+  return legacy;
+}
 const MAX_STORED_CONVERSATIONS = 20;
 
 export type AgentId = 'artie' | 'tutor' | 'coach';
@@ -423,6 +475,8 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [measuredWidth, setMeasuredWidth] = useState(0);
   /** True only while the panel floats over the page as a detached card. */
   const [isDetached, setIsDetached] = useState(false);
+  /** Conversation waiting for a delete confirmation; null when none is. */
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   /**
    * The scope the route itself implies. Guided project pages mount the widget
@@ -438,6 +492,12 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [scope, setScope] = useState<AgentChatScope>(routeScope);
 
   const hasLoadedHistory = useRef(false);
+  /** Storage key the current `history` came from, to detect account switches. */
+  const loadedHistoryKey = useRef<string | null>(null);
+  /** The open conversation, readable from callbacks that outlive a render. */
+  const activeConversationRef = useRef<string | null>(null);
+  /** Cancels the reply in flight when the learner leaves its conversation. */
+  const inFlightRef = useRef<AbortController | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const backdropRef = useRef<HTMLDivElement | null>(null);
@@ -467,6 +527,27 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     close: closePopOut,
   } = useDocumentPictureInPicture(PIP_WIDTH, PIP_HEIGHT);
   const isPoppedOut = pipWindow !== null;
+
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const historyStorageKey = historyStorageKeyFor(user?.id ?? null);
+
+  /**
+   * Switches the open conversation. Any reply still in flight belongs to the
+   * one being left, so it is aborted here: without this it lands in whatever
+   * chat is open by the time it resolves.
+   *
+   * Only refs and setters are touched, which is what keeps it stable enough to
+   * sit in an effect's dependency list.
+   */
+  const leaveConversation = useCallback((nextId: string | null) => {
+    inFlightRef.current?.abort();
+    inFlightRef.current = null;
+    activeConversationRef.current = nextId;
+    setConversationId(nextId);
+    setIsSending(false);
+    setUnreadCount(0);
+    setPendingDeleteId(null);
+  }, []);
 
   const agent = AGENTS[agentId];
   const AgentIcon = agent.icon;
@@ -927,17 +1008,28 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     return () => window.clearInterval(timer);
   }, [isSending]);
 
-  // Restore the locally stored conversations once, on mount.
+  // Load the conversations of whoever is signed in, and reload them when that
+  // changes. Waiting for Clerk avoids reading the anonymous bucket first and
+  // flashing someone else's list.
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(HISTORY_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as StoredConversation[];
-      if (Array.isArray(parsed)) setHistory(parsed);
-    } catch {
-      // Corrupt or unavailable storage: start with an empty history.
+    if (!isUserLoaded) return;
+
+    const previousKey = loadedHistoryKey.current;
+    const isAccountSwitch =
+      previousKey !== null && previousKey !== historyStorageKey;
+
+    loadedHistoryKey.current = historyStorageKey;
+    hasLoadedHistory.current = false;
+    setHistory(loadHistoryFor(historyStorageKey));
+
+    // Signing in or out must not leave the previous account's conversation on
+    // screen, so the open one is dropped along with its pending reply.
+    if (isAccountSwitch) {
+      leaveConversation(null);
+      setMessages([]);
+      setQuotaNotice(null);
     }
-  }, []);
+  }, [historyStorageKey, isUserLoaded, leaveConversation]);
 
   // Keep the open conversation mirrored into the history list. Only exchanges
   // that got an answer are stored, so a blocked message leaves nothing behind.
@@ -975,16 +1067,17 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   // Persist on every change except the very first render, which would
   // overwrite stored history before the load effect above has run.
   useEffect(() => {
+    if (!isUserLoaded) return;
     if (!hasLoadedHistory.current) {
       hasLoadedHistory.current = true;
       return;
     }
     try {
-      window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+      window.localStorage.setItem(historyStorageKey, JSON.stringify(history));
     } catch {
       // Storage full or blocked: history stays in memory for this session.
     }
-  }, [history]);
+  }, [history, historyStorageKey, isUserLoaded]);
 
   /** Closes the history, unless it is docked — there it is part of the layout. */
   const closeHistoryPanel = () => {
@@ -992,21 +1085,25 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   };
 
   const startNewConversation = () => {
+    // Cancels the reply the previous chat was still waiting for, so it cannot
+    // land here. Also clears its sending state: this chat starts idle.
+    leaveConversation(null);
     setMessages([]);
-    setConversationId(null);
     setDraft('');
+    setQuotaNotice(null);
     closeHistoryPanel();
     setScope(routeScope);
-    setUnreadCount(0);
     // A fresh chat always starts at the orchestrator, whoever answered last:
     // it reads the intent and hands off to the specialist on its own.
     setAgentId('artie');
   };
 
   const openConversation = (conversation: StoredConversation) => {
+    leaveConversation(conversation.id);
     setAgentId(conversation.agent);
     setMessages(conversation.messages);
-    setConversationId(conversation.id);
+    setDraft('');
+    setQuotaNotice(null);
     closeHistoryPanel();
     setScope(readScope(conversation));
   };
@@ -1025,7 +1122,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
 
         setScope(requested);
         setAgentId(specialist);
-        setConversationId(`conv-${now.getTime()}`);
+        leaveConversation(`conv-${now.getTime()}`);
         setMessages([
           {
             id: `${now.getTime()}-agent`,
@@ -1041,15 +1138,31 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         if (!hasRoomForHistoryRef.current) setIsHistoryOpen(false);
         setIsOpen(true);
       }),
-    []
+    [leaveConversation]
   );
 
+  /**
+   * Deleting is one tap plus a confirmation: the chat is the only copy, since
+   * nothing is stored server-side.
+   */
   const deleteConversation = (id: string) => {
     setHistory((prev) => prev.filter((item) => item.id !== id));
-    if (conversationId === id) {
+    setPendingDeleteId(null);
+
+    // Deleting the chat being read also drops what it was still waiting for.
+    if (activeConversationRef.current === id) {
+      leaveConversation(null);
       setMessages([]);
-      setConversationId(null);
+      setQuotaNotice(null);
     }
+  };
+
+  const deleteAllConversations = () => {
+    setHistory([]);
+    setPendingDeleteId(null);
+    leaveConversation(null);
+    setMessages([]);
+    setQuotaNotice(null);
   };
 
   const { totalActivities, completedActivities, currentActivity } =
@@ -1110,9 +1223,18 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     const now = new Date();
     const userMessageId = `${now.getTime()}-user`;
 
-    if (!conversationId) {
-      setConversationId(`conv-${now.getTime()}`);
-    }
+    // Everything below belongs to THIS conversation. The learner can start a
+    // new chat while the answer is still travelling, so every write that
+    // follows the await is checked against what is open by then.
+    const targetConversationId = conversationId ?? `conv-${now.getTime()}`;
+    if (!conversationId) setConversationId(targetConversationId);
+    activeConversationRef.current = targetConversationId;
+
+    const isStillOpen = () =>
+      activeConversationRef.current === targetConversationId;
+
+    const controller = new AbortController();
+    inFlightRef.current = controller;
 
     setMessages((prev) => [
       ...prev,
@@ -1130,6 +1252,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     try {
       const response = await fetch('/api/agents/chat', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
@@ -1152,6 +1275,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         quota?: AgentQuotaPayload;
         notice?: AgentQuotaNotice;
       };
+
+      // The learner moved on: this answer belongs to a chat they already left,
+      // and the one they are reading now must not inherit it.
+      if (!isStillOpen()) return;
 
       // Blocked: no session, not enrolled, or allowance spent. In every case
       // the message never reached the agent, so the optimistic bubble goes
@@ -1192,7 +1319,12 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           time: formatTime(replyTime),
         },
       ]);
-    } catch {
+    } catch (error) {
+      // Aborting is how leaving a conversation cancels its reply, not a
+      // failure the learner should ever be told about.
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      if (!isStillOpen()) return;
+
       const errorTime = new Date();
       setMessages((prev) => [
         ...prev,
@@ -1205,7 +1337,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         },
       ]);
     } finally {
-      setIsSending(false);
+      if (inFlightRef.current === controller) inFlightRef.current = null;
+      // A conversation the learner already left must not unlock the composer
+      // of the one they are in now — that one owns its own sending state.
+      if (isStillOpen()) setIsSending(false);
     }
   };
 
@@ -1242,14 +1377,53 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         <h3 className="text-sm font-semibold text-foreground">
           Historial de chats
         </h3>
-        <button
-          type="button"
-          aria-label="Cerrar historial"
-          onClick={() => setIsHistoryOpen(false)}
-          className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-        >
-          <X className="size-4 text-muted-foreground" />
-        </button>
+        <div className="flex items-center gap-1">
+          {history.length > 0 &&
+            (pendingDeleteId === CLEAR_ALL_ID ? (
+              <>
+                <button
+                  type="button"
+                  onClick={deleteAllConversations}
+                  className="
+                    rounded-lg px-2 py-1 text-[11px] font-semibold
+                    text-red-400 transition-colors
+                    hover:bg-red-500/10
+                  "
+                >
+                  Borrar todo
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPendingDeleteId(null)}
+                  className="
+                    rounded-lg px-2 py-1 text-[11px] font-medium
+                    text-muted-foreground transition-colors
+                    hover:bg-white/[0.06]
+                  "
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                aria-label="Vaciar el historial"
+                title="Vaciar el historial"
+                onClick={() => setPendingDeleteId(CLEAR_ALL_ID)}
+                className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+              >
+                <Trash2 className="size-4 text-muted-foreground" />
+              </button>
+            ))}
+          <button
+            type="button"
+            aria-label="Cerrar historial"
+            onClick={() => setIsHistoryOpen(false)}
+            className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
+          >
+            <X className="size-4 text-muted-foreground" />
+          </button>
+        </div>
       </div>
 
       <div className="scrollbar-minimal flex-1 overflow-y-auto p-3">
@@ -1318,14 +1492,45 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                       </div>
                     </div>
                   </button>
-                  <button
-                    type="button"
-                    aria-label={`Eliminar ${conversation.title}`}
-                    onClick={() => deleteConversation(conversation.id)}
-                    className="rounded-lg p-2 transition-colors hover:bg-white/[0.06]"
-                  >
-                    <Trash2 className="size-3.5 text-muted-foreground" />
-                  </button>
+                  {pendingDeleteId === conversation.id ? (
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        aria-label={`Confirmar eliminar ${conversation.title}`}
+                        onClick={() => deleteConversation(conversation.id)}
+                        className="
+                          rounded-lg px-2 py-1 text-[11px] font-semibold
+                          text-red-400 transition-colors
+                          hover:bg-red-500/10
+                        "
+                      >
+                        Borrar
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Cancelar"
+                        onClick={() => setPendingDeleteId(null)}
+                        className="
+                          rounded-lg p-1.5 transition-colors
+                          hover:bg-white/[0.06]
+                        "
+                      >
+                        <X className="size-3.5 text-muted-foreground" />
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={`Eliminar ${conversation.title}`}
+                      onClick={() => setPendingDeleteId(conversation.id)}
+                      className="
+                        shrink-0 rounded-lg p-2 transition-colors
+                        hover:bg-white/[0.06]
+                      "
+                    >
+                      <Trash2 className="size-3.5 text-muted-foreground" />
+                    </button>
+                  )}
                 </li>
               );
             })}
@@ -1339,9 +1544,9 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         type="button"
         onClick={startNewConversation}
         className="
-          absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center
-          gap-1.5 rounded-full py-2.5 pr-4 pl-3 text-sm font-semibold
-          whitespace-nowrap transition-transform
+          absolute right-4 bottom-4 flex items-center gap-1.5 rounded-full
+          py-2.5 pr-4 pl-3 text-sm font-semibold whitespace-nowrap
+          transition-transform
           hover:scale-105
           active:scale-95
         "
