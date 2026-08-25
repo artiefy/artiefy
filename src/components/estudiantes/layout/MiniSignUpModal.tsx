@@ -91,6 +91,21 @@ const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
     return error.errors;
   }
 
+  // The v7 sign-up methods resolve with `{ error }` rather than throwing, and
+  // that error carries the field-level ones in `errors`. Without unwrapping it
+  // the generic branch below flattens them and loses `meta.paramName`, so no
+  // input can be highlighted and "username taken" reads as a generic failure.
+  if (error && typeof error === 'object' && 'errors' in error) {
+    const nested = (error as { errors: unknown }).errors;
+    if (Array.isArray(nested)) {
+      const apiErrors = nested.filter(
+        (item): item is ClerkAPIError =>
+          Boolean(item) && typeof item === 'object' && 'code' in item
+      );
+      if (apiErrors.length > 0) return apiErrors;
+    }
+  }
+
   if (error && typeof error === 'object') {
     const record = error as Record<string, unknown>;
     const code =
@@ -253,30 +268,37 @@ export default function MiniSignUpModal({
     };
   }, [isOpen, onClose]);
 
-  // Sincronizar estado de SignUp al abrir el modal
+  // Clerk hands back a new SignUp resource on every mutation. Depending on the
+  // object itself would re-run this on each one — including right after a
+  // failed submit — so the fields are tracked through primitives instead.
+  const signUpStatus = signUp?.status ?? null;
+  const signUpMissingKey = normalizeMissingFields(
+    signUp?.missingFields ?? []
+  ).join(',');
+
+  // Sincronizar estado de SignUp al abrir el modal.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (signUpStatus !== 'missing_requirements') return;
+
+    // Only the fields are seeded here. Setting an error too would overwrite the
+    // real reason a submit failed — "ese usuario ya existe" turning back into
+    // the generic "completa los campos faltantes" is exactly that bug.
+    setOauthMissingFields(
+      signUpMissingKey ? signUpMissingKey.split(',') : null
+    );
+  }, [isOpen, signUpStatus, signUpMissingKey]);
+
+  // A sign-up that is already complete only needs converting into a session.
   useEffect(() => {
     if (!isOpen || !signUp) return;
+    if (signUpStatus !== 'complete') return;
 
-    if (signUp.status === 'complete') {
-      void signUp.finalize();
-      return;
-    }
-
-    if (signUp.status === 'missing_requirements') {
-      const missingFields = normalizeMissingFields(signUp.missingFields ?? []);
-      if (missingFields.length > 0) {
-        setOauthMissingFields(missingFields);
-        setErrors([
-          {
-            code: 'missing_requirements',
-            message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-            longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-            meta: {},
-          },
-        ]);
-      }
-    }
-  }, [isOpen, signUp]);
+    void (async () => {
+      const { error } = await signUp.finalize();
+      if (error) setErrors(toClerkApiErrors(error));
+    })();
+  }, [isOpen, signUp, signUpStatus]);
 
   // Detectar cuando OAuth o registro se completa exitosamente
   useEffect(() => {
@@ -705,10 +727,22 @@ export default function MiniSignUpModal({
 
     try {
       setIsSubmitting(true);
-      await signUp.update(payload);
+
+      // `update` resolves with `{ error }` instead of throwing. Ignoring it is
+      // what made a rejected username look like nothing happened: the status
+      // stayed `missing_requirements` and the generic notice came back with no
+      // hint that the name was already taken.
+      const { error: updateError } = await signUp.update(payload);
+      if (updateError) {
+        setErrors(toClerkApiErrors(updateError));
+        return;
+      }
 
       if (signUp.status === 'complete') {
-        await signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+        if (finalizeError) {
+          setErrors(toClerkApiErrors(finalizeError));
+        }
         return;
       }
 
@@ -815,7 +849,10 @@ export default function MiniSignUpModal({
       }
 
       if (signUp.status === 'complete') {
-        await signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+        if (finalizeError) {
+          setErrors(toClerkApiErrors(finalizeError));
+        }
         return;
       }
 
@@ -861,7 +898,10 @@ export default function MiniSignUpModal({
       }
 
       if (signUp.status === 'complete') {
-        await signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+        if (finalizeError) {
+          setErrors(toClerkApiErrors(finalizeError));
+        }
         return;
       }
 
@@ -891,9 +931,17 @@ export default function MiniSignUpModal({
     }
   };
 
+  /** Clerk reports a taken username with the same code as a taken email. */
+  const isTakenIdentifierError = (error: ClerkAPIError) =>
+    error.code === 'form_identifier_exists' ||
+    error.code === 'identification_claimed';
+
+  const isUsernameTakenError = (error: ClerkAPIError) =>
+    isTakenIdentifierError(error) && error.meta?.paramName === 'username';
+
   const emailError = errors?.some(
     (error) =>
-      error.code === 'form_identifier_exists' ||
+      (isTakenIdentifierError(error) && !isUsernameTakenError(error)) ||
       (error.code === 'form_param_format_invalid' &&
         error.meta?.paramName === 'emailAddress') ||
       (error.code === 'form_param_missing' &&
@@ -923,6 +971,7 @@ export default function MiniSignUpModal({
   );
   const usernameError = errors?.some(
     (error) =>
+      isUsernameTakenError(error) ||
       (error.code === 'form_param_missing' &&
         error.meta?.paramName === 'username') ||
       (error.code === 'form_param_format_invalid' &&
@@ -945,6 +994,10 @@ export default function MiniSignUpModal({
   const showPasswordChecklist = password.length > 0;
 
   const getSignUpErrorMessage = (error: ClerkAPIError) => {
+    // Checked before the account-exists copy below: the same code covers both,
+    // and telling someone to sign in because a username is taken is wrong.
+    if (isUsernameTakenError(error))
+      return 'Ese nombre de usuario ya está en uso. Elige otro.';
     if (error.code === 'form_identifier_exists')
       return 'Esta cuenta ya existe. Por favor inicia sesión.';
     if (
