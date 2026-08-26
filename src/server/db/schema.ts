@@ -316,7 +316,7 @@ export const activities = pgTable('activities', {
   lastUpdated: timestamp('last_updated').defaultNow().notNull(),
   revisada: boolean('revisada').default(false),
   parametroId: integer('parametro_id').references(() => parametros.id),
-  porcentaje: integer('porcentaje'),
+  porcentaje: real('porcentaje'),
   fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
   fechaInicioActividad: timestamp('fecha_inicio_actividad'),
 });

@@ -96,6 +96,9 @@ export function ModalFormActivityQuick({
   const [porcentajeSugerido, setPorcentajeSugerido] = useState<number | null>(
     null
   );
+  const [previewActividades, setPreviewActividades] = useState<
+    Array<{ id: number | string; name: string; porcentaje: number }>
+  >([]);
   const [loadingDisponible, setLoadingDisponible] = useState(false);
   const [hasDueDate, setHasDueDate] = useState(false);
   const [fechaMaximaEntrega, setFechaMaximaEntrega] = useState('');
@@ -121,48 +124,82 @@ export function ModalFormActivityQuick({
     setDocImagen(null);
   }, [presetLessonId, parametroId]);
 
-  const loadDisponibleFor = useCallback(async (paramId: number) => {
-    setLoadingDisponible(true);
-    try {
-      // Disponible real del parámetro (100 - lo ya asignado). porcentaje:0
-      // es un "no-op" solo para leer el total actual sin validar una suma.
-      const disponibleRes = await fetch(
-        '/api/educadores/actividades/actividadesByLesson',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parametroId: paramId, porcentaje: 0 }),
-        }
-      );
-      if (disponibleRes.ok) {
-        const disponibleData = (await disponibleRes.json()) as {
-          disponible: number;
-        };
-        setPorcentajeDisponible(disponibleData.disponible);
-      } else {
-        setPorcentajeDisponible(null);
-      }
+  const loadDisponibleFor = useCallback(
+    async (paramId: number) => {
+      setLoadingDisponible(true);
+      try {
+        // Disponible real del parámetro (100 - lo ya asignado). porcentaje:0
+        // es un "no-op" solo para leer el total actual sin validar una suma.
+        const [disponibleRes, sugeridoRes, actividadesRes] = await Promise.all([
+          fetch('/api/educadores/actividades/actividadesByLesson', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ parametroId: paramId, porcentaje: 0 }),
+          }),
+          fetch(`/api/educadores/actividades/sugerido?parametroId=${paramId}`),
+          fetch(
+            `/api/educadores/actividades?courseId=${courseId}&parametroId=${paramId}`
+          ),
+        ]);
 
-      // Sugerido para ESTA actividad (reparte el disponible entre las
-      // actividades que le falten al parámetro, si tiene un número fijo).
-      const sugeridoRes = await fetch(
-        `/api/educadores/actividades/sugerido?parametroId=${paramId}`
-      );
-      if (sugeridoRes.ok) {
-        const sugeridoData = (await sugeridoRes.json()) as {
-          porcentajeSugerido: number | null;
-        };
-        setPorcentajeSugerido(sugeridoData.porcentajeSugerido);
-        if (sugeridoData.porcentajeSugerido) {
-          setPorcentaje(sugeridoData.porcentajeSugerido);
+        if (disponibleRes.ok) {
+          const disponibleData = (await disponibleRes.json()) as {
+            disponible: number;
+          };
+          setPorcentajeDisponible(disponibleData.disponible);
+        } else {
+          setPorcentajeDisponible(null);
         }
+
+        let suggestedValue: number | null = null;
+        if (sugeridoRes.ok) {
+          const sugeridoData = (await sugeridoRes.json()) as {
+            porcentajeSugerido: number | null;
+          };
+          suggestedValue = sugeridoData.porcentajeSugerido;
+          setPorcentajeSugerido(sugeridoData.porcentajeSugerido);
+        } else {
+          setPorcentajeSugerido(null);
+        }
+
+        let actividadesDeParametro: Array<{ id: number; name: string }> = [];
+        if (actividadesRes.ok) {
+          actividadesDeParametro = (await actividadesRes.json()) as Array<{
+            id: number;
+            name: string;
+          }>;
+        }
+
+        const totalConNueva = actividadesDeParametro.length + 1;
+        const porcentajeBase =
+          totalConNueva > 0 ? Number((100 / totalConNueva).toFixed(2)) : 100;
+
+        const preview = [
+          ...actividadesDeParametro.map((actividad) => ({
+            id: actividad.id,
+            name: actividad.name,
+            porcentaje: porcentajeBase,
+          })),
+          {
+            id: 'nueva-actividad',
+            name: 'Nueva actividad',
+            porcentaje: porcentajeBase,
+          },
+        ];
+
+        setPreviewActividades(preview);
+
+        const valueToUse = suggestedValue ?? porcentajeBase;
+        setPorcentaje(valueToUse);
+      } catch {
+        setPorcentajeDisponible(null);
+        setPreviewActividades([]);
+      } finally {
+        setLoadingDisponible(false);
       }
-    } catch {
-      setPorcentajeDisponible(null);
-    } finally {
-      setLoadingDisponible(false);
-    }
-  }, []);
+    },
+    [courseId]
+  );
 
   const uploadFileToS3 = async (file: File): Promise<string> => {
     const res = await fetch('/api/upload', {
@@ -547,26 +584,24 @@ export function ModalFormActivityQuick({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-start">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white">
-                  Peso en el parámetro (%) *
+                  Peso automático del parámetro (%)
                 </label>
                 <Input
                   type="number"
                   min={0}
                   max={100}
+                  readOnly
                   value={porcentaje}
-                  onChange={(e) => setPorcentaje(Number(e.target.value))}
-                  className="border-cyan-500/30 bg-slate-800 text-white placeholder-gray-500"
+                  className="border-cyan-500/30 bg-slate-800 text-white placeholder-gray-500 opacity-90"
                 />
                 {loadingDisponible ? (
-                  <p className="text-xs text-gray-400">
-                    Consultando disponible...
-                  </p>
+                  <p className="text-xs text-gray-400">Calculando reparto...</p>
                 ) : !effectiveParametroId ? (
                   <p className="text-xs text-gray-500">
-                    Selecciona un parámetro para ver el disponible.
+                    Selecciona un parámetro para ver el reparto.
                   </p>
                 ) : (
-                  <div className="space-y-0.5">
+                  <div className="space-y-2">
                     <p className="text-xs text-cyan-400">
                       Disponible en el parámetro:{' '}
                       <span className="font-semibold">
@@ -575,12 +610,37 @@ export function ModalFormActivityQuick({
                     </p>
                     {porcentajeSugerido !== null && (
                       <p className="text-xs text-gray-400">
-                        Sugerido para esta actividad:{' '}
+                        Este nuevo peso quedará en{' '}
                         <span className="font-semibold text-gray-300">
                           {porcentajeSugerido}%
                         </span>
                       </p>
                     )}
+                    {previewActividades.length > 0 && (
+                      <div className="rounded-md border border-cyan-500/20 bg-slate-900/60 p-2">
+                        <p className="mb-1 text-[10px] font-semibold tracking-wide text-cyan-300 uppercase">
+                          Reparto si creas esta actividad
+                        </p>
+                        <div className="space-y-1 text-xs text-gray-300">
+                          {previewActividades.map((actividad) => (
+                            <div
+                              key={String(actividad.id)}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <span className="truncate">{actividad.name}</span>
+                              <span className="font-semibold text-cyan-300">
+                                {actividad.porcentaje}%
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400">
+                      Si el parámetro tiene 1 actividad, vale 100%. Si agregas
+                      otra, se reparte 50% y 50%. Con 3 actividades, cada una
+                      queda en 33.33% y así sucesivamente.
+                    </p>
                     {(porcentajeDisponible ?? 0) <= 0 && (
                       <p className="text-xs text-red-400">
                         Este parámetro ya no tiene porcentaje disponible.

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { and, eq, ne as neq } from 'drizzle-orm';
 
+import { scheduleCourseIndex } from '~/lib/embeddings/index-now';
 import {
   createCourse,
   deleteCourse,
@@ -763,6 +764,9 @@ export async function PUT(
         }
       }
     }
+
+    // Reindexa tras editar, sin esperar al cron.
+    scheduleCourseIndex(courseId);
 
     const refreshedCourse = await getCourseById(courseId);
     return NextResponse.json({

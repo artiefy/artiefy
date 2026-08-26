@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 
+import { scheduleCourseIndex } from '~/lib/embeddings/index-now';
 import {
   createCourse,
   deleteCourse,
@@ -100,6 +101,9 @@ export async function PUT(
       spaceOptionId: updatedCourse?.spaceOptionId,
       certificationTypeId: updatedCourse?.certificationTypeId,
     });
+    // Reindexa tras editar, sin esperar al cron.
+    scheduleCourseIndex(Number(params.id));
+
     return NextResponse.json(updatedCourse, { status: 200 });
   } catch (error) {
     console.error('❌ Error en el backend al actualizar el curso:', error);

@@ -162,6 +162,9 @@ export async function getUsersEnrolledInCourse(courseId: number) {
             parametroName: parametros.name,
             parametroPeso: parametros.porcentaje,
             actividadPeso: activities.porcentaje,
+            // Tope de actividades del parámetro: la tabla lo usa para saber
+            // hasta cuántas se pueden agregar bajo cada parámetro.
+            numberOfActivities: parametros.numberOfActivities,
             grade: userActivitiesProgress.finalGrade,
           })
           .from(activities)
@@ -191,6 +194,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
             parametroName: p.parametroName,
             parametroPeso: p.parametroPeso,
             actividadPeso: 0,
+            numberOfActivities: p.numberOfActivities,
             grade: 0,
           }));
         actividadNotas = [...actividadNotas, ...placeholders];
@@ -224,6 +228,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
             parametroName: a.parametroName,
             parametroPeso: a.parametroPeso,
             actividadPeso: a.actividadPeso,
+            numberOfActivities: a.numberOfActivities,
             grade: toNum(a.grade, 0),
           })),
         };

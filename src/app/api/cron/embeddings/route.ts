@@ -67,7 +67,9 @@ async function reindexarCurso(id: number, title: string): Promise<Resultado> {
     1000,
     200
   );
-  await saveDocumentEmbeddings({ type: 'course', id }, documents);
+  await saveDocumentEmbeddings({ type: 'course', id }, documents, {
+    replaceAll: true,
+  });
 
   return { type: 'course', id, title, chunks: documents.length };
 }
@@ -96,7 +98,9 @@ async function reindexarProyecto(
     1000,
     200
   );
-  await saveDocumentEmbeddings({ type: 'project', id }, documents);
+  await saveDocumentEmbeddings({ type: 'project', id }, documents, {
+    replaceAll: true,
+  });
 
   return { type: 'project', id, title, chunks: documents.length };
 }

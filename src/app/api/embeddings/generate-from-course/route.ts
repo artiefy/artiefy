@@ -30,6 +30,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { authorizeCourseEmbeddings } from '~/lib/embeddings/authorize';
 import { getCourseContentForEmbeddings } from '~/lib/embeddings/course-processor';
 import { getDocumentStats, processDocument } from '~/lib/embeddings/processor';
 import { saveDocumentEmbeddings } from '~/lib/embeddings/search';
@@ -46,6 +47,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Se requiere courseId (número válido)' },
         { status: 400 }
+      );
+    }
+
+    // Generar embeddings gasta créditos de OpenAI: la ruta no puede quedar
+    // abierta. Admins pasan siempre; los educadores solo con sus cursos.
+    const permiso = await authorizeCourseEmbeddings(courseId);
+    if (!permiso.ok) {
+      return NextResponse.json(
+        { error: permiso.error },
+        { status: permiso.status }
       );
     }
 
@@ -85,7 +96,9 @@ export async function POST(request: NextRequest) {
 
     // Guardar en base de datos
     console.log(`💾 Guardando embeddings en BD...`);
-    const saved = await saveDocumentEmbeddings(String(courseId), documents);
+    const saved = await saveDocumentEmbeddings(String(courseId), documents, {
+      replaceAll: true,
+    });
     console.log(`✅ Guardados ${saved} documentos en BD`);
 
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
 
+import { scheduleCourseIndex } from '~/lib/embeddings/index-now';
 import {
   createCourse,
   deleteCourse,
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🛠️ Intentando crear el curso en la base de datos...');
-    await createCourse({
+    const [nuevoCurso] = await createCourse({
       title,
       description,
       creatorId: userId,
@@ -109,6 +110,10 @@ export async function POST(request: NextRequest) {
       instructors,
     });
     console.log('✅ Curso creado con éxito');
+
+    // Indexa apenas se crea, sin esperar al cron. Corre después de responder,
+    // así que no demora el guardado.
+    if (nuevoCurso?.id) scheduleCourseIndex(Number(nuevoCurso.id));
 
     return NextResponse.json({ message: 'Curso creado exitosamente' });
   } catch (error: unknown) {

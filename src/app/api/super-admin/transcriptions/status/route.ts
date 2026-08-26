@@ -12,6 +12,7 @@
  *   ?health=1                   -> diagnóstico del servicio del VPS
  */
 
+import { after } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
@@ -22,6 +23,7 @@ import {
   getSingleVideo,
   type VideoSource,
 } from '~/lib/transcriptions/content-sources';
+import { reindexAfterTranscription } from '~/lib/transcriptions/reindex-on-complete';
 import {
   checkServiceHealth,
   type ContentType,
@@ -46,6 +48,13 @@ async function buildStatus(video: VideoSource): Promise<VideoStatus> {
   let state = null;
   try {
     state = await reconcileTranscription(video.type, video.contentId);
+
+    // Si acaba de terminar, el embedding del curso o proyecto todavia no
+    // contiene lo hablado en el video: se reindexa despues de responder.
+    if (state?.justCompleted) {
+      const { type, contentId } = video;
+      after(() => reindexAfterTranscription(type, contentId));
+    }
   } catch {
     state = await getTranscriptionState(video.type, video.contentId);
   }

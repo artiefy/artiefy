@@ -31,6 +31,7 @@ import { toast } from 'sonner';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import { AudioRecorder } from '~/components/AudioRecorder';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
+import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,6 +41,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
@@ -61,6 +63,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
+import { esCorreoAutorizado } from '~/lib/permissions/course-deletion';
 import { normalizeSearch } from '~/lib/utils';
 
 import '~/styles/course-detail-system.css';
@@ -534,6 +537,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     []
   );
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false);
+  const [activitiesRefreshKey, setActivitiesRefreshKey] = useState(0);
   const [loadingProjects, setLoadingProjects] = useState(false);
   // Estado para el modal de proyecto seleccionado
   const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
@@ -617,7 +622,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setLoadingActivities(false);
       }
     })();
-  }, [courseIdNumber]);
+  }, [courseIdNumber, activitiesRefreshKey]);
 
   // Función para crear respuesta a un post
   const handleCreateReply = async (postId: number) => {
@@ -818,6 +823,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   }
   const { user } = useUser(); // Ya está dentro del componente
+
+  // Eliminar un curso borra también sus clases, actividades y archivos en S3,
+  // y no se puede deshacer. Por eso la acción queda restringida a una sola
+  // cuenta en vez de estar disponible para cualquier super-admin.
+  const puedeEliminarCurso = esCorreoAutorizado(
+    user?.primaryEmailAddress?.emailAddress
+  );
 
   // Estado para meetings ya poblados desde backend
   const [populatedMeetings, setPopulatedMeetings] = useState<UIMeeting[]>([]);
@@ -2414,6 +2426,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </Link>
           </Button>
           <AlertDialog>
+            {puedeEliminarCurso && (
+              <AlertDialogTrigger asChild>
+                <Button
+                  className="
+                    w-full border border-red-500/40 bg-red-500/10 text-red-400
+                    transition-colors
+                    hover:bg-red-500/20 hover:text-red-300
+                  "
+                >
+                  🗑️ Eliminar curso
+                </Button>
+              </AlertDialogTrigger>
+            )}
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
@@ -5853,9 +5878,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                 {activeTab === 'actividades' && (
                   <div className="animate-in fade-in duration-500">
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      Actividades del curso
-                    </h2>
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <h2 className="text-2xl font-bold text-white">
+                        Actividades del curso
+                      </h2>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsCreateActivityOpen(true)}
+                        className="
+                          inline-flex items-center gap-2 rounded-xl border
+                          border-[#22C4D3] bg-[#22C4D3]/15 px-4 py-2 text-sm
+                          font-semibold text-[#22C4D3] transition hover:bg-[#22C4D3]/25
+                        "
+                      >
+                        <span>＋</span>
+                        Crear actividad
+                      </button>
+                    </div>
 
                     {loadingActivities ? (
                       <div className="flex items-center gap-3 text-white/60">
@@ -6170,6 +6210,13 @@ text-[#94A3B8]
           </div>
         )
       )}
+
+      <ModalFormActivityQuick
+        open={isCreateActivityOpen}
+        onOpenChange={setIsCreateActivityOpen}
+        courseId={courseIdNumber}
+        onSuccess={() => setActivitiesRefreshKey((key) => key + 1)}
+      />
 
       <ModalScheduleMeeting
         isOpen={isMeetingModalOpen}

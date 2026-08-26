@@ -3,6 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import {
+  getCourseIdOfLesson,
+  scheduleCourseIndex,
+  scheduleIndexForLesson,
+} from '~/lib/embeddings/index-now';
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
+import {
   createLesson,
   deleteLesson,
   getLessonsByCourseId,
@@ -64,6 +70,17 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as CreateLessonBody;
     const result = await createLesson(body);
 
+    // La clase entra al embedding del curso al que pertenece.
+    if (body.courseId) scheduleCourseIndex(Number(body.courseId));
+
+    // Clase creada con video -> se encola su transcripcion. El modal de clases
+    // envia siempre a esta ruta, asi que sin esto el video quedaba guardado
+    // pero nunca se transcribia.
+    const videoNuevo = (body as { coverVideoKey?: string }).coverVideoKey;
+    if (videoNuevo && videoNuevo !== 'none' && result?.id) {
+      await autoTranscribe('lesson', Number(result.id), videoNuevo, true);
+    }
+
     return NextResponse.json(
       {
         message: 'Lección creada exitosamente',
@@ -97,6 +114,13 @@ export async function PUT(req: NextRequest) {
 
     await updateLesson(Number(lessonId), updateData);
 
+    const videoNuevo = (updateData as { coverVideoKey?: string }).coverVideoKey;
+    if (videoNuevo) {
+      await autoTranscribe('lesson', Number(lessonId), videoNuevo, true);
+    }
+
+    scheduleIndexForLesson(Number(lessonId));
+
     return NextResponse.json({ message: 'Lección actualizada exitosamente' });
   } catch (error) {
     console.error('Error al actualizar la lección:', error);
@@ -123,7 +147,11 @@ export async function DELETE(req: NextRequest) {
       return respondWithError('Se requiere el ID de la lección', 400);
     }
 
+    // Se resuelve el curso ANTES de borrar: despues la clase ya no existe.
+    const cursoDeLaClase = await getCourseIdOfLesson(Number(lessonId));
     await deleteLesson(Number(lessonId));
+    if (cursoDeLaClase) scheduleCourseIndex(cursoDeLaClase);
+
     return NextResponse.json({ message: 'Lección eliminada exitosamente' });
   } catch (error) {
     console.error('Error al eliminar la lección:', error);
@@ -156,6 +184,15 @@ export async function PATCH(req: NextRequest) {
     // Update the lesson only if coverVideoKey is provided
     if (coverVideoKey) {
       await updateLesson(Number(lessonId), { coverVideoKey });
+
+      // Video recien subido o reemplazado -> se encola su transcripcion.
+      // `force` porque si cambiaron el video, la transcripcion vieja ya no
+      // corresponde. Nunca lanza: no puede romper la subida.
+      await autoTranscribe('lesson', Number(lessonId), coverVideoKey, true);
+
+      // Se reindexa ya con lo que hay; cuando la transcripcion termine, el
+      // reconcile vuelve a reindexar para incorporar lo hablado.
+      scheduleIndexForLesson(Number(lessonId));
     }
 
     return NextResponse.json({

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { asc, eq } from 'drizzle-orm';
 
+import { scheduleCourseIndex } from '~/lib/embeddings/index-now';
 import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   getLessonById,
@@ -149,6 +150,11 @@ export async function PUT(
     }
 
     const updatedLesson = await updateLesson(lessonId, updatePayload);
+
+    // La clase pertenece a un curso: se reindexa el curso completo.
+    const cursoDeLaClase =
+      updatePayload.courseId ?? updatedLesson?.[0]?.courseId;
+    if (cursoDeLaClase) scheduleCourseIndex(Number(cursoDeLaClase));
 
     // Video de la clase recien subido o reemplazado -> se encola su
     // transcripcion. `force` porque si cambiaron el video, la transcripcion

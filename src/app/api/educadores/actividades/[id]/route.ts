@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { z } from 'zod';
 
+import { scheduleIndexForActivity } from '~/lib/embeddings/index-now';
 import {
   getActivityById,
   updateActivity,
@@ -145,6 +146,8 @@ export async function PUT(
     }
 
     await updateActivity(id, payload);
+
+    scheduleIndexForActivity(Number(id));
 
     return NextResponse.json({
       message: 'Actividad actualizada correctamente',

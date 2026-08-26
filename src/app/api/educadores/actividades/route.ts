@@ -5,6 +5,12 @@ import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import {
+  getCourseIdOfLesson,
+  scheduleCourseIndex,
+  scheduleIndexForActivity,
+  scheduleIndexForLesson,
+} from '~/lib/embeddings/index-now';
+import {
   createActivity,
   updateActivity,
 } from '~/models/educatorsModels/activitiesModels';
@@ -96,6 +102,10 @@ export async function POST(request: NextRequest) {
       porcentaje,
       fechaMaximaEntrega,
     });
+
+    // La actividad entra al embedding del curso al que pertenece su clase.
+    if (newActivity?.lessonsId)
+      scheduleIndexForLesson(Number(newActivity.lessonsId));
 
     return NextResponse.json({
       id: newActivity.id,
@@ -207,6 +217,8 @@ export async function PUT(request: NextRequest) {
       fechaInicioActividad,
     });
 
+    scheduleIndexForActivity(Number(id));
+
     return NextResponse.json({
       message: 'Actividad actualizada exitosamente',
     });
@@ -295,7 +307,14 @@ export async function DELETE(request: NextRequest) {
       .delete(userActivitiesProgress)
       .where(eq(userActivitiesProgress.activityId, parseInt(id)));
 
+    // Se resuelve el curso ANTES de borrar: despues la actividad ya no existe.
+    const cursoDeLaActividad = await getCourseIdOfLesson(
+      Number(activity.lessonsId)
+    );
+
     await db.delete(activities).where(eq(activities.id, parseInt(id)));
+
+    if (cursoDeLaActividad) scheduleCourseIndex(cursoDeLaActividad);
 
     return NextResponse.json({ success: true });
   } catch (error) {

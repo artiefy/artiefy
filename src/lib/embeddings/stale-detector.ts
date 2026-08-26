@@ -25,11 +25,14 @@ export interface StaleItem {
 }
 
 /**
- * Cursos cuyo contenido (curso, lecciones o actividades) cambió después de la
- * última vez que se generaron sus embeddings.
+ * Cursos que necesitan reindexarse, por cualquiera de estas dos razones:
  *
- * Solo considera cursos que YA fueron indexados alguna vez: indexar de oficio
- * todo el catálogo sería una decisión de negocio, no de mantenimiento.
+ *  - Ya estaban indexados y su contenido cambió después.
+ *  - Nunca se indexaron y son recientes (creados o editados en los últimos
+ *    7 días), de modo que un curso nuevo se indexa solo.
+ *
+ * El límite de 7 días es lo que impide que la primera corrida encole el
+ * catálogo histórico entero, que serían cientos de reindexaciones.
  */
 export async function findStaleCourses(limit = 20): Promise<StaleItem[]> {
   const result = await db.execute(sql`
@@ -55,8 +58,15 @@ export async function findStaleCourses(limit = 20): Promise<StaleItem[]> {
     )
     SELECT ct.id, ct.title, ct.content_updated_at, ix.indexed_at
     FROM contenido ct
-    JOIN indexado ix ON ix.course_id = ct.id
-    WHERE ct.content_updated_at > ix.indexed_at
+    LEFT JOIN indexado ix ON ix.course_id = ct.id
+    WHERE
+      -- Ya indexado y con contenido más nuevo que sus embeddings.
+      (ix.indexed_at IS NOT NULL AND ct.content_updated_at > ix.indexed_at)
+      OR
+      -- Nunca indexado, pero creado o editado hace poco. El filtro de fecha
+      -- es lo que evita que la primera corrida encole el catálogo histórico
+      -- completo (cientos de cursos) y a la vez deja entrar los nuevos.
+      (ix.indexed_at IS NULL AND ct.content_updated_at > NOW() - INTERVAL '7 days')
     ORDER BY ct.content_updated_at DESC
     LIMIT ${limit}
   `);
@@ -98,8 +108,11 @@ export async function findStaleProjects(limit = 20): Promise<StaleItem[]> {
     )
     SELECT ct.id, ct.title, ct.content_updated_at, ix.indexed_at
     FROM contenido ct
-    JOIN indexado ix ON ix.project_id = ct.id
-    WHERE ct.content_updated_at > ix.indexed_at
+    LEFT JOIN indexado ix ON ix.project_id = ct.id
+    WHERE
+      (ix.indexed_at IS NOT NULL AND ct.content_updated_at > ix.indexed_at)
+      OR
+      (ix.indexed_at IS NULL AND ct.content_updated_at > NOW() - INTERVAL '7 days')
     ORDER BY ct.content_updated_at DESC
     LIMIT ${limit}
   `);
