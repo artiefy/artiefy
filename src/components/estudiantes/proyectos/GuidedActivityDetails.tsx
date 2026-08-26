@@ -535,9 +535,9 @@ export function GuidedActivityDetails({
               {nextActivity ? (
                 <Button
                   asChild
-                  variant="ghost"
+                  variant="default"
                   size="icon"
-                  className="size-8 rounded-full"
+                  className="size-8 rounded-full bg-primary text-background hover:bg-primary/90"
                 >
                   <Link
                     href={activityHref(nextActivity.id)}
@@ -893,25 +893,6 @@ export function GuidedActivityDetails({
           </div>
         </main>
       </div>
-
-      {nextActivity && (
-        <Link
-          href={activityHref(nextActivity.id)}
-          className="fixed right-6 bottom-6 z-30 hidden max-w-xs items-center gap-4 rounded-2xl border border-border/50 bg-card/95 p-4 pr-6 shadow-xl backdrop-blur-xl transition-transform hover:scale-[1.02] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:flex"
-        >
-          <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <ChevronRight className="size-6" aria-hidden="true" />
-          </span>
-          <span className="min-w-0">
-            <span className="mb-0.5 block text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
-              Siguiente
-            </span>
-            <span className="block truncate text-sm font-medium text-foreground">
-              {nextActivity.name}
-            </span>
-          </span>
-        </Link>
-      )}
 
       <Dialog
         open={isMobileSyllabusOpen}
