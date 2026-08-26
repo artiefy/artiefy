@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { type CSSProperties, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -48,12 +48,92 @@ const PASSWORD_RULES: {
 const getFailedPasswordRules = (value: string) =>
   PASSWORD_RULES.filter((rule) => !rule.test(value));
 
+/**
+ * Decorative layout is computed once, from a fixed seed, instead of with
+ * `Math.random()` during render. Random values differ between the server pass
+ * and the client one, and React reports every one of them as a hydration
+ * mismatch — twenty-six of them on this page alone.
+ *
+ * Values are rounded so the string React renders survives CSS normalisation
+ * unchanged.
+ */
+function createSeededRandom(seed: number) {
+  let state = seed;
+  return () => {
+    state = (state * 1664525 + 1013904223) % 4294967296;
+    return state / 4294967296;
+  };
+}
+
+const DECORATION_SEED = 20240517;
+
+const STAR_STYLES: CSSProperties[] = (() => {
+  const random = createSeededRandom(DECORATION_SEED);
+  return Array.from({ length: 20 }, () => ({
+    left: `${(random() * 100).toFixed(4)}%`,
+    top: `${(random() * 100).toFixed(4)}%`,
+    animationDelay: `${(random() * 3).toFixed(4)}s`,
+    animationDuration: `${(1.5 + random() * 2).toFixed(4)}s`,
+  }));
+})();
+
+const EMBER_STYLES: CSSProperties[] = (() => {
+  const random = createSeededRandom(DECORATION_SEED + 1);
+  return Array.from({ length: 6 }, (_, index) => ({
+    left: `${(20 + random() * 60).toFixed(4)}%`,
+    bottom: '-10px',
+    animationDelay: `${(index * 0.8).toFixed(4)}s`,
+    animationDuration: `${(3 + random() * 1.5).toFixed(4)}s`,
+  }));
+})();
+
+/**
+ * Mirrors the Clerk instance, which answers "Username must be between 4 and 64
+ * characters long." Validating three here let a name through that the server
+ * then rejected, and that rejection used to be swallowed.
+ */
+const USERNAME_MIN_LENGTH = 4;
+const USERNAME_MAX_LENGTH = 64;
+
+const getUsernameLengthError = (value: string): ClerkAPIError | null => {
+  if (
+    value.length >= USERNAME_MIN_LENGTH &&
+    value.length <= USERNAME_MAX_LENGTH
+  ) {
+    return null;
+  }
+
+  const message = `El nombre de usuario debe tener entre ${USERNAME_MIN_LENGTH} y ${USERNAME_MAX_LENGTH} caracteres.`;
+
+  return {
+    code: 'form_param_format_invalid',
+    message,
+    longMessage: message,
+    meta: { paramName: 'username' },
+  };
+};
+
 const normalizeMissingFields = (fields: string[]) =>
   fields.map((field) => {
     if (field === 'email_address') return 'emailAddress';
     if (field === 'phone_number') return 'phoneNumber';
+    if (field === 'legal_accepted') return 'legalAccepted';
     return field;
   });
+
+/**
+ * Fields this form can actually produce. Anything Clerk requires beyond these
+ * cannot be satisfied here, and the learner has to be told so by name instead
+ * of being left retrying a username that was never the problem.
+ */
+const COLLECTABLE_FIELDS = new Set([
+  'username',
+  'firstName',
+  'lastName',
+  'emailAddress',
+  'password',
+  'legalAccepted',
+]);
 
 const formatFields = (fields?: string[]) => {
   if (!fields || fields.length === 0) return 'ninguno';
@@ -66,6 +146,8 @@ const formatFields = (fields?: string[]) => {
     phoneNumber: 'teléfono',
     phone_number: 'teléfono',
     username: 'usuario',
+    legalAccepted: 'aceptación de los términos',
+    legal_accepted: 'aceptación de los términos',
   };
   return fields.map((field) => labels[field] ?? field).join(', ');
 };
@@ -89,6 +171,21 @@ const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
 
   if (isClerkAPIResponseError(error)) {
     return error.errors;
+  }
+
+  // The v7 sign-up methods resolve with `{ error }` rather than throwing, and
+  // that error carries the field-level ones in `errors`. Without unwrapping it
+  // the generic branch below flattens them and loses `meta.paramName`, so no
+  // input can be highlighted and "username taken" reads as a generic failure.
+  if (error && typeof error === 'object' && 'errors' in error) {
+    const nested = (error as { errors: unknown }).errors;
+    if (Array.isArray(nested)) {
+      const apiErrors = nested.filter(
+        (item): item is ClerkAPIError =>
+          Boolean(item) && typeof item === 'object' && 'code' in item
+      );
+      if (apiErrors.length > 0) return apiErrors;
+    }
   }
 
   if (error && typeof error === 'object') {
@@ -216,6 +313,7 @@ export default function MiniSignUpModal({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
   const [oauthMissingFields, setOauthMissingFields] = useState<string[] | null>(
     null
   );
@@ -253,30 +351,37 @@ export default function MiniSignUpModal({
     };
   }, [isOpen, onClose]);
 
-  // Sincronizar estado de SignUp al abrir el modal
+  // Clerk hands back a new SignUp resource on every mutation. Depending on the
+  // object itself would re-run this on each one — including right after a
+  // failed submit — so the fields are tracked through primitives instead.
+  const signUpStatus = signUp?.status ?? null;
+  const signUpMissingKey = normalizeMissingFields(
+    signUp?.missingFields ?? []
+  ).join(',');
+
+  // Sincronizar estado de SignUp al abrir el modal.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (signUpStatus !== 'missing_requirements') return;
+
+    // Only the fields are seeded here. Setting an error too would overwrite the
+    // real reason a submit failed — "ese usuario ya existe" turning back into
+    // the generic "completa los campos faltantes" is exactly that bug.
+    setOauthMissingFields(
+      signUpMissingKey ? signUpMissingKey.split(',') : null
+    );
+  }, [isOpen, signUpStatus, signUpMissingKey]);
+
+  // A sign-up that is already complete only needs converting into a session.
   useEffect(() => {
     if (!isOpen || !signUp) return;
+    if (signUpStatus !== 'complete') return;
 
-    if (signUp.status === 'complete') {
-      void signUp.finalize();
-      return;
-    }
-
-    if (signUp.status === 'missing_requirements') {
-      const missingFields = normalizeMissingFields(signUp.missingFields ?? []);
-      if (missingFields.length > 0) {
-        setOauthMissingFields(missingFields);
-        setErrors([
-          {
-            code: 'missing_requirements',
-            message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-            longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-            meta: {},
-          },
-        ]);
-      }
-    }
-  }, [isOpen, signUp]);
+    void (async () => {
+      const { error } = await signUp.finalize();
+      if (error) setErrors(toClerkApiErrors(error));
+    })();
+  }, [isOpen, signUp, signUpStatus]);
 
   // Detectar cuando OAuth o registro se completa exitosamente
   useEffect(() => {
@@ -319,6 +424,7 @@ export default function MiniSignUpModal({
       setPassword('');
       setConfirmPassword('');
       setCode('');
+      setLegalAccepted(false);
       setPendingVerification(false);
       setOauthMissingFields(null);
       oauthGeneratedPasswordRef.current = '';
@@ -420,13 +526,9 @@ export default function MiniSignUpModal({
         longMessage: 'Ingresa tu nombre de usuario.',
         meta: { paramName: 'username' },
       });
-    } else if (uname.length < 3) {
-      validationErrors.push({
-        code: 'form_param_format_invalid',
-        message: 'El nombre de usuario debe tener al menos 3 caracteres.',
-        longMessage: 'El nombre de usuario debe tener al menos 3 caracteres.',
-        meta: { paramName: 'username' },
-      });
+    } else {
+      const lengthError = getUsernameLengthError(uname);
+      if (lengthError) validationErrors.push(lengthError);
     }
 
     if (!email) {
@@ -538,13 +640,9 @@ export default function MiniSignUpModal({
           longMessage: 'Ingresa tu nombre de usuario.',
           meta: { paramName: 'username' },
         });
-      } else if (data.username.length < 3) {
-        validationErrors.push({
-          code: 'form_param_format_invalid',
-          message: 'El nombre de usuario debe tener al menos 3 caracteres.',
-          longMessage: 'El nombre de usuario debe tener al menos 3 caracteres.',
-          meta: { paramName: 'username' },
-        });
+      } else {
+        const lengthError = getUsernameLengthError(data.username);
+        if (lengthError) validationErrors.push(lengthError);
       }
     }
 
@@ -625,19 +723,12 @@ export default function MiniSignUpModal({
     const normalizedMissingFields = normalizeMissingFields(missingFields);
     const trimmedUsername = username.trim();
 
-    if (
-      normalizedMissingFields.includes('username') &&
-      trimmedUsername.length < 3
-    ) {
-      setErrors([
-        {
-          code: 'form_param_format_invalid',
-          message: 'El nombre de usuario debe tener al menos 3 caracteres.',
-          longMessage: 'El nombre de usuario debe tener al menos 3 caracteres.',
-          meta: { paramName: 'username' },
-        },
-      ]);
-      return;
+    if (normalizedMissingFields.includes('username')) {
+      const lengthError = getUsernameLengthError(trimmedUsername);
+      if (lengthError) {
+        setErrors([lengthError]);
+        return;
+      }
     }
 
     const derivedFirstName =
@@ -686,7 +777,22 @@ export default function MiniSignUpModal({
       return;
     }
 
-    const payload: Record<string, string> = {};
+    if (normalizedMissingFields.includes('legalAccepted') && !legalAccepted) {
+      setErrors([
+        {
+          code: 'form_param_missing',
+          message: 'Debes aceptar los términos para continuar.',
+          longMessage: 'Debes aceptar los términos para continuar.',
+          meta: { paramName: 'legalAccepted' },
+        },
+      ]);
+      return;
+    }
+
+    const payload: Record<string, string | boolean> = {};
+    if (normalizedMissingFields.includes('legalAccepted')) {
+      payload.legalAccepted = legalAccepted;
+    }
     if (normalizedMissingFields.includes('firstName')) {
       payload.firstName = derivedFirstName;
     }
@@ -705,10 +811,22 @@ export default function MiniSignUpModal({
 
     try {
       setIsSubmitting(true);
-      await signUp.update(payload);
+
+      // `update` resolves with `{ error }` instead of throwing. Ignoring it is
+      // what made a rejected username look like nothing happened: the status
+      // stayed `missing_requirements` and the generic notice came back with no
+      // hint that the name was already taken.
+      const { error: updateError } = await signUp.update(payload);
+      if (updateError) {
+        setErrors(toClerkApiErrors(updateError));
+        return;
+      }
 
       if (signUp.status === 'complete') {
-        await signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+        if (finalizeError) {
+          setErrors(toClerkApiErrors(finalizeError));
+        }
         return;
       }
 
@@ -815,7 +933,10 @@ export default function MiniSignUpModal({
       }
 
       if (signUp.status === 'complete') {
-        await signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+        if (finalizeError) {
+          setErrors(toClerkApiErrors(finalizeError));
+        }
         return;
       }
 
@@ -861,7 +982,10 @@ export default function MiniSignUpModal({
       }
 
       if (signUp.status === 'complete') {
-        await signUp.finalize();
+        const { error: finalizeError } = await signUp.finalize();
+        if (finalizeError) {
+          setErrors(toClerkApiErrors(finalizeError));
+        }
         return;
       }
 
@@ -891,9 +1015,17 @@ export default function MiniSignUpModal({
     }
   };
 
+  /** Clerk reports a taken username with the same code as a taken email. */
+  const isTakenIdentifierError = (error: ClerkAPIError) =>
+    error.code === 'form_identifier_exists' ||
+    error.code === 'identification_claimed';
+
+  const isUsernameTakenError = (error: ClerkAPIError) =>
+    isTakenIdentifierError(error) && error.meta?.paramName === 'username';
+
   const emailError = errors?.some(
     (error) =>
-      error.code === 'form_identifier_exists' ||
+      (isTakenIdentifierError(error) && !isUsernameTakenError(error)) ||
       (error.code === 'form_param_format_invalid' &&
         error.meta?.paramName === 'emailAddress') ||
       (error.code === 'form_param_missing' &&
@@ -921,12 +1053,12 @@ export default function MiniSignUpModal({
       (error.code === 'form_param_format_invalid' &&
         error.meta?.paramName === 'lastName')
   );
+  // Clerk rejects a username under several codes — length, invalid character,
+  // digits only, already taken. Keying on the param it blames rather than on
+  // an enumerated list means a new code still lights up the right input.
   const usernameError = errors?.some(
     (error) =>
-      (error.code === 'form_param_missing' &&
-        error.meta?.paramName === 'username') ||
-      (error.code === 'form_param_format_invalid' &&
-        error.meta?.paramName === 'username')
+      isUsernameTakenError(error) || error.meta?.paramName === 'username'
   );
   const confirmPasswordError = errors?.some(
     (error) =>
@@ -945,6 +1077,16 @@ export default function MiniSignUpModal({
   const showPasswordChecklist = password.length > 0;
 
   const getSignUpErrorMessage = (error: ClerkAPIError) => {
+    // Checked before the account-exists copy below: the same code covers both,
+    // and telling someone to sign in because a username is taken is wrong.
+    if (isUsernameTakenError(error))
+      return 'Ese nombre de usuario ya está en uso. Elige otro.';
+    if (error.code === 'form_username_needs_non_number_char')
+      return 'El nombre de usuario no puede ser solo números: incluye al menos una letra.';
+    if (error.code === 'form_username_invalid_character')
+      return 'El nombre de usuario solo admite letras, números, guiones y guiones bajos.';
+    if (error.code === 'form_username_invalid_length')
+      return `El nombre de usuario debe tener entre ${USERNAME_MIN_LENGTH} y ${USERNAME_MAX_LENGTH} caracteres.`;
     if (error.code === 'form_identifier_exists')
       return 'Esta cuenta ya existe. Por favor inicia sesión.';
     if (
@@ -973,8 +1115,16 @@ export default function MiniSignUpModal({
       return 'La contraseña no es lo suficientemente segura. Elige una más robusta.';
     if (error.code === 'password_mismatch')
       return 'Las contraseñas no coinciden';
+    // The handler builds a message naming the fields that are still missing.
+    // Replacing it with a fixed string is what turned this into a dead end:
+    // the learner kept trying usernames without ever being told what was
+    // actually blocking the sign-up.
     if (error.code === 'missing_requirements')
-      return 'Completa los campos faltantes para terminar tu registro.';
+      return (
+        error.longMessage ??
+        error.message ??
+        'Completa los campos faltantes para terminar tu registro.'
+      );
     if (error.code === 'clerk_json_parse_error')
       return 'No se pudo completar el registro en este intento. Inténtalo nuevamente.';
     const msg = error.longMessage ?? error.message ?? '';
@@ -997,6 +1147,15 @@ export default function MiniSignUpModal({
   const isOAuthCompletionFlow =
     Array.isArray(oauthMissingFields) && oauthMissingFields.length > 0;
   const needsUsername = needsOAuthField('username');
+  const needsLegalAccepted = needsOAuthField('legalAccepted');
+  /**
+   * Required fields this form has no input for. While one of these is pending
+   * no username will ever get through, so the learner is told plainly instead
+   * of being left guessing at names.
+   */
+  const uncollectableFields = (oauthMissingFields ?? []).filter(
+    (field) => !COLLECTABLE_FIELDS.has(field)
+  );
 
   return (
     <div
@@ -1069,18 +1228,13 @@ export default function MiniSignUpModal({
         {/* Decorative background elements */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           {/* Stars */}
-          {Array.from({ length: 20 }).map((_, i) => (
+          {STAR_STYLES.map((style, i) => (
             <div
               key={`star-${i}`}
               className="
                 absolute size-1 animate-pulse rounded-full bg-accent/40
               "
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${1.5 + Math.random() * 2}s`,
-              }}
+              style={style}
             />
           ))}
 
@@ -1191,19 +1345,14 @@ export default function MiniSignUpModal({
           </div>
 
           {/* Floating particles */}
-          {Array.from({ length: 6 }).map((_, i) => (
+          {EMBER_STYLES.map((style, i) => (
             <div
               key={`particle-${i}`}
               className="
                 animate-rise absolute size-1.5 rounded-full bg-gradient-to-b
                 from-accent/60 to-orange-400/40
               "
-              style={{
-                left: `${20 + Math.random() * 60}%`,
-                bottom: '-10px',
-                animationDelay: `${i * 0.8}s`,
-                animationDuration: `${3 + Math.random() * 1.5}s`,
-              }}
+              style={style}
             />
           ))}
         </div>
@@ -1288,9 +1437,24 @@ export default function MiniSignUpModal({
               Completa tu registro para continuar con OAuth.
             </p>
             <p className="text-xs text-muted-foreground/80">
-              Solo necesitamos tu nombre de usuario. Los demás datos se
-              completan automáticamente con OAuth.
+              {needsLegalAccepted
+                ? 'Elige tu nombre de usuario y acepta los términos. Los demás datos se completan automáticamente con OAuth.'
+                : 'Solo necesitamos tu nombre de usuario. Los demás datos se completan automáticamente con OAuth.'}
             </p>
+
+            {uncollectableFields.length > 0 && (
+              <p
+                className="
+                  rounded-lg bg-rose-500/10 px-3 py-2 text-xs text-rose-200
+                  ring-1 ring-rose-400/40 ring-inset
+                "
+              >
+                Tu cuenta necesita {formatFields(uncollectableFields)}, y eso no
+                se puede completar desde aquí. Escríbenos para terminar tu
+                registro; cambiar de usuario no resolverá esto.
+              </p>
+            )}
+
             <div>
               <input
                 onChange={(e) => setUsername(e.target.value)}
@@ -1309,6 +1473,19 @@ export default function MiniSignUpModal({
                 `}
               />
             </div>
+            {needsLegalAccepted && (
+              <label className="flex items-start gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  name="legalAccepted"
+                  checked={legalAccepted}
+                  onChange={(e) => setLegalAccepted(e.target.checked)}
+                  className="mt-0.5 size-4 shrink-0 accent-[#22C4D3]"
+                />
+                <span>Acepto los términos y la política de privacidad.</span>
+              </label>
+            )}
+
             <div id="clerk-captcha" />
             <button
               type="submit"

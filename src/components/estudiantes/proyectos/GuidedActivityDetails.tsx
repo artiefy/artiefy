@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 
+import LessonTranscription from '~/components/estudiantes/layout/lessondetail/LessonTranscription';
 import VideoPlayer from '~/components/estudiantes/layout/lessondetail/LessonVideo';
 import { GuidedActivitySubmissionDialog } from '~/components/estudiantes/proyectos/GuidedActivitySubmissionDialog';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -84,7 +85,13 @@ interface GuidedActivitySyllabusProps {
   onNavigate?: () => void;
 }
 
-type ActivityTab = 'introduction' | 'activity' | 'resources';
+type ActivityTab = 'introduction' | 'transcription' | 'activity' | 'resources';
+
+interface TranscriptionItem {
+  start: number;
+  end: number;
+  text: string;
+}
 
 // coverVideoKey is reused for images in some projects; treat known image
 // extensions as non-video so they never reach the video player.
@@ -251,6 +258,9 @@ export function GuidedActivityDetails({
   const [isDesktopSyllabusOpen, setIsDesktopSyllabusOpen] = useState(true);
   const [isMobileSyllabusOpen, setIsMobileSyllabusOpen] = useState(false);
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
+  const [transcription, setTranscription] = useState<TranscriptionItem[]>([]);
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
+  const [videoTime, setVideoTime] = useState(0);
   const [expandedObjectiveIds, setExpandedObjectiveIds] = useState<Set<number>>(
     () => new Set([currentObjectiveId])
   );
@@ -273,9 +283,66 @@ export function GuidedActivityDetails({
   const activityVideoKey = normalizedInstructionVideoKey ?? coverVideoOnlyKey;
   const tabRefs = useRef<Record<ActivityTab, HTMLButtonElement | null>>({
     introduction: null,
+    transcription: null,
     activity: null,
     resources: null,
   });
+  // La transcripción del video de instrucción vive en Redis bajo
+  // `transcription:activity:{id}`, igual que las clases de un curso.
+  useEffect(() => {
+    let isCurrent = true;
+    setIsLoadingTranscription(true);
+
+    const fetchTranscription = async () => {
+      try {
+        const response = await fetch(
+          `/api/estudiantes/transcriptions?type=activity&contentId=${activity.id}`
+        );
+
+        if (!response.ok) {
+          if (isCurrent) setTranscription([]);
+          return;
+        }
+
+        const data = (await response.json()) as {
+          transcription?: TranscriptionItem[];
+        };
+        if (isCurrent) setTranscription(data.transcription ?? []);
+      } catch {
+        if (isCurrent) setTranscription([]);
+      } finally {
+        if (isCurrent) setIsLoadingTranscription(false);
+      }
+    };
+
+    void fetchTranscription();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [activity.id]);
+
+  // Manda la transcripción, no el video: si hay segmentos guardados la pestaña
+  // aparece, y si no la hay la actividad no gana una pestaña vacía.
+  const showTranscriptionTab = transcription.length > 0;
+
+  const tabOrder = useMemo<ActivityTab[]>(
+    () =>
+      showTranscriptionTab
+        ? ['introduction', 'transcription', 'activity', 'resources']
+        : ['introduction', 'activity', 'resources'],
+    [showTranscriptionTab]
+  );
+
+  // Si la pestaña desaparece mientras está activa, el panel quedaría en blanco.
+  useEffect(() => {
+    if (!showTranscriptionTab) {
+      setActiveTab((current) =>
+        current === 'transcription' ? 'introduction' : current
+      );
+    }
+  }, [showTranscriptionTab]);
+
   const activities = objectives.flatMap((objective) => objective.activities);
   const currentActivityIndex = activities.findIndex(
     (item) => item.id === activity.id
@@ -310,7 +377,6 @@ export function GuidedActivityDetails({
     event: KeyboardEvent<HTMLButtonElement>,
     currentTab: ActivityTab
   ) => {
-    const tabOrder: ActivityTab[] = ['introduction', 'activity', 'resources'];
     const currentIndex = tabOrder.indexOf(currentTab);
     let nextIndex: number | null = null;
 
@@ -564,6 +630,7 @@ export function GuidedActivityDetails({
                   videoKey={activityVideoKey}
                   onVideoEnd={() => undefined}
                   onProgressUpdate={() => undefined}
+                  onTimeUpdate={setVideoTime}
                   isVideoCompleted={false}
                   allowSeek
                 />
@@ -637,6 +704,31 @@ export function GuidedActivityDetails({
                 >
                   Instrucción
                 </button>
+                {showTranscriptionTab && (
+                  <button
+                    ref={(node) => {
+                      tabRefs.current.transcription = node;
+                    }}
+                    id="guided-transcription-tab"
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === 'transcription'}
+                    aria-controls="guided-transcription-panel"
+                    tabIndex={activeTab === 'transcription' ? 0 : -1}
+                    onClick={() => setActiveTab('transcription')}
+                    onKeyDown={(event) =>
+                      handleTabKeyDown(event, 'transcription')
+                    }
+                    className={cn(
+                      'rounded-t-lg border-b-2 px-4 py-3 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                      activeTab === 'transcription'
+                        ? 'border-primary text-foreground'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    Transcripción
+                  </button>
+                )}
                 <button
                   ref={(node) => {
                     tabRefs.current.activity = node;
@@ -707,6 +799,25 @@ export function GuidedActivityDetails({
                 </div>
               )}
             </section>
+
+            {showTranscriptionTab && (
+              <section
+                id="guided-transcription-panel"
+                role="tabpanel"
+                aria-labelledby="guided-transcription-tab"
+                hidden={activeTab !== 'transcription'}
+                className="py-6"
+              >
+                <div className="rounded-xl border border-border/50 bg-card/40">
+                  <LessonTranscription
+                    transcription={transcription}
+                    isLoading={isLoadingTranscription}
+                    currentTime={videoTime}
+                    emptyMessage="No hay transcripción disponible para esta actividad."
+                  />
+                </div>
+              </section>
+            )}
 
             <section
               id="guided-activity-panel"

@@ -10,12 +10,15 @@ interface LessonTranscriptionProps {
   transcription: TranscriptionItem[];
   isLoading: boolean;
   currentTime?: number;
+  /** Copy for the empty state, so guided projects can say "actividad". */
+  emptyMessage?: string;
 }
 
 const LessonTranscription = ({
   transcription,
   isLoading,
   currentTime = 0,
+  emptyMessage = 'No hay transcripción disponible para esta clase.',
 }: LessonTranscriptionProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -55,9 +58,7 @@ const LessonTranscription = ({
   if (transcription.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="text-white">
-          No hay transcripción disponible para esta clase.
-        </p>
+        <p className="text-white">{emptyMessage}</p>
       </div>
     );
   }
