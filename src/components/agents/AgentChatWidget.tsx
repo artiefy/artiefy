@@ -25,6 +25,8 @@ import {
   ChevronRight,
   CircleCheck,
   FolderKanban,
+  Maximize2,
+  Minimize2,
   PictureInPicture,
   PictureInPicture2,
   Play,
@@ -39,10 +41,8 @@ import {
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
-import {
-  AgentMessageContent,
-  messageHasCode,
-} from '~/components/agents/AgentMessageContent';
+import { messageHasCode } from '~/components/agents/AgentMessageContent';
+import { AgentRevealedContent } from '~/components/agents/AgentRevealedContent';
 import { ArtiefyMark } from '~/components/agents/ArtiefyMark';
 import { useDocumentPictureInPicture } from '~/hooks/useDocumentPictureInPicture';
 import {
@@ -393,8 +393,8 @@ interface AgentQuotaNotice {
 function buildQuotaNotice(quota: AgentQuotaPayload): AgentQuotaNotice {
   if (quota.tier === 'premium') {
     return {
-      title: 'Llegaste a tus mensajes de hoy',
-      body: `Tu plan incluye ${quota.limit} mensajes diarios con nuestros agentes. El cupo se renueva mañana y seguimos donde lo dejamos.`,
+      title: 'Llegaste a tus intentos de hoy',
+      body: `Tu plan incluye ${quota.limit} intentos diarios con nuestros agentes. El cupo se renueva mañana y seguimos donde lo dejamos.`,
       primary: null,
       secondary: null,
     };
@@ -402,16 +402,16 @@ function buildQuotaNotice(quota: AgentQuotaPayload): AgentQuotaNotice {
 
   if (quota.tier === 'free') {
     return {
-      title: 'Se te acabaron los mensajes de prueba',
-      body: `Aprovechaste los ${quota.limit} mensajes de tu prueba gratis, y se nota que le estás sacando jugo. Con Premium tienes 50 mensajes al día con Artie, el Tutor y el Coach, más todos los cursos, para que nada te frene.`,
+      title: 'Se te acabaron los intentos de prueba',
+      body: `Aprovechaste los ${quota.limit} intentos de tu prueba gratis, y se nota que le estás sacando jugo. Con Premium tienes 50 intentos al día con Artie, el Tutor y el Coach, más todos los cursos, para que nada te frene.`,
       primary: { label: 'Quiero Premium', href: '/planes' },
       secondary: null,
     };
   }
 
   return {
-    title: 'Se te acabaron los mensajes gratis',
-    body: `Ya usaste los ${quota.limit} mensajes de cortesía. Crea tu cuenta y estrena 10 días de Premium, o pásate a Premium y conversa hasta 50 veces al día con nuestros agentes.`,
+    title: 'Se te acabaron los intentos gratis',
+    body: `Ya usaste los ${quota.limit} intentos de cortesía. Crea tu cuenta y estrena 10 días de Premium, o pásate a Premium y conversa hasta 50 veces al día con nuestros agentes.`,
     primary: { label: 'Quiero Premium', href: '/planes' },
     secondary: { label: 'Crear cuenta gratis', href: '/sign-up' },
   };
@@ -477,6 +477,11 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [isDetached, setIsDetached] = useState(false);
   /** Conversation waiting for a delete confirmation; null when none is. */
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  /** Id of the agent message currently typewriter-revealing; null when idle. */
+  const [revealingId, setRevealingId] = useState<string | null>(null);
+  /** Full-window mode, stacked above the site header. Additive: it never
+   *  touches `panelRect`, so collapsing restores the panel exactly. */
+  const [isExpanded, setIsExpanded] = useState(false);
 
   /**
    * The scope the route itself implies. Guided project pages mount the widget
@@ -547,14 +552,23 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     setIsSending(false);
     setUnreadCount(0);
     setPendingDeleteId(null);
+    // Whatever bubble was mid-reveal belongs to the conversation being left;
+    // it renders its full text instantly once `revealingId` no longer matches.
+    setRevealingId(null);
   }, []);
 
   const agent = AGENTS[agentId];
   const AgentIcon = agent.icon;
 
   const hasPanelRect = panelRect !== null;
-  /** A panel with its own geometry can be dragged around; a CSS-sized one cannot. */
-  const canMovePanel = hasPanelRect && !isPoppedOut;
+  /**
+   * Full-window mode never applies while popped out — that window is already
+   * its own always-on-top surface, so "expand" has nothing to add there.
+   */
+  const isFullWindow = isExpanded && !isPoppedOut;
+  /** A panel with its own geometry can be dragged around; a CSS-sized one
+   *  cannot, and neither can one currently forced full-window. */
+  const canMovePanel = hasPanelRect && !isPoppedOut && !isFullWindow;
 
   /**
    * How wide the panel actually is. A dragged panel knows its own width; a
@@ -596,7 +610,22 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     view.addEventListener('resize', measure);
 
     return () => view.removeEventListener('resize', measure);
-  }, [isOpen, pipWindow]);
+    // `isExpanded` is included so toggling full-window mode re-measures right
+    // away: its layout changes without firing a `resize` event on its own.
+  }, [isOpen, pipWindow, isExpanded]);
+
+  // Escape collapses the full-window mode, the same way it closes any other
+  // overlay stacked above the page.
+  useEffect(() => {
+    if (!isExpanded) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsExpanded(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isExpanded]);
 
   // Rotating the phone or resizing the window must not leave the panel
   // half off screen.
@@ -945,6 +974,16 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     setUnreadCount(0);
   }, [pinToBottom]);
 
+  /**
+   * A revealing bubble grows without `messages` itself changing, so the pin
+   * effect keyed on `messages` never fires for it. Each reveal tick re-pins
+   * imperatively instead, the same way the code-block `ResizeObserver` below
+   * does for lazy-loaded content.
+   */
+  const handleRevealTick = useCallback(() => {
+    if (isAtBottomRef.current) pinToBottom();
+  }, [pinToBottom]);
+
   const handleScroll = (event: ReactUIEvent<HTMLDivElement>) => {
     const area = event.currentTarget;
     const atBottom =
@@ -1236,6 +1275,11 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     const controller = new AbortController();
     inFlightRef.current = controller;
 
+    // A new turn starting cancels whatever reveal was still animating: the
+    // previous bubble renders its full text instantly the moment its id no
+    // longer matches `revealingId`.
+    setRevealingId(null);
+
     setMessages((prev) => [
       ...prev,
       {
@@ -1258,6 +1302,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           message: text,
           agent: agentId,
           projectId: scope.kind === 'project' ? scope.id : undefined,
+          projectSource: scope.kind === 'project' ? scope.source : undefined,
           courseId: scope.kind === 'course' ? scope.id : undefined,
           // The activity tree only belongs to the project this route mounted;
           // a project picked up from an enrollment elsewhere has none loaded.
@@ -1306,10 +1351,12 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         data.agent && AGENTS[data.agent] ? data.agent : agentId;
       setAgentId(answeringAgent);
 
+      const agentMessageId = `${replyTime.getTime()}-agent`;
+
       setMessages((prev) => [
         ...prev,
         {
-          id: `${replyTime.getTime()}-agent`,
+          id: agentMessageId,
           role: 'agent',
           agent: answeringAgent,
           text:
@@ -1319,6 +1366,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           time: formatTime(replyTime),
         },
       ]);
+      setRevealingId(agentMessageId);
     } catch (error) {
       // Aborting is how leaving a conversation cancels its reply, not a
       // failure the learner should ever be told about.
@@ -1569,16 +1617,18 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       className={
         isPoppedOut
           ? 'js-agent-chat-panel fixed inset-0 z-60'
-          : hasPanelRect
-            ? 'js-agent-chat-panel fixed z-60'
-            : `
-              js-agent-chat-panel fixed inset-0 z-60
-              md:inset-auto md:right-6 md:bottom-6 md:h-[min(70dvh,620px)]
-              md:w-[440px] md:max-w-[calc(100vw-48px)]
-            `
+          : isFullWindow
+            ? 'js-agent-chat-panel fixed inset-0 z-[100010]'
+            : hasPanelRect
+              ? 'js-agent-chat-panel fixed z-60'
+              : `
+                js-agent-chat-panel fixed inset-0 z-60
+                md:inset-auto md:right-6 md:bottom-6 md:h-[min(70dvh,620px)]
+                md:w-[440px] md:max-w-[calc(100vw-48px)]
+              `
       }
       style={
-        panelRect && !isPoppedOut
+        panelRect && !isPoppedOut && !isFullWindow
           ? {
               left: panelRect.x,
               top: panelRect.y,
@@ -1604,7 +1654,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         className={`
           holo-glass absolute inset-0 flex flex-col overflow-hidden
           ${
-            isPoppedOut
+            isPoppedOut || isFullWindow
               ? 'rounded-none'
               : hasPanelRect
                 ? 'rounded-[18px]'
@@ -1745,6 +1795,38 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                 <PictureInPicture className="size-4 text-muted-foreground" />
               ) : (
                 <PictureInPicture2 className="size-4 text-muted-foreground" />
+              )}
+            </button>
+
+            {/* Full-window mode, stacked above the site header — additive to
+                the pop-out control above, which keeps working unchanged. */}
+            <button
+              type="button"
+              aria-label={
+                isFullWindow
+                  ? 'Salir de pantalla completa'
+                  : 'Expandir el chat a pantalla completa'
+              }
+              aria-expanded={isFullWindow}
+              title={
+                isFullWindow
+                  ? 'Salir de pantalla completa'
+                  : 'Expandir el chat a pantalla completa'
+              }
+              onClick={() => setIsExpanded((prev) => !prev)}
+              disabled={isPoppedOut}
+              className="
+                shrink-0 rounded-lg p-2 transition-colors
+                hover:bg-white/[0.06]
+                focus-visible:outline focus-visible:outline-2
+                focus-visible:outline-offset-2 focus-visible:outline-white/60
+                disabled:cursor-not-allowed disabled:opacity-40
+              "
+            >
+              {isFullWindow ? (
+                <Minimize2 className="size-4 text-muted-foreground" />
+              ) : (
+                <Maximize2 className="size-4 text-muted-foreground" />
               )}
             </button>
 
@@ -2131,9 +2213,11 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                             {messageAgent.name}
                           </span>
                         </div>
-                        <AgentMessageContent
+                        <AgentRevealedContent
                           text={message.text}
                           accent={messageAgent.color}
+                          active={message.id === revealingId}
+                          onRevealTick={handleRevealTick}
                         />
                         <span className="mt-1 block text-[10px] text-muted-foreground/60">
                           {message.time}
@@ -2329,39 +2413,51 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
 
       {/* Every side and corner is a grab edge, so the panel is resized by
           dragging it rather than by a toggle. In the pop-out window the same
-          gesture resizes the window itself. Only the full-screen sheet has
-          nothing to resize. */}
-      {RESIZE_EDGES.map((edge) => (
-        <div
-          key={edge}
-          role="separator"
-          aria-label={RESIZE_HANDLES[edge].label}
-          onPointerDown={handleResizeStart(edge)}
-          onPointerMove={handleResizeMove}
-          onPointerUp={handleResizeEnd}
-          onPointerCancel={handleResizeEnd}
+          gesture resizes the window itself. Full-window mode and the
+          full-screen sheet have nothing to resize. */}
+      {!isFullWindow &&
+        RESIZE_EDGES.map((edge) => (
+          <div
+            key={edge}
+            role="separator"
+            aria-label={RESIZE_HANDLES[edge].label}
+            onPointerDown={handleResizeStart(edge)}
+            onPointerMove={handleResizeMove}
+            onPointerUp={handleResizeEnd}
+            onPointerCancel={handleResizeEnd}
+            className={`
+              absolute z-[80] touch-none ${RESIZE_HANDLES[edge].className}
+              ${hasPanelRect || isPoppedOut ? 'block' : 'hidden md:block'}
+            `}
+          />
+        ))}
+
+      {/* Corner hint: the only visible sign that the panel can be resized. */}
+      {!isFullWindow && (
+        <span
+          aria-hidden
           className={`
-            absolute z-[80] touch-none ${RESIZE_HANDLES[edge].className}
+            pointer-events-none absolute right-1.5 bottom-1.5 z-[79] size-2.5
+            rounded-tl-sm border-r-2 border-b-2 border-white/25
             ${hasPanelRect || isPoppedOut ? 'block' : 'hidden md:block'}
           `}
         />
-      ))}
-
-      {/* Corner hint: the only visible sign that the panel can be resized. */}
-      <span
-        aria-hidden
-        className={`
-          pointer-events-none absolute right-1.5 bottom-1.5 z-[79] size-2.5
-          rounded-tl-sm border-r-2 border-b-2 border-white/25
-          ${hasPanelRect || isPoppedOut ? 'block' : 'hidden md:block'}
-        `}
-      />
+      )}
     </div>
   );
 
   // Popped out: the chat renders inside the always-on-top window instead of
   // the page, so it stays visible while the user works in other apps.
-  return pipWindow ? createPortal(panel, pipWindow.document.body) : panel;
+  //
+  // Otherwise it always portals to the main document's body — never
+  // conditionally on `isExpanded` — so expanding and collapsing never
+  // remounts the subtree and loses scroll position or focus. A route that
+  // mounts this widget inside a transformed/glass ancestor would otherwise
+  // trap it in a local stacking context, where no z-index value could ever
+  // climb above the site header.
+  return pipWindow
+    ? createPortal(panel, pipWindow.document.body)
+    : createPortal(panel, document.body);
 }
 
 export default AgentChatWidget;
