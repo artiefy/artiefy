@@ -38,6 +38,8 @@ interface ProjectData {
   projectTypeId?: number; // Nuevo campo normalizado
   categoryId: number;
   courseId?: number; // Proyecto asociado a un curso
+  /** Discriminator, descriptive only. Defaults from `courseId` when absent. */
+  type?: 'course' | 'user';
   isPublic?: boolean;
   needsCollaborators?: boolean; // Nuevo campo
   fechaInicio?: string;
@@ -125,6 +127,7 @@ export async function createProject(
       projectTypeId: projectData.projectTypeId ?? null, // Nuevo campo normalizado
       userId: UserId,
       courseId: projectData.courseId ?? null, // Curso asociado (opcional)
+      type: projectData.type ?? (projectData.courseId ? 'course' : 'user'),
       categoryId: projectData.categoryId,
       isPublic: projectData.isPublic ?? false,
       needsCollaborators: projectData.needsCollaborators ?? false, // Nuevo campo

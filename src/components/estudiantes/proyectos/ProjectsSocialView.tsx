@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { Search, SlidersHorizontal } from 'lucide-react';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
+import { openAgentChatFor } from '~/lib/agents/agentChatBus';
 
 import { ProjectFeedCard } from './subcomponents/ProjectFeedCard';
 import {
@@ -63,6 +66,7 @@ export function ProjectsSocialView({
   collaborationItems,
   collaboratorItems,
 }: ProjectsSocialViewProps) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeStage, setActiveStage] = useState<string>('all');
   const [needsCollaboratorsFilter, setNeedsCollaboratorsFilter] =
@@ -83,6 +87,7 @@ export function ProjectsSocialView({
   const [editingProject, setEditingProject] =
     useState<ProjectSocialItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const allVisibleItems = useMemo(() => {
     const itemMap = new Map<number, ProjectSocialItem>();
@@ -221,6 +226,10 @@ export function ProjectsSocialView({
     setIsEditModalOpen(true);
   };
 
+  const handleCreateProject = () => {
+    setIsCreateModalOpen(true);
+  };
+
   const updateInCollection = (
     collection: ProjectSocialItem[],
     projectId: number,
@@ -353,6 +362,7 @@ export function ProjectsSocialView({
               following={followedProjectIds.size}
               activeView={activeView}
               onChangeView={setActiveView}
+              onCreateProject={handleCreateProject}
             />
 
             <div className="min-w-0 flex-1">
@@ -651,6 +661,62 @@ export function ProjectsSocialView({
         onUpdateProject={handleProjectUpdate}
         fechaInicio={editingProject?.fechaInicio ?? ''}
         fechaFin={editingProject?.fechaFin ?? ''}
+        actividades={[]}
+        responsablesPorActividad={{}}
+        horasPorActividad={{}}
+        setHorasPorActividad={() => {}}
+        horasPorDiaProyecto={6}
+        setHorasPorDiaProyecto={() => {}}
+        tiempoEstimadoProyecto={0}
+        setTiempoEstimadoProyecto={() => {}}
+        onAnterior={() => {}}
+        setPlanteamiento={() => {}}
+        setJustificacion={() => {}}
+        setObjetivoGen={() => {}}
+        setObjetivosEspProp={() => {}}
+      />
+
+      <ModalResumen
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+        }}
+        titulo=""
+        description=""
+        planteamiento=""
+        justificacion=""
+        objetivoGen=""
+        objetivosEsp={[]}
+        categoriaId={undefined}
+        tipoProyecto=""
+        projectId={undefined}
+        coverImageKey={undefined}
+        coverVideoKey={undefined}
+        courseId={undefined}
+        onProjectCreated={(createdId, createdTitle) => {
+          // Meet the learner right after their project exists: the chat
+          // opens scoped to it, same as post-enrollment in a course or a
+          // guided project (`CourseDetails.tsx`, `GuidedProjectDetails.tsx`).
+          // A hard `window.location.reload()` here would discard the chat
+          // the instant it opens, so this uses the same soft
+          // `router.refresh()` those two flows rely on instead.
+          if (createdId) {
+            openAgentChatFor({
+              scope: {
+                kind: 'project',
+                id: createdId,
+                title: createdTitle ?? 'tu proyecto',
+                source: 'user',
+              },
+              greeting: `¡Listo! Soy tu Coach y te acompaño en "${createdTitle ?? 'tu proyecto'}". ¿Quieres que sigamos armándolo juntos?`,
+            });
+          }
+          router.refresh();
+        }}
+        setObjetivosEsp={() => {}}
+        setActividades={() => {}}
+        fechaInicio=""
+        fechaFin=""
         actividades={[]}
         responsablesPorActividad={{}}
         horasPorActividad={{}}

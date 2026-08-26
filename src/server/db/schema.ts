@@ -436,6 +436,11 @@ export const projects = pgTable('projects', {
   courseId: integer('course_id')
     .references(() => courses.id)
     .default(sql`NULL`), // Opcional: proyecto asociado a un curso
+  // Descriptivo, no autoritativo: la comprobación de acceso al chat del coach
+  // sigue basándose en la propiedad (userId), no en este valor.
+  type: text('type', { enum: ['course', 'user'] })
+    .default('course')
+    .notNull(),
   categoryId: integer('category_id')
     .references(() => categories.id)
     .notNull(),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -109,6 +109,39 @@ export function ProjectFeedCard({
   const [hasLoadedComments, setHasLoadedComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isDescriptionOverflowing, setIsDescriptionOverflowing] =
+    useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+
+  const descriptionParagraphs = useMemo(() => {
+    const parts = item.description
+      .split(/\n\s*\n/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    return parts.length > 0 ? parts : [item.description];
+  }, [item.description]);
+
+  const isDescriptionParagraphStructured = descriptionParagraphs.length > 1;
+  const hasMoreParagraphs = descriptionParagraphs.length > 3;
+
+  // Line-clamp fallback for unstructured descriptions: only measurable via
+  // the actual rendered DOM node, so this effect is a genuine layout
+  // measurement (not derivable state), re-run only when it can matter.
+  useEffect(() => {
+    if (isDescriptionParagraphStructured || isDescriptionExpanded) return;
+    const node = descriptionRef.current;
+    if (!node) return;
+    setIsDescriptionOverflowing(node.scrollHeight > node.clientHeight + 1);
+  }, [
+    isDescriptionParagraphStructured,
+    isDescriptionExpanded,
+    item.description,
+  ]);
+
+  const showDescriptionToggle = isDescriptionParagraphStructured
+    ? hasMoreParagraphs
+    : isDescriptionOverflowing;
 
   useEffect(() => {
     const fetchInteractions = async () => {
@@ -277,12 +310,7 @@ export function ProjectFeedCard({
   const shareText = `${item.title} - ${item.description}`;
 
   type ShareTarget =
-    | 'profile'
-    | 'whatsapp'
-    | 'linkedin'
-    | 'facebook'
-    | 'x'
-    | 'copy';
+    'profile' | 'whatsapp' | 'linkedin' | 'facebook' | 'x' | 'copy';
 
   const handleShareAction = async (target: ShareTarget) => {
     await toggleShare();
@@ -644,9 +672,47 @@ export function ProjectFeedCard({
           </div>
         </div>
 
-        <p className="relative mb-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-          {item.description}
-        </p>
+        <div className="relative mb-4 text-sm leading-relaxed text-foreground">
+          {isDescriptionParagraphStructured ? (
+            <div className="space-y-2">
+              {(isDescriptionExpanded
+                ? descriptionParagraphs
+                : descriptionParagraphs.slice(0, 3)
+              ).map((paragraph, index) => (
+                <p
+                  key={`${item.id}-desc-${index}`}
+                  className="whitespace-pre-wrap"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p
+              ref={descriptionRef}
+              className={
+                isDescriptionExpanded
+                  ? 'whitespace-pre-wrap'
+                  : 'line-clamp-6 whitespace-pre-wrap'
+              }
+            >
+              {item.description}
+            </p>
+          )}
+          {showDescriptionToggle ? (
+            <button
+              type="button"
+              onClick={() => setIsDescriptionExpanded((current) => !current)}
+              aria-expanded={isDescriptionExpanded}
+              className="
+                mt-1 text-xs font-semibold text-primary transition-colors
+                hover:text-primary/80
+              "
+            >
+              {isDescriptionExpanded ? 'Ver menos' : 'Ver más'}
+            </button>
+          ) : null}
+        </div>
 
         {item.coverImageUrl ? (
           <div
