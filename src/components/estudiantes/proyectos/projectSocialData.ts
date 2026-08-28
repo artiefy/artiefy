@@ -350,16 +350,17 @@ export async function getProjectSocialCollections(
     .innerJoin(users, eq(projects.userId, users.id))
     .where(eq(projectsTaken.userId, viewerId));
 
-  const ownPublicItems = ownRows
-    .filter((row) => row.isPublic)
-    .map((row) =>
-      mapToSocialItem(mapUserRowToRecord(row), {
-        viewerId,
-        ownerId: row.userId,
-        ownerName: row.ownerName,
-        ownerEmail: row.ownerEmail,
-      })
-    );
+  // "Mis proyectos" is the owner's own shelf, so it lists every project they
+  // own. Filtering it by isPublic hid their private and draft projects from
+  // themselves.
+  const ownItems = ownRows.map((row) =>
+    mapToSocialItem(mapUserRowToRecord(row), {
+      viewerId,
+      ownerId: row.userId,
+      ownerName: row.ownerName,
+      ownerEmail: row.ownerEmail,
+    })
+  );
 
   const collaborationItemsMap = new Map<number, ProjectSocialItem>();
   collaborationRows
@@ -382,7 +383,7 @@ export async function getProjectSocialCollections(
   );
 
   const myItemsMap = new Map<number, ProjectSocialItem>();
-  [...ownPublicItems, ...collaborationItems].forEach((item) => {
+  [...ownItems, ...collaborationItems].forEach((item) => {
     myItemsMap.set(item.id, item);
   });
 
@@ -399,8 +400,10 @@ export async function getProjectSocialCollections(
 }
 
 export async function getPublicProjectsByOwner(
-  userId: string
+  userId: string,
+  viewerId?: string | null
 ): Promise<ProjectSocialItem[]> {
+  const includePrivate = Boolean(viewerId && viewerId === userId);
   const rows = await db
     .select({
       id: projects.id,
@@ -427,7 +430,11 @@ export async function getPublicProjectsByOwner(
     .from(projects)
     .leftJoin(categories, eq(projects.categoryId, categories.id))
     .innerJoin(users, eq(projects.userId, users.id))
-    .where(and(eq(projects.userId, userId), eq(projects.isPublic, true)))
+    .where(
+      includePrivate
+        ? eq(projects.userId, userId)
+        : and(eq(projects.userId, userId), eq(projects.isPublic, true))
+    )
     .orderBy(desc(projects.createdAt));
 
   return rows.map((row) =>
@@ -472,10 +479,15 @@ export async function getCollaboratorPublicDetails(userId: string): Promise<{
 }
 
 export async function getProjectSocialById(
-  id: number
+  id: number,
+  viewerId?: string | null
 ): Promise<ProjectSocialItem | null> {
   const project = await getProjectById(id);
-  if (!project?.isPublic) return null;
+  if (!project) return null;
+  // isPublic means "visible to other people", not "visible at all": the owner
+  // always reaches their own project, private or still a draft.
+  const isOwner = Boolean(viewerId && project.userId === viewerId);
+  if (!project.isPublic && !isOwner) return null;
 
   return mapToSocialItem({
     id: project.id,

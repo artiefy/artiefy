@@ -1,5 +1,7 @@
 import { notFound } from 'next/navigation';
 
+import { auth } from '@clerk/nextjs/server';
+
 import Footer from '~/components/estudiantes/layout/Footer';
 import { ProjectDetail } from '~/components/estudiantes/proyectos/ProjectDetail';
 import { getProjectSocialById } from '~/components/estudiantes/proyectos/projectSocialData';
@@ -19,7 +21,8 @@ export default async function ProyectoDetallePage({
   const projectId = Number(id);
   if (!Number.isFinite(projectId)) notFound();
 
-  const item = await getProjectSocialById(projectId);
+  const { userId } = await auth();
+  const item = await getProjectSocialById(projectId, userId);
   if (!item) notFound();
 
   return (
