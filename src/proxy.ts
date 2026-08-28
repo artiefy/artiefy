@@ -24,7 +24,12 @@ function isSuperAdminPath(pathname: string): boolean {
 }
 
 function isSuperAdminSharedDashboardPath(pathname: string): boolean {
-  return pathname.startsWith('/dashboard/subscription');
+  return (
+    pathname.startsWith('/dashboard/subscription') ||
+    // El super-admin puede entrar al panel de educadores para ver lo que ve
+    // un educador. Sin esto, el redirect por rol lo devolvia a su dashboard.
+    pathname.startsWith('/dashboard/educadores')
+  );
 }
 
 function isEducadorPath(pathname: string): boolean {
@@ -282,7 +287,11 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
-    if (isEducadorPath(pathname) && role !== 'educador') {
+    if (
+      isEducadorPath(pathname) &&
+      role !== 'educador' &&
+      role !== 'super-admin'
+    ) {
       return NextResponse.redirect(new URL('/', req.url));
     }
 

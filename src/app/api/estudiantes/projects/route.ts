@@ -15,7 +15,9 @@ import {
 // GET - Obtener proyectos de un curso para el usuario actual
 export async function GET(req: NextRequest) {
   try {
-    const { userId } = (await auth()) as { userId: string | null };
+    const { userId, sessionClaims } = await auth();
+    const esSuperAdmin =
+      String(sessionClaims?.metadata?.role ?? '') === 'super-admin';
 
     if (!userId) {
       return NextResponse.json(
@@ -44,9 +46,15 @@ export async function GET(req: NextRequest) {
 
     const invitedProjectIds = invitedProjects.map((p) => p.projectId);
 
-    // Construir WHERE clause según si hay invitaciones
-    const whereCondition =
-      invitedProjectIds.length > 0
+    // Construir WHERE clause según si hay invitaciones.
+    //
+    // Un super-admin ve TODOS los proyectos del curso, no solo los suyos: es
+    // el mismo conjunto que muestra el panel de administracion. Para el resto
+    // se mantiene la regla de siempre — cada quien ve lo propio y aquello a
+    // lo que lo invitaron.
+    const whereCondition = esSuperAdmin
+      ? eq(projects.courseId, parseInt(courseId))
+      : invitedProjectIds.length > 0
         ? and(
             // Para proyectos propios: deben estar en el curso
             or(
