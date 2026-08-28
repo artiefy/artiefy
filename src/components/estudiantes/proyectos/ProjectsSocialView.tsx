@@ -2,10 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useRouter } from 'next/navigation';
+
 import { Search, SlidersHorizontal } from 'lucide-react';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
+import { openAgentChatFor } from '~/lib/agents/agentChatBus';
+import {
+  consumePendingCreateEntry,
+  requestCreateEntry,
+  subscribeToCreateEntry,
+} from '~/lib/creation/createEntryBus';
 
+import { CreatePostModal } from './subcomponents/CreatePostModal';
 import { ProjectFeedCard } from './subcomponents/ProjectFeedCard';
 import {
   ProjectsLeftRail,
@@ -57,12 +66,22 @@ const getPublishHref = (item: ProjectSocialItem) => {
   return `/estudiantes/proyectos/${item.id}`;
 };
 
+/** "Trabajar" opens the course workspace for a course-linked project, or
+ *  the courseless owner-only workspace otherwise. */
+const getWorkHref = (item: ProjectSocialItem) => {
+  if (item.courseId) {
+    return `/estudiantes/cursos/${item.courseId}?projectId=${item.id}&view=projects`;
+  }
+  return `/estudiantes/proyectos/${item.id}/trabajar`;
+};
+
 export function ProjectsSocialView({
   exploreItems,
   myItems,
   collaborationItems,
   collaboratorItems,
 }: ProjectsSocialViewProps) {
+  const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeStage, setActiveStage] = useState<string>('all');
   const [needsCollaboratorsFilter, setNeedsCollaboratorsFilter] =
@@ -83,6 +102,23 @@ export function ProjectsSocialView({
   const [editingProject, setEditingProject] =
     useState<ProjectSocialItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+  // Entry point for both the desktop "Crear" dropdown (already inside this
+  // tree) and the mobile bottom sheet (mounted globally by `Header`, so it
+  // needs a cross-route signal — see `createEntryBus.ts` for why a
+  // `?create=` query param isn't an option on this route).
+  useEffect(() => {
+    const pending = consumePendingCreateEntry();
+    if (pending === 'project') setIsCreateModalOpen(true);
+    if (pending === 'post') setIsPostModalOpen(true);
+
+    return subscribeToCreateEntry((action) => {
+      if (action === 'project') setIsCreateModalOpen(true);
+      if (action === 'post') setIsPostModalOpen(true);
+    });
+  }, []);
 
   const allVisibleItems = useMemo(() => {
     const itemMap = new Map<number, ProjectSocialItem>();
@@ -221,6 +257,14 @@ export function ProjectsSocialView({
     setIsEditModalOpen(true);
   };
 
+  const handleCreateProject = () => {
+    requestCreateEntry('project');
+  };
+
+  const handleCreatePost = () => {
+    requestCreateEntry('post');
+  };
+
   const updateInCollection = (
     collection: ProjectSocialItem[],
     projectId: number,
@@ -353,6 +397,8 @@ export function ProjectsSocialView({
               following={followedProjectIds.size}
               activeView={activeView}
               onChangeView={setActiveView}
+              onCreateProject={handleCreateProject}
+              onCreatePost={handleCreatePost}
             />
 
             <div className="min-w-0 flex-1">
@@ -487,8 +533,9 @@ export function ProjectsSocialView({
                       <ProjectWorkspaceCard
                         key={item.id}
                         item={item}
-                        onEdit={handleEditProject}
+                        workHref={getWorkHref(item)}
                         publishHref={getPublishHref(item)}
+                        onEdit={handleEditProject}
                       />
                     )
                   )
@@ -664,6 +711,67 @@ export function ProjectsSocialView({
         setJustificacion={() => {}}
         setObjetivoGen={() => {}}
         setObjetivosEspProp={() => {}}
+      />
+
+      <ModalResumen
+        isOpen={isCreateModalOpen}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+        }}
+        titulo=""
+        description=""
+        planteamiento=""
+        justificacion=""
+        objetivoGen=""
+        objetivosEsp={[]}
+        categoriaId={undefined}
+        tipoProyecto=""
+        projectId={undefined}
+        coverImageKey={undefined}
+        coverVideoKey={undefined}
+        courseId={undefined}
+        onProjectCreated={(createdId, createdTitle) => {
+          // Meet the learner right after their project exists: the chat
+          // opens scoped to it, same as post-enrollment in a course or a
+          // guided project (`CourseDetails.tsx`, `GuidedProjectDetails.tsx`).
+          // A hard `window.location.reload()` here would discard the chat
+          // the instant it opens, so this uses the same soft
+          // `router.refresh()` those two flows rely on instead.
+          if (createdId) {
+            openAgentChatFor({
+              scope: {
+                kind: 'project',
+                id: createdId,
+                title: createdTitle ?? 'tu proyecto',
+                source: 'user',
+              },
+              greeting: `¡Listo! Soy tu Coach y te acompaño en "${createdTitle ?? 'tu proyecto'}". ¿Quieres que sigamos armándolo juntos?`,
+            });
+          }
+          router.refresh();
+        }}
+        setObjetivosEsp={() => {}}
+        setActividades={() => {}}
+        fechaInicio=""
+        fechaFin=""
+        actividades={[]}
+        responsablesPorActividad={{}}
+        horasPorActividad={{}}
+        setHorasPorActividad={() => {}}
+        horasPorDiaProyecto={6}
+        setHorasPorDiaProyecto={() => {}}
+        tiempoEstimadoProyecto={0}
+        setTiempoEstimadoProyecto={() => {}}
+        onAnterior={() => {}}
+        setPlanteamiento={() => {}}
+        setJustificacion={() => {}}
+        setObjetivoGen={() => {}}
+        setObjetivosEspProp={() => {}}
+      />
+
+      <CreatePostModal
+        isOpen={isPostModalOpen}
+        onClose={() => setIsPostModalOpen(false)}
       />
 
       <style jsx global>{`

@@ -13,12 +13,14 @@ import {
   resolveAgentQuotaTier,
 } from '~/server/agents/agentChatQuota';
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+import { courses, projects } from '~/server/db/schema';
 
 interface AgentChatRequestBody {
   message?: unknown;
   agent?: unknown;
   projectId?: unknown;
+  /** Set by the widget when the scope came from a user-owned project. */
+  projectSource?: unknown;
   courseId?: unknown;
   activityId?: unknown;
 }
@@ -155,6 +157,37 @@ async function buildCourseContext(courseId: number): Promise<string> {
   return lines.join('\n');
 }
 
+/**
+ * Coach counterpart of `buildProjectContext`, for a project the learner
+ * created directly on `/proyectos` (no course, no guided curriculum). Same
+ * "only source of truth" rule applies: the agent never queries the database
+ * itself.
+ */
+function buildUserProjectContext(project: {
+  name: string;
+  description: string | null;
+  planteamiento: string;
+  justificacion: string;
+  objetivo_general: string;
+}): string {
+  const lines = [`Proyecto: ${project.name}`];
+
+  if (project.description) {
+    lines.push(`Descripción: ${project.description}`);
+  }
+  if (project.planteamiento) {
+    lines.push(`Planteamiento: ${project.planteamiento}`);
+  }
+  if (project.justificacion) {
+    lines.push(`Justificación: ${project.justificacion}`);
+  }
+  if (project.objetivo_general) {
+    lines.push(`Objetivo general: ${project.objetivo_general}`);
+  }
+
+  return lines.join('\n');
+}
+
 export async function POST(request: NextRequest) {
   const {
     webhookUrl: WEBHOOK_URL,
@@ -224,6 +257,14 @@ export async function POST(request: NextRequest) {
   // A project always wins: a conversation is about one subject at a time.
   const hasCourseContext =
     !hasProjectContext && Number.isFinite(courseId) && courseId > 0;
+  // Set by the widget when the id came from a user-owned project scope, so a
+  // colliding id in `guidedProjects` (independent serial sequence) is never
+  // consulted for it. Absent (including every conversation saved before this
+  // field existed) falls back to guided-first, same as today.
+  const projectSource = body.projectSource === 'user' ? 'user' : undefined;
+  // Tracks which table actually answered, so the n8n payload below can keep
+  // sending `projectId` for guided projects only.
+  let isUserProjectContext = false;
 
   // Both describe what the learner is enrolled in, so both are personal data
   // and always require a session.
@@ -242,26 +283,64 @@ export async function POST(request: NextRequest) {
   let sessionId = userId ? `${userId}:artie` : `anon:${anonId}:artie`;
 
   if (hasProjectContext && userId) {
-    const project = await getGuidedProjectById(projectId, userId);
+    // `projectSource: 'user'` short-circuits straight to the general table —
+    // a request explicitly scoped to a user project never touches the
+    // premium gate below, so it can never be mistaken for a guided one.
+    const guidedProject =
+      projectSource === 'user'
+        ? null
+        : await getGuidedProjectById(projectId, userId);
 
-    // Enrollment gate: the agents only ever see projects the learner owns.
-    if (!project?.enrolled) {
-      return accessDenied(403, {
-        title: 'Este proyecto guiado es Premium',
-        body: 'Los proyectos guiados vienen conmigo de mentor: te acompaño actividad por actividad hasta que lo termines. Necesitas un plan Pro o Premium activo para entrar.',
-        primary: { label: 'Quiero Premium', href: '/planes' },
-        secondary: {
-          label: 'Ver el proyecto',
-          href: `/estudiantes/proyectos-guiados/${projectId}`,
+    if (guidedProject) {
+      // Enrollment gate: the agents only ever see projects the learner owns.
+      // Byte-identical to before the fallback branch below existed.
+      if (!guidedProject.enrolled) {
+        return accessDenied(403, {
+          title: 'Este proyecto guiado es Premium',
+          body: 'Los proyectos guiados vienen conmigo de mentor: te acompaño actividad por actividad hasta que lo termines. Necesitas un plan Pro o Premium activo para entrar.',
+          primary: { label: 'Quiero Premium', href: '/planes' },
+          secondary: {
+            label: 'Ver el proyecto',
+            href: `/estudiantes/proyectos-guiados/${projectId}`,
+          },
+        });
+      }
+
+      context = buildProjectContext(
+        guidedProject,
+        Number.isFinite(activityId) && activityId > 0 ? activityId : null
+      );
+      sessionId = `${userId}:project:${projectId}`;
+    } else {
+      // The id is absent from `guidedProjects` (or the scope already said
+      // "user project"): fall back to the general table. `type` on that row
+      // is descriptive only — ownership is the actual gate, same as every
+      // other personal scope on this route.
+      const userProject = await db.query.projects.findFirst({
+        where: eq(projects.id, projectId),
+        columns: {
+          userId: true,
+          name: true,
+          description: true,
+          planteamiento: true,
+          justificacion: true,
+          objetivo_general: true,
         },
       });
-    }
 
-    context = buildProjectContext(
-      project,
-      Number.isFinite(activityId) && activityId > 0 ? activityId : null
-    );
-    sessionId = `${userId}:project:${projectId}`;
+      if (!userProject || userProject.userId !== userId) {
+        return accessDenied(403, {
+          title: 'Este proyecto no es tuyo',
+          body: 'Solo quien creó este proyecto puede hablar con el Coach sobre él.',
+          primary: { label: 'Ver mis proyectos', href: '/proyectos' },
+          secondary: null,
+        });
+      }
+
+      isUserProjectContext = true;
+      context = buildUserProjectContext(userProject);
+      sessionId = `${userId}:userproject:${projectId}`;
+    }
   } else if (hasCourseContext && userId) {
     // Same rule as projects: the agents only ever discuss courses the learner
     // actually has.
@@ -318,7 +397,10 @@ export async function POST(request: NextRequest) {
         context,
         agent: requestedAgent,
         courseId: hasCourseContext ? courseId : null,
-        projectId: hasProjectContext ? projectId : null,
+        // User projects have no document in the RAG store to collide with a
+        // guided one under the same numeric id, so they never reach it.
+        projectId:
+          hasProjectContext && !isUserProjectContext ? projectId : null,
       }),
       signal: AbortSignal.timeout(60_000),
     });

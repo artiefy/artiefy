@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 
+import { auth } from '@clerk/nextjs/server';
+
 import { ProfileView } from '~/components/estudiantes/profile/ProfileView';
+import { getPublicProjectsByOwner } from '~/components/estudiantes/proyectos/projectSocialData';
 import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { getMyProfile } from '~/server/actions/estudiantes/profile/profileActions';
 import { getEnrolledPrograms } from '~/server/actions/estudiantes/programs/getEnrolledPrograms';
@@ -16,14 +19,23 @@ export default async function ProfilePage() {
     redirect('/sign-in?redirect_url=/estudiantes/perfil');
   }
 
-  const [courses, programs] = await Promise.all([
+  const { userId } = await auth();
+  const [courses, programs, projects] = await Promise.all([
     getEnrolledCourses(),
     getEnrolledPrograms(),
+    // Viewer and owner are the same person here, so private and draft
+    // projects are included.
+    userId ? getPublicProjectsByOwner(userId, userId) : Promise.resolve([]),
   ]);
 
   return (
     <>
-      <ProfileView profile={profile} courses={courses} programs={programs} />
+      <ProfileView
+        profile={profile}
+        courses={courses}
+        programs={programs}
+        projects={projects}
+      />
     </>
   );
 }

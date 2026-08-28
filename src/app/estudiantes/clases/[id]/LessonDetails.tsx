@@ -21,7 +21,6 @@ import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPla
 import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonResource';
 import LessonTopNavBar from '~/components/estudiantes/layout/lessondetail/LessonTopNavBar';
 import LessonTranscription from '~/components/estudiantes/layout/lessondetail/LessonTranscription';
-import { NextLessonModal } from '~/components/estudiantes/layout/lessondetail/NextLessonModal';
 import { useCourseGradeSummary } from '~/hooks/useCourseGradeSummary';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
@@ -1097,28 +1096,6 @@ export default function LessonDetails({
           isLastActivityInLesson={
             activities[0]?.id === selectedActivityForModal.id
           }
-        />
-      )}
-
-      {/* Next Lesson Modal */}
-      {!isSubscriptionAccessBlocked && (
-        <NextLessonModal
-          nextLesson={(() => {
-            const sortedLessons = sortLessons(lessonsState);
-            const currentIndex = sortedLessons.findIndex(
-              (l) => l.id === lesson.id
-            );
-            const nextLesson =
-              currentIndex >= 0 ? sortedLessons[currentIndex + 1] : null;
-            return nextLesson
-              ? {
-                  id: nextLesson.id,
-                  title: nextLesson.title,
-                  isLocked: nextLesson.isLocked,
-                }
-              : null;
-          })()}
-          courseId={lesson.courseId}
         />
       )}
     </div>

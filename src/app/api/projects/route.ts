@@ -30,6 +30,8 @@ interface ProjectData {
   projectTypeId?: number; // Nuevo campo normalizado
   categoryId: number;
   courseId?: number; // Proyecto asociado a un curso
+  /** Discriminator, descriptive only. `createProject` derives it when absent. */
+  type?: 'course' | 'user';
   isPublic?: boolean;
   needsCollaborators?: boolean; // Nuevo campo
   userId: string;
@@ -262,6 +264,7 @@ export async function POST(req: Request) {
       projectTypeId: body.projectTypeId ?? undefined, // Nuevo campo normalizado
       categoryId: body.categoryId,
       courseId: body.courseId ?? undefined, // Proyecto asociado a un curso (opcional)
+      type: body.type ?? undefined,
       userId,
       objetivos_especificos: objetivos_especificos_db,
       actividades: actividades_db,

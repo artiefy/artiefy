@@ -3,9 +3,13 @@
 import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { BookOpen, Layers, Plus, Search, User } from 'lucide-react';
+
+import { requestCreateEntry } from '~/lib/creation/createEntryBus';
+
+import { MobileCreateSheet } from './MobileCreateSheet';
 
 interface MobileBottomNavProps {
   isSignedIn: boolean;
@@ -15,7 +19,8 @@ interface MobileBottomNavProps {
 
 /**
  * Floating bottom navigation bar shown only on small screens.
- * The center "+" button is intentionally inert for now.
+ * The center "+" button opens a bottom sheet with the same "Proyecto"/"Post"
+ * choices as the desktop "Crear" dropdown (see `MobileCreateSheet`).
  * It shrinks (hides labels, reduces padding) while scrolling down and
  * expands again when scrolling up or at the top of the page.
  */
@@ -25,7 +30,9 @@ export function MobileBottomNav({
   onLoginClick,
 }: MobileBottomNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [compact, setCompact] = useState(false);
+  const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   // Hide the bar while the enroll/subscribe CTA bar owns the bottom of the
   // screen (non-enrolled course/program pages). ProgramHeader/CourseDetails
   // toggle `html.mobile-bottom-cta-visible` and emit this event.
@@ -90,6 +97,20 @@ export function MobileBottomNav({
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  const navigateToProyectos = () => {
+    if (pathname !== '/proyectos') router.push('/proyectos');
+  };
+
+  const handleSelectProject = () => {
+    requestCreateEntry('project');
+    navigateToProyectos();
+  };
+
+  const handleSelectPost = () => {
+    requestCreateEntry('post');
+    navigateToProyectos();
+  };
 
   const isActive = (href: string, exact = false) =>
     exact
@@ -156,8 +177,15 @@ export function MobileBottomNav({
           <span className={labelClass(isActive('/proyectos'))}>Proyectos</span>
         </Link>
 
-        {/* Center create button — intentionally inert for now */}
-        <button type="button" aria-label="Crear" className={buttonClass}>
+        {/* Center create button — opens the "Proyecto"/"Post" sheet */}
+        <button
+          type="button"
+          aria-label="Crear"
+          aria-haspopup="dialog"
+          aria-expanded={isCreateSheetOpen}
+          onClick={() => setIsCreateSheetOpen(true)}
+          className={buttonClass}
+        >
           <span
             className={`
               -mt-1 flex items-center justify-center rounded-full
@@ -207,6 +235,13 @@ export function MobileBottomNav({
           </button>
         )}
       </nav>
+
+      <MobileCreateSheet
+        isOpen={isCreateSheetOpen}
+        onOpenChange={setIsCreateSheetOpen}
+        onSelectProject={handleSelectProject}
+        onSelectPost={handleSelectPost}
+      />
     </div>
   );
 }

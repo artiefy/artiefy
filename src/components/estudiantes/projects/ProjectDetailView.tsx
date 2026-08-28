@@ -34,6 +34,7 @@ import { useGenerateContent } from '~/hooks/useGenerateContent';
 import { Progress } from './ui/progress';
 import AddCustomSectionModal from './AddCustomSectionModal';
 import AddSectionDropdown from './AddSectionDropdown';
+import ProjectFeedbackThread from './ProjectFeedbackThread';
 
 import type { Project } from '~/types/project';
 
@@ -2735,7 +2736,7 @@ export default function ProjectDetailView({
                 <>
                   <div
                     className="
-                      scrollbar-thin w-full max-w-full overflow-x-auto
+                      w-full max-w-full scrollbar-thin overflow-x-auto
                       [&::-webkit-scrollbar]:h-1.5
                       [&::-webkit-scrollbar-thumb]:rounded-full
                       [&::-webkit-scrollbar-thumb]:bg-border/50
@@ -3787,16 +3788,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="feedback">
-          <div
-            className="
-              rounded-xl border border-border/50 bg-card/50 p-4 text-center
-              sm:p-6
-            "
-          >
-            <p className="text-muted-foreground">
-              No hay retroalimentación disponible aún.
-            </p>
-          </div>
+          <ProjectFeedbackThread projectId={project.id} />
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-4">
@@ -3960,7 +3952,7 @@ export default function ProjectDetailView({
                 <>
                   <div
                     className="
-                      scrollbar-thin w-full max-w-full overflow-x-auto
+                      w-full max-w-full scrollbar-thin overflow-x-auto
                       [&::-webkit-scrollbar]:h-1.5
                       [&::-webkit-scrollbar-thumb]:rounded-full
                       [&::-webkit-scrollbar-thumb]:bg-border/50

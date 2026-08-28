@@ -291,6 +291,8 @@ export async function POST(req: NextRequest) {
         categoryId: parseInt(categoryId),
         coverImageKey: coverImageKey ?? null,
         isPublic,
+        // This route never sets courseId, so its rows are user projects.
+        type: 'user',
         createdAt: new Date(),
         updatedAt: new Date(),
       })

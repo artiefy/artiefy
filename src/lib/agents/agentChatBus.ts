@@ -8,7 +8,19 @@
 export type AgentChatScope =
   | { kind: 'general' }
   | { kind: 'course'; id: number; title: string }
-  | { kind: 'project'; id: number; title: string };
+  | {
+      kind: 'project';
+      id: number;
+      title: string;
+      /**
+       * Disambiguates the id when it collides between `guidedProjects` and
+       * `projects` (independent serial sequences). Absent means "resolve as
+       * a guided project first, like every conversation before this field
+       * existed" — never a security boundary on its own, since the chat
+       * route still re-checks enrollment/ownership server-side.
+       */
+      source?: 'guided' | 'user';
+    };
 
 export const GENERAL_SCOPE: AgentChatScope = { kind: 'general' };
 

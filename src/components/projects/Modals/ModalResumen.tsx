@@ -615,7 +615,13 @@ interface ModalResumenProps {
     hoursPerDay?: number;
   }[];
   courseId?: number;
-  onProjectCreated?: () => void;
+  /**
+   * Fired the instant step 1's create call succeeds (before the remaining
+   * wizard steps run). `createdId`/`createdTitle` let a caller with no course
+   * context — e.g. the "+ Nuevo proyecto" flow — open a scoped coach chat for
+   * the project that now exists.
+   */
+  onProjectCreated?: (createdId?: number, createdTitle?: string) => void;
   setObjetivosEsp: (value: ObjetivosInput) => void;
   setActividades: (value: string[]) => void;
   responsablesPorActividad?: Record<string, string>;
@@ -1994,7 +2000,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
       // Notificar al componente padre
       if (onProjectCreated) {
-        onProjectCreated();
+        onProjectCreated(createdId, title);
       }
     } catch (error) {
       console.error('❌ Error al crear el proyecto:', error);
@@ -4114,9 +4120,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       <div className="max-w-full min-w-0">
                         <div
                           className="
-                            scrollbar-thin relative w-full max-w-full
-                            touch-pan-x overflow-x-scroll overflow-y-hidden
-                            overscroll-x-contain pb-2 [scrollbar-gutter:stable]
+                            relative w-full max-w-full touch-pan-x
+                            scrollbar-thin [scrollbar-gutter:stable] overflow-x-scroll
+                            overflow-y-hidden overscroll-x-contain pb-2
                             [&::-webkit-scrollbar]:h-2
                             [&::-webkit-scrollbar-thumb]:rounded-full
                             [&::-webkit-scrollbar-thumb]:bg-border/60
