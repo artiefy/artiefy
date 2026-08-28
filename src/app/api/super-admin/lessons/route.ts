@@ -3,6 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
 import {
+  getCourseIdOfLesson,
+  scheduleCourseIndex,
+  scheduleIndexForLesson,
+} from '~/lib/embeddings/index-now';
+import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
+import {
   createLesson,
   deleteLesson,
   getLessonsByCourseId,
@@ -89,7 +95,7 @@ export async function POST(req: NextRequest) {
     const nextOrderIndex = (lastLesson?.orderIndex ?? 0) + 1;
 
     // 2. Asignar orderIndex a la nueva lección y pasar todos los campos explícitamente
-    await createLesson({
+    const creada = await createLesson({
       title,
       description,
       duration,
@@ -126,6 +132,14 @@ export async function POST(req: NextRequest) {
       console.log('Faltan campos obligatorios.');
     }
 
+    // La clase entra al embedding del curso al que pertenece.
+    scheduleCourseIndex(Number(courseId));
+
+    // Si la clase se creo con video, se encola su transcripcion.
+    if (coverVideoKey && coverVideoKey !== 'none' && creada?.id) {
+      await autoTranscribe('lesson', Number(creada.id), coverVideoKey, true);
+    }
+
     return NextResponse.json({ status: 201 });
   } catch (error) {
     console.error('Error al crear la lección:', error);
@@ -153,6 +167,13 @@ export async function PUT(req: NextRequest) {
 
     await updateLesson(Number(lessonId), updateData);
 
+    const videoNuevo = (updateData as { coverVideoKey?: string }).coverVideoKey;
+    if (videoNuevo) {
+      await autoTranscribe('lesson', Number(lessonId), videoNuevo, true);
+    }
+
+    scheduleIndexForLesson(Number(lessonId));
+
     return NextResponse.json({ message: 'Lección actualizada exitosamente' });
   } catch (error) {
     console.error('Error al actualizar la lección:', error);
@@ -179,7 +200,11 @@ export async function DELETE(req: NextRequest) {
       return respondWithError('Se requiere el ID de la lección', 400);
     }
 
+    // Se resuelve el curso ANTES de borrar: despues la clase ya no existe.
+    const cursoDeLaClase = await getCourseIdOfLesson(Number(lessonId));
     await deleteLesson(Number(lessonId));
+    if (cursoDeLaClase) scheduleCourseIndex(cursoDeLaClase);
+
     return NextResponse.json({ message: 'Lección eliminada exitosamente' });
   } catch (error) {
     console.error('Error al eliminar la lección:', error);

@@ -79,7 +79,8 @@ export async function POST(request: Request) {
 
     const saved = await saveDocumentEmbeddings(
       { type: 'project', id: projectId },
-      documents
+      documents,
+      { replaceAll: true }
     );
     console.log(`✅ Guardados ${saved} documentos en BD`);
 

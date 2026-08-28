@@ -9,11 +9,12 @@
 
 import { eq } from 'drizzle-orm';
 
+import { readTranscriptions } from '~/lib/transcriptions/read-many';
 import { db } from '~/server/db';
 import { activities, courses, lessons } from '~/server/db/schema';
 
 import { downloadMultipleFilesFromS3 } from './s3-downloader';
-import { estimateTokens,extractTextFromFile } from './utils';
+import { estimateTokens, extractTextFromFile } from './utils';
 
 export interface CourseContentData {
   courseId: number;
@@ -167,7 +168,47 @@ export async function getCourseContentForEmbeddings(
     }
   }
 
-  // 6. Combinar todo el contenido
+  // 6. Transcripciones de los videos del curso.
+  //
+  // Lo que el instructor explica hablando suele ser el contenido más rico del
+  // curso, y hasta ahora quedaba fuera del índice: se transcribía pero la IA
+  // no podía usarlo para responder.
+  try {
+    const { classMeetings } = await import('~/server/db/schema');
+    const meetings = await db
+      .select({ id: classMeetings.id, title: classMeetings.title })
+      .from(classMeetings)
+      .where(eq(classMeetings.courseId, courseId));
+
+    const transcripciones = await readTranscriptions([
+      ...lessonsData.map((l) => ({ type: 'lesson' as const, contentId: l.id })),
+      ...meetings.map((m) => ({ type: 'meeting' as const, contentId: m.id })),
+    ]);
+
+    if (transcripciones.length > 0) {
+      const tituloPorId = new Map<string, string>([
+        ...lessonsData.map((l) => [`lesson-${l.id}`, l.title] as const),
+        ...meetings.map((m) => [`meeting-${m.id}`, m.title] as const),
+      ]);
+
+      contentParts.push('');
+      contentParts.push('=== TRANSCRIPCIONES DE LOS VIDEOS ===');
+      for (const t of transcripciones) {
+        const titulo =
+          tituloPorId.get(`${t.type}-${t.contentId}`) ??
+          `${t.type} ${t.contentId}`;
+        contentParts.push(`--- ${titulo} ---`);
+        contentParts.push(t.text);
+        sources.push({ type: 'file', name: `Transcripción: ${titulo}` });
+      }
+      console.log(`🎙️ ${transcripciones.length} transcripciones incorporadas`);
+    }
+  } catch (error) {
+    // Sin transcripciones el curso se indexa igual; no vale la pena abortar.
+    console.error('⚠️ No se pudieron leer las transcripciones:', error);
+  }
+
+  // 7. Combinar todo el contenido
   const fullContent = contentParts.join('\n');
 
   return {

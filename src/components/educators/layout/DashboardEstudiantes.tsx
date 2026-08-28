@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
@@ -435,6 +435,77 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     peso: number;
   } | null>(null);
 
+  /**
+   * Agrupa las actividades por parámetro conservando el orden de aparición.
+   * La cabecera de la tabla usa esto para combinar el parámetro sobre sus
+   * actividades (como el "combinar celdas" de Excel) en vez de repetir el
+   * nombre del parámetro en cada columna.
+   */
+  const activityGroups = useMemo(() => {
+    const groups: {
+      parametroId: number;
+      parametro: string;
+      parametroPeso: number;
+      /** Tope de actividades del parámetro (0 = sin tope definido). */
+      maxActivities: number;
+      items: Activity[];
+    }[] = [];
+    const byId = new Map<number, (typeof groups)[number]>();
+
+    for (const activity of activities) {
+      let group = byId.get(activity.parametroId);
+      if (!group) {
+        group = {
+          parametroId: activity.parametroId,
+          parametro: activity.parametro,
+          parametroPeso: activity.parametroPeso,
+          maxActivities: activity.numberOfActivities ?? 0,
+          items: [],
+        };
+        byId.set(activity.parametroId, group);
+        groups.push(group);
+      }
+      // El tope viaja repetido en cada actividad; basta el mayor visto.
+      group.maxActivities = Math.max(
+        group.maxActivities,
+        activity.numberOfActivities ?? 0
+      );
+      group.items.push(activity);
+    }
+
+    return groups;
+  }, [activities]);
+
+  /** Cuenta solo las actividades reales: los placeholders no ocupan cupo. */
+  const countRealActivities = (items: Activity[]) =>
+    items.filter((a) => a.id > 0 && a.name !== 'Sin actividad').length;
+
+  const [limitModal, setLimitModal] = useState<{
+    parametro: string;
+    max: number;
+  } | null>(null);
+
+  /**
+   * Botón "+" de la cabecera del parámetro. Si ya se alcanzó el tope
+   * configurado en el parámetro, avisa con un modal en vez de abrir el
+   * formulario.
+   */
+  const handleAddActivity = (group: (typeof activityGroups)[number]) => {
+    const usadas = countRealActivities(group.items);
+
+    if (group.maxActivities > 0 && usadas >= group.maxActivities) {
+      setLimitModal({ parametro: group.parametro, max: group.maxActivities });
+      return;
+    }
+
+    setQuickActivityParametro({
+      id: group.parametroId,
+      name: group.parametro,
+      peso: group.parametroPeso,
+    });
+    setQuickActivityOpen(true);
+  };
+
   const openQuickActivity = (activity: Activity) => {
     setQuickActivityParametro({
       id: activity.parametroId,
@@ -647,6 +718,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
               parametroId: a.parametroId,
               parametroPeso: a.parametroPeso ?? 0,
               actividadPeso: a.actividadPeso ?? 0,
+              numberOfActivities: a.numberOfActivities ?? 0,
             });
             g[a.activityId] = a.grade;
           });
@@ -921,6 +993,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   <thead className="sticky top-0 z-20 bg-slate-900">
                     <tr>
                       <th
+                        rowSpan={2}
                         className="
                           sticky left-0 z-10 min-w-[48px] bg-slate-900 px-4
                         "
@@ -941,6 +1014,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         />
                       </th>
                       <th
+                        rowSpan={2}
                         className="
                           sticky left-[48px] z-10 bg-slate-900 px-4 py-3
                           text-left text-xs font-semibold text-cyan-300/80
@@ -950,6 +1024,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         Nombre
                       </th>
                       <th
+                        rowSpan={2}
                         className="
                           px-4 py-3 text-left text-xs font-semibold
                           text-cyan-300/80 uppercase
@@ -958,6 +1033,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         Correo
                       </th>
                       <th
+                        rowSpan={2}
                         className="
                           px-4 py-3 text-left text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
@@ -966,6 +1042,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         Progreso
                       </th>
                       <th
+                        rowSpan={2}
                         className="
                           px-4 py-3 text-left text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
@@ -974,6 +1051,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         Última conexión
                       </th>
                       <th
+                        rowSpan={2}
                         className="
                           px-4 py-3 text-left text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
@@ -982,41 +1060,74 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         Tiempo
                       </th>
 
-                      {activities.map((activity) => (
-                        <th
-                          key={`${activity.parametro}-${activity.id}`}
-                          className="
-                            hidden px-4 py-3 text-center text-xs font-semibold
-                            whitespace-nowrap uppercase
-                            lg:table-cell
-                          "
-                        >
-                          <span
-                            className="
-                              mb-1 block text-[10px] text-cyan-400 italic
-                            "
-                          >
-                            {activity.parametro} ({activity.parametroPeso}%)
-                          </span>
-                          {activity.name === 'Sin actividad' ? (
-                            <button
-                              type="button"
-                              className="
-                                rounded bg-green-600 px-1 py-0.5 text-[9px]
-                                font-bold text-white
-                                hover:bg-green-700
-                              "
-                              onClick={() => openQuickActivity(activity)}
-                            >
-                              + Crear
-                            </button>
-                          ) : (
-                            `${activity.name} (${activity.actividadPeso}%)`
-                          )}
-                        </th>
-                      ))}
+                      {/* Cabecera combinada: el parámetro abarca todas sus
+                          actividades, igual que "combinar celdas" en Excel. */}
+                      {activityGroups.map((group, gi) => {
+                        const usadas = countRealActivities(group.items);
+                        const lleno =
+                          group.maxActivities > 0 &&
+                          usadas >= group.maxActivities;
 
+                        return (
+                          <th
+                            key={`param-${group.parametroId}`}
+                            colSpan={group.items.length}
+                            className={`
+                              hidden bg-cyan-500/[0.07] px-3 py-2.5
+                              lg:table-cell
+                              ${gi > 0 ? 'border-l border-cyan-400/25' : ''}
+                            `}
+                          >
+                            <div className="flex items-center justify-center gap-2">
+                              <span className="text-[11px] leading-tight font-semibold tracking-wide text-cyan-300 normal-case">
+                                {group.parametro}
+                              </span>
+
+                              <span className="rounded-full bg-cyan-400/15 px-1.5 py-0.5 text-[10px] leading-none font-bold text-cyan-200">
+                                {group.parametroPeso}%
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => handleAddActivity(group)}
+                                title={
+                                  lleno
+                                    ? `Tope alcanzado (${group.maxActivities})`
+                                    : 'Agregar actividad a este parámetro'
+                                }
+                                className={`
+                                  flex size-[18px] items-center justify-center
+                                  rounded-full text-[13px] leading-none
+                                  font-bold transition-colors
+                                  ${
+                                    lleno
+                                      ? 'bg-white/10 text-white/35'
+                                      : `
+                                        bg-cyan-400/20 text-cyan-200
+                                        hover:bg-cyan-400/40 hover:text-white
+                                      `
+                                  }
+                                `}
+                              >
+                                +
+                              </button>
+
+                              {group.maxActivities > 0 && (
+                                <span
+                                  className={`
+                                    text-[10px] leading-none font-medium
+                                    ${lleno ? 'text-amber-400/80' : 'text-white/35'}
+                                  `}
+                                >
+                                  {usadas}/{group.maxActivities}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                        );
+                      })}
                       <th
+                        rowSpan={2}
                         className="
                           px-4 py-3 text-center text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
@@ -1025,6 +1136,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         Nota Final
                       </th>
                       <th
+                        rowSpan={2}
                         className="
                           px-4 py-3 text-center text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
@@ -1032,6 +1144,49 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       >
                         Acciones
                       </th>
+                    </tr>
+
+                    <tr>
+                      {activityGroups.flatMap((group, gi) =>
+                        group.items.map((activity, ai) => (
+                          <th
+                            key={`${activity.parametroId}-${activity.id}`}
+                            className={`
+                              hidden px-3 py-2 text-center align-middle
+                              lg:table-cell
+                              ${
+                                ai === 0 && gi > 0
+                                  ? 'border-l border-cyan-400/25'
+                                  : ''
+                              }
+                            `}
+                          >
+                            {activity.name === 'Sin actividad' ? (
+                              <button
+                                type="button"
+                                onClick={() => openQuickActivity(activity)}
+                                className="
+                                  rounded-full bg-green-600/90 px-2 py-1
+                                  text-[10px] font-semibold text-white
+                                  transition-colors
+                                  hover:bg-green-600
+                                "
+                              >
+                                + Crear
+                              </button>
+                            ) : (
+                              <div className="flex flex-col items-center gap-0.5">
+                                <span className="max-w-[130px] truncate text-[11px] leading-tight font-medium text-white/85 normal-case">
+                                  {activity.name}
+                                </span>
+                                <span className="text-[10px] leading-none text-white/35">
+                                  {activity.actividadPeso}%
+                                </span>
+                              </div>
+                            )}
+                          </th>
+                        ))
+                      )}
                     </tr>
                   </thead>
 
@@ -1105,82 +1260,89 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           {user.tiempoEnCurso ?? 'N/D'}
                         </td>
 
-                        {activities.map((activity) => (
-                          <td
-                            key={`${user.id}-${activity.id}`}
-                            className="
-                              hidden px-4 py-2 text-center text-xs
-                              whitespace-nowrap
-                              lg:table-cell
-                            "
-                          >
-                            {activity.name === 'Sin actividad' ||
-                            activity.name === 'Agregar actividad' ? (
-                              <div
-                                className="
+                        {activityGroups.flatMap((group, gi) =>
+                          group.items.map((activity, ai) => (
+                            <td
+                              key={`${user.id}-${activity.id}`}
+                              className={`
+                                hidden px-4 py-2 text-center text-xs
+                                whitespace-nowrap
+                                lg:table-cell
+                                ${
+                                  ai === 0 && gi > 0
+                                    ? 'border-l border-cyan-400/25'
+                                    : ''
+                                }
+                              `}
+                            >
+                              {activity.name === 'Sin actividad' ||
+                              activity.name === 'Agregar actividad' ? (
+                                <div
+                                  className="
                                   flex items-center justify-center space-x-2
                                 "
-                              >
-                                <input
-                                  type="number"
-                                  value={
-                                    user.parameterGrades.find(
-                                      (p) =>
-                                        p.parametroName === activity.parametro
-                                    )?.grade ?? 0
-                                  }
-                                  disabled
-                                  className="
+                                >
+                                  <input
+                                    type="number"
+                                    value={
+                                      user.parameterGrades.find(
+                                        (p) =>
+                                          p.parametroName === activity.parametro
+                                      )?.grade ?? 0
+                                    }
+                                    disabled
+                                    className="
                                     w-16 cursor-not-allowed rounded bg-gray-700
                                     p-1 text-center text-white opacity-50
                                   "
-                                />
-                                <button
-                                  onClick={() => openQuickActivity(activity)}
-                                  className="
+                                  />
+                                  <button
+                                    onClick={() => openQuickActivity(activity)}
+                                    className="
                                     rounded bg-green-600 px-2 py-1 text-xs
                                     text-white
                                     hover:bg-green-700
                                   "
-                                >
-                                  Crear
-                                </button>
-                              </div>
-                            ) : (
-                              <input
-                                type="number"
-                                min={0}
-                                max={100}
-                                step={0.5}
-                                data-tour-id={
-                                  user.id === firstVisibleUserId &&
-                                  activity.id === firstGradeActivityId
-                                    ? 'tutorial-first-grade-input'
-                                    : undefined
-                                }
-                                className="
+                                  >
+                                    Crear
+                                  </button>
+                                </div>
+                              ) : (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  step={0.5}
+                                  data-tour-id={
+                                    user.id === firstVisibleUserId &&
+                                    activity.id === firstGradeActivityId
+                                      ? 'tutorial-first-grade-input'
+                                      : undefined
+                                  }
+                                  className="
                                   w-16 rounded bg-gray-700 p-1 text-center
                                   text-white
                                 "
-                                value={grades[user.id]?.[activity.id] ?? ''}
-                                onChange={(e) =>
-                                  handleGradeChange(
-                                    user.id,
-                                    activity.id,
-                                    parseFloat(e.target.value)
-                                  )
-                                }
-                                onBlur={() =>
-                                  saveGrade(
-                                    user.id,
-                                    activity.id,
-                                    grades[user.id]?.[activity.id] ?? 0
-                                  )
-                                }
-                              />
-                            )}
-                          </td>
-                        ))}
+                                  value={grades[user.id]?.[activity.id] ?? ''}
+                                  onChange={(e) =>
+                                    handleGradeChange(
+                                      user.id,
+                                      activity.id,
+                                      parseFloat(e.target.value)
+                                    )
+                                  }
+                                  onBlur={() =>
+                                    saveGrade(
+                                      user.id,
+                                      activity.id,
+                                      grades[user.id]?.[activity.id] ?? 0
+                                    )
+                                  }
+                                />
+                              )}
+                            </td>
+                          ))
+                        )}
 
                         <td
                           className="
@@ -1300,6 +1462,42 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           parametroPeso={quickActivityParametro.peso}
           onSuccess={() => void fetchEnrolledUsers(courseId)}
         />
+      )}
+
+      {/* Aviso de tope: el parámetro ya tiene todas las actividades que se
+          configuraron para él. */}
+      {limitModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setLimitModal(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-amber-500/40 bg-[#0b1f3d] p-6 text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-amber-500/15 text-2xl">
+              ⚠️
+            </div>
+            <h3 className="mb-2 text-lg font-bold text-white">
+              Límite de actividades alcanzado
+            </h3>
+            <p className="mb-1 text-sm text-white/70">
+              El parámetro <strong>{limitModal.parametro}</strong> ya tiene sus{' '}
+              <strong>{limitModal.max}</strong> actividades.
+            </p>
+            <p className="mb-5 text-xs text-white/50">
+              Para agregar más, aumenta el número de actividades del parámetro
+              en la configuración del curso.
+            </p>
+            <button
+              type="button"
+              onClick={() => setLimitModal(null)}
+              className="w-full rounded-lg bg-[#22C4D3] px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-[#00A5C0]"
+            >
+              Entendido
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

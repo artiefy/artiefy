@@ -21,6 +21,7 @@ import { type NextRequest } from 'next/server';
 
 import { env } from '~/env';
 import { findRecentVideos } from '~/lib/transcriptions/content-sources';
+import { reindexAfterTranscription } from '~/lib/transcriptions/reindex-on-complete';
 import {
   hasTranscription,
   isTranscriptionServiceConfigured,
@@ -98,6 +99,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const reconciliacion = await reconcileAllPending();
+
+    // Lo hablado en el video solo entra al embedding cuando la transcripcion
+    // existe, y eso pasa AHORA, no cuando se guardo la clase. Por eso se
+    // reindexa aqui el dueno de cada video que acaba de terminar.
+    for (const item of reconciliacion.completedItems) {
+      await reindexAfterTranscription(item.type, item.contentId);
+    }
+
     const auto = await encolarNuevos();
 
     console.log('[TRANSCRIPCIÓN] Cron:', { ...reconciliacion, ...auto });

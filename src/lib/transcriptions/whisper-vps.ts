@@ -41,6 +41,12 @@ export interface TranscriptionState {
   startedAt: string;
   updatedAt: string;
   error?: string;
+  /**
+   * true solo en la llamada que hace la transicion a completado. NO se
+   * persiste: sirve para que quien reconcilia sepa que acaba de terminar y
+   * dispare la reindexacion una sola vez.
+   */
+  justCompleted?: boolean;
 }
 
 const redis = new Redis({
@@ -255,7 +261,8 @@ export async function reconcileTranscription(
   await redis.set(statusKey(type, contentId), completed);
   await redis.srem(PENDING_SET, pendingMember(type, contentId));
 
-  return completed;
+  // El flag va solo en el valor devuelto, no en lo guardado en Redis.
+  return { ...completed, justCompleted: true };
 }
 
 async function finishWithError(
@@ -279,8 +286,11 @@ export async function reconcileAllPending(): Promise<{
   completed: number;
   failed: number;
   stillProcessing: number;
+  /** Los que acaban de terminar en esta pasada, para reindexarlos. */
+  completedItems: { type: ContentType; contentId: number }[];
 }> {
   const pending = await redis.smembers(PENDING_SET);
+  const completedItems: { type: ContentType; contentId: number }[] = [];
 
   let completed = 0;
   let failed = 0;
@@ -294,12 +304,20 @@ export async function reconcileAllPending(): Promise<{
     }
 
     const state = await reconcileTranscription(parsed.type, parsed.contentId);
-    if (state?.status === 'completed') completed++;
-    else if (state?.status === 'failed') failed++;
+    if (state?.status === 'completed') {
+      completed++;
+      completedItems.push({ type: parsed.type, contentId: parsed.contentId });
+    } else if (state?.status === 'failed') failed++;
     else stillProcessing++;
   }
 
-  return { checked: pending.length, completed, failed, stillProcessing };
+  return {
+    checked: pending.length,
+    completed,
+    failed,
+    stillProcessing,
+    completedItems,
+  };
 }
 
 /** Estado guardado, sin consultar al VPS. */

@@ -41,9 +41,10 @@ export async function getSuggestedPercentage(
 
     if (countActividades >= param.numberOfActivities) return null;
 
-    const restantes = param.numberOfActivities - countActividades;
-    return Math.round((porcentajeDisponible / restantes) * 100) / 100;
+    const totalConNueva = countActividades + 1;
+    const sugerido = 100 / totalConNueva;
+    return Number(sugerido.toFixed(2));
   }
 
-  return porcentajeDisponible;
+  return 100;
 }

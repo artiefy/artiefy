@@ -30,6 +30,7 @@ import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page'
 import { AudioRecorder } from '~/components/AudioRecorder';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
+import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,8 @@ import {
 } from '~/components/educators/ui/alert-dialog';
 import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
+import { EmbeddingsGenerator } from '~/components/embeddings/EmbeddingsGenerator';
+import { EmbeddingsGeneratorComplete } from '~/components/embeddings/EmbeddingsGeneratorComplete';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
@@ -570,6 +573,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     []
   );
   const [loadingActivities, setLoadingActivities] = useState(false);
+  const [isCreateActivityOpen, setIsCreateActivityOpen] = useState(false);
+  const [activitiesRefreshKey, setActivitiesRefreshKey] = useState(0);
   // Estado para el modal de proyecto seleccionado
   const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
     null
@@ -651,7 +656,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setLoadingActivities(false);
       }
     })();
-  }, [courseIdNumber]);
+  }, [courseIdNumber, activitiesRefreshKey]);
 
   useEffect(() => {
     if (!courseIdNumber) return;
@@ -2947,6 +2952,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 ? studentProjects.length
                                 : 0}
                             </span>
+                          </button>
+
+                          <button
+                            onClick={() => setActiveTab('embeddings')}
+                            className={`
+                              rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                              transition-all duration-300
+                              ${
+                                activeTab === 'embeddings'
+                                  ? `
+                                    bg-[#22C4D3]/15 text-[#22C4D3]
+                                    shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                    ring-[#22C4D3]/40
+                                  `
+                                  : `
+                                    text-white/80
+                                    hover:bg-white/5 hover:text-white
+                                  `
+                              }
+                            `}
+                          >
+                            🧠 Embeddings
                           </button>
                         </div>
                       </div>
@@ -5771,9 +5798,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                         {activeTab === 'actividades' && (
                           <div className="animate-in fade-in duration-500">
-                            <h2 className="mb-6 text-2xl font-bold text-white">
-                              Actividades del curso
-                            </h2>
+                            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                              <h2 className="text-2xl font-bold text-white">
+                                Actividades del curso
+                              </h2>
+
+                              <button
+                                type="button"
+                                onClick={() => setIsCreateActivityOpen(true)}
+                                className="
+                                  inline-flex items-center gap-2 rounded-xl border
+                                  border-[#22C4D3] bg-[#22C4D3]/15 px-4 py-2 text-sm
+                                  font-semibold text-[#22C4D3] transition hover:bg-[#22C4D3]/25
+                                "
+                              >
+                                <span>＋</span>
+                                Crear actividad
+                              </button>
+                            </div>
 
                             {loadingActivities ? (
                               <div className="flex items-center gap-3 text-white/60">
@@ -5981,6 +6023,109 @@ text-[#94A3B8]
                             )}
                           </div>
                         )}
+
+                        {activeTab === 'embeddings' && (
+                          <div className="animate-in fade-in space-y-8 duration-500">
+                            <div>
+                              <h2 className="mb-4 text-3xl font-bold text-white">
+                                🧠 Sistema de Embeddings Inteligente
+                              </h2>
+                              <p className="text-white/70">
+                                Genera embeddings vectoriales para búsquedas
+                                semánticas completas que incluyen todo el
+                                contenido del curso: lecciones, actividades,
+                                archivos y recursos.
+                              </p>
+                            </div>
+
+                            <div
+                              className="
+                                grid gap-6
+                                md:grid-cols-2
+                              "
+                            >
+                              <div
+                                className="
+                                  rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/5
+                                  p-6 backdrop-blur-sm
+                                "
+                              >
+                                <h3
+                                  className="
+                                    mb-2 flex items-center gap-2 text-lg font-semibold
+                                    text-[#22C4D3]
+                                  "
+                                >
+                                  <span>🚀</span> Completo (Recomendado)
+                                </h3>
+                                <p className="mb-4 text-sm text-white/70">
+                                  Procesa el curso completo incluyendo:
+                                </p>
+                                <ul className="mb-4 space-y-1 text-xs text-white/60">
+                                  <li>✅ Descripción y metadata del curso</li>
+                                  <li>
+                                    ✅ Todas las lecciones y sus contenidos
+                                  </li>
+                                  <li>✅ Todas las actividades</li>
+                                  <li>
+                                    ✅ Archivos asociados (PDF, DOCX, TXT)
+                                  </li>
+                                </ul>
+                                {course && (
+                                  <EmbeddingsGeneratorComplete
+                                    courseId={courseIdNumber}
+                                    courseTitle={course.title}
+                                  />
+                                )}
+                              </div>
+
+                              <div
+                                className="
+                                  rounded-lg border border-[#1d283a] bg-[#0d2a4d]/40
+                                  p-6 backdrop-blur-sm
+                                "
+                              >
+                                <h3
+                                  className="
+                                    mb-2 flex items-center gap-2 text-lg font-semibold
+                                    text-white
+                                  "
+                                >
+                                  <span>⚡</span> Simple (Solo Metadata)
+                                </h3>
+                                <p className="mb-4 text-sm text-white/70">
+                                  Procesa solo la información básica:
+                                </p>
+                                <ul className="mb-4 space-y-1 text-xs text-white/60">
+                                  <li>✅ Título del curso</li>
+                                  <li>✅ Descripción</li>
+                                  <li>⚠️ Sin contenido de archivos</li>
+                                  <li>⚠️ Sin datos de lecciones</li>
+                                </ul>
+                                {course && (
+                                  <EmbeddingsGenerator
+                                    courseId={courseIdNumber}
+                                    courseTitle={course.title}
+                                    courseDescription={course.description}
+                                  />
+                                )}
+                              </div>
+                            </div>
+
+                            <div
+                              className="
+                                rounded-lg border border-[#22C4D3]/20 bg-[#22C4D3]/5 p-4
+                              "
+                            >
+                              <p className="text-xs text-[#22C4D3]/70">
+                                <strong>💡 Recomendación:</strong> Usa la opción
+                                <strong> Completo</strong> para obtener
+                                búsquedas semánticas más precisas y con mayor
+                                cobertura del curso.
+                              </p>
+                            </div>
+                          </div>
+                        )}
                         {/* ⬅️ VERIFICA QUE ESTE CIERRE ESTÉ AQUÍ */}
                       </div>
                     </div>
@@ -5996,6 +6141,13 @@ text-[#94A3B8]
               </div>
             </div>
           </div>
+
+          <ModalFormActivityQuick
+            open={isCreateActivityOpen}
+            onOpenChange={setIsCreateActivityOpen}
+            courseId={courseIdNumber}
+            onSuccess={() => setActivitiesRefreshKey((key) => key + 1)}
+          />
 
           <ModalScheduleMeeting
             isOpen={isMeetingModalOpen}

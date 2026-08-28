@@ -18,7 +18,7 @@ import {
   saveDocumentEmbeddings,
 } from '~/lib/embeddings/search';
 import { db } from '~/server/db';
-import { courses } from '~/server/db/schema';
+import { courses, documentEmbeddings } from '~/server/db/schema';
 import {
   activities,
   enrollments,
@@ -250,6 +250,15 @@ export async function POST(request: NextRequest) {
     });
 
     // Procesar cada sección y generar embeddings
+    // Se limpia una sola vez, ANTES del bucle: cada vuelta guarda una seccion
+    // distinta del mismo curso, asi que borrar dentro del bucle se llevaria
+    // por delante las secciones ya guardadas.
+    const borradas = await db
+      .delete(documentEmbeddings)
+      .where(eq(documentEmbeddings.courseId, courseIdNum))
+      .returning({ id: documentEmbeddings.id });
+    console.log(`🧹 Eliminados ${borradas.length} fragmentos anteriores`);
+
     let totalSections = 0;
     let totalTokens = 0;
 

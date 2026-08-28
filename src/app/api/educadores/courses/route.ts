@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { and, eq, ne } from 'drizzle-orm';
 
+import { scheduleCourseIndex } from '~/lib/embeddings/index-now';
+import { autorizarEliminacionDeCurso } from '~/lib/permissions/course-deletion.server';
 import {
   deleteCourse,
   getAllCourses,
@@ -256,6 +258,10 @@ export async function POST(request: NextRequest) {
       console.log('No se proporcionaron materias para actualizar.');
     }
 
+    // Indexar de una, sin esperar al cron: `after()` corre despues de que la
+    // respuesta ya salio, asi que crear el curso sigue siendo instantaneo.
+    if (createdCourse?.id) scheduleCourseIndex(Number(createdCourse.id));
+
     return NextResponse.json({
       message: 'Curso creado exitosamente',
       course: createdCourse,
@@ -411,6 +417,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    scheduleCourseIndex(Number(id));
+
     return NextResponse.json({
       message: 'Curso actualizado exitosamente',
       id:
@@ -426,6 +434,17 @@ export async function PUT(request: NextRequest) {
 // Eliminar un curso
 export async function DELETE(request: NextRequest) {
   try {
+    // Eliminar un curso borra sus clases, actividades, notas y archivos de S3,
+    // y no se puede deshacer. Antes esta ruta no pedía autenticación alguna:
+    // cualquiera podía borrar cualquier curso con una sola petición.
+    const permiso = await autorizarEliminacionDeCurso();
+    if (!permiso.ok) {
+      return NextResponse.json(
+        { error: permiso.error },
+        { status: permiso.status }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get('courseId');
 

@@ -7,8 +7,9 @@
  * que es una tabla aparte y no un curso.
  */
 
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
+import { readTranscriptions } from '~/lib/transcriptions/read-many';
 import { db } from '~/server/db';
 import {
   guidedObjectiveActivities,
@@ -124,6 +125,47 @@ export async function getGuidedProjectContentForEmbeddings(
         name: `${activity.name} (en ${objective.title})`,
       });
     }
+  }
+
+  // Transcripciones de los videos del proyecto, sus objetivos y las
+  // instrucciones de sus actividades. Lo hablado en el video suele explicar
+  // mucho más que la descripción escrita.
+  try {
+    const activityIds = (
+      await db
+        .select({ id: guidedObjectiveActivities.id })
+        .from(guidedObjectiveActivities)
+        .where(
+          inArray(
+            guidedObjectiveActivities.objectiveId,
+            objectives.length > 0 ? objectives.map((o) => o.id) : [-1]
+          )
+        )
+    ).map((a) => a.id);
+
+    const transcripciones = await readTranscriptions([
+      { type: 'project', contentId: projectId },
+      ...objectives.map((o) => ({
+        type: 'objective' as const,
+        contentId: o.id,
+      })),
+      ...activityIds.map((id) => ({
+        type: 'activity' as const,
+        contentId: id,
+      })),
+    ]);
+
+    if (transcripciones.length > 0) {
+      contentParts.push('');
+      contentParts.push('=== TRANSCRIPCIONES DE LOS VIDEOS ===');
+      for (const t of transcripciones) {
+        contentParts.push(`--- ${t.type} ${t.contentId} ---`);
+        contentParts.push(t.text);
+      }
+      console.log(`🎙️ ${transcripciones.length} transcripciones incorporadas`);
+    }
+  } catch (error) {
+    console.error('⚠️ No se pudieron leer las transcripciones:', error);
   }
 
   const projectContent = contentParts.join('\n');

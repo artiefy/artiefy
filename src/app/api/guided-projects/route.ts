@@ -2,6 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 
+import { scheduleProjectIndex } from '~/lib/embeddings/index-now';
 import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   createGuidedProject,
@@ -51,6 +52,8 @@ export async function POST(request: Request) {
       creatorId: userId,
     });
 
+    if (project?.id) scheduleProjectIndex(Number(project.id));
+
     return Response.json(project, { status: 201 });
   } catch (error) {
     console.error('POST error:', error);
@@ -81,6 +84,8 @@ export async function PUT(request: Request) {
     if (videoKey) {
       await autoTranscribe('project', parseInt(projectId), videoKey);
     }
+
+    scheduleProjectIndex(parseInt(projectId));
 
     return Response.json(project);
   } catch (error) {

@@ -55,9 +55,22 @@ function normalizeOwner(
  * @param documents - Documentos procesados con embeddings
  * @returns Número de documentos guardados
  */
+export interface SaveOptions {
+  /**
+   * true = reindexado completo: borra los fragmentos que ya tenia ese curso o
+   * proyecto antes de insertar los nuevos. Es lo correcto cuando se regenera
+   * todo el contenido del dueno.
+   *
+   * false (por defecto) = se anaden documentos sin tocar los existentes. Lo
+   * usa la ruta que sube un documento suelto a un curso.
+   */
+  replaceAll?: boolean;
+}
+
 export async function saveDocumentEmbeddings(
   owner: string | number | EmbeddingOwner,
-  documents: DocumentWithEmbedding[]
+  documents: DocumentWithEmbedding[],
+  options: SaveOptions = {}
 ): Promise<number> {
   if (documents.length === 0) {
     return 0;
@@ -65,6 +78,7 @@ export async function saveDocumentEmbeddings(
 
   const { type, id } = normalizeOwner(owner);
   const isCourse = type === 'course';
+  const { replaceAll = false } = options;
 
   try {
     // Preparar datos para inserción
@@ -85,6 +99,28 @@ export async function saveDocumentEmbeddings(
       source: doc.metadata.source,
       chunkIndex: doc.chunkIndex,
     }));
+
+    // Reindexado completo: fuera lo anterior.
+    //
+    // El ON CONFLICT solo pisa la fila cuando el CONTENIDO es identico, asi
+    // que al cambiar el curso (editar la descripcion, agregar una clase) el
+    // texto nuevo entra como fila aparte y la version vieja se queda para
+    // siempre. Sin esto, cada reindexado deja una copia obsoleta y la
+    // busqueda acaba recuperando contenido que ya no existe.
+    if (replaceAll) {
+      const borradas = await db
+        .delete(documentEmbeddings)
+        .where(
+          isCourse
+            ? eq(documentEmbeddings.courseId, id)
+            : eq(documentEmbeddings.projectId, id)
+        )
+        .returning({ id: documentEmbeddings.id });
+
+      if (borradas.length > 0) {
+        console.log(`🧹 Eliminados ${borradas.length} fragmentos anteriores`);
+      }
+    }
 
     // Insertar en lotes para evitar queries muy grandes
     const batchSize = 50;

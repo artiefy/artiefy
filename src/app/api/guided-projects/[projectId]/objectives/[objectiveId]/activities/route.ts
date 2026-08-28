@@ -2,6 +2,7 @@
 
 import { auth } from '@clerk/nextjs/server';
 
+import { scheduleProjectIndex } from '~/lib/embeddings/index-now';
 import { autoTranscribe } from '~/lib/transcriptions/auto-transcribe';
 import {
   createGuidedActivity,
@@ -87,6 +88,8 @@ export async function PUT(
     if (videoKey) {
       await autoTranscribe('activity', parseInt(activityId), videoKey);
     }
+
+    scheduleProjectIndex(parseInt((await params).projectId));
 
     return Response.json(activity);
   } catch (error) {

@@ -12,6 +12,43 @@ import {
 
 import { createTemporaryLesson } from './lessonsModels';
 
+const balancePercentagesAcrossParameter = async (parametroId: number) => {
+  const rows = await db
+    .select({ id: activities.id, porcentaje: activities.porcentaje })
+    .from(activities)
+    .where(eq(activities.parametroId, parametroId));
+
+  if (rows.length === 0) return;
+
+  const total = 100;
+  const targetShare = Number((total / rows.length).toFixed(2));
+
+  const updates = rows.map((row, index) => {
+    // La última actividad absorbe el resto para que la suma cierre en 100
+    // exacto (con 3 actividades: 33.33 + 33.33 + 33.34).
+    //
+    // El resto se calcula sobre los valores NUEVOS, no sobre los viejos: al
+    // repartir sobre porcentajes previos que ya sumaban 100, a la última le
+    // tocaba 0 (ej. pasar de 50/50 a tres actividades daba 100-100=0).
+    const porcentaje =
+      index === rows.length - 1
+        ? Number((total - targetShare * (rows.length - 1)).toFixed(2))
+        : targetShare;
+
+    return {
+      id: row.id,
+      porcentaje,
+    };
+  });
+
+  for (const item of updates) {
+    await db
+      .update(activities)
+      .set({ porcentaje: item.porcentaje })
+      .where(eq(activities.id, item.id));
+  }
+};
+
 // Interfaces
 export interface Activity {
   id: number;
@@ -136,6 +173,10 @@ export async function createActivity(params: CreateActivityParams) {
 
     if (!newActivity[0]) {
       throw new Error('No se pudo crear la actividad');
+    }
+
+    if (newActivity[0].parametroId != null) {
+      await balancePercentagesAcrossParameter(newActivity[0].parametroId);
     }
 
     console.log(
@@ -286,6 +327,16 @@ export const updateActivity = async (
   }
 ): Promise<void> => {
   try {
+    const current = await db
+      .select({ parametroId: activities.parametroId })
+      .from(activities)
+      .where(eq(activities.id, activityId))
+      .limit(1)
+      .then((results) => results[0]);
+
+    const targetParamId =
+      data.parametroId !== undefined ? data.parametroId : current?.parametroId;
+
     const updateData: Record<string, unknown> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined)
@@ -306,6 +357,10 @@ export const updateActivity = async (
       .update(activities)
       .set(updateData)
       .where(eq(activities.id, activityId));
+
+    if (targetParamId != null) {
+      await balancePercentagesAcrossParameter(targetParamId);
+    }
   } catch (error) {
     throw new Error(
       `Error al actualizar la actividad: ${

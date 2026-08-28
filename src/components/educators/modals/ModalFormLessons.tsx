@@ -54,6 +54,46 @@ interface UploadResponse {
   totalParts?: number;
 }
 
+/** Lo que ocurre DESPUES de subir: transcripción del video e indexado. */
+interface EstadoProcesamiento {
+  lessonId: number;
+  transcripcion: 'none' | 'processing' | 'completed' | 'failed' | 'sin-video';
+  fragmentos: number;
+}
+
+/**
+ * Una etapa del post-proceso.
+ *
+ * No lleva barra de progreso a proposito: ni el VPS ni el indexado reportan
+ * un porcentaje real, y una barra inventada mentiria sobre cuanto falta.
+ */
+const FilaEtapa = ({
+  titulo,
+  detalle,
+  estado,
+}: {
+  titulo: string;
+  detalle: string;
+  estado: 'trabajando' | 'listo' | 'error';
+}) => (
+  <div className="flex items-center gap-2 text-sm">
+    <span
+      className={`
+        size-2 shrink-0 rounded-full
+        ${
+          estado === 'listo'
+            ? 'bg-emerald-400'
+            : estado === 'error'
+              ? 'bg-red-400'
+              : 'animate-pulse bg-amber-400'
+        }
+      `}
+    />
+    <span className="truncate text-gray-200">{titulo}</span>
+    <span className="ml-auto shrink-0 text-xs text-gray-400">{detalle}</span>
+  </div>
+);
+
 interface UploadProgress {
   fileName: string;
   progress: number;
@@ -103,6 +143,8 @@ const ModalFormLessons = ({
   }); // Estado para los errores del formulario
   const [uploadController, setUploadController] =
     useState<AbortController | null>(null); // Estado para el controlador de subida
+  const [procesamiento, setProcesamiento] =
+    useState<EstadoProcesamiento | null>(null);
   const [uploadProgresses, setUploadProgresses] = useState<
     Record<string, UploadProgress>
   >({});
@@ -267,6 +309,19 @@ const ModalFormLessons = ({
       ...prev,
       [fileName]: { fileName, progress, status, estimatedTimeRemaining },
     }));
+
+    // Al llegar al 100% el archivo desaparece de la lista: ya no aporta nada
+    // y solo estorba mientras siguen subiendo los demas. Un segundo de
+    // margen para que se alcance a ver que termino.
+    if (progress >= 100 && status !== 'error') {
+      setTimeout(() => {
+        setUploadProgresses((prev) => {
+          const resto = { ...prev };
+          delete resto[fileName];
+          return resto;
+        });
+      }, 1000);
+    }
   };
 
   // Función para calcular tiempo estimado
@@ -609,9 +664,24 @@ const ModalFormLessons = ({
         body: JSON.stringify(requestBody),
       });
 
-      const responseData = (await response.json()) as { message?: string };
+      const responseData = (await response.json()) as {
+        message?: string;
+        id?: number;
+      };
 
       if (response.ok) {
+        // Se sigue lo que pasa despues de guardar: el video se transcribe en
+        // el VPS y el curso se reindexa. Consultar el estado es ademas lo que
+        // hace avanzar la transcripcion cuando el cron no corre.
+        const idClase = isEditing ? editingLesson?.id : responseData.id;
+        if (idClase) {
+          setProcesamiento({
+            lessonId: Number(idClase),
+            transcripcion: coverVideoKey === 'none' ? 'sin-video' : 'none',
+            fragmentos: 0,
+          });
+        }
+
         toast.success(isEditing ? 'Lección actualizada' : 'Lección creada');
         onCloseAction();
         if (onUpdateSuccess) {
@@ -645,6 +715,62 @@ const ModalFormLessons = ({
   };
 
   // Añadir componente de progreso persistente
+  // Sondeo del post-proceso. Se detiene solo cuando ya no puede cambiar.
+  const lessonEnProceso = procesamiento?.lessonId;
+  const procesoTerminado =
+    procesamiento?.transcripcion === 'completed' ||
+    procesamiento?.transcripcion === 'failed' ||
+    procesamiento?.transcripcion === 'sin-video';
+
+  useEffect(() => {
+    if (!lessonEnProceso) return;
+
+    let cancelado = false;
+
+    const consultar = async () => {
+      try {
+        const res = await fetch(
+          `/api/educadores/lessons/estado-procesamiento?lessonId=${lessonEnProceso}`
+        );
+        if (!res.ok || cancelado) return;
+
+        const data = (await res.json()) as {
+          transcripcion: { estado: EstadoProcesamiento['transcripcion'] };
+          embedding: { fragmentos: number };
+        };
+        if (cancelado) return;
+
+        setProcesamiento((prev) =>
+          prev && prev.lessonId === lessonEnProceso
+            ? {
+                lessonId: lessonEnProceso,
+                transcripcion: data.transcripcion.estado,
+                fragmentos: data.embedding.fragmentos,
+              }
+            : prev
+        );
+      } catch {
+        // Que falle una consulta no debe romper nada: se reintenta sola.
+      }
+    };
+
+    void consultar();
+    if (procesoTerminado) return;
+
+    const id = setInterval(() => void consultar(), 6000);
+    return () => {
+      cancelado = true;
+      clearInterval(id);
+    };
+  }, [lessonEnProceso, procesoTerminado]);
+
+  // Cuando todo termino, el panel se retira solo.
+  useEffect(() => {
+    if (!procesoTerminado || !procesamiento?.fragmentos) return;
+    const id = setTimeout(() => setProcesamiento(null), 5000);
+    return () => clearTimeout(id);
+  }, [procesoTerminado, procesamiento?.fragmentos]);
+
   const UploadProgressDisplay = () => (
     <div
       className="
@@ -666,6 +792,53 @@ const ModalFormLessons = ({
           )}
         </div>
       ))}
+
+      {procesamiento && (
+        <div
+          className={`
+            space-y-2 border-t border-white/10 pt-3
+            ${Object.keys(uploadProgresses).length > 0 ? 'mt-1' : ''}
+          `}
+        >
+          {procesamiento.transcripcion !== 'sin-video' && (
+            <FilaEtapa
+              titulo="Transcripción del video"
+              detalle={
+                {
+                  none: 'En cola…',
+                  processing: 'Transcribiendo…',
+                  completed: 'Lista',
+                  failed: 'Falló',
+                }[
+                  procesamiento.transcripcion as
+                    'none' | 'processing' | 'completed' | 'failed'
+                ]
+              }
+              estado={
+                procesamiento.transcripcion === 'completed'
+                  ? 'listo'
+                  : procesamiento.transcripcion === 'failed'
+                    ? 'error'
+                    : 'trabajando'
+              }
+            />
+          )}
+
+          <FilaEtapa
+            titulo="Embedding del curso"
+            detalle={
+              procesamiento.fragmentos > 0
+                ? `${procesamiento.fragmentos} ${
+                    procesamiento.fragmentos === 1
+                      ? 'fragmento indexado'
+                      : 'fragmentos indexados'
+                  }`
+                : 'Generando…'
+            }
+            estado={procesamiento.fragmentos > 0 ? 'listo' : 'trabajando'}
+          />
+        </div>
+      )}
     </div>
   );
 
@@ -972,7 +1145,9 @@ const ModalFormLessons = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {Object.keys(uploadProgresses).length > 0 && <UploadProgressDisplay />}
+      {(Object.keys(uploadProgresses).length > 0 || procesamiento) && (
+        <UploadProgressDisplay />
+      )}
     </>
   );
 };

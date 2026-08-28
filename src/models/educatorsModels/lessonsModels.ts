@@ -467,7 +467,15 @@ export const updateLesson = async (
 
   return await db
     .update(lessons)
-    .set(updateData)
+    .set({
+      ...updateData,
+      // Marca de tiempo obligatoria: el detector de embeddings compara esta
+      // fecha contra la última indexación para saber si hay que reindexar.
+      // Sin esto, subir un recurso o cambiar el video de una clase no se
+      // detectaba como cambio y el curso quedaba desactualizado.
+      lastUpdated: new Date(),
+      updatedAt: new Date(),
+    })
     .where(eq(lessons.id, lessonId))
     .returning();
 };
