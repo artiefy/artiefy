@@ -341,9 +341,9 @@ export function ProjectFeedCard({
   const shareMenu = (
     <div
       className="
-        animate-in fade-in slide-in-from-bottom-2 absolute right-0 bottom-full
-        z-50 mb-2 w-56 overflow-hidden rounded-2xl border border-border/60
-        bg-card shadow-xl shadow-black/30 duration-200
+        absolute right-0 bottom-full z-50 mb-2 w-56
+        overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xl shadow-black/30
+        duration-200 animate-in fade-in slide-in-from-bottom-2
       "
     >
       <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
@@ -621,7 +621,7 @@ export function ProjectFeedCard({
               )}
               <span
                 className="
-                  pointer-events-none absolute right-0 bottom-full mb-2
+                  pointer-events-none absolute top-full right-0 z-20 mt-2
                   rounded-md border border-border/60 bg-card px-2 py-1 text-xs
                   font-semibold text-foreground opacity-0 shadow-lg
                   shadow-black/20 transition-opacity

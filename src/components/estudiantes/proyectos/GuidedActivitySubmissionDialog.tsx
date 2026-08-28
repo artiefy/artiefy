@@ -255,7 +255,18 @@ export function GuidedActivitySubmissionDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        className="
+          top-auto bottom-0 left-0 max-h-[90vh] w-full max-w-full
+          translate-0 overflow-y-auto rounded-t-2xl
+          rounded-b-none
+          data-[state=closed]:slide-out-to-bottom data-[state=closed]:zoom-out-100
+          data-[state=open]:slide-in-from-bottom data-[state=open]:zoom-in-100
+          sm:top-[50%] sm:bottom-auto sm:left-[50%] sm:max-w-lg
+          sm:translate-[-50%] sm:rounded-lg
+          sm:data-[state=open]:slide-in-from-bottom-0 sm:data-[state=open]:zoom-in-95
+        "
+      >
         <DialogHeader>
           <DialogTitle>Entregar actividad</DialogTitle>
           <DialogDescription className="sr-only">
