@@ -8,7 +8,13 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
 import { openAgentChatFor } from '~/lib/agents/agentChatBus';
+import {
+  consumePendingCreateEntry,
+  requestCreateEntry,
+  subscribeToCreateEntry,
+} from '~/lib/creation/createEntryBus';
 
+import { CreatePostModal } from './subcomponents/CreatePostModal';
 import { ProjectFeedCard } from './subcomponents/ProjectFeedCard';
 import {
   ProjectsLeftRail,
@@ -60,6 +66,15 @@ const getPublishHref = (item: ProjectSocialItem) => {
   return `/estudiantes/proyectos/${item.id}`;
 };
 
+/** "Trabajar" opens the course workspace for a course-linked project, or
+ *  the courseless owner-only workspace otherwise. */
+const getWorkHref = (item: ProjectSocialItem) => {
+  if (item.courseId) {
+    return `/estudiantes/cursos/${item.courseId}?projectId=${item.id}&view=projects`;
+  }
+  return `/estudiantes/proyectos/${item.id}/trabajar`;
+};
+
 export function ProjectsSocialView({
   exploreItems,
   myItems,
@@ -88,6 +103,22 @@ export function ProjectsSocialView({
     useState<ProjectSocialItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+  // Entry point for both the desktop "Crear" dropdown (already inside this
+  // tree) and the mobile bottom sheet (mounted globally by `Header`, so it
+  // needs a cross-route signal — see `createEntryBus.ts` for why a
+  // `?create=` query param isn't an option on this route).
+  useEffect(() => {
+    const pending = consumePendingCreateEntry();
+    if (pending === 'project') setIsCreateModalOpen(true);
+    if (pending === 'post') setIsPostModalOpen(true);
+
+    return subscribeToCreateEntry((action) => {
+      if (action === 'project') setIsCreateModalOpen(true);
+      if (action === 'post') setIsPostModalOpen(true);
+    });
+  }, []);
 
   const allVisibleItems = useMemo(() => {
     const itemMap = new Map<number, ProjectSocialItem>();
@@ -227,7 +258,11 @@ export function ProjectsSocialView({
   };
 
   const handleCreateProject = () => {
-    setIsCreateModalOpen(true);
+    requestCreateEntry('project');
+  };
+
+  const handleCreatePost = () => {
+    requestCreateEntry('post');
   };
 
   const updateInCollection = (
@@ -363,6 +398,7 @@ export function ProjectsSocialView({
               activeView={activeView}
               onChangeView={setActiveView}
               onCreateProject={handleCreateProject}
+              onCreatePost={handleCreatePost}
             />
 
             <div className="min-w-0 flex-1">
@@ -497,8 +533,9 @@ export function ProjectsSocialView({
                       <ProjectWorkspaceCard
                         key={item.id}
                         item={item}
-                        onEdit={handleEditProject}
+                        workHref={getWorkHref(item)}
                         publishHref={getPublishHref(item)}
+                        onEdit={handleEditProject}
                       />
                     )
                   )
@@ -730,6 +767,11 @@ export function ProjectsSocialView({
         setJustificacion={() => {}}
         setObjetivoGen={() => {}}
         setObjetivosEspProp={() => {}}
+      />
+
+      <CreatePostModal
+        isOpen={isPostModalOpen}
+        onClose={() => setIsPostModalOpen(false)}
       />
 
       <style jsx global>{`

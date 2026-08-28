@@ -1,5 +1,10 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+
 import {
   Bookmark,
+  ChevronDown,
   Compass,
   FolderKanban,
   Plus,
@@ -7,12 +12,10 @@ import {
   Users,
 } from 'lucide-react';
 
+import { CreateMenuOptions } from './CreateMenuOptions';
+
 export type SocialView =
-  | 'explorar'
-  | 'mis'
-  | 'colabs'
-  | 'favoritos'
-  | 'seguidos';
+  'explorar' | 'mis' | 'colabs' | 'favoritos' | 'seguidos';
 
 interface ProjectsLeftRailProps {
   favorites: number;
@@ -20,6 +23,7 @@ interface ProjectsLeftRailProps {
   activeView: SocialView;
   onChangeView: (view: SocialView) => void;
   onCreateProject?: () => void;
+  onCreatePost?: () => void;
 }
 
 const railItems = [
@@ -36,7 +40,31 @@ export function ProjectsLeftRail({
   activeView,
   onChangeView,
   onCreateProject,
+  onCreatePost,
 }: ProjectsLeftRailProps) {
+  const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  const createMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isCreateMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsCreateMenuOpen(false);
+    };
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!createMenuRef.current?.contains(event.target as Node)) {
+        setIsCreateMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCreateMenuOpen]);
+
   return (
     <aside
       className={`
@@ -45,30 +73,66 @@ export function ProjectsLeftRail({
       `}
     >
       <div className="sticky top-24 space-y-3">
-        <button
-          type="button"
-          onClick={onCreateProject}
-          className={`
-            group relative flex w-full items-center gap-3 overflow-hidden
-            rounded-xl px-4 py-3 text-sm font-semibold text-[#080c16]
-            transition-all duration-300
-            hover:scale-[1.02] hover:shadow-[0_0_25px_hsl(185_72%_48%/0.35)]
-          `}
-        >
-          <div
+        <div ref={createMenuRef} className="relative">
+          <button
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={isCreateMenuOpen}
+            onClick={() => setIsCreateMenuOpen((prev) => !prev)}
             className={`
-              absolute inset-0 animate-[shimmerGradient_3s_linear_infinite]
-              bg-gradient-to-r from-primary via-cyan-500 to-primary
-              bg-[length:200%_100%]
+              group relative flex w-full items-center gap-3 overflow-hidden
+              rounded-xl px-4 py-3 text-sm font-semibold text-[#080c16]
+              transition-all duration-300
+              hover:scale-[1.02] hover:shadow-[0_0_25px_hsl(185_72%_48%/0.35)]
             `}
-          />
-          <span className="relative flex items-center gap-3">
-            <span className="rounded-lg bg-white/20 p-1.5">
-              <Plus className="size-4" />
+          >
+            <div
+              className={`
+                absolute inset-0 animate-[shimmerGradient_3s_linear_infinite]
+                bg-gradient-to-r from-primary via-cyan-500 to-primary
+                bg-[length:200%_100%]
+              `}
+            />
+            <span className="relative flex items-center gap-3">
+              <span className="rounded-lg bg-white/20 p-1.5">
+                <Plus className="size-4" />
+              </span>
+              Crear
             </span>
-            Nuevo proyecto
-          </span>
-        </button>
+            {/* Points down when closed, up when open, so the control reads as
+                a menu rather than a plain button. */}
+            <ChevronDown
+              aria-hidden="true"
+              className={`
+                relative ml-auto size-4 transition-transform duration-200
+                ${isCreateMenuOpen ? 'rotate-180' : ''}
+              `}
+            />
+          </button>
+
+          {isCreateMenuOpen ? (
+            <div
+              role="menu"
+              aria-label="Crear"
+              className={`
+                animate-in fade-in slide-in-from-top-2 absolute top-full
+                right-0 left-0 z-50 mt-2 overflow-hidden rounded-xl border
+                border-border/50 bg-card shadow-xl duration-200
+              `}
+            >
+              <CreateMenuOptions
+                onSelectProject={() => {
+                  setIsCreateMenuOpen(false);
+                  onCreateProject?.();
+                }}
+                onSelectPost={() => {
+                  setIsCreateMenuOpen(false);
+                  onCreatePost?.();
+                }}
+              />
+            </div>
+          ) : null}
+        </div>
 
         <div
           className={`

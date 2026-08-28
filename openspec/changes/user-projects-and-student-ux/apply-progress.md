@@ -184,7 +184,7 @@ Completed tasks (see `tasks.md` Phase 2, marked `[x]`):
       mirroring state, an explicit `focus-visible:outline` ring, and
       `disabled` while popped out (full-window mode does not apply there).
       Added `isExpanded` state and derived `isFullWindow = isExpanded &&
-    !isPoppedOut`. The panel's outer class swaps to
+  !isPoppedOut`. The panel's outer class swaps to
       `fixed inset-0 z-[100010]` and the inner glass panel to `rounded-none`
       while `isFullWindow`; drag (`canMovePanel`) and the 8 resize handles are
       disabled/hidden in that state. `panelRect`, `pipWindow`, and
@@ -431,3 +431,633 @@ tuyo" rejection.
 
 Per hard constraints, no commit/push/PR was created. Changes are in the
 working tree only, awaiting user-approved commit.
+
+## Batch 3c — Courseless Project Workspace (continuation) — DONE
+
+Completed tasks (see `tasks.md` Phase 3c, marked `[x]`):
+
+- [x] 3c.1 Created `src/app/estudiantes/proyectos/[id]/trabajar/page.tsx`: an
+      async Server Component. Resolves `params`, `Number(id)` coerced and
+      checked with `Number.isFinite`, `notFound()` on a bad id. Calls
+      `auth()` from `@clerk/nextjs/server` and `getProjectById(projectId)`
+      from `src/server/actions/project/getProjectById.ts`. Owner gate is a
+      single `if (!project || project.userId !== userId) notFound();` after
+      an earlier `if (!userId) notFound();` — a missing project and a
+      non-owner both fall through to the exact same generic `notFound()`,
+      so a non-owner cannot distinguish "doesn't exist" from "not yours".
+      Renders `<UserProjectWorkspace project={project} /><Footer />` and
+      carries the same
+      `// TODO: Cache Components adoption...` / `export const instant = false;`
+      opt-out block every sibling route in this repo has (copied verbatim
+      from `src/app/proyectos/[id]/page.tsx`, the reference route named in
+      the task).
+- [x] 3c.2 Created
+      `src/components/estudiantes/proyectos/UserProjectWorkspace.tsx`
+      (`'use client'`). Renders `ProjectDetailView` (default export from
+      `~/components/estudiantes/projects/ProjectDetailView`) with a local
+      `project` state seeded from the server-fetched prop (`useState`, not a
+      bare prop pass-through) so `onUpdateProject` can optimistically patch
+      it the same way `ProjectsSection.tsx`'s `applyProjectUpdate` does,
+      without waiting for a full server round-trip while the wizard is open.
+      Owns `showModal`/`modalStep`/`addedSections` state; `onEditSection`
+      wires to open `ModalResumen` at that step, copied from
+      `ProjectsSection.tsx`'s `handleEditSection`. `ModalResumen` gets
+      `courseId={undefined}` and `projectId={project.id}` (see the "How the
+      edit-not-duplicate behavior was confirmed" note below), plus
+      `onUpdateProject={applyProjectUpdate}`. On modal close
+      (`handleModalClose`), calls `router.refresh()` — never
+      `window.location.reload()`, matching this batch's constraint and the
+      `router.refresh()` pattern PR3b already established in
+      `ProjectsSocialView.tsx`'s create-modal callback for the identical
+      "don't tear down chat/UI state" reason. A `Link href="/proyectos"`
+      "Volver a proyectos" control (`FaArrowLeft` + the exact button
+      classes `ProjectsSection.tsx`'s own back button uses) sits above the
+      workspace.
+- [x] 3c.3 In `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`,
+      added a `getWorkHref()` sibling to the existing `getPublishHref()`:
+      identical course-linked branch
+      (`/estudiantes/cursos/${courseId}?projectId=${id}&view=projects`), but
+      the courseless branch returns
+      `/estudiantes/proyectos/${item.id}/trabajar` instead of
+      `/estudiantes/proyectos/${item.id}` (the public read-only detail
+      page). Only the `ProjectWorkspaceCard`'s `workHref` prop switched to
+      `getWorkHref(item)`; `publishHref={getPublishHref(item)}` is
+      byte-for-byte unchanged. In
+      `src/components/estudiantes/profile/ProfileView.tsx`, added the
+      equivalent `projectWorkHref()` next to the existing `projectHref()`
+      (same split: course branch identical, courseless branch appends
+      `/trabajar`); `ProjectWorkspaceCard`'s `workHref` now calls
+      `projectWorkHref(item)` while `publishHref` keeps calling
+      `projectHref(item)`, unchanged.
+
+### How the edit-not-duplicate behavior was confirmed (load-bearing)
+
+Read `ModalResumen.tsx` directly (not assumed) at three points:
+
+1. Its `isOpen`-keyed reset effect (`ModalResumen.tsx` ~line 1447-1473): on
+   every open it runs `setCurrentProjectId(projectId); setIsProjectCreated(Boolean(projectId));`
+   — passing a defined `projectId` makes `isProjectCreated` start `true`.
+2. `isCreateStep = currentStep === 1 && !isProjectCreated` (~line 2011) and
+   `handleCreateProject` (~line 1895), the function that does the
+   `createProject()` POST that would create a **new** row, is only ever
+   invoked from the step-1 "create" UI path gated by `isCreateStep`.
+3. Since `isProjectCreated` is `true` from the moment the modal opens (step
+   1 above), `isCreateStep` is `false`, so `handleCreateProject` — and
+   therefore `createProject()` — is never called. Step 1 instead renders
+   its existing-project edit form, sourced from `useSWR`'s
+   `` `/api/projects/${projectId}?details=true` `` fetch (~line 1140-1142),
+   gated by `enabled: isProjectCreated && Boolean(currentProjectId)`
+   (~line 1276-1277) — i.e. the same `existingProject` data-loading path
+   `ProjectsSection.tsx`'s `modalProject?.id` case and
+   `ProjectsSocialView.tsx`'s edit modal (`editingProject?.id`) already rely
+   on for editing, not creating.
+
+This is the exact same mechanism those two pre-existing edit flows use, so
+`UserProjectWorkspace.tsx` passing `projectId={project.id}` puts
+`ModalResumen` in the same "edit an existing project" mode as both of them
+— it does not create a second project on every pencil click.
+
+### `Project` vs `ProjectDetail` typing (documented, not a deviation)
+
+`getProjectById()` returns `ProjectDetail` (its own interface in
+`getProjectById.ts`), while `ProjectDetailView`/`UserProjectWorkspace` are
+typed against `~/types/project`'s `Project`. The two are not the same
+declared type, but every field `Project` requires (`id`, `name`,
+`planteamiento`, `type_project`, `categoryId`, `createdAt`, `updatedAt`) is
+present on `ProjectDetail` with a compatible (often more specific, e.g.
+required vs optional) type, so passing the `getProjectById()` result where a
+`Project` is expected type-checks structurally with no adapter needed — this
+is the same shape `ProjectsSection.tsx` already treats `as Project` after
+fetching from `/api/projects/${id}?details=true` (which is `getProjectById()`
+under the hood), so this is an established pattern in this codebase, not a
+new risk. One pre-existing, out-of-scope quirk carried over unchanged:
+`ProjectDetail`'s activities live under the key `actividades`, while
+`Project`/`ProjectDetailView` read `project.activities` (English key) — this
+mismatch already exists for every course-linked project using this same
+component and was not introduced or fixed by this batch.
+
+### Files changed (Batch 3c)
+
+- Created: `src/app/estudiantes/proyectos/[id]/trabajar/page.tsx`
+- Created: `src/components/estudiantes/proyectos/UserProjectWorkspace.tsx`
+- Modified: `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`
+  (added `getWorkHref()`, switched `ProjectWorkspaceCard`'s `workHref` to it)
+- Modified: `src/components/estudiantes/profile/ProfileView.tsx` (added
+  `projectWorkHref()`, switched `ProjectWorkspaceCard`'s `workHref` to it)
+- Modified: `openspec/changes/user-projects-and-student-ux/tasks.md` (added
+  Phase 3c, 3c.1-3c.3 marked `[x]`)
+
+### Not touched (per hard constraints)
+
+`src/components/estudiantes/proyectos/projectSocialData.ts`,
+`src/components/agents/AgentChatWidget.tsx`, `src/app/proyectos/[id]/page.tsx`,
+`src/server/db/schema.ts`, `src/app/api/agents/chat/route.ts`, and every
+PR1/PR2/PR3a/PR3b file listed above.
+
+### Verification status (Batch 3c)
+
+No `npm run check`/`lint`/`typecheck`/`build` run per validation-timing
+policy. No integrated-browser check was performed — none was started this
+session. Recommend, once verified convenient: as a student with no active
+course project, create a project via "+ Nuevo proyecto" on `/proyectos`,
+click "Trabajar" on its card, confirm the same tabbed workspace a
+course-linked project shows appears (not the public read-only detail page),
+click a section pencil, confirm the wizard opens directly at that step with
+the project's existing data (not a blank step 1), save, and confirm the
+change reflects without a full page reload; then, as a different signed-in
+user, try navigating directly to that project's `/trabajar` URL and confirm
+a 404 with no distinguishing information.
+
+### Not committed (Batch 3c)
+
+Per hard constraints, no commit/push/PR was created. Changes are in the
+working tree only, awaiting user-approved commit.
+
+## Batch 4 — Community Posts: Schema + API (continuation, no UI) — CODE DONE, MIGRATION PENDING
+
+Completed tasks (see `tasks.md` Phase 4, marked `[x]`, except 4.4):
+
+- [x] 4.1 In `src/server/db/schema.ts`, added the `communityPosts` table
+      (SQL name `community_posts`), placed right after the `projects` table
+      (before `specificObjectives`):
+
+  ```ts
+  export const communityPosts = pgTable('community_posts', {
+    id: serial('id').primaryKey(),
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    projectId: integer('project_id').references(() => projects.id, {
+      onDelete: 'set null',
+    }),
+    kind: text('kind', {
+      enum: ['none', 'update', 'milestone', 'request'],
+    })
+      .default('none')
+      .notNull(),
+    content: text('content').notNull(),
+    imageKey: text('image_key'),
+    linkUrl: text('link_url'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .notNull()
+      .$onUpdateFn(() => new Date()),
+  });
+  ```
+
+  **Delete rule chosen for `projectId`: `onDelete: 'set null'`.** The column
+  is nullable by design (null = general publication not tied to a project),
+  so when its project is deleted the post degrades gracefully to a general
+  publication instead of being deleted itself (`cascade`, which the task
+  explicitly warned against — "must not orphan or crash the feed") or
+  blocking the project delete (`restrict`/default no-action, which has no
+  precedent in this schema for a nullable FK and would surprise whoever
+  deletes a project next). `restrict` was rejected because nothing else in
+  `schema.ts` restricts on a nullable reference; `cascade` was rejected
+  because deleting the project would silently delete someone's social post,
+  which is a worse UX regression than the post losing its project link.
+  Added `communityPostsRelations` (`user`, `project`) grouped with the other
+  post-like relations right after `postLikesRelations`, matching how
+  `projectsRelations`/`postRelations`/`postRepliesRelations` are written
+  (same `relations(table, ({ one }) => ({ ... }))` shape, same
+  `fields`/`references` style). Left `posts`, `postReplies`, and `forums`
+  completely untouched — `communityPosts` is a separate table with no shared
+  code path.
+
+- [x] 4.2 Created `src/app/api/community-posts/route.ts`:
+  - `POST` — `auth()` from `@clerk/nextjs/server`, 401 when signed out.
+    Body validated with zod: `content` (`z.string().trim().min(1).max(2000)`),
+    `kind` (`z.enum(['none','update','milestone','request']).default('none')`),
+    `projectId` optional (`z.coerce.number().int().positive().optional()`),
+    `imageKey` optional string, `linkUrl` optional
+    (`z.string().trim().url().max(2048).optional()`). When `projectId` is
+    present, looks the project up first (404 if it doesn't exist), then
+    requires `project.userId === userId || project.isPublic` — **rejects
+    with 403 otherwise, never trusting the client's own claim about
+    ownership/visibility.** Inserts via `db.insert(communityPosts)` and
+    returns the created row with `201`.
+  - `GET` — no auth required (public feed read). Inner-joins `users` for
+    the author, left-joins `projects` for the optional project, orders by
+    `desc(communityPosts.createdAt)`, `limit` query param clamped to
+    `[1, 50]` (default `20`) via `resolveLimit()`. Shapes each row into
+    `{ id, content, kind, imageKey, linkUrl, createdAt, updatedAt, author:
+{ id, name, email }, project: { id, name } | null }` so a client can
+    render "«autor» publicó en «proyecto»" directly, or omit the "en
+    «proyecto»" clause when `project` is `null`.
+
+- [x] 4.3 Created `src/server/actions/project/getPublishableProjects.ts`
+      (`'use server'`, placed alongside the other `src/server/actions/project/`
+      query helpers, matching `getUserProjects.ts`'s placement/style):
+      `getPublishableProjects(userId)` selects every row where
+      `eq(projects.userId, userId) OR eq(projects.isPublic, true)`,
+      deduplicates by `id` (a project can match both conditions), and
+      returns `{ id, name, isOwner }[]` sorted with the caller's own
+      projects first, then by most recently updated
+      (`projects.updatedAt desc`). This is the exact set the task specified:
+      all of the user's own projects (public or private) plus other users'
+      public projects, nothing else. The selector UI itself (the modal's
+      "Buscar proyecto..." list) is out of scope for this batch — only the
+      server-side data function was requested.
+
+### Not done (explicit gate, per hard constraints)
+
+- [ ] 4.4 **No `db:generate`/`db:migrate`/`db:push`/`drizzle-kit` command was
+      run.** The `communityPosts` table exists in `schema.ts` only — it does
+      not exist in the actual Neon database yet. Any `db.insert(communityPosts)`
+      / `db.select().from(communityPosts)` call would fail at runtime against
+      the real database until a migration is generated and applied (same
+      approval gate as Phase 3b's `type` column — `npm run db:migrate` hangs
+      in this environment; the neon-http workaround with manual hash
+      registration in `drizzle.__drizzle_migrations` applies here too).
+      Code review can proceed; end-to-end testing of `/api/community-posts`
+      cannot, until this migration is approved and applied.
+
+### Deliberately not built (per scope — "SCHEMA + API only. No UI.")
+
+- No modal, menu, or bottom sheet for composing a post.
+- No wiring into `/proyectos`'s existing feed rendering.
+- `posts`, `postReplies`, `forums`, `ModalResumen.tsx`, `AgentChatWidget.tsx`,
+  and everything under `src/components/` were left untouched, per the hard
+  constraints.
+
+### Risk noted, not resolved (flagged, out of this batch's scope)
+
+`GET /api/community-posts` does not re-check the _current_ visibility of a
+linked project at read time — only `POST` checks ownership/`isPublic` at
+creation time. If an owner later flips a project from public to private, a
+community post that references it keeps showing the project's name/id in the
+feed response (the post row itself has no independent visibility flag). The
+task description did not ask for a live re-check on every `GET`, so this was
+not implemented, but it is worth a follow-up decision: either re-check
+`project.isPublic` in the `GET` join (extra cost per request) or accept that
+a post's project reference is a point-in-time snapshot of permission, not a
+live one.
+
+### Files changed (Batch 4)
+
+- Modified: `src/server/db/schema.ts` (added `communityPosts` table +
+  `communityPostsRelations`)
+- Created: `src/app/api/community-posts/route.ts` (`GET`, `POST`)
+- Created: `src/server/actions/project/getPublishableProjects.ts`
+- Modified: `openspec/changes/user-projects-and-student-ux/tasks.md` (added
+  Phase 4, 4.1-4.3 marked `[x]`, 4.4 left unchecked and annotated
+  "GATE — pending, not run this batch")
+
+### Not touched (per hard constraints)
+
+`posts`, `postReplies`, `forums` in `schema.ts`; `ModalResumen.tsx`;
+`AgentChatWidget.tsx`; everything under `src/components/`; and every
+PR1/PR2/PR3a/PR3b/3c file listed above.
+
+### Verification status (Batch 4)
+
+No `npm run check`/`lint`/`typecheck`/`build`/`db:*` run per hard
+constraints and validation-timing policy. No integrated-browser check
+applies — this batch has no UI surface. Recommend, once the migration in
+4.4 is approved and applied: `POST /api/community-posts` as an owner of a
+private project (should succeed), as a non-owner of that same private
+project (should 403), as anyone against a public project (should succeed),
+and with no `projectId` at all (should succeed as a general publication);
+then `GET /api/community-posts?limit=5` and confirm the author/project
+shape and ordering.
+
+### Not committed (Batch 4)
+
+Per hard constraints, no commit/push/PR was created. Changes are in the
+working tree only, awaiting user-approved commit.
+
+## Batch 5 — Create Menu + Post Modal UI — DONE
+
+Completed tasks (see `tasks.md` Phase 5, marked `[x]`):
+
+- [x] 5.1 Created `src/lib/creation/createEntryBus.ts`: `requestCreateEntry`,
+      `subscribeToCreateEntry`, `consumePendingCreateEntry`.
+
+### Cross-tree mechanism chosen, and why (load-bearing decision)
+
+The task offered two options: reuse `agentChatBus.ts`'s DOM `CustomEvent`
+pattern, or navigate with a `?create=` query param. **Query param was
+verified and rejected before writing any code**: `src/app/proyectos/page.tsx`
+computes `hasLegacyQuery = Boolean(params && Object.keys(params).length > 0)`
+and `redirect()`s to `/estudiantes` whenever it is true — ANY search param on
+`/proyectos`, not just legacy ones. A `?create=project` navigation would have
+been redirected away to `/estudiantes?create=project` before
+`ProjectsSocialView` ever mounted, silently breaking the whole feature. This
+was confirmed by reading the page file directly, not assumed from the task's
+framing.
+
+So the chosen mechanism is the DOM `CustomEvent` bus, matching
+`agentChatBus.ts`'s pattern, **plus a `sessionStorage` fallback** for the
+case the chat bus doesn't need: chat's `openAgentChatFor` only ever needs the
+globally-mounted `AgentChatWidget` to be listening, which it always is. Here,
+the listener (`ProjectsSocialView`) is NOT always mounted — it only exists on
+`/proyectos`. A bare `CustomEvent` dispatched before navigating there would
+have nobody listening yet and be lost. `requestCreateEntry()` therefore both
+dispatches the event (for the case the listener is already mounted — see
+below) AND writes the pending action to `sessionStorage` (for the
+cross-route case); `ProjectsSocialView`'s mount effect calls
+`consumePendingCreateEntry()` once, then subscribes to the live event for
+as long as it stays mounted.
+
+**Implemented identically for both platforms**, per the task's explicit ask:
+desktop's `ProjectsLeftRail` "Crear" dropdown and `ProjectsSocialView`'s own
+`handleCreateProject`/`handleCreatePost` call the exact same
+`requestCreateEntry('project' | 'post')` function the mobile sheet calls —
+even though desktop's listener is already mounted in the same tree and the
+`sessionStorage` write is a no-op for it in practice. This was a deliberate
+choice over giving desktop a shortcut direct `setState` call: one function,
+one code path, used identically regardless of which of the two entry points
+fired it.
+
+- [x] 5.2 Created
+      `src/components/estudiantes/proyectos/subcomponents/CreateMenuOptions.tsx`:
+      the two "Crear" choices ("Proyecto" — `Layers` icon, `bg-primary/15`;
+      "Post" — `FileText` icon, `bg-accent/15`), copy and classes matching
+      the reference markup, shared verbatim by both surfaces below.
+- [x] 5.3 In
+      `src/components/estudiantes/proyectos/subcomponents/ProjectsLeftRail.tsx`:
+      replaced the single gradient "Nuevo proyecto" button with a "Crear"
+      toggle button (same gradient/shimmer treatment, relabeled) + dropdown
+      (`CreateMenuOptions`) anchored via a wrapping `relative` container.
+      Added `isCreateMenuOpen` state, a `createMenuRef`, and an effect that
+      closes the menu on outside click (`mousedown` + `contains` check) and
+      on `Escape`, only registered while open. Trigger has
+      `aria-haspopup="menu"`/`aria-expanded`; the panel has
+      `role="menu"`/`aria-label="Crear"`; both options are real `<button
+    role="menuitem">` elements from `CreateMenuOptions`, reachable and
+      activatable by keyboard with no extra wiring needed. Added the new
+      `onCreatePost?: () => void` prop alongside the existing
+      `onCreateProject?: () => void`; both close the menu before firing.
+- [x] 5.4 Created `src/components/estudiantes/layout/MobileCreateSheet.tsx`:
+      built directly on `@radix-ui/react-dialog` primitives (not the shared
+      `estudiantes/ui/dialog.tsx`, which is tuned for a centered dialog) so
+      it could slide up from the bottom instead. `z-[2147483001]`/
+      `z-[2147483002]` (overlay/content) sit just above
+      `MobileBottomNav`'s own `z-[2147483000]` wrapper. Radix gives
+      Escape-to-close and backdrop-dismiss-on-tap for free; added
+      `motion-reduce:animate-none motion-reduce:transition-none` on both the
+      overlay and the content so `prefers-reduced-motion` users get an
+      instant show/hide instead of the slide/fade. Content includes a
+      sr-only `Title`/`Description` (Radix requires a `Title` for a11y) and
+      a decorative drag-handle bar, then renders `CreateMenuOptions`.
+- [x] 5.5 In `src/components/estudiantes/layout/MobileBottomNav.tsx`: the
+      center "+" button (previously `{/* intentionally inert for now */}`
+      with no `onClick`) now opens `MobileCreateSheet` via new
+      `isCreateSheetOpen` state, with `aria-haspopup="dialog"`/
+      `aria-expanded`. Selecting an option calls `requestCreateEntry(...)`
+      then `router.push('/proyectos')` **only if not already there**
+      (`pathname !== '/proyectos'`) — added `useRouter` alongside the
+      existing `usePathname`. Works from any route because `MobileBottomNav`
+      is mounted globally by `Header.tsx`, as the orchestrator's verified
+      facts noted.
+- [x] 5.6 Created
+      `src/app/api/community-posts/publishable-projects/route.ts`: a thin
+      auth-gated `GET` wrapper — `auth()` for the real session `userId`
+      (401 if signed out), then `getPublishableProjects(userId)`. Written as
+      a **new** file specifically because `getPublishableProjects` itself
+      (which the hard constraints forbid modifying) trusts whatever `userId`
+      string it is given with no internal auth check; calling it directly
+      from a client component would have let anyone pass an arbitrary
+      user id and see that user's private-project names mislabeled as
+      `isOwner: true`. This wrapper is the safe boundary instead.
+- [x] 5.7 Created
+      `src/components/estudiantes/proyectos/subcomponents/CreatePostModal.tsx`:
+  - Uses `Dialog`/`DialogContent`/`DialogHeader`/`DialogTitle`/
+    `DialogDescription` from `~/components/estudiantes/ui/dialog` (same
+    Radix-based primitive already used by `GuidedActivitySubmissionDialog.tsx`
+    and others in this codebase) — its `DialogContent` already renders the
+    top-right close button with an `sr-only` "Close" label, so no custom
+    close control was added.
+  - Author row: decorative avatar circle (`aria-hidden`, "Tú" monogram) +
+    visible "Tú" name + a `Publicando en <destino>` selector button (`Globe`
+    icon, `ChevronDown` that rotates when open).
+  - Selector panel: `Buscar proyecto...` text filter (client-side
+    `.filter()` on the fetched list), first entry always
+    `Proyectos (publicación general)` (`Globe` icon, selecting it sets
+    `selectedProject = null` → posts with no `projectId`), followed by
+    `GET /api/community-posts/publishable-projects` results (`FolderKanban`
+    icon, `truncate`d names). Selecting a project updates the button label
+    and closes the panel.
+  - Kind chips: `Ninguno` (no icon) | `Actualización` (`Zap`) | `Hito`
+    (`Flame`) | `Solicitud` (`Users`), single-select via `kind` state
+    defaulting to `'none'`, mapped 1:1 to the API's enum values.
+  - Textarea: `min-h-[120px]`, `resize-none`, exact placeholder copy.
+  - Image upload: a `<label>` wrapping a hidden `accept="image/*"` file
+    input, reusing the exact same presigned-POST S3 flow as
+    `ModalResumen.tsx`'s `handleMultimediaUpload` (fetch `/api/upload` for
+    the presigned fields → `FormData` POST straight to S3) — re-derived
+    inline here (not imported) since `ModalResumen.tsx` is on the
+    do-not-modify list and its version is tangled with that component's own
+    `multimedia[]` array state; this version keeps only the single
+    `imageKey` the `communityPosts` schema actually has a column for. Shows
+    the uploaded file name with a remove ("×") control once set.
+  - Link button (`Link2`) toggles a small inline `type="url"` input for
+    `linkUrl`, with its own remove control.
+  - Footer right: submit button, exact reference label "Previsualizar"
+    (shows "Publicando..." while in flight), `disabled` while
+    `content.trim()` is empty or a submit is already in flight.
+  - Submit: `POST /api/community-posts` with
+    `{ content, kind, projectId: selectedProject?.id, imageKey, linkUrl }`.
+    On success: closes the modal, then `router.refresh()` (never
+    `window.location.reload()`, matching every other soft-refresh
+    convention this whole change has followed since PR3b). On failure:
+    parses the server's JSON `{ error }` body and shows it via `sonner`'s
+    `toast.error(...)`, falling back to a generic Spanish message only if
+    the response body couldn't be parsed at all — errors are never
+    swallowed.
+  - State resets to blank on every `isOpen` transition to `true` (content,
+    kind, link, image, selected project, filter query), mirroring
+    `ModalResumen`'s own `isOpen`-keyed reset effect noted in this file's
+    Batch 3b/3c entries.
+- [x] 5.8 In `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`:
+      added `isPostModalOpen` state and the mount effect described in 5.1
+      (`consumePendingCreateEntry()` once, then `subscribeToCreateEntry`
+      for the component's lifetime). `handleCreateProject` changed from a
+      direct `setIsCreateModalOpen(true)` to `requestCreateEntry('project')`
+      (now routes through the same subscription instead of setting state
+      directly — see the 5.1 rationale for why); added the sibling
+      `handleCreatePost`. Wired `onCreatePost={handleCreatePost}` onto
+      `ProjectsLeftRail`, and mounted `<CreatePostModal isOpen=
+    {isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />`
+      alongside the two existing `ModalResumen` instances.
+
+### Files changed (Batch 5)
+
+- Created: `src/lib/creation/createEntryBus.ts`
+- Created:
+  `src/components/estudiantes/proyectos/subcomponents/CreateMenuOptions.tsx`
+- Created: `src/components/estudiantes/layout/MobileCreateSheet.tsx`
+- Created: `src/app/api/community-posts/publishable-projects/route.ts`
+- Created:
+  `src/components/estudiantes/proyectos/subcomponents/CreatePostModal.tsx`
+- Modified:
+  `src/components/estudiantes/proyectos/subcomponents/ProjectsLeftRail.tsx`
+  (dropdown, `onCreatePost` prop)
+- Modified: `src/components/estudiantes/layout/MobileBottomNav.tsx` (wired
+  the center "+" button, mounted the sheet)
+- Modified: `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`
+  (`isPostModalOpen`, bus wiring, `CreatePostModal` mount)
+- Modified: `openspec/changes/user-projects-and-student-ux/tasks.md` (added
+  Phase 5, 5.1-5.8 marked `[x]`)
+
+### Not touched (per hard constraints)
+
+`src/server/db/schema.ts`, `src/app/api/community-posts/route.ts`,
+`getPublishableProjects.ts`, `ModalResumen.tsx`, `AgentChatWidget.tsx`,
+everything under `drizzle/`, and every PR1/PR2/PR3a/PR3b/3c/Batch4 file
+listed above. No `db:*` command was run (the `community_posts` migration
+from Phase 4 is still pending — posting will 500 against the real database
+until it lands; this was not fixed here, it is unrelated to this batch's
+scope, and the UI surfaces the resulting server error via the toast rather
+than swallowing it).
+
+### Verification status (Batch 5)
+
+No `npm run check`/`lint`/`typecheck`/`build` run per validation-timing
+policy. No integrated-browser check was performed — no browser tool was
+available in this session's toolset (confirmed by checking the tool list
+before starting, not assumed). Recommend, once convenient: on desktop
+`/proyectos`, click "Crear", confirm the dropdown opens with "Proyecto"/
+"Post", closes on outside click/Escape, and each option opens its modal;
+resize to a mobile viewport (or a real device), tap the bottom nav's "+",
+confirm the sheet slides up with the same two options, and confirm tapping
+either option from a **different** route (e.g. `/estudiantes`) correctly
+navigates to `/proyectos` and opens the right modal there. In
+`CreatePostModal`, exercise the project selector's search filter, each kind
+chip, an image upload, an attached link, and both the disabled-until-content
+and error-toast paths (the latter will currently always fire, since
+`community_posts` has no live table yet).
+
+### Not committed (Batch 5)
+
+Per hard constraints, no commit/push/PR was created. Changes are in the
+working tree only, awaiting user-approved commit.
+
+## Batch 6 — Project Feedback Threads: Schema + API (SCHEMA + API ONLY, no UI) — DONE
+
+Completed tasks (see `tasks.md` Phase 6, marked `[x]`): 6.1, 6.2. CODE ONLY —
+no `db:*` command run, not committed.
+
+### Schema (`src/server/db/schema.ts`)
+
+Added `AnyPgColumn` to the `drizzle-orm/pg-core` type import, and the new
+table right after `projectComments`:
+
+```ts
+export const projectFeedback = pgTable(
+  'project_feedback',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    parentId: integer('parent_id').references(
+      (): AnyPgColumn => projectFeedback.id,
+      { onDelete: 'cascade' }
+    ),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    authorRole: text('author_role', {
+      enum: ['estudiante', 'educador', 'admin', 'super-admin'],
+    }).notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('project_feedback_project_idx').on(table.projectId),
+    index('project_feedback_parent_idx').on(table.parentId),
+  ]
+);
+```
+
+Plus `projectFeedbackRelations` (project, user, self `parent`/`replies` via
+a shared `relationName: 'projectFeedbackReplies'`), and
+`projectFeedback: many(projectFeedback)` added to both `usersRelations` and
+`projectsRelations`. `projectComments` itself was left completely untouched,
+per the hard constraint.
+
+### API (`src/app/api/projects/[id]/feedback/route.ts`)
+
+**Deviation from the requested path**: the task specified
+`src/app/api/projects/[projectId]/feedback/route.ts`, but the sibling routes
+under `src/app/api/projects/` already use the dynamic segment name `[id]`
+(`[id]/comments`, `[id]/likes`, `[id]/follows`, `[id]/shares`, `[id]/route.ts`,
+etc.). Next.js App Router requires every dynamic segment at the same route
+level to share one slug name — mixing `[id]` and `[projectId]` under
+`/api/projects/*` throws a build-time routing error
+("You cannot use different slug names for the same dynamic path"). The route
+was created at `src/app/api/projects/[id]/feedback/route.ts` instead, matching
+the existing convention; this is a path-only change, the URL shape
+(`/api/projects/<id>/feedback`) is identical to what was requested.
+
+- **Permission model**: `getApiSession()`/role checks from
+  `~/server/utils/apiAuth.ts` reused as instructed; no role logic
+  re-implemented. `resolveProjectAccess()` resolves project ownership
+  (`projects.userId`) and collaborator status (`projectsTaken`) once per
+  request.
+- **`GET`**: 401 if unauthenticated; 404 if the project doesn't exist; 403
+  unless the caller is the owner, a collaborator, or staff
+  (`session.isStaff` — `educador`/`admin`/`super-admin`, reused from
+  `apiAuth.ts`). Returns `{ items: [...] }`, each item a root feedback entry
+  with a nested `replies` array, joined with the author's name and the
+  **snapshot** `authorRole` (not a live role join).
+- **`POST`**: zod schema `{ content: string (trim, min 1, max 2000),
+parentId?: coerced positive int }`. Depth cap: if `parentId` points at a
+  row that is itself a reply (has its own `parentId`), the new row is
+  re-parented onto that reply's root (`effectiveParentId = parent.parentId
+?? parent.id`) rather than nesting further, and rather than rejecting —
+  chosen because it matches the described YouTube/Facebook UX (replying to a
+  reply keeps the conversation in one visible thread instead of erroring).
+  A `parentId` belonging to a different project is rejected with 400, never
+  silently accepted. Root creation requires `ROOT_FEEDBACK_ROLES`; replies
+  require owner/collaborator/`REPLY_STAFF_ROLES`.
+
+### Root ordering and named-constant confirmations (as requested)
+
+- **Root ordering chosen: newest-first.** Rationale: this is a feedback log
+  on a specific project, read the same way the existing social feed
+  (`community_posts`, `GET /api/community-posts`) already reads — newest
+  first lets the owner/staff see the latest observation without scrolling.
+  Replies within a root are chronological, oldest-first (natural
+  conversation reading order), which falls out for free from selecting the
+  whole table `ORDER BY createdAt ASC` once and only re-sorting the roots.
+- **Depth-cap behaviour chosen: re-parent, not reject** (see above).
+- **`admin`-excluded-from-root-comments is a single named constant**:
+  `ROOT_FEEDBACK_ROLES: readonly Roles[] = ['educador', 'super-admin']`
+  (top of the route file). Confirmed one-line change if that decision
+  changes.
+- **Additional, unprompted-but-literal reading of the spec**: the reply
+  permission list in the task ("the project OWNER, any collaborator ...,
+  `educador`, and `super-admin`") also omits `admin` — unlike the read
+  permission, which explicitly lists `admin`. This was implemented literally
+  as a second named constant, `REPLY_STAFF_ROLES` (same two roles), kept
+  separate from `ROOT_FEEDBACK_ROLES` and from `apiAuth.ts`'s `STAFF_ROLES`
+  (which does include `admin`) so this asymmetry is a single, clearly
+  commented, isolated point per role list. Flagging this explicitly in case
+  it was accidental in the original request rather than intentional.
+
+### Not touched (per hard constraints)
+
+`projectComments`, `communityPosts`, `ModalResumen.tsx`,
+`AgentChatWidget.tsx`, everything under `drizzle/`, and no UI component was
+added. No `db:*` command was run — `project_feedback` exists in code only,
+not in the database, until a migration is generated and applied (separate
+approval-gated step, same pattern as `community_posts` in Phase 4).
+
+### Verification status (Batch 6)
+
+No `npm run check`/`lint`/`typecheck`/`build` run per validation-timing
+policy (schema/API changes normally warrant a targeted check, but this batch
+explicitly prohibits running any command beyond edits). No integrated
+browser check — this slice has no UI. Manual review: reread the full route
+file after edits for permission-branch correctness and import formatting.
+
+### Not committed (Batch 6)
+
+Per hard constraints, no commit/push/PR was created. Changes are in the
+working tree only, awaiting user-approved commit and a separately
+approved migration for `project_feedback` before this table can be used in
+production.

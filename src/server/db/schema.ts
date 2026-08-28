@@ -21,6 +21,7 @@ import {
 } from 'drizzle-orm/pg-core';
 
 import type { GuidedActivitySubmissionFile } from '~/lib/guidedActivitySubmissions';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 export const users = pgTable(
   'users',
@@ -225,6 +226,46 @@ export const projectComments = pgTable(
   (table) => [
     index('project_comments_project_idx').on(table.projectId),
     index('project_comments_user_idx').on(table.userId),
+  ]
+);
+
+// Tabla de hilos de retroalimentación (feedback) sobre un proyecto.
+// Distinta de `projectComments` (comentarios planos del feed social):
+// esta tabla soporta hilos de 2 niveles (raíz + respuestas, estilo
+// YouTube/Facebook) con permisos de lectura/escritura propios.
+export const projectFeedback = pgTable(
+  'project_feedback',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    // null = hilo raíz; con valor = respuesta. Las respuestas siempre
+    // apuntan a una entrada RAÍZ (profundidad máxima 2): una respuesta a
+    // una respuesta se re-asocia a la raíz de esa respuesta en la API, en
+    // vez de anidarse más profundo.
+    parentId: integer('parent_id').references(
+      (): AnyPgColumn => projectFeedback.id,
+      { onDelete: 'cascade' }
+    ),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Snapshot del rol del autor (users.role) en el momento de escribir el
+    // mensaje, NO un valor derivado en vivo: así la UI puede mostrar la
+    // insignia "Educador"/"Admin" correcta incluso si el rol de esa persona
+    // cambia más adelante; un cambio de rol nunca debe reescribir el
+    // historial de retroalimentación.
+    authorRole: text('author_role', {
+      enum: ['estudiante', 'educador', 'admin', 'super-admin'],
+    }).notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('project_feedback_project_idx').on(table.projectId),
+    index('project_feedback_parent_idx').on(table.parentId),
   ]
 );
 
@@ -462,6 +503,34 @@ export const projects = pgTable('projects', {
   dias_estimados: integer('dias_estimados'), // NUEVO: Días estimados por cálculo automático
   dias_necesarios: integer('dias_necesarios'), // NUEVO: Días necesarios por edición manual
   multimedia: text('multimedia'), // NUEVO: JSON array de multimedia (imágenes y videos adicionales)
+});
+
+// Tabla de publicaciones de la comunidad (feed /proyectos)
+export const communityPosts = pgTable('community_posts', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id')
+    .references(() => users.id)
+    .notNull(),
+  // Nullable: null significa una publicación general, no asociada a ningún
+  // proyecto. onDelete 'set null' (en vez de 'cascade') evita que borrar un
+  // proyecto rompa o elimine el feed: la publicación permanece como
+  // publicación general en lugar de convertirse en huérfana o desaparecer.
+  projectId: integer('project_id').references(() => projects.id, {
+    onDelete: 'set null',
+  }),
+  kind: text('kind', {
+    enum: ['none', 'update', 'milestone', 'request'],
+  })
+    .default('none')
+    .notNull(),
+  content: text('content').notNull(),
+  imageKey: text('image_key'),
+  linkUrl: text('link_url'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .notNull()
+    .$onUpdateFn(() => new Date()),
 });
 
 // Tabla de objetivos especificos proyectos
@@ -1039,6 +1108,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   projectFollows: many(projectFollows),
   projectShares: many(projectShares),
   projectComments: many(projectComments),
+  projectFeedback: many(projectFeedback),
   userLessonsProgress: many(userLessonsProgress),
   userActivitiesProgress: many(userActivitiesProgress),
 }));
@@ -1150,6 +1220,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   projectFollows: many(projectFollows),
   projectShares: many(projectShares),
   projectComments: many(projectComments),
+  projectFeedback: many(projectFeedback),
   specificObjectives: many(specificObjectives),
   addedSections: many(projectAddedSections),
 }));
@@ -1223,6 +1294,28 @@ export const projectCommentsRelations = relations(
   })
 );
 
+export const projectFeedbackRelations = relations(
+  projectFeedback,
+  ({ one, many }) => ({
+    project: one(projects, {
+      fields: [projectFeedback.projectId],
+      references: [projects.id],
+    }),
+    user: one(users, {
+      fields: [projectFeedback.userId],
+      references: [users.id],
+    }),
+    parent: one(projectFeedback, {
+      fields: [projectFeedback.parentId],
+      references: [projectFeedback.id],
+      relationName: 'projectFeedbackReplies',
+    }),
+    replies: many(projectFeedback, {
+      relationName: 'projectFeedbackReplies',
+    }),
+  })
+);
+
 export const userLessonsProgressRelations = relations(
   userLessonsProgress,
   ({ one }) => ({
@@ -1283,6 +1376,17 @@ export const postLikesRelations = relations(postLikes, ({ one }) => ({
   user: one(users, {
     fields: [postLikes.userId],
     references: [users.id],
+  }),
+}));
+
+export const communityPostsRelations = relations(communityPosts, ({ one }) => ({
+  user: one(users, {
+    fields: [communityPosts.userId],
+    references: [users.id],
+  }),
+  project: one(projects, {
+    fields: [communityPosts.projectId],
+    references: [projects.id],
   }),
 }));
 

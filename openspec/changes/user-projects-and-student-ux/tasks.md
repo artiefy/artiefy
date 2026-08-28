@@ -56,3 +56,181 @@ Chain strategy: stacked-to-main
 - [x] 3b.5 In `src/app/api/projects/route.ts`, pass `type` through.
 - [x] 3b.6 In `src/lib/agents/agentChatBus.ts`, extend the project scope to `{ kind: 'project'; id; title; source?: 'guided' | 'user' }`.
 - [x] 3b.7 In `src/app/api/agents/chat/route.ts`, resolve project context: `guidedProjects` first (premium gate unchanged); else look up `projects`, reject when `projects.userId` does not match the session user (existing entitlement-rejection behavior), else `buildUserProjectContext()`; store `projectSource: 'user'` in the persisted scope; send `null` `projectId` to n8n for user projects.
+
+## Phase 3c: Courseless Project Workspace (continuation, no migration)
+
+A student who creates a project from `/proyectos` (no course) needs the same
+"Trabajar" workspace a course-linked project gets — the tabbed
+`ProjectDetailView` with per-section pencils reopening `ModalResumen` at that
+step — instead of "Trabajar" and "Publicar avance" pointing at the same
+read-only public detail page.
+
+- [x] 3c.1 Create `src/app/estudiantes/proyectos/[id]/trabajar/page.tsx`: owner-only
+      server route. Resolves `params`, coerces the id, `notFound()` on a bad
+      id or when there is no signed-in user, no project, or
+      `project.userId !== userId` (does not leak existence to a non-owner);
+      fetches via `getProjectById`; renders `UserProjectWorkspace` + `Footer`,
+      carrying the repo's `export const instant = false;` opt-out comment.
+- [x] 3c.2 Create `src/components/estudiantes/proyectos/UserProjectWorkspace.tsx`:
+      client component rendering `ProjectDetailView` for the fetched project,
+      wiring `onEditSection` to open `ModalResumen` at that step exactly like
+      `ProjectsSection.tsx`, with `courseId={undefined}` and
+      `projectId={project.id}` so the wizard EDITS the existing project
+      instead of creating a duplicate; `router.refresh()` (not
+      `window.location.reload()`) on modal close; a "Volver a proyectos" link
+      back to `/proyectos`.
+- [x] 3c.3 Point "Trabajar" at the new route: `ProjectsSocialView.tsx` gets a
+      `getWorkHref()` (courseless → `/estudiantes/proyectos/${id}/trabajar`,
+      course-linked → unchanged course workspace href), leaving
+      `getPublishHref()`/`publishHref` untouched; `ProfileView.tsx` gets the
+      equivalent `projectWorkHref()` split from its shared `projectHref()`
+      helper, applied only to `workHref`.
+
+## Phase 4: Community Posts — Schema + API (continuation, no UI, migration pending)
+
+Social publications for the `/proyectos` feed, decoupled from the existing
+course-forum `posts`/`postReplies` tables (left untouched). Schema-only in
+this batch — no `db:*` command was run; the column/table exist in code but
+not yet in the database.
+
+- [x] 4.1 In `src/server/db/schema.ts`, add `communityPosts` table
+      (`community_posts`): `id` serial PK; `userId` text → `users.id`
+      not null; `projectId` integer → `projects.id`, nullable, `onDelete:
+    'set null'` (a deleted project degrades the post to a general
+      publication instead of orphaning/crashing the feed); `kind` text enum
+      `['none','update','milestone','request']` default `'none'` not null;
+      `content` text not null; `imageKey` text nullable; `linkUrl` text
+      nullable; `createdAt`/`updatedAt` timestamps matching the
+      `forums`/`postReplies` convention (`updatedAt` has `$onUpdateFn`). Added
+      `communityPostsRelations` (`user`, `project`) grouped with the other
+      post-like relations.
+- [x] 4.2 Create `src/app/api/community-posts/route.ts`: `POST` — Clerk
+      `auth()` (401 when signed out), zod-validated body (`content`
+      trimmed/non-empty/max 2000, `kind` enum, optional `projectId`
+      coerced to a positive int, optional `imageKey`, optional `linkUrl`
+      validated as a URL); when `projectId` is present, looks up the
+      project and requires `project.userId === userId || project.isPublic`
+      (403 otherwise, 404 if the project doesn't exist) — never trusts the
+      client. `GET` — public feed listing, newest first, inner-joined with
+      `users` (author) and left-joined with `projects` (nullable), `limit`
+      query param clamped to `[1, 50]` (default 20).
+- [x] 4.3 Create `src/server/actions/project/getPublishableProjects.ts`:
+      returns projects a user may attach a publication to — every project
+      they own (public or private) plus every other public project,
+      deduplicated by id, `{ id, name, isOwner }`, owner's projects first
+      then by most recently updated. Backs the post-composer's "Buscar
+      proyecto..." selector (selector UI itself is out of scope for this
+      batch).
+- [ ] 4.4 **[GATE — pending, not run this batch]** Generate + apply the
+      migration for `community_posts` (`db:generate` then apply; same
+      approval gate as 3b.2/3b.3) before this table can be used in
+      production.
+
+## Phase 5: Create Menu + Post Modal UI (continuation, no migration)
+
+Wires the `communityPosts` schema/API from Phase 4 to actual UI: a "Crear"
+menu (desktop dropdown + mobile bottom sheet) offering "Proyecto"/"Post", and
+the "Crear publicación" modal itself.
+
+- [x] 5.1 `src/lib/creation/createEntryBus.ts` (new): `requestCreateEntry`,
+      `subscribeToCreateEntry`, `consumePendingCreateEntry` — DOM
+      `CustomEvent` bus (same pattern as `agentChatBus.ts`) plus a
+      `sessionStorage` fallback for cross-route delivery. Chosen over a
+      `?create=` query param because `src/app/proyectos/page.tsx` redirects
+      to `/estudiantes` whenever it sees ANY search param
+      (`hasLegacyQuery`), which would have bounced the user away before
+      `ProjectsSocialView` ever mounted.
+- [x] 5.2 `src/components/estudiantes/proyectos/subcomponents/CreateMenuOptions.tsx`
+      (new): the two "Crear" choices ("Proyecto"/"Post", copy + icons)
+      shared verbatim by the desktop dropdown and the mobile sheet.
+- [x] 5.3 `src/components/estudiantes/proyectos/subcomponents/ProjectsLeftRail.tsx`:
+      replaced the single "Nuevo proyecto" button with a "Crear" toggle +
+      dropdown (`CreateMenuOptions`); outside-click + Escape close;
+      `aria-haspopup`/`aria-expanded` on the trigger. New `onCreatePost` prop
+      alongside the existing `onCreateProject`.
+- [x] 5.4 `src/components/estudiantes/layout/MobileCreateSheet.tsx` (new):
+      Radix-primitive bottom sheet (slide-in-from-bottom, backdrop dismiss,
+      Escape close, `motion-reduce` override), sitting above
+      `MobileBottomNav`'s `z-[2147483000]`.
+- [x] 5.5 `src/components/estudiantes/layout/MobileBottomNav.tsx`: wired the
+      previously-inert center "+" button to open `MobileCreateSheet`;
+      selecting an option calls `requestCreateEntry` then navigates to
+      `/proyectos` (no query string) if not already there.
+- [x] 5.6 `src/app/api/community-posts/publishable-projects/route.ts` (new):
+      auth-gated GET wrapper around `getPublishableProjects` — that action
+      trusts whatever `userId` it receives, so it must never be called
+      directly from client code with an unverified id.
+- [x] 5.7 `src/components/estudiantes/proyectos/subcomponents/CreatePostModal.tsx`
+      (new): "Crear publicación" dialog — target selector (general feed vs.
+      one of the user's publishable projects, with a text filter), kind
+      chips (Ninguno/Actualización/Hito/Solicitud), textarea, image upload
+      reusing the `/api/upload` presigned-POST flow, optional link URL,
+      submits to `POST /api/community-posts`, Spanish-toast on failure,
+      `router.refresh()` on success.
+- [x] 5.8 `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`: added
+      `isPostModalOpen` state, mounted `CreatePostModal`, and a mount effect
+      that both consumes any pending `sessionStorage` request and subscribes
+      to the live bus event — the single code path both desktop and mobile
+      route through.
+
+## Phase 6: Project Feedback Threads — Schema + API (continuation, no UI, migration pending)
+
+Threaded feedback on a project (YouTube/Facebook-style: root comment + one
+level of replies), distinct from the flat social-feed `projectComments`.
+Not public — restricted to the project owner, its collaborators, and staff.
+Schema-only in this batch — no `db:*` command was run.
+
+- [x] 6.1 In `src/server/db/schema.ts`, add `projectFeedback` table
+      (`project_feedback`), placed next to `projectComments`: `id` serial PK;
+      `projectId` integer → `projects.id`, `onDelete: 'cascade'`, not null;
+      `parentId` integer, self-reference to `projectFeedback.id` (explicit
+      `AnyPgColumn` return-type annotation, imported from
+      `drizzle-orm/pg-core`), nullable, `onDelete: 'cascade'`; `userId` text
+      → `users.id`, `onDelete: 'cascade'`, not null; `authorRole` text with
+      the same 4-value enum as `users.role`, not null — a SNAPSHOT of the
+      author's role at write time (not a live join) so the UI can badge
+      "Educador" correctly even after that person's role changes later;
+      `content` text not null; `createdAt`/`updatedAt` timestamps matching
+      neighbouring tables. Indexes on `projectId` and `parentId` (the thread
+      read is `where projectId = ?` then grouped by parent). Added
+      `projectFeedbackRelations` (`project`, `user`, self `parent`/`replies`
+      via `relationName`) and `projectFeedback: many(...)` on
+      `usersRelations`/`projectsRelations`.
+- [x] 6.2 Create `src/app/api/projects/[id]/feedback/route.ts` (task said
+      `[projectId]`; used the existing `[id]` sibling segment instead — see
+      deviation note below). `GET` — returns the whole thread tree: roots
+      newest-first, each with its replies in chronological order, author
+      name + snapshot `authorRole` joined in; enforces read permission
+      (owner, collaborator via `projectsTaken`, or staff
+      `educador`/`admin`/`super-admin`) — 401 unauthenticated, 403
+      unauthorized. `POST` — zod-validated body (`content`
+      trimmed/non-empty/max 2000, optional `parentId` coerced positive int);
+      root creation restricted to `ROOT_FEEDBACK_ROLES` (`educador`,
+      `super-admin` — single named constant, `admin` intentionally
+      excluded per spec); replies restricted to owner, collaborator, or
+      `REPLY_STAFF_ROLES` (`educador`, `super-admin` — `admin` excluded
+      here too, per the literal spec, unlike the read permission which
+      does include it); depth capped at 2 by re-parenting a reply-to-a-reply
+      onto that reply's root; rejects a `parentId` belonging to another
+      project (400, not silently accepted).
+- [x] 6.3 Create `src/components/estudiantes/projects/ProjectFeedbackThread.tsx`
+      (new) and render it from `ProjectDetailView.tsx`'s
+      `<TabsContent value="feedback">` (previously a static placeholder),
+      passing `projectId={project.id}`. Fetches the thread tree via `useSWR`
+      against `GET /api/projects/[id]/feedback`; root cards show an initial
+      avatar, author name, a role badge derived from the stored snapshot
+      role, a Spanish relative timestamp, and content; replies render
+      indented (smaller avatar, left border) in chronological order. A
+      "Iniciar retroalimentación" composer is shown only when the viewer's
+      Clerk `publicMetadata.role` is `educador`/`super-admin` (mirrors
+      `ROOT_FEEDBACK_ROLES`, a reliable client-side check since it does not
+      depend on project ownership). "Responder" is shown to any signed-in
+      viewer — the API does not expose the viewer's owner/collaborator
+      status in its `GET` response, so this is deliberately optimistic; the
+      server remains the sole authority and its 403 Spanish message is
+      surfaced via `toast` on rejection. Submit buttons disable while empty
+      or in-flight with a pending label; failures never fail silently
+      (`toast.error`); empty state tells staff viewers they can start the
+      thread. Real `<button>`s, a labelled reply textarea (`sr-only`
+      `<label>`), `focus-visible` rings, and `aria-expanded`/`aria-controls`
+      linking "Responder" to its reply region.
