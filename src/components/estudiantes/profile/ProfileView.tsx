@@ -23,6 +23,7 @@ import MyCoursesContent, {
   type Course,
   type Program,
 } from '~/components/estudiantes/layout/MyCoursesContent';
+import { ProjectWorkspaceCard } from '~/components/estudiantes/proyectos/subcomponents/ProjectWorkspaceCard';
 import {
   coverKeyToUrl,
   MAX_COVER_SIZE,
@@ -32,6 +33,7 @@ import { updateMyCover } from '~/server/actions/estudiantes/profile/profileActio
 
 import { EditProfileModal } from './EditProfileModal';
 
+import type { ProjectSocialItem } from '~/components/estudiantes/proyectos/types';
 import type { MyProfile } from '~/server/actions/estudiantes/profile/profileActions';
 
 const TABS = [
@@ -63,14 +65,32 @@ function normalizeUrl(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
+/** A project opens in its course workspace, or in its own page when it has
+ *  no course. */
+function projectHref(item: ProjectSocialItem) {
+  return item.courseId
+    ? `/estudiantes/cursos/${item.courseId}?projectId=${item.id}&view=projects`
+    : `/estudiantes/proyectos/${item.id}`;
+}
+
+/** "Trabajar" opens the course workspace for a course-linked project, or
+ *  the courseless owner-only workspace otherwise. */
+function projectWorkHref(item: ProjectSocialItem) {
+  return item.courseId
+    ? `/estudiantes/cursos/${item.courseId}?projectId=${item.id}&view=projects`
+    : `/estudiantes/proyectos/${item.id}/trabajar`;
+}
+
 export function ProfileView({
   profile,
   courses,
   programs,
+  projects = [],
 }: {
   profile: MyProfile;
   courses: Course[];
   programs: Program[];
+  projects?: ProjectSocialItem[];
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>('cursos');
@@ -116,7 +136,7 @@ export function ProfileView({
     }
   };
   const stats = [
-    { label: 'Proyectos', value: 0 },
+    { label: 'Proyectos', value: projects.length },
     { label: 'Posts', value: 0 },
     { label: 'Seguidores', value: 0 },
     { label: 'Siguiendo', value: 0 },
@@ -406,6 +426,22 @@ export function ProfileView({
           <div className="mt-6 lg:mt-8">
             {activeTab === 'cursos' ? (
               <MyCoursesContent courses={courses} programs={programs} />
+            ) : activeTab === 'proyectos' && projects.length > 0 ? (
+              <div
+                className="
+                  grid gap-4
+                  xl:grid-cols-2
+                "
+              >
+                {projects.map((item) => (
+                  <ProjectWorkspaceCard
+                    key={item.id}
+                    item={item}
+                    workHref={projectWorkHref(item)}
+                    publishHref={projectHref(item)}
+                  />
+                ))}
+              </div>
             ) : (
               <div
                 className="

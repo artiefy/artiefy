@@ -3,14 +3,17 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { DollarSign, Pen, Send, Users } from 'lucide-react';
+import { Code, DollarSign, Pen, Send, Users } from 'lucide-react';
 
 import type { ProjectSocialItem } from '../types';
 
 interface ProjectWorkspaceCardProps {
   item: ProjectSocialItem;
-  onEdit: (item: ProjectSocialItem) => void;
+  /** Opens the project's own workspace, where its sections are filled in. */
+  workHref: string;
   publishHref: string;
+  /** Omitted where there is no wizard to open, such as the profile page. */
+  onEdit?: (item: ProjectSocialItem) => void;
 }
 
 const stageBadgeClass: Record<ProjectSocialItem['stage'], string> = {
@@ -22,8 +25,9 @@ const stageBadgeClass: Record<ProjectSocialItem['stage'], string> = {
 
 export function ProjectWorkspaceCard({
   item,
-  onEdit,
+  workHref,
   publishHref,
+  onEdit,
 }: ProjectWorkspaceCardProps) {
   const progress = Math.max(0, Math.min(100, item.progressPercentage ?? 0));
 
@@ -133,6 +137,18 @@ export function ProjectWorkspaceCard({
 
       <div className="mt-4 flex items-center gap-2 border-t border-border pt-3">
         <Link
+          href={workHref}
+          className={`
+            flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent
+            px-3 py-1.5 text-xs font-medium text-accent-foreground
+            transition-colors
+            hover:bg-accent/90
+          `}
+        >
+          <Code className="size-3.5" />
+          Trabajar
+        </Link>
+        <Link
           href={publishHref}
           className={`
             flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary
@@ -143,18 +159,20 @@ export function ProjectWorkspaceCard({
           <Send className="size-3.5" />
           Publicar avance
         </Link>
-        <button
-          type="button"
-          onClick={() => onEdit(item)}
-          className={`
-            flex items-center gap-2 rounded-lg bg-[#1A2333] px-3 py-1.5 text-xs
-            font-medium text-foreground transition-colors
-            hover:bg-[#1A2333]/80
-          `}
-        >
-          <Pen className="size-3.5" />
-          Editar
-        </button>
+        {onEdit ? (
+          <button
+            type="button"
+            onClick={() => onEdit(item)}
+            className={`
+              flex items-center gap-2 rounded-lg bg-[#1A2333] px-3 py-1.5
+              text-xs font-medium text-foreground transition-colors
+              hover:bg-[#1A2333]/80
+            `}
+          >
+            <Pen className="size-3.5" />
+            Editar
+          </button>
+        ) : null}
       </div>
     </article>
   );
