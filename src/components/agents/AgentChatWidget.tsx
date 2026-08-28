@@ -1620,7 +1620,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           : isFullWindow
             ? 'js-agent-chat-panel fixed inset-0 z-[100010]'
             : hasPanelRect
-              ? 'js-agent-chat-panel fixed z-60'
+              ? // A panel the learner has dragged or resized is a floating
+                // window they placed on purpose, so it clears the header the
+                // same way full-window mode does.
+                'js-agent-chat-panel fixed z-[100010]'
               : `
                 js-agent-chat-panel fixed inset-0 z-60
                 md:inset-auto md:right-6 md:bottom-6 md:h-[min(70dvh,620px)]
