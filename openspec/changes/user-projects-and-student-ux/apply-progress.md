@@ -184,7 +184,7 @@ Completed tasks (see `tasks.md` Phase 2, marked `[x]`):
       mirroring state, an explicit `focus-visible:outline` ring, and
       `disabled` while popped out (full-window mode does not apply there).
       Added `isExpanded` state and derived `isFullWindow = isExpanded &&
-  !isPoppedOut`. The panel's outer class swaps to
+!isPoppedOut`. The panel's outer class swaps to
       `fixed inset-0 z-[100010]` and the inner glass panel to `rounded-none`
       while `isFullWindow`; drag (`canMovePanel`) and the 8 resize handles are
       disabled/hidden in that state. `panelRect`, `pipWindow`, and
@@ -785,7 +785,7 @@ fired it.
       on `Escape`, only registered while open. Trigger has
       `aria-haspopup="menu"`/`aria-expanded`; the panel has
       `role="menu"`/`aria-label="Crear"`; both options are real `<button
-    role="menuitem">` elements from `CreateMenuOptions`, reachable and
+  role="menuitem">` elements from `CreateMenuOptions`, reachable and
       activatable by keyboard with no extra wiring needed. Added the new
       `onCreatePost?: () => void` prop alongside the existing
       `onCreateProject?: () => void`; both close the menu before firing.
@@ -879,7 +879,7 @@ fired it.
       directly — see the 5.1 rationale for why); added the sibling
       `handleCreatePost`. Wired `onCreatePost={handleCreatePost}` onto
       `ProjectsLeftRail`, and mounted `<CreatePostModal isOpen=
-    {isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />`
+  {isPostModalOpen} onClose={() => setIsPostModalOpen(false)} />`
       alongside the two existing `ModalResumen` instances.
 
 ### Files changed (Batch 5)
@@ -1061,3 +1061,427 @@ Per hard constraints, no commit/push/PR was created. Changes are in the
 working tree only, awaiting user-approved commit and a separately
 approved migration for `project_feedback` before this table can be used in
 production.
+
+## Batch 7 — Community Posts: Feed Rendering — DONE
+
+Completed tasks (see `tasks.md` Phase 7, marked `[x]`): 7.1, 7.2, 7.3.
+Per the orchestrator's verified facts this session, `community_posts` is
+already an applied migration in the real database (not the "pending" state
+Batch 4 left it in), so this slice reads real rows, not a table that
+doesn't exist yet.
+
+### 1. Server-side fetch (7.1)
+
+Added `getCommunityPostsFeed(limit = 30)` to
+`src/components/estudiantes/proyectos/projectSocialData.ts`, right before
+`getProjectSocialCollections`. One `db.select` on `communityPosts`,
+inner-joined with `users` (author) and left-joined with `projects` (nullable
+link), ordered `desc(communityPosts.createdAt)`. Queries the tables directly
+rather than calling `GET /api/community-posts` internally — this runs inside
+a Server Component, and it needs `projects.needsCollaborators` for the one
+real chip the card can show, which that route's JSON response doesn't
+include.
+
+Added a new `CommunityFeedPost` (+ `CommunityFeedPostAuthor`,
+`CommunityFeedPostProject`, `CommunityPostKind`) family to
+`src/components/estudiantes/proyectos/types.ts`, alongside the existing
+`ProjectSocialItem`/`ProjectSocialCollaborator` types.
+
+Image handling reuses `toCoverImageUrl` (already defined in
+`projectSocialData.ts`, the same helper `ProjectsSocialView.tsx` has its own
+copy of, per the task's explicit instruction) for `post.imageKey` → a
+proxied `/api/image-proxy?url=...` URL. The author's avatar is a **new**
+sibling helper, `toAvatarUrl(profileImageKey)`, added next to it: `users` has
+no dedicated "avatar" column, but it does have `profileImageKey` (the same
+field `src/app/api/projects/[id]/comments/route.ts` already uses for a
+comment author's `avatarUrl`, which `ProjectFeedCard.tsx` already renders
+straight into `next/image` with no proxy). `toAvatarUrl` follows that exact
+precedent — a direct bucket URL, not proxied — rather than inventing a third
+image-URL convention.
+
+`src/app/proyectos/page.tsx`: added `getCommunityPostsFeed()` to the
+existing `Promise.all` alongside `getProjectSocialCollections(userId)`, and
+passed the result as a new `communityPosts` prop to `ProjectsSocialView`.
+
+### 2. `CommunityPostCard` (7.2)
+
+Created
+`src/components/estudiantes/proyectos/subcomponents/CommunityPostCard.tsx`,
+structured directly off `ProjectFeedCard.tsx` (same `feed-card` article
+shell, hover glow, avatar treatment with the decorative online dot, gradient
+project-name link, action-bar layout under a `border-t`):
+
+- **Header**: avatar (real `avatarUrl` image when present, else the same
+  initials-circle-with-online-dot `ProjectFeedCard` uses) + author name +,
+  **only when `post.project` is non-null**, `"publicó en"` followed by a
+  gradient `Link` to `/proyectos/{project.id}`. When there is no project,
+  that whole middle clause (including the literal words "publicó en") is
+  omitted — not rendered with an empty name.
+- **Badge row**: `kind === 'none'` renders no badge at all. Otherwise one of
+  three pills, each with its own icon/color (`update` → `Zap`/emerald,
+  `milestone` → `Flame`/amber, `request` → `Users`/blue — the reference
+  markup only styled two of these, so `request`'s color was chosen fresh,
+  distinct from the other two, rather than reusing one of theirs). Always
+  followed by a Spanish relative timestamp, reusing the finer-grained
+  `formatRelativeTime` helper from `ProjectFeedbackThread.tsx` (minutes/
+  hours/days/months/years, so "hace 2 días" falls out naturally for a
+  2-day-old post) — duplicated locally, matching this repo's existing
+  per-file convention (`ProjectFeedCard.tsx` and `ProjectFeedbackThread.tsx`
+  each already keep their own copy; there is no shared date-format module).
+- **Body**: `post.content` in a `whitespace-pre-wrap` paragraph.
+- **Link line** (not in the task's explicit bullet list, but real data
+  fetched from a real column): when `post.linkUrl` is set, a small
+  `Link2`-icon anchor to it, `target="_blank" rel="noopener noreferrer"`,
+  truncated. Omitted when absent.
+- **Media**: `post.imageUrl` in the same rounded/hover-scale treatment as
+  `ProjectFeedCard`'s cover image. Omitted entirely when there is no image
+  (no placeholder box).
+- **Chips**: only `post.project?.needsCollaborators` renders anything — the
+  same "Busca colaboradores" pill `ProjectFeedCard` uses. No stage/category/
+  tag chips, because a post has none of that data (see decision below).
+- **Action bar**: like/comment/save/share, all **disabled**, each with a
+  Spanish `title` explaining it is coming soon (see decision below).
+
+### Real-data decisions (as the task required, stated explicitly)
+
+- **Action counts: shown as no number at all**, not a fabricated count and
+  not a real `0`. There is genuinely no post-level like/comment/save table
+  (`projectLikes`/`projectSaves`/`projectComments`/`projectShares` are all
+  keyed to a project id, confirmed by reading `schema.ts` before writing any
+  of this), so even a `0` would misleadingly imply "this is being counted
+  and nobody has acted yet" when in fact nothing is being counted. Omitting
+  the number entirely was judged the more honest of the two allowed options.
+- **All four action controls are `disabled`**, each with an explanatory
+  Spanish `title` (`"Los me gusta en publicaciones llegarán pronto"`, etc.)
+  rather than wired to the project-level like/save/comment/share endpoints.
+  Wiring a post's like button to `POST /api/projects/{id}/likes` would like
+  the **project**, not the post — corrupting that project's real like count
+  with clicks that have nothing to do with it, exactly what the task warned
+  against. Share was considered separately (a share could theoretically just
+  copy a URL, no new table needed) but there is no post detail route to
+  share — `/proyectos/{postId}` doesn't exist and creating one was outside
+  this slice's scope — so share is disabled too, for the same "must not look
+  enabled-and-broken" reason as the other three.
+- **Chips kept: only "Busca colaboradores"**, sourced from
+  `post.project.needsCollaborators` (a real, currently-live column on the
+  linked project). Everything else in the reference's chip row (stage,
+  category, the two `objetivosEsp`-derived tags) was dropped — a post has no
+  stage/category/tags of its own, and inventing one from the linked
+  project's `type_project`/`category` would have mixed "properties of the
+  post" with "properties of the project it happens to reference," which is a
+  different kind of fabrication than a literal made-up number but the same
+  underlying problem the task was guarding against.
+
+### 3. Feed integration (7.3)
+
+`src/components/estudiantes/proyectos/ProjectsSocialView.tsx`:
+
+- New `communityPosts: CommunityFeedPost[]` prop (no local `useState` copy —
+  unlike `exploreItems`/`myItems`/`collaborationItems`, nothing in this
+  batch mutates a post client-side, so there is no optimistic-update reason
+  to mirror it into state the way `localExploreItems` etc. do).
+- `filteredCommunityPosts` (`useMemo`): empty outside the `explorar` view;
+  empty whenever `activeStage !== 'all'` or `needsCollaboratorsFilter` is
+  on (see filter decision below); otherwise filtered by the same search box
+  against `content`/`author.name`/`project?.name`.
+- `exploreFeed` (`useMemo`, new `ExploreFeedEntry` discriminated union):
+  only populated for the `explorar` view; merges `filteredItems` (existing
+  project filtering, untouched) with `filteredCommunityPosts`, tagged
+  `{ kind: 'project' | 'post' }`, sorted together by `createdAt` descending
+  — so a brand-new post actually appears above older projects, not appended
+  after them.
+- Render: `activeView === 'explorar'` now iterates `exploreFeed` and picks
+  `CommunityPostCard` or `ProjectFeedCard` per entry; every other view
+  (`mis`/`colabs`/`favoritos`/`seguidos`) is **untouched** — still iterates
+  `filteredItems` exactly as before (posts never appear there, since none of
+  those shelves has a post-equivalent concept: a post has no owner-shelf,
+  save, or follow state of its own). The empty-state copy for `explorar`
+  changed from "No encontramos proyectos con esos filtros." to "No
+  encontramos proyectos ni publicaciones con esos filtros." (the other
+  views' empty state is unchanged). The "Cargar más proyectos" button's
+  guard condition switched from `filteredItems.length > 0` to
+  `exploreFeed.length > 0` (same button, unwired pagination, pre-existing
+  behavior — not implemented or touched beyond that guard).
+
+### Filter-interaction decision (as the task required, stated explicitly)
+
+**A post is hidden from the merged feed whenever a project-only filter is
+active** — `activeStage !== 'all'` (a post has no `stage`) or
+`needsCollaboratorsFilter` is on (a post has no `needsCollaborators` of its
+own; only its _linked project_, if any, does, and applying that filter to
+the post itself would silently show/hide it based on a property it doesn't
+have). This was the task's own suggested default ("most likely: hidden"),
+confirmed and implemented rather than assumed. The **search box does
+apply** to posts (content/author/linked-project name) — a plain text search
+has an obvious, non-fabricated meaning for a post, unlike a stage or
+collaborators toggle, so excluding it there would have made the search box
+inconsistently ignore half the visible feed.
+
+### Files changed (Batch 7)
+
+- Modified:
+  `src/components/estudiantes/proyectos/projectSocialData.ts`
+  (`getCommunityPostsFeed`, `toAvatarUrl`, `communityPosts`/`CommunityFeedPost`
+  imports)
+- Modified: `src/components/estudiantes/proyectos/types.ts`
+  (`CommunityFeedPost` + related types)
+- Created:
+  `src/components/estudiantes/proyectos/subcomponents/CommunityPostCard.tsx`
+- Modified: `src/app/proyectos/page.tsx` (`getCommunityPostsFeed()` in the
+  parallel fetch, `communityPosts` prop)
+- Modified: `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`
+  (`communityPosts` prop, `ExploreFeedEntry`, `filteredCommunityPosts`,
+  `exploreFeed`, render + empty-state + "load more" guard changes)
+- Modified: `openspec/changes/user-projects-and-student-ux/tasks.md` (added
+  Phase 7, 7.1-7.3 marked `[x]`)
+
+### Not touched (per hard constraints)
+
+`src/app/api/community-posts/route.ts`, `getPublishableProjects.ts`,
+`CreatePostModal.tsx`, `ProjectFeedbackThread.tsx`, `AgentChatWidget.tsx`,
+everything under `drizzle/`, `src/server/db/schema.ts`, and every
+PR1/PR2/PR3a/PR3b/3c/Batch4/Batch5/Batch6 file listed above. No `db:*`
+command was run (none was needed — the migration was already applied per
+this session's orchestrator-verified facts).
+
+### Verification status (Batch 7)
+
+No `npm run check`/`lint`/`typecheck`/`build` run per validation-timing
+policy. No integrated-browser check was performed — no browser tool was
+available in this session's toolset (confirmed by checking the available
+tool list before starting, not assumed); a dev server was already running
+on `:3000` but could not be visually exercised without one. Recommend, once
+convenient: on `/proyectos`'s "Explorar" tab, confirm a real published post
+renders above/below project cards by recency, confirm a post with no
+`projectId` omits the "publicó en" clause entirely, confirm each `kind`
+shows the right badge (and `none` shows none), confirm the image/link
+blocks only appear when set, confirm every action button is visibly
+disabled with its tooltip, then toggle a stage filter or "🤝 Colaboradores"
+and confirm posts disappear from the feed while projects keep filtering
+normally, and finally type into the search box and confirm it matches post
+content/author/project name too.
+
+### Not committed (Batch 7)
+
+Per hard constraints, no commit/push/PR was created. Changes are in the
+working tree only, awaiting user-approved commit.
+
+## Batch 8 — Post upload fix, preview step, edit/delete, tooltip clip — DONE
+
+Continuation slice, no migration, no schema change. All work is code-only in
+the working tree.
+
+### 1. Server-side image upload for the post composer
+
+`CreatePostModal.tsx`'s `handleImageUpload` previously did a browser -> S3
+POST against a presigned URL from `/api/upload`, which failed with a bare
+`TypeError: Failed to fetch` because the bucket's CORS policy doesn't allow
+that cross-origin POST (orchestrator-verified, pre-existing infra config,
+not a code defect). Fixed by moving the write server-side:
+
+- Created `src/app/api/community-posts/upload-image/route.ts` (new),
+  following the precedent in `documentupload-direct/route.ts` and
+  `src/app/api/estudiantes/profile/cover/route.ts` (server `PutObjectCommand`
+  instead of a presigned POST the browser has to reach directly). Auth via
+  `getApiSession()` (401 "No autorizado" when anonymous); accepts only
+  image/jpeg|png|webp|gif|avif (400 otherwise); 8 MB max (400 above it); key
+  `uploads/<sanitized>-<timestamp>-<uuid>.<ext>`, matching `/api/upload`'s
+  convention; `ACL: 'public-read'` (same as `/api/upload` and
+  `documentupload-direct`, since the resulting URL is rendered straight into
+  `next/image`/`toCoverImageUrl`'s `/api/image-proxy`). Returns `{ key }`.
+- `CreatePostModal.tsx`: `handleImageUpload` now posts a `FormData` with the
+  raw `File` to this route instead of the two-step presigned-POST dance; the
+  dead presigned-POST code path was deleted from that component. A
+  client-side `URL.createObjectURL(file)` preview is created immediately
+  (independent of the upload finishing) so the new preview step (below) has
+  something to show without waiting on a live S3 URL; it's revoked on
+  replace/unmount/removal, never touching a real (non-blob) URL from an
+  `editingPost`.
+- `ModalResumen.tsx` was not touched — it has the same latent
+  presigned-POST issue but is explicitly out of this slice per the
+  orchestrator's hard constraints.
+
+### 2. Preview step before publishing
+
+"Previsualizar" no longer submits directly. `CreatePostModal.tsx` now
+renders two stacked `Dialog`s:
+
+- The existing composer dialog: "Previsualizar" now calls `openPreview()`
+  (guards on non-empty content + not already submitting) which opens the
+  second dialog, instead of calling the API.
+- A new preview dialog — title "Previsualizar publicación", description
+  "Revisa cómo se verá tu post antes de publicarlo". Body: the same "Tú"
+  avatar-circle-with-initial treatment as the composer, "Tú" label, and —
+  only when a project is selected — a `FolderKanban`-icon line "Publicando
+  en <proyecto>" with the project name in the same gradient-accent style
+  `CommunityPostCard`/`ProjectFeedCard` use for project name links; the line
+  is omitted entirely (not rendered empty) when no project is selected. Then
+  `content` in a `whitespace-pre-wrap` paragraph, then the image (via the
+  blob-preview or the real `editingPost.imageUrl`) in a rounded container
+  using `next/image` with `fill` + `unoptimized` (required for a `blob:`
+  URL, which the Next image optimizer can't fetch server-side). Footer:
+  "Editar" (outline, just closes the preview dialog — composer state is
+  untouched, so every field is exactly as the user left it) and "Publicar"
+  (accent, `Send` icon) which calls `handlePublish` — the only place that
+  now calls POST/PATCH `/api/community-posts`.
+- Both dialogs reuse the shared `~/components/estudiantes/ui/dialog.tsx`
+  primitives, so the close button (top-right, `sr-only` "Close" label),
+  Escape-to-close, and `role="dialog"`/labelled-and-described-by wiring are
+  inherited for free from Radix — no extra accessibility code needed.
+
+### 3. Edit and delete a post (author-only)
+
+Route shape chosen: `src/app/api/community-posts/[id]/route.ts` (new),
+sibling to the existing `route.ts` (GET/POST) — matches this repo's existing
+`[id]` sub-route convention (e.g. `src/app/api/projects/[id]/feedback/route.ts`)
+rather than overloading the collection route with an id in the body.
+
+- `PATCH` — validates the same fields POST does (`content`, `kind`,
+  `projectId`, `imageKey`, `linkUrl`, same zod shape/limits). Loads the post
+  by id first: 404 "Publicación no encontrada" if it doesn't exist, 403 "No
+  tienes permiso para editar esta publicación" if it exists but
+  `post.userId !== session.userId` — this ordering (404 before the
+  ownership 403) is the same pattern already established by this codebase's
+  `POST /api/community-posts` (project lookup) and
+  `/api/projects/[id]/feedback` (project lookup), so it was kept consistent
+  rather than invented fresh. When `projectId` is supplied, re-checks
+  `project.userId === session.userId` from scratch — the previously-selected
+  project is never trusted from the client, same rule as create.
+- `DELETE` — same author-only 404-then-403 check, then deletes the row.
+- Both use `getApiSession()` (not raw Clerk `auth()`), matching this slice's
+  auth convention and this codebase's `feedback/route.ts` precedent.
+
+`CommunityPostCard.tsx`:
+
+- Viewer identity: `useUser()` from `@clerk/nextjs` (same hook already used
+  by `ProjectFeedCard.tsx`, `ProjectDetailView.tsx`,
+  `ProjectFeedbackThread.tsx`, `GuidedProjectDetails.tsx` in this exact
+  component tree — chosen over prop-drilling a server-resolved viewer id
+  because the feed is a Server Component fetch with no per-request viewer
+  context threaded through it, and this hook is already the repo's
+  established client-side pattern for "who is looking at this"). Author
+  identity was already on the data: `CommunityFeedPost.author.id` (mapped
+  from `communityPosts.userId` in `getCommunityPostsFeed`), so
+  `isAuthor = user?.id === post.author.id` needed no new data fetch.
+- New `Ellipsis` "..." button (same icon/pattern as `ProjectFeedCard`'s own
+  actions menu — `aria-haspopup="menu"`, `aria-expanded`, outside-click +
+  Escape close via a `menuRef` + effect, same shape as
+  `ProjectsLeftRail.tsx`'s "Crear" dropdown) rendered only when `isAuthor`
+  to the right of the header row. Menu: "Editar" (calls the new
+  `onEdit(post)` prop) and "Eliminar" (calls a local `handleDelete`:
+  `window.confirm` Spanish prompt, then `DELETE /api/community-posts/[id]`,
+  then `router.refresh()` — never `window.location.reload()` — with a
+  Spanish `toast.error` on failure and `isDeleting` disabling the button
+  mid-flight).
+- `onEdit` is a required prop (`(post: CommunityFeedPost) => void`) — the
+  modal itself is mounted once by `ProjectsSocialView`, not per card, so the
+  card can't open it directly; it bubbles the request up instead.
+
+`ProjectsSocialView.tsx`:
+
+- New `editingPost: CommunityFeedPost | null` state + `handleEditPost`
+  (sets it and opens the existing `isPostModalOpen`/`CreatePostModal`
+  instance — no second modal instance was created).
+- `CreatePostModal`'s `onClose` now also resets `editingPost` to `null`, so
+  the next "Crear publicación" open (via the "+" menu) is guaranteed to
+  start blank, not stuck showing the last-edited post.
+- `CommunityPostCard` render call gets the new `onEdit={handleEditPost}`
+  prop.
+
+`CreatePostModal.tsx` edit-mode support:
+
+- New optional `editingPost?: CommunityFeedPost | null` prop (default
+  `null`, so every existing "create" call site — the mobile sheet, the
+  desktop dropdown — is unaffected without changes).
+- The existing `isOpen`-keyed reset effect now branches: when `editingPost`
+  is set, it pre-fills `content`/`kind`/`linkUrl`/`imageKey`/
+  `imageFileName`/`imagePreviewUrl`/`selectedProject` from it instead of
+  blanking them; `selectedProject` is rebuilt as
+  `{ id, name, isOwner: true }` from `editingPost.project` (safe: only an
+  owner can attach a post to a project in the first place, per both the
+  create and edit server checks, and `getPublishableProjects` — read before
+  writing this — only ever returns the caller's own projects, so `isOwner`
+  is always `true` for anything that could legally be `editingPost.project`
+  here).
+- `handlePublish` branches PATCH `/api/community-posts/{id}` vs. POST
+  `/api/community-posts` on `Boolean(editingPost)`, and the dialog title
+  switches to "Editar publicación" vs. "Crear publicación".
+- Type change required for this: `CommunityFeedPost` (in `types.ts`) only
+  exposed the resolved `imageUrl?: string`, not the raw S3 `imageKey` PATCH
+  needs to send back when the image is unchanged. Added
+  `imageKey: string | null` to `CommunityFeedPost` and to
+  `getCommunityPostsFeed`'s mapped return in `projectSocialData.ts`
+  (`row.imageKey` was already selected in the query — only the final object
+  literal was missing the field).
+
+### 4. Fixed the clipped follow-button tooltip
+
+`src/components/estudiantes/proyectos/subcomponents/ProjectFeedCard.tsx`:
+what was clipping it — the card's own `<article>` wrapper has
+`overflow-hidden` (needed for its rounded corners + hover-glow gradient
+overlay). The follow button's custom tooltip `<span>` was positioned
+`absolute right-0 bottom-full mb-2` — i.e. above the button. Since the
+button sits in the card's very first row (right under a few pixels of
+padding), that upward-opening tooltip extended past the article's top edge
+and got clipped by the ancestor's `overflow-hidden`, cutting it off exactly
+as reported. Fix: flipped the tooltip to open below the button instead
+(`top-full mt-2` in place of `bottom-full mb-2`, plus `z-20` so it draws
+above the badge/timestamp row directly beneath it during the hover
+transition). This keeps the tooltip fully inside the card's own bounds — it
+can never clip (nothing above it to escape past) and it can never float
+above the site header (it's anchored to a button inside the card, not to
+the viewport). The native `title` attribute on the same button (used for
+the browser's own tooltip, separate text: "Seguir proyecto"/"Dejar de
+seguir") was left untouched — it isn't CSS-positioned and was never the
+clipped element.
+
+### Files changed (Batch 8)
+
+- Created: `src/app/api/community-posts/upload-image/route.ts`
+- Created: `src/app/api/community-posts/[id]/route.ts` (PATCH, DELETE)
+- Modified:
+  `src/components/estudiantes/proyectos/subcomponents/CreatePostModal.tsx`
+  (server-side upload rewire, preview dialog, edit-mode pre-fill + PATCH)
+- Modified:
+  `src/components/estudiantes/proyectos/subcomponents/CommunityPostCard.tsx`
+  (`onEdit` prop, author-only "..." menu, delete flow)
+- Modified: `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`
+  (`editingPost` state, `handleEditPost`, `CreatePostModal`/`CommunityPostCard`
+  wiring)
+- Modified: `src/components/estudiantes/proyectos/types.ts` (`imageKey` added
+  to `CommunityFeedPost`)
+- Modified: `src/components/estudiantes/proyectos/projectSocialData.ts`
+  (`imageKey` added to `getCommunityPostsFeed`'s mapped result)
+- Modified:
+  `src/components/estudiantes/proyectos/subcomponents/ProjectFeedCard.tsx`
+  (follow-button tooltip repositioned below the button instead of above it)
+- Modified: `openspec/changes/user-projects-and-student-ux/tasks.md` (added
+  Phase 8, 8.1-8.4 marked `[x]`)
+
+### Not touched (per hard constraints)
+
+`ModalResumen.tsx`, `ProjectFeedbackThread.tsx`, `AgentChatWidget.tsx`,
+`getPublishableProjects.ts`, everything under `drizzle/`,
+`src/server/db/schema.ts` (no new tables/columns — `community_posts` already
+had every field this slice needed).
+
+### Verification status (Batch 8)
+
+No `npm run check`/`lint`/`typecheck`/`build` run per validation-timing
+policy. No integrated-browser check was performed in this session. Recommend,
+once convenient: post a new community post with an image and confirm the
+upload no longer throws "Failed to fetch"; click "Previsualizar" and confirm
+it opens the preview dialog without publishing, that "Editar" returns to the
+composer with every field intact, and that "Publicar" actually creates the
+post; as the post's author, open the "..." menu on your own post and confirm
+"Editar" pre-fills the composer and PATCHes correctly, and "Eliminar" asks
+for confirmation, removes it, and refreshes the feed; confirm the "..." menu
+is absent on posts by other authors; and hover the follow button on a
+project card near the top of the "Explorar" list to confirm the "Seguir"/
+"Siguiendo" tooltip is now fully visible below the button instead of cut off
+above it.
+
+### Not committed (Batch 8)
+
+Per hard constraints, no commit/push/PR was created. Changes are in the
+working tree only, awaiting user-approved commit.

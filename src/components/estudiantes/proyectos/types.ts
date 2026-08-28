@@ -46,3 +46,29 @@ export interface ProjectSocialCollaborator {
   name: string;
   imageUrl?: string;
 }
+
+export interface CommunityFeedPostAuthor {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+}
+
+export interface CommunityFeedPostProject {
+  id: number;
+  name: string;
+  needsCollaborators: boolean;
+}
+
+export type CommunityPostKind = 'none' | 'update' | 'milestone' | 'request';
+
+export interface CommunityFeedPost {
+  id: number;
+  content: string;
+  kind: CommunityPostKind;
+  imageKey: string | null;
+  imageUrl?: string;
+  linkUrl: string | null;
+  createdAt: string;
+  author: CommunityFeedPostAuthor;
+  project: CommunityFeedPostProject | null;
+}

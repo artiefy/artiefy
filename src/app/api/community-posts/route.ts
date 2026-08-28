@@ -112,10 +112,7 @@ export async function POST(req: Request) {
 
     if (projectId !== undefined) {
       const [project] = await db
-        .select({
-          userId: projects.userId,
-          isPublic: projects.isPublic,
-        })
+        .select({ userId: projects.userId })
         .from(projects)
         .where(eq(projects.id, projectId))
         .limit(1);
@@ -124,8 +121,9 @@ export async function POST(req: Request) {
         return respondWithError('Proyecto no encontrado', 404);
       }
 
-      const canPostToProject = project.userId === userId || project.isPublic;
-      if (!canPostToProject) {
+      // Only the owner publishes under a project. A public project belonging
+      // to somebody else is readable, not postable.
+      if (project.userId !== userId) {
         return respondWithError(
           'No tienes permiso para publicar en este proyecto',
           403

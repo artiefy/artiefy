@@ -3,7 +3,10 @@ import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { getProjectSocialCollections } from '~/components/estudiantes/proyectos/projectSocialData';
+import {
+  getCommunityPostsFeed,
+  getProjectSocialCollections,
+} from '~/components/estudiantes/proyectos/projectSocialData';
 import { ProjectsSocialView } from '~/components/estudiantes/proyectos/ProjectsSocialView';
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
@@ -39,8 +42,13 @@ export default async function ProyectosPage({
   }
 
   const { userId } = await auth();
-  const { exploreItems, myItems, collaborationItems, collaboratorItems } =
-    await getProjectSocialCollections(userId);
+  const [
+    { exploreItems, myItems, collaborationItems, collaboratorItems },
+    communityPosts,
+  ] = await Promise.all([
+    getProjectSocialCollections(userId),
+    getCommunityPostsFeed(),
+  ]);
 
   return (
     <>
@@ -49,6 +57,7 @@ export default async function ProyectosPage({
         myItems={myItems}
         collaborationItems={collaborationItems}
         collaboratorItems={collaboratorItems}
+        communityPosts={communityPosts}
       />
       <Footer />
     </>
