@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { Code, DollarSign, Pen, Send, Users } from 'lucide-react';
+import { Code, DollarSign, Pen, Send, Trash2, Users } from 'lucide-react';
 
 import type { ProjectSocialItem } from '../types';
 
@@ -14,6 +14,9 @@ interface ProjectWorkspaceCardProps {
   publishHref: string;
   /** Omitted where there is no wizard to open, such as the profile page. */
   onEdit?: (item: ProjectSocialItem) => void;
+  /** Omitted where deleting is not offered. Deleting is irreversible, so the
+   *  handler is responsible for confirming with the owner first. */
+  onDelete?: (item: ProjectSocialItem) => void;
 }
 
 const stageBadgeClass: Record<ProjectSocialItem['stage'], string> = {
@@ -28,6 +31,7 @@ export function ProjectWorkspaceCard({
   workHref,
   publishHref,
   onEdit,
+  onDelete,
 }: ProjectWorkspaceCardProps) {
   const progress = Math.max(0, Math.min(100, item.progressPercentage ?? 0));
 
@@ -171,6 +175,21 @@ export function ProjectWorkspaceCard({
           >
             <Pen className="size-3.5" />
             Editar
+          </button>
+        ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            onClick={() => onDelete(item)}
+            aria-label={`Eliminar ${item.title}`}
+            className={`
+              flex items-center gap-2 rounded-lg bg-[#1A2333] px-3 py-1.5
+              text-xs font-medium text-rose-300 transition-colors
+              hover:bg-rose-500/15 hover:text-rose-200
+            `}
+          >
+            <Trash2 className="size-3.5" />
+            Eliminar
           </button>
         ) : null}
       </div>
