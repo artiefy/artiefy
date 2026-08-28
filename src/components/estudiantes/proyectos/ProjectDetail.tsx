@@ -255,6 +255,22 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
           Volver a proyectos
         </Link>
 
+        {/* Entrar al espacio de trabajo del proyecto: resumen, entregas,
+            retroalimentacion y cronograma. Tiene ruta propia, asi que no
+            depende de aterrizar en el curso y que la lista lo abra. */}
+        <Link
+          href={`/estudiantes/proyectos/${item.id}/trabajo`}
+          className="
+              ml-2 inline-flex items-center gap-2 rounded-lg border
+              border-primary/40 bg-primary/15 px-3 py-2 text-sm font-semibold
+              text-primary transition-colors
+              hover:bg-primary/25
+            "
+        >
+          Entrar
+          <ArrowLeft className="size-4 rotate-180" />
+        </Link>
+
         <article
           className="
             mt-6 overflow-hidden rounded-2xl border border-border/50 bg-card/70

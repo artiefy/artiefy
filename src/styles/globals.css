@@ -485,6 +485,33 @@ body.no-chrome {
   background-color: rgba(255, 255, 255, 0.28);
 }
 
+/* Scroll horizontal discreto, en el color de la marca.
+   Para las filas que se desplazan de lado: chips de instructores, pestañas.
+   La barra nativa ahí es gruesa y gris, y parte el diseño. */
+.scrollbar-marca {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 196, 211, 0.45) transparent;
+}
+
+.scrollbar-marca::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-marca::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-marca::-webkit-scrollbar-thumb {
+  background-color: rgba(34, 196, 211, 0.35);
+  border-radius: 9999px;
+  transition: background-color 0.2s;
+}
+
+.scrollbar-marca::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(34, 196, 211, 0.65);
+}
+
 /* Reserve space for the fixed mobile bottom bar so it never covers content.
    Applied only on small screens and only while the bar is mounted. */
 @media (max-width: 767px) {

@@ -91,7 +91,7 @@ Responde las preguntas de los estudiantes sobre el curso de forma clara, directa
 
 IMPORTANTE:
 - Si la pregunta es simple (como "¿nombre del curso?"), responde de forma conversacional simple sin listar formatos.
-- Si la pregunta pide información técnica o detalhada, proporciona los detalles relevantes.
+- Si la pregunta pide información técnica o detallada, proporciona los detalles relevantes.
 - Usa un tono amigable y accesible.
 - Evita reproducir exactamente el contenido bruto - parafrasea y simplifica.
 - Si el contenido tiene formato especial (--- Hoja: X ---), interpreta y resume.

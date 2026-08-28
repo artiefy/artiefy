@@ -24,6 +24,8 @@ export interface ProjectDetail {
   coverVideoKey?: string | null;
   type_project: string;
   userId: string;
+  /** Curso al que pertenece el proyecto, si lo hay. */
+  courseId: number | null;
   categoryId: number;
   categoryName?: string;
   isPublic: boolean;
@@ -173,6 +175,7 @@ export async function getProjectById(
     coverVideoKey: project.coverVideoKey ?? null,
     type_project: project.type_project,
     userId: project.userId,
+    courseId: project.courseId ?? null,
     categoryId: project.categoryId,
     categoryName,
     isPublic: project.isPublic,

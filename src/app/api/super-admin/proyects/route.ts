@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { eq, inArray } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db/index';
-import { enrollments, projects, users } from '~/server/db/schema';
+import { projects, users } from '~/server/db/schema';
 
 // GET /api/super-admin/proyects?courseId=ID
 export async function GET(req: Request) {
@@ -14,18 +14,11 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Falta courseId' }, { status: 400 });
     }
 
-    // 1. Obtener los estudiantes inscritos en el curso
-    const inscripciones = await db
-      .select({ userId: enrollments.userId })
-      .from(enrollments)
-      .where(eq(enrollments.courseId, Number(courseId)));
-
-    const userIds = inscripciones.map((i) => i.userId);
-    if (userIds.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    // 2. Obtener los proyectos de esos estudiantes junto con nombre y correo
+    // Los proyectos DEL CURSO, no los de sus estudiantes.
+    //
+    // Antes se resolvia por inscripciones: se buscaba a los alumnos del curso
+    // y se traian todos sus proyectos, incluidos los de otros cursos y los
+    // personales. `projects.course_id` es la relacion real.
     let proyectos = [];
     try {
       proyectos = await db
@@ -57,7 +50,7 @@ export async function GET(req: Request) {
         })
         .from(projects)
         .leftJoin(users, eq(projects.userId, users.id))
-        .where(inArray(projects.userId, userIds));
+        .where(eq(projects.courseId, Number(courseId)));
     } catch (joinError) {
       console.error(
         '[API /api-super-admin/proyects] Join error, fallback to projects only:',
@@ -66,7 +59,7 @@ export async function GET(req: Request) {
       proyectos = await db
         .select()
         .from(projects)
-        .where(inArray(projects.userId, userIds));
+        .where(eq(projects.courseId, Number(courseId)));
     }
     return NextResponse.json(proyectos);
   } catch (error) {

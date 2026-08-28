@@ -560,16 +560,22 @@ export async function getCollaboratorPublicDetails(userId: string): Promise<{
   };
 }
 
+/**
+ * Trae un proyecto para su ficha.
+ *
+ * Por defecto solo devuelve proyectos publicos: esta pagina es la vista
+ * social, abierta a cualquiera. `permitirPrivado` lo usa la ficha cuando ya
+ * ha comprobado que quien mira tiene derecho a ver el proyecto (su dueno, o
+ * un admin/educador desde el panel del curso). Nunca lo actives sin esa
+ * comprobacion previa: expondria proyectos privados a todo el mundo.
+ */
 export async function getProjectSocialById(
   id: number,
-  viewerId?: string | null
+  permitirPrivado = false
 ): Promise<ProjectSocialItem | null> {
   const project = await getProjectById(id);
   if (!project) return null;
-  // isPublic means "visible to other people", not "visible at all": the owner
-  // always reaches their own project, private or still a draft.
-  const isOwner = Boolean(viewerId && project.userId === viewerId);
-  if (!project.isPublic && !isOwner) return null;
+  if (!project.isPublic && !permitirPrivado) return null;
 
   return mapToSocialItem({
     id: project.id,
@@ -582,6 +588,9 @@ export async function getProjectSocialById(
     isPublic: project.isPublic,
     needsCollaborators: project.needsCollaborators,
     createdAt: project.createdAt,
+    // Sin esto la ficha no sabe a que curso pertenece el proyecto, y no
+    // puede ofrecer el "Entrar" que lleva a su espacio de trabajo.
+    courseId: project.courseId ?? null,
     coverImageKey: project.coverImageKey,
     coverVideoKey: project.coverVideoKey,
     userId: project.userId,

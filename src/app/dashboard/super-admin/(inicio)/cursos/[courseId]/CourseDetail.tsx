@@ -2700,7 +2700,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto pb-1">
+          <div className="scrollbar-marca mt-4 flex flex-nowrap items-center gap-2 overflow-x-auto pb-2">
             {currentInstructors.length > 0 ? (
               currentInstructors.map((instructorId) => {
                 const educator = educators.find((e) => e.id === instructorId);
@@ -5435,16 +5435,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     </span>
                                   )}
                                 </div>
-                                <button
+                                {/* Abre el proyecto en la vista de
+                                    estudiantes. Estas tarjetas salen de la
+                                    tabla `projects`, cuya pagina publica es
+                                    /estudiantes/proyectos/[id]. */}
+                                <Link
+                                  href={`/estudiantes/proyectos/${project.id}`}
                                   className="
-                                    mt-4 w-full rounded bg-[#22C4D3]/20 px-4 py-2
-                                    font-semibold text-[#22C4D3] transition
+                                    mt-4 block w-full rounded bg-[#22C4D3]/20
+                                    px-4 py-2 text-center font-semibold
+                                    text-[#22C4D3] transition
                                     hover:bg-[#22C4D3]/40 hover:text-white
                                   "
-                                  onClick={() => setSelectedProject(project)}
                                 >
                                   Ver más
-                                </button>
+                                </Link>
                               </div>
                             ))
                           ) : (
