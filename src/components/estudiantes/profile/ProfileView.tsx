@@ -18,6 +18,7 @@ import {
   MapPin,
   Pencil,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import MyCoursesContent, {
   type Course,
@@ -135,8 +136,43 @@ export function ProfileView({
       setUploadingCover(false);
     }
   };
+  const [deletedProjectIds, setDeletedProjectIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const visibleProjects = projects.filter(
+    (item) => !deletedProjectIds.has(item.id)
+  );
+
+  const handleDeleteProject = async (item: ProjectSocialItem) => {
+    // Irreversible, and it takes the project's objectives, activities and
+    // feedback with it, so confirm before calling the endpoint.
+    const confirmed = window.confirm(
+      `¿Eliminar "${item.title}"? Se borrarán también sus objetivos, actividades y retroalimentación. Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/projects/${item.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(body?.error ?? 'No se pudo eliminar el proyecto.');
+      }
+      setDeletedProjectIds((prev) => new Set(prev).add(item.id));
+      toast.success('Proyecto eliminado.');
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo eliminar el proyecto.'
+      );
+    }
+  };
+
   const stats = [
-    { label: 'Proyectos', value: projects.length },
+    { label: 'Proyectos', value: visibleProjects.length },
     { label: 'Posts', value: 0 },
     { label: 'Seguidores', value: 0 },
     { label: 'Siguiendo', value: 0 },
@@ -426,19 +462,20 @@ export function ProfileView({
           <div className="mt-6 lg:mt-8">
             {activeTab === 'cursos' ? (
               <MyCoursesContent courses={courses} programs={programs} />
-            ) : activeTab === 'proyectos' && projects.length > 0 ? (
+            ) : activeTab === 'proyectos' && visibleProjects.length > 0 ? (
               <div
                 className="
                   grid gap-4
                   xl:grid-cols-2
                 "
               >
-                {projects.map((item) => (
+                {visibleProjects.map((item) => (
                   <ProjectWorkspaceCard
                     key={item.id}
                     item={item}
                     workHref={projectWorkHref(item)}
                     publishHref={projectHref(item)}
+                    onDelete={handleDeleteProject}
                   />
                 ))}
               </div>

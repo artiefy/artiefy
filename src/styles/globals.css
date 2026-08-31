@@ -1,4 +1,8 @@
 @import 'tailwindcss';
+/* Tailwind v4 needs plugins registered explicitly. Without this the
+   `animate-in`, `fade-in-*` and `slide-in-from-*` utilities used by every
+   dialog, select, tooltip and bottom sheet emit no CSS at all. */
+@plugin 'tailwindcss-animate';
 
 @custom-variant dark (&:is(.dark *));
 

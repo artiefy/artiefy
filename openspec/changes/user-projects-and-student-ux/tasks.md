@@ -96,7 +96,7 @@ not yet in the database.
 - [x] 4.1 In `src/server/db/schema.ts`, add `communityPosts` table
       (`community_posts`): `id` serial PK; `userId` text → `users.id`
       not null; `projectId` integer → `projects.id`, nullable, `onDelete:
-    'set null'` (a deleted project degrades the post to a general
+  'set null'` (a deleted project degrades the post to a general
       publication instead of orphaning/crashing the feed); `kind` text enum
       `['none','update','milestone','request']` default `'none'` not null;
       `content` text not null; `imageKey` text nullable; `linkUrl` text
@@ -234,3 +234,71 @@ Schema-only in this batch — no `db:*` command was run.
       thread. Real `<button>`s, a labelled reply textarea (`sr-only`
       `<label>`), `focus-visible` rings, and `aria-expanded`/`aria-controls`
       linking "Responder" to its reply region.
+
+## Phase 7: Community Posts — Feed Rendering (continuation, no migration)
+
+Renders the `communityPosts` schema/API from Phase 4 in the `/proyectos`
+feed — previously a post was saved by `POST /api/community-posts` and never
+displayed anywhere.
+
+- [x] 7.1 In `src/components/estudiantes/proyectos/projectSocialData.ts`,
+      added `getCommunityPostsFeed()`: selects `communityPosts` joined with
+      `users` (author) and left-joined with `projects` (for `id`/`name`/
+      `needsCollaborators`), newest first, mapped into the new
+      `CommunityFeedPost` shape (`types.ts`). Reuses the file's existing
+      `toCoverImageUrl()` for `imageKey` and adds a sibling `toAvatarUrl()`
+      (direct S3 URL, matching the precedent in
+      `src/app/api/projects/[id]/comments/route.ts`) for the author's
+      `users.profileImageKey`. Wired into `src/app/proyectos/page.tsx`
+      (fetched in parallel with `getProjectSocialCollections`) and passed to
+      `ProjectsSocialView` as a new `communityPosts` prop.
+- [x] 7.2 Created
+      `src/components/estudiantes/proyectos/subcomponents/CommunityPostCard.tsx`:
+      header (avatar + online dot, author name, "publicó en <proyecto>"
+      gradient link — omitted entirely when the post has no project), kind
+      badge (`Actualización`/`Hito`/`Solicitud`, none for `kind === 'none'`),
+      Spanish relative timestamp, `whitespace-pre-wrap` content, an optional
+      link line, an optional image block, an optional "Busca colaboradores"
+      chip driven by the linked project's real `needsCollaborators`, and a
+      like/comment/save/share action bar with every control disabled
+      (real-data rationale in apply-progress).
+- [x] 7.3 In `src/components/estudiantes/proyectos/ProjectsSocialView.tsx`,
+      merged posts into the "Explorar" view only, sorted by recency
+      alongside project cards; posts drop out of the merged feed whenever a
+      project-only filter (stage, "busca colaboradores") is active, and the
+      search box also filters posts (content/author/project name).
+      "Mis proyectos"/"Colaboraciones"/"Favoritos"/"Proyectos que sigo" are
+      unchanged (project-only, as they already were).
+
+## Phase 8: Post upload fix, preview step, edit/delete, tooltip clip (continuation)
+
+Fixes the post-composer image upload (browser->S3 CORS failure), adds a real
+preview step before publishing, lets an author edit/delete their own post,
+and fixes a clipped follow-button tooltip on `ProjectFeedCard`.
+
+- [x] 8.1 Created `src/app/api/community-posts/upload-image/route.ts`
+      (server-side `PutObjectCommand`, `getApiSession()`-gated, image-only,
+      8 MB max, `uploads/<sanitized>-<unique>.<ext>` key convention);
+      rewired `CreatePostModal.tsx`'s `handleImageUpload` to it and deleted
+      the dead presigned-POST path. `ModalResumen.tsx` intentionally not
+      touched (same latent issue, out of this slice).
+- [x] 8.2 `CreatePostModal.tsx`: "Previsualizar" now opens a second
+      "Previsualizar publicación" `Dialog` (avatar/`Tú`, "Publicando en
+      `<proyecto>`" line omitted when no project selected, `whitespace-pre-wrap`
+      content, rounded image block) instead of publishing directly; footer
+      "Editar" (returns to composer, fields intact) / "Publicar" (`Send`
+      icon, performs the actual `POST`/`PATCH`).
+- [x] 8.3 Added `PATCH`/`DELETE` to
+      `src/app/api/community-posts/[id]/route.ts` (new sibling route,
+      author-only, 404 not found / 403 not author, re-validates `projectId`
+      ownership on `PATCH`). `CommunityPostCard.tsx`: author-only "..." menu
+      (`useUser()` vs. `post.author.id`) offering "Editar" (reopens
+      `CreatePostModal` pre-filled, saves via `PATCH`) and "Eliminar"
+      (Spanish confirm, `DELETE`, `router.refresh()`). `types.ts` /
+      `projectSocialData.ts`: added `imageKey` to `CommunityFeedPost` so
+      edit mode can resend an unchanged image.
+- [x] 8.4 `ProjectFeedCard.tsx`: follow-button tooltip was clipped by the
+      card's `overflow-hidden` because it opened upward
+      (`bottom-full`) past the card's top edge; flipped it to open
+      downward (`top-full`, `z-20`) so it stays inside the card and is
+      never clipped or floats above the header.

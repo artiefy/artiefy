@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { toast } from 'sonner';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
 import { openAgentChatFor } from '~/lib/agents/agentChatBus';
@@ -14,6 +15,7 @@ import {
   subscribeToCreateEntry,
 } from '~/lib/creation/createEntryBus';
 
+import { CommunityPostCard } from './subcomponents/CommunityPostCard';
 import { CreatePostModal } from './subcomponents/CreatePostModal';
 import { ProjectFeedCard } from './subcomponents/ProjectFeedCard';
 import {
@@ -23,14 +25,27 @@ import {
 import { ProjectsRightRail } from './subcomponents/ProjectsRightRail';
 import { ProjectWorkspaceCard } from './subcomponents/ProjectWorkspaceCard';
 
-import type { ProjectSocialCollaborator, ProjectSocialItem } from './types';
+import type {
+  CommunityFeedPost,
+  ProjectSocialCollaborator,
+  ProjectSocialItem,
+} from './types';
 
 interface ProjectsSocialViewProps {
   exploreItems: ProjectSocialItem[];
   myItems: ProjectSocialItem[];
   collaborationItems: ProjectSocialItem[];
   collaboratorItems: ProjectSocialCollaborator[];
+  communityPosts: CommunityFeedPost[];
 }
+
+// One entry of the merged "Explorar" feed — a project card or a community
+// post, ordered together by recency. Project-specific filters (stage,
+// "busca colaboradores") have no meaning for a post, so it drops out of the
+// feed whenever one of those is active rather than ignoring the filter.
+type ExploreFeedEntry =
+  | { kind: 'project'; createdAt: string; item: ProjectSocialItem }
+  | { kind: 'post'; createdAt: string; post: CommunityFeedPost };
 
 const stageFilters: Array<ProjectSocialItem['stage']> = [
   'Idea',
@@ -80,6 +95,7 @@ export function ProjectsSocialView({
   myItems,
   collaborationItems,
   collaboratorItems,
+  communityPosts,
 }: ProjectsSocialViewProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -104,6 +120,9 @@ export function ProjectsSocialView({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<CommunityFeedPost | null>(
+    null
+  );
 
   // Entry point for both the desktop "Crear" dropdown (already inside this
   // tree) and the mobile bottom sheet (mounted globally by `Header`, so it
@@ -211,6 +230,52 @@ export function ProjectsSocialView({
     });
   }, [activeItems, activeStage, needsCollaboratorsFilter, query]);
 
+  // A stage filter or the "busca colaboradores" toggle only makes sense for
+  // a project, so posts hide whenever one of those is active rather than
+  // being (wrongly) included or excluded by a filter they can't match.
+  const filteredCommunityPosts = useMemo(() => {
+    if (activeView !== 'explorar') return [];
+    if (activeStage !== 'all' || needsCollaboratorsFilter) return [];
+
+    const normalizedQuery = query.toLowerCase().trim();
+    if (normalizedQuery.length === 0) return communityPosts;
+
+    return communityPosts.filter(
+      (post) =>
+        post.content.toLowerCase().includes(normalizedQuery) ||
+        post.author.name.toLowerCase().includes(normalizedQuery) ||
+        (post.project?.name.toLowerCase().includes(normalizedQuery) ?? false)
+    );
+  }, [
+    activeStage,
+    activeView,
+    communityPosts,
+    needsCollaboratorsFilter,
+    query,
+  ]);
+
+  // Only the "Explorar" tab mixes posts with projects — "Mis proyectos",
+  // "Colaboraciones", "Favoritos" and "Proyectos que sigo" are all
+  // project-only shelves by definition (a post has no owner/save/follow
+  // state of its own), so this merge is deliberately scoped to that one view.
+  const exploreFeed = useMemo<ExploreFeedEntry[]>(() => {
+    if (activeView !== 'explorar') return [];
+
+    const projectEntries: ExploreFeedEntry[] = filteredItems.map((item) => ({
+      kind: 'project',
+      createdAt: item.createdAt,
+      item,
+    }));
+    const postEntries: ExploreFeedEntry[] = filteredCommunityPosts.map(
+      (post) => ({ kind: 'post', createdAt: post.createdAt, post })
+    );
+
+    return [...projectEntries, ...postEntries].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [activeView, filteredCommunityPosts, filteredItems]);
+
   const currentSectionTitle =
     activeView === 'mis'
       ? `Mis proyectos (${filteredItems.length})`
@@ -257,12 +322,45 @@ export function ProjectsSocialView({
     setIsEditModalOpen(true);
   };
 
+  const handleDeleteProject = async (item: ProjectSocialItem) => {
+    // Deleting a project also removes its objectives, activities, feedback and
+    // collaborators, so make the owner confirm before anything leaves.
+    const confirmed = window.confirm(
+      `¿Eliminar "${item.title}"? Se borrarán también sus objetivos, actividades y retroalimentación. Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/projects/${item.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(body?.error ?? 'No se pudo eliminar el proyecto.');
+      }
+      setLocalMyItems((prev) => prev.filter((entry) => entry.id !== item.id));
+      toast.success('Proyecto eliminado.');
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'No se pudo eliminar el proyecto.'
+      );
+    }
+  };
+
   const handleCreateProject = () => {
     requestCreateEntry('project');
   };
 
   const handleCreatePost = () => {
     requestCreateEntry('post');
+  };
+
+  const handleEditPost = (post: CommunityFeedPost) => {
+    setEditingPost(post);
+    setIsPostModalOpen(true);
   };
 
   const updateInCollection = (
@@ -438,7 +536,7 @@ export function ProjectsSocialView({
                       transition-colors
                       ${
                         activeStage === 'all'
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-primary text-[#080c16]'
                           : `
                             bg-[#1A2333] text-muted-foreground
                             hover:text-foreground
@@ -458,7 +556,7 @@ export function ProjectsSocialView({
                         transition-colors
                         ${
                           activeStage === stage
-                            ? 'bg-primary text-primary-foreground'
+                            ? 'bg-primary text-[#080c16]'
                             : `
                               bg-[#1A2333] text-muted-foreground
                               hover:text-foreground
@@ -480,7 +578,7 @@ export function ProjectsSocialView({
                       transition-colors
                       ${
                         needsCollaboratorsFilter
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-primary text-[#080c16]'
                           : `
                             bg-[#1A2333] text-muted-foreground
                             hover:text-foreground
@@ -516,11 +614,44 @@ export function ProjectsSocialView({
                   </div>
                 ) : null}
 
-                {filteredItems.length > 0 ? (
+                {activeView === 'explorar' ? (
+                  exploreFeed.length > 0 ? (
+                    exploreFeed.map((entry) =>
+                      entry.kind === 'post' ? (
+                        <CommunityPostCard
+                          key={`post-${entry.post.id}`}
+                          post={entry.post}
+                          onEdit={handleEditPost}
+                        />
+                      ) : (
+                        <ProjectFeedCard
+                          key={`project-${entry.item.id}`}
+                          item={entry.item}
+                          initialSaved={favoriteProjectIds.has(entry.item.id)}
+                          initialFollowed={followedProjectIds.has(
+                            entry.item.id
+                          )}
+                          onSavedChange={handleFavoriteChange}
+                          onFollowedChange={handleFollowChange}
+                        />
+                      )
+                    )
+                  ) : (
+                    <div
+                      className={`
+                        rounded-2xl border border-border/50 bg-card/50 p-8
+                        text-center
+                      `}
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        No encontramos proyectos ni publicaciones con esos
+                        filtros.
+                      </p>
+                    </div>
+                  )
+                ) : filteredItems.length > 0 ? (
                   filteredItems.map((item) =>
-                    activeView === 'explorar' ||
-                    activeView === 'favoritos' ||
-                    activeView === 'seguidos' ? (
+                    activeView === 'favoritos' || activeView === 'seguidos' ? (
                       <ProjectFeedCard
                         key={item.id}
                         item={item}
@@ -536,6 +667,7 @@ export function ProjectsSocialView({
                         workHref={getWorkHref(item)}
                         publishHref={getPublishHref(item)}
                         onEdit={handleEditProject}
+                        onDelete={handleDeleteProject}
                       />
                     )
                   )
@@ -552,7 +684,7 @@ export function ProjectsSocialView({
                   </div>
                 )}
 
-                {activeView === 'explorar' && filteredItems.length > 0 ? (
+                {activeView === 'explorar' && exploreFeed.length > 0 ? (
                   <button
                     type="button"
                     className={`
@@ -771,7 +903,11 @@ export function ProjectsSocialView({
 
       <CreatePostModal
         isOpen={isPostModalOpen}
-        onClose={() => setIsPostModalOpen(false)}
+        onClose={() => {
+          setIsPostModalOpen(false);
+          setEditingPost(null);
+        }}
+        editingPost={editingPost}
       />
 
       <style jsx global>{`

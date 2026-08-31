@@ -37,6 +37,25 @@ export function MobileBottomNav({
   // screen (non-enrolled course/program pages). ProgramHeader/CourseDetails
   // toggle `html.mobile-bottom-cta-visible` and emit this event.
   const [ctaVisible, setCtaVisible] = useState(false);
+  // Same idea for modals: a dialog or bottom sheet owns the whole screen while
+  // it is open, and this bar sits at a z-index nothing can out-stack, so it
+  // would paint over every one of them. Watching the DOM for an open dialog
+  // covers every modal in the app without each one having to opt in.
+  // Only the bar is hidden, never this component: it also renders the create
+  // sheet, and unmounting that mid-open would tear it down and re-mount it in
+  // a loop.
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const readDialogs = () =>
+      setDialogOpen(Boolean(document.querySelector('[role="dialog"]')));
+
+    readDialogs();
+
+    const observer = new MutationObserver(readDialogs);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const readState = () =>
@@ -141,12 +160,13 @@ export function MobileBottomNav({
 
   return (
     <div
-      className="
+      className={`
         js-mobile-bottom-nav pointer-events-none fixed inset-x-0 bottom-0
-        z-[2147483000] flex
+        z-[2147483000]
         justify-center px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)]
         md:hidden
-      "
+        ${dialogOpen ? 'hidden' : 'flex'}
+      `}
     >
       <nav
         aria-label="Navegación inferior"

@@ -4,9 +4,19 @@ import { and, desc, eq } from 'drizzle-orm';
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import getPublicProjects from '~/server/actions/project/getPublicProjects';
 import { db } from '~/server/db';
-import { categories, projects, projectsTaken, users } from '~/server/db/schema';
+import {
+  categories,
+  communityPosts,
+  projects,
+  projectsTaken,
+  users,
+} from '~/server/db/schema';
 
-import type { ProjectSocialCollaborator, ProjectSocialItem } from './types';
+import type {
+  CommunityFeedPost,
+  ProjectSocialCollaborator,
+  ProjectSocialItem,
+} from './types';
 
 import 'server-only';
 
@@ -81,6 +91,20 @@ const toCoverImageUrl = (coverImageKey?: string | null) => {
   if (!bucketBase) return undefined;
   const sourceUrl = `${bucketBase}/${coverImageKey}`;
   return `/api/image-proxy?url=${encodeURIComponent(sourceUrl)}`;
+};
+
+// Community post author avatars come from `users.profileImageKey`, the same
+// S3 key convention `toCoverImageUrl` handles above, but returned as a direct
+// bucket URL (not proxied) — matching the precedent already established by
+// `src/app/api/projects/[id]/comments/route.ts`'s `toAvatarUrl`, whose output
+// `ProjectFeedCard.tsx` already renders straight into `next/image` with no
+// proxy needed.
+const toAvatarUrl = (profileImageKey?: string | null) => {
+  if (!profileImageKey) return undefined;
+  if (profileImageKey.startsWith('http')) return profileImageKey;
+  const bucketBase = process.env.NEXT_PUBLIC_AWS_S3_URL;
+  if (!bucketBase) return undefined;
+  return `${bucketBase}/${profileImageKey}`;
 };
 
 const toDateString = (value?: string | Date | null) => {
@@ -262,6 +286,64 @@ export async function getProjectSocialFeed(): Promise<ProjectSocialItem[]> {
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+}
+
+const DEFAULT_COMMUNITY_FEED_LIMIT = 30;
+
+// Feeds `CommunityPostCard` — one post-level select, joined with its author
+// and (optionally) its linked project, so `/proyectos` can render a post
+// alongside project cards on first paint without a second client round-trip.
+// Queries the tables directly rather than calling `GET /api/community-posts`
+// internally: this is a Server Component data path, not a client fetch, and
+// it needs `projects.needsCollaborators` (for the one real chip this feed can
+// show), which that route's response shape doesn't include.
+export async function getCommunityPostsFeed(
+  limit = DEFAULT_COMMUNITY_FEED_LIMIT
+): Promise<CommunityFeedPost[]> {
+  const rows = await db
+    .select({
+      id: communityPosts.id,
+      content: communityPosts.content,
+      kind: communityPosts.kind,
+      imageKey: communityPosts.imageKey,
+      linkUrl: communityPosts.linkUrl,
+      createdAt: communityPosts.createdAt,
+      authorId: users.id,
+      authorName: users.name,
+      authorEmail: users.email,
+      authorProfileImageKey: users.profileImageKey,
+      projectId: projects.id,
+      projectName: projects.name,
+      projectNeedsCollaborators: projects.needsCollaborators,
+    })
+    .from(communityPosts)
+    .innerJoin(users, eq(communityPosts.userId, users.id))
+    .leftJoin(projects, eq(communityPosts.projectId, projects.id))
+    .orderBy(desc(communityPosts.createdAt))
+    .limit(limit);
+
+  return rows.map((row) => ({
+    id: row.id,
+    content: row.content,
+    kind: row.kind,
+    imageKey: row.imageKey,
+    imageUrl: toCoverImageUrl(row.imageKey),
+    linkUrl: row.linkUrl,
+    createdAt: toDateString(row.createdAt),
+    author: {
+      id: row.authorId,
+      name: row.authorName?.trim() || row.authorEmail,
+      avatarUrl: toAvatarUrl(row.authorProfileImageKey),
+    },
+    project:
+      row.projectId !== null
+        ? {
+            id: row.projectId,
+            name: row.projectName?.trim() || 'Proyecto sin título',
+            needsCollaborators: Boolean(row.projectNeedsCollaborators),
+          }
+        : null,
+  }));
 }
 
 export async function getProjectSocialCollections(

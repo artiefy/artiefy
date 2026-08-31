@@ -4396,9 +4396,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   return createPortal(
     <div
       className="
-        fixed inset-x-0 top-16 bottom-0 z-50 flex items-start justify-center
-        bg-black/80 px-2 pt-3 pb-2
-        sm:items-center sm:px-4 sm:pt-4 sm:pb-4
+        fixed inset-0 z-[100020] flex items-end justify-center bg-black/80
+        duration-200 animate-in fade-in-0
+        sm:items-center sm:p-4
       "
       onClick={handleOverlayClick}
     >
@@ -4407,11 +4407,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
         className="
-          relative flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] flex-col
-          gap-0 overflow-hidden rounded-[12px] border bg-background p-0
-          shadow-lg duration-200
-          sm:h-[80vh] sm:max-h-[80vh] sm:w-[95vw] sm:max-w-6xl sm:flex-row
-          sm:gap-4 sm:rounded-[16px]
+          relative flex h-[88vh] max-h-[88vh] w-full max-w-full
+          flex-col gap-0 overflow-hidden rounded-t-2xl border bg-background p-0
+          shadow-lg duration-300 animate-in slide-in-from-bottom
+          sm:h-[80vh] sm:max-h-[80vh] sm:w-[95vw] sm:max-w-6xl
+          sm:flex-row sm:gap-4 sm:rounded-[16px] sm:slide-in-from-bottom-2
           xl:max-w-7xl
         "
       >
