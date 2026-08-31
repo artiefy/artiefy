@@ -16,6 +16,11 @@ interface Toast {
   subtitle?: string;
 }
 
+import {
+  type ResultadoFacial,
+  VerificacionFacial,
+} from '~/components/acceso/VerificacionFacial';
+
 interface SearchResult {
   found: boolean;
   user?: {
@@ -27,12 +32,19 @@ interface SearchResult {
     subscriptionEndDate?: string;
     daysRemaining?: number;
     hasOpenEntry?: boolean; // Agregar para saber si tiene entrada sin cerrar
+    /** Clave en S3 de la foto de referencia para la verificación facial. */
+    profileImageKey?: string | null;
   };
   message?: string;
 }
 
 export default function BuscarSuscripcionPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [verificacion, setVerificacion] = useState<ResultadoFacial | null>(
+    null
+  );
+  /** Foto recién capturada, para no tener que volver a buscar a la persona. */
+  const [fotoNueva, setFotoNueva] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<'email' | 'document' | 'name'>(
     'email'
   );
@@ -139,6 +151,78 @@ export default function BuscarSuscripcionPage() {
         return;
       }
 
+      // Encontrada: aquí termina la búsqueda. El registro NO se dispara
+      // solo — antes hay que verificar el rostro (ver registrarAcceso).
+      setResult(searchResult);
+      setVerificacion(null);
+      setFotoNueva(null);
+      return;
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : 'Error en la búsqueda';
+      setError(errorMsg);
+      addToast('Error en la búsqueda', 'error', 5000, errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /** URL pública de la foto de referencia, o null si no tiene. */
+  const fotoReferencia = (() => {
+    const key = result?.user?.profileImageKey;
+    if (!key) return null;
+    if (key.startsWith('http')) return key;
+    return `https://s3.us-east-2.amazonaws.com/artiefy-upload/${key}`;
+  })();
+
+  /**
+   * Veredicto de la verificación facial.
+   *
+   * Todo intento queda registrado, conceda o deniegue: los denegados son
+   * precisamente los que hay que poder auditar después. El registro se hace
+   * en segundo plano y nunca bloquea el acceso de quien sí coincide.
+   */
+  const alVerificarRostro = (resultado: ResultadoFacial) => {
+    setVerificacion(resultado);
+
+    void fetch('/api/acceso/verificacion-facial', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: result?.user?.id ?? null,
+        searchTerm: searchTerm.trim(),
+        granted: resultado.coincide,
+        distance: resultado.distancia,
+        reason: resultado.motivo ?? null,
+      }),
+    }).catch(() => {
+      // El registro es auditoría, no un requisito para abrir la puerta.
+    });
+
+    if (!resultado.coincide) {
+      const detalle =
+        resultado.motivo === 'sin_referencia'
+          ? 'La persona no tiene foto de referencia registrada'
+          : resultado.motivo === 'sin_rostro'
+            ? 'No se detectó un rostro en la cámara'
+            : 'El rostro no coincide con la foto registrada';
+      addToast('Acceso denegado', 'error', 6000, detalle);
+      return;
+    }
+
+    if (result) void registrarAcceso(result);
+  };
+
+  /**
+   * Registra la entrada o salida. Solo se llama cuando la verificación
+   * facial ha dado positivo.
+   */
+  const registrarAcceso = async (searchResult: SearchResult) => {
+    setLoading(true);
+    setError(null);
+    setEsp32Message(null);
+
+    try {
       // Usuario encontrado
       setResult(searchResult);
       const userId = searchResult.user?.id;
@@ -349,6 +433,28 @@ export default function BuscarSuscripcionPage() {
           md:space-y-5
         "
       >
+        {/* Verificación facial: sin ella no se registra el acceso. La
+            comparación ocurre en este navegador; la cámara no envía la
+            imagen a ningún servidor. */}
+        {!verificacion?.coincide && (
+          <div
+            className="
+              rounded-lg border border-cyan-500/30 bg-slate-900/60 p-4
+            "
+          >
+            <p className="mb-3 text-center text-sm font-semibold text-cyan-300">
+              Verifica el rostro para continuar
+            </p>
+            <VerificacionFacial
+              fotoReferencia={fotoNueva ?? fotoReferencia}
+              onResultado={alVerificarRostro}
+              ocupado={loading}
+              userId={result?.user?.id ?? null}
+              onFotoGuardada={setFotoNueva}
+            />
+          </div>
+        )}
+
         {/* Información del usuario */}
         <div
           className="
@@ -858,12 +964,14 @@ export default function BuscarSuscripcionPage() {
                     </svg>
                     {actionType === 'entry'
                       ? 'Registrando entrada...'
-                      : 'Registrando salida...'}
+                      : actionType === 'exit'
+                        ? 'Registrando salida...'
+                        : 'Buscando...'}
                   </span>
-                ) : result?.user?.hasOpenEntry ? (
-                  '✗ Registrar Salida'
                 ) : (
-                  '✓ Registrar Entrada'
+                  // Este botón ya solo busca: el registro ocurre después de
+                  // que la verificación facial dé positivo.
+                  '🔎 Buscar persona'
                 )}
               </button>
             </div>

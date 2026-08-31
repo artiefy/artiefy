@@ -67,6 +67,18 @@ function isLegacyEducadorPath(pathname: string): boolean {
   );
 }
 
+/**
+ * Archivos servidos desde /public que el middleware NO debe tocar.
+ *
+ * El matcher excluye css, js e imágenes, pero deja pasar `.json` y `.bin`. Sin
+ * esta salida, la petición de un usuario con rol privilegiado acaba en el
+ * redirect al dashboard, y quien pedía JSON recibe una página HTML. Es lo que
+ * rompía la carga de los modelos de reconocimiento facial.
+ */
+function isPublicAssetPath(pathname: string): boolean {
+  return pathname.startsWith('/models/');
+}
+
 function isDashboardPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard');
 }
@@ -201,6 +213,11 @@ export default clerkMiddleware(async (auth, req) => {
 
     // Webhooks y APIs públicas: nunca tocan auth ni redirecciones.
     if (whatsAppWebhookPaths.has(pathname) || isPublicApiPath(pathname)) {
+      return NextResponse.next();
+    }
+
+    // Archivos estáticos de /public: se sirven tal cual, sin redirecciones.
+    if (isPublicAssetPath(pathname)) {
       return NextResponse.next();
     }
 

@@ -2141,6 +2141,36 @@ export const accessLogs = pgTable(
   ]
 );
 
+/**
+ * Intentos de verificación facial en el control de acceso.
+ *
+ * Tabla aparte de `access_logs` a propósito: allí `entryTime` es obligatorio y
+ * la app deduce quién está dentro por la ausencia de `exitTime`. Un intento
+ * denegado guardado ahí contaría como una entrada real.
+ */
+export const faceVerificationAttempts = pgTable(
+  'face_verification_attempts',
+  {
+    id: serial('id').primaryKey(),
+    /** Null si no se llegó a identificar a nadie. */
+    userId: text('user_id').references(() => users.id),
+    /** Lo que tecleó el operador: cédula, correo o nombre. */
+    searchTerm: text('search_term'),
+    granted: boolean('granted').notNull(),
+    /** Distancia euclídea entre descriptores; menor es más parecido. */
+    distance: real('distance'),
+    /** 'sin_rostro' | 'sin_referencia' | 'no_coincide' */
+    reason: text('reason'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index('face_attempts_user_idx').on(t.userId),
+    index('face_attempts_created_idx').on(t.createdAt),
+  ]
+);
+
 export const accessLogsRelations = relations(accessLogs, ({ one }) => ({
   user: one(users, {
     fields: [accessLogs.userId],

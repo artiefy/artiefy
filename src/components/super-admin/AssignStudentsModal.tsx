@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { ImportarDesdeExcel } from './importar/ImportarDesdeExcel';
+
 interface AssignUser {
   id: string;
   firstName: string;
@@ -607,9 +609,10 @@ export function AssignStudentsModal({
         {/* Contenido: dos columnas en escritorio */}
         <div
           className="
-            grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-hidden p-4
+            grid min-h-0 flex-1 grid-cols-1 gap-4 overflow-y-auto p-4
             sm:p-6
             lg:grid-cols-2
+            lg:overflow-hidden
           "
         >
           {/* Columna izquierda: estudiantes */}
@@ -639,6 +642,24 @@ export function AssignStudentsModal({
             <p className="mb-3 text-xs text-gray-400">
               {selectedStudents.length} seleccionado(s)
             </p>
+
+            {/* Importación masiva: cruza una lista de Excel con los
+                estudiantes existentes y deja elegir entre los candidatos. */}
+            <div className="mb-3">
+              <ImportarDesdeExcel
+                estudiantes={users}
+                seleccionados={selectedStudents}
+                onElegir={(id, elegido) =>
+                  setSelectedStudents((prev) =>
+                    elegido
+                      ? prev.includes(id)
+                        ? prev
+                        : [...prev, id]
+                      : prev.filter((x) => x !== id)
+                  )
+                }
+              />
+            </div>
 
             <div className="relative mb-2">
               <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-gray-500" />

@@ -62,6 +62,8 @@ export async function POST(request: NextRequest) {
             document: true,
             subscriptionStatus: true,
             subscriptionEndDate: true,
+            // Foto de referencia para la verificación facial.
+            profileImageKey: true,
           },
         });
         break;
@@ -78,6 +80,8 @@ export async function POST(request: NextRequest) {
             document: true,
             subscriptionStatus: true,
             subscriptionEndDate: true,
+            // Foto de referencia para la verificación facial.
+            profileImageKey: true,
           },
         });
         break;
@@ -95,6 +99,8 @@ export async function POST(request: NextRequest) {
             document: true,
             subscriptionStatus: true,
             subscriptionEndDate: true,
+            // Foto de referencia para la verificación facial.
+            profileImageKey: true,
           },
         });
         break;
@@ -148,6 +154,7 @@ export async function POST(request: NextRequest) {
         subscriptionEndDate: user.subscriptionEndDate?.toISOString(),
         daysRemaining,
         hasOpenEntry,
+        profileImageKey: user.profileImageKey ?? null,
       },
     });
   } catch (error) {

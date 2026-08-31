@@ -76,6 +76,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/og": "^1.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "@vladmandic/face-api": "^1.7.15",
     "@webgpu/types": "^0.1.72",
     "axios": "^1.19.0",
     "chart.js": "^4.5.1",
