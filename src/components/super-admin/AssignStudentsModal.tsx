@@ -649,6 +649,7 @@ export function AssignStudentsModal({
               <ImportarDesdeExcel
                 estudiantes={users}
                 seleccionados={selectedStudents}
+                onBuscarManual={setStudentSearch}
                 onElegir={(id, elegido) =>
                   setSelectedStudents((prev) =>
                     elegido

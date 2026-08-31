@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
-import { Download, FileSpreadsheet, X } from 'lucide-react';
+import { Download, FileSpreadsheet, Search, X } from 'lucide-react';
 
 import { buscarCandidatos, type Candidato } from './emparejar-nombres';
 
@@ -28,6 +28,8 @@ interface Props {
   seleccionados: string[];
   /** Se llama al elegir o desmarcar a alguien. */
   onElegir: (id: string, elegido: boolean) => void;
+  /** Manda un nombre al buscador de estudiantes de al lado. */
+  onBuscarManual?: (nombre: string) => void;
 }
 
 const nombreCompleto = (e: EstudianteBuscable) =>
@@ -44,6 +46,7 @@ export function ImportarDesdeExcel({
   estudiantes,
   seleccionados,
   onElegir,
+  onBuscarManual,
 }: Props) {
   const archivoRef = useRef<HTMLInputElement>(null);
   const [personas, setPersonas] = useState<PersonaImportada[]>([]);
@@ -83,8 +86,26 @@ export function ImportarDesdeExcel({
         // SheetJS se carga solo cuando hace falta: pesa bastante y esta
         // pantalla se usa de vez en cuando.
         const XLSX = await import('xlsx');
-        const datos = new Uint8Array(await archivo.arrayBuffer());
-        const libro = XLSX.read(datos, { type: 'array' });
+        const bytes = new Uint8Array(await archivo.arrayBuffer());
+
+        // Los .xlsx guardan el texto en UTF-8 internamente, pero un .csv
+        // exportado desde Excel en Windows suele venir en Windows-1252: leerlo
+        // como UTF-8 convierte la ñ y las tildes en caracteres ilegibles. Se
+        // intenta UTF-8 estricto y, si falla, se relee como Windows-1252.
+        const esCsv = /\.csv$/i.test(archivo.name);
+        let libro;
+
+        if (esCsv) {
+          let texto: string;
+          try {
+            texto = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+          } catch {
+            texto = new TextDecoder('windows-1252').decode(bytes);
+          }
+          libro = XLSX.read(texto, { type: 'string' });
+        } else {
+          libro = XLSX.read(bytes, { type: 'array' });
+        }
         const hoja = libro.Sheets[libro.SheetNames[0]];
 
         // `header: 1` devuelve cada fila como un array: estas listas suelen
@@ -116,7 +137,12 @@ export function ImportarDesdeExcel({
             fila: i + 1,
             nombreOriginal: nombre,
             documento,
-            candidatos: buscarCandidatos(nombre, estudiantes, nombreCompleto),
+            candidatos: buscarCandidatos(
+              nombre,
+              estudiantes,
+              nombreCompleto,
+              3
+            ),
           });
         });
 
@@ -216,14 +242,35 @@ export function ImportarDesdeExcel({
               key={persona.fila}
               className="rounded-lg border border-gray-700 bg-gray-900/60 p-2"
             >
-              <p className="text-xs font-semibold text-white">
-                {persona.nombreOriginal}
-                {persona.documento && (
-                  <span className="ml-2 text-[11px] font-normal text-gray-500">
-                    {persona.documento}
-                  </span>
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-xs font-semibold text-white">
+                  {persona.nombreOriginal}
+                  {persona.documento && (
+                    <span className="ml-2 text-[11px] font-normal text-gray-500">
+                      {persona.documento}
+                    </span>
+                  )}
+                </p>
+
+                {/* Salida manual: si ninguna de las tres propuestas es la
+                    persona, se manda el nombre al buscador de al lado para
+                    revisarlo a mano. */}
+                {onBuscarManual && (
+                  <button
+                    type="button"
+                    onClick={() => onBuscarManual(persona.nombreOriginal)}
+                    title="Buscar este nombre en la lista completa"
+                    className="
+                      flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5
+                      text-[11px] text-gray-400 transition-colors
+                      hover:bg-white/5 hover:text-cyan-300
+                    "
+                  >
+                    <Search className="size-3" />
+                    Buscar
+                  </button>
                 )}
-              </p>
+              </div>
 
               {persona.candidatos.length === 0 ? (
                 <p className="mt-1 text-[11px] text-amber-400">
