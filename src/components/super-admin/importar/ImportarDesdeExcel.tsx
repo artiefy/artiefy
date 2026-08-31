@@ -87,33 +87,48 @@ export function ImportarDesdeExcel({
         // pantalla se usa de vez en cuando.
         const XLSX = await import('xlsx');
         const bytes = new Uint8Array(await archivo.arrayBuffer());
-
-        // Los .xlsx guardan el texto en UTF-8 internamente, pero un .csv
-        // exportado desde Excel en Windows suele venir en Windows-1252: leerlo
-        // como UTF-8 convierte la ñ y las tildes en caracteres ilegibles. Se
-        // intenta UTF-8 estricto y, si falla, se relee como Windows-1252.
         const esCsv = /\.csv$/i.test(archivo.name);
-        let libro;
 
-        if (esCsv) {
-          let texto: string;
-          try {
-            texto = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-          } catch {
-            texto = new TextDecoder('windows-1252').decode(bytes);
+        /** Lee el archivo con una página de códigos concreta. */
+        const leerFilas = (codepage?: number): unknown[][] => {
+          let libro;
+
+          if (esCsv) {
+            // Un .csv exportado desde Excel en Windows suele venir en
+            // Windows-1252; leerlo como UTF-8 rompe la ñ y las tildes.
+            let texto: string;
+            try {
+              texto = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+            } catch {
+              texto = new TextDecoder('windows-1252').decode(bytes);
+            }
+            libro = XLSX.read(texto, { type: 'string' });
+          } else {
+            libro = XLSX.read(bytes, { type: 'array', codepage });
           }
-          libro = XLSX.read(texto, { type: 'string' });
-        } else {
-          libro = XLSX.read(bytes, { type: 'array' });
-        }
-        const hoja = libro.Sheets[libro.SheetNames[0]];
 
-        // `header: 1` devuelve cada fila como un array: estas listas suelen
-        // venir sin encabezados, así que llegan tal cual.
-        const filas = XLSX.utils.sheet_to_json<unknown[]>(hoja, {
-          header: 1,
-          blankrows: false,
-        });
+          const hoja = libro.Sheets[libro.SheetNames[0]];
+          return XLSX.utils.sheet_to_json<unknown[]>(hoja, {
+            header: 1,
+            blankrows: false,
+          });
+        };
+
+        /**
+         * ¿Salieron caracteres CJK donde debería haber nombres en español?
+         *
+         * Es la firma de un .xls cuyo registro de codificación viene mal: la
+         * "ñ" acaba convertida en ideogramas como 簽 o 織. Cuando ocurre, se
+         * relee forzando Windows-1252, que es lo que realmente contiene.
+         */
+        const pareceCodificacionRota = (fs: unknown[][]) =>
+          fs.some((f) => f.some((c) => /[　-鿿가-힯＀-￯]/.test(String(c ?? ''))));
+
+        let filas = leerFilas();
+        if (!esCsv && pareceCodificacionRota(filas)) {
+          console.warn('[IMPORTAR] codificación rota, releyendo en 1252');
+          filas = leerFilas(1252);
+        }
 
         const resultado: PersonaImportada[] = [];
 
@@ -233,7 +248,7 @@ export function ImportarDesdeExcel({
       {personas.length > 0 && (
         <div
           className="
-            scrollbar-marca max-h-[45vh] min-h-0 flex-1 space-y-2
+            scrollbar-marca max-h-[26vh] min-h-0 flex-1 space-y-2
             overflow-y-auto pr-1
           "
         >

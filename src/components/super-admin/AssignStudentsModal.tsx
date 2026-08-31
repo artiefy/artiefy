@@ -616,7 +616,12 @@ export function AssignStudentsModal({
           "
         >
           {/* Columna izquierda: estudiantes */}
-          <div className="flex min-h-0 flex-col rounded-lg bg-gray-800 p-4">
+          <div
+            className="
+              scrollbar-marca flex min-h-0 flex-col overflow-y-auto rounded-lg
+              bg-gray-800 p-4
+            "
+          >
             <div className="mb-3 flex items-center justify-between gap-2">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
                 <UserIcon className="size-4 text-cyan-400" />
@@ -698,7 +703,12 @@ export function AssignStudentsModal({
               />
             </label>
 
-            <div className="min-h-0 flex-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900">
+            <div
+              className="
+                scrollbar-marca max-h-[40vh] min-h-[9rem] shrink-0
+                overflow-y-auto rounded-lg border border-gray-700 bg-gray-900
+              "
+            >
               {users.length === 0 ? (
                 <p className="p-4 text-center text-sm text-gray-500">
                   No hay usuarios disponibles.
