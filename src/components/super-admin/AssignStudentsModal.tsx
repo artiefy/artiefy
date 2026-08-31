@@ -645,7 +645,7 @@ export function AssignStudentsModal({
 
             {/* Importación masiva: cruza una lista de Excel con los
                 estudiantes existentes y deja elegir entre los candidatos. */}
-            <div className="mb-3">
+            <div className="mb-3 shrink-0">
               <ImportarDesdeExcel
                 estudiantes={users}
                 seleccionados={selectedStudents}

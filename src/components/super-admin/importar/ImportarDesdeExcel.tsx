@@ -205,7 +205,12 @@ export function ImportarDesdeExcel({
       )}
 
       {personas.length > 0 && (
-        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+        <div
+          className="
+            scrollbar-marca max-h-[45vh] min-h-0 flex-1 space-y-2
+            overflow-y-auto pr-1
+          "
+        >
           {personas.map((persona) => (
             <div
               key={persona.fila}
