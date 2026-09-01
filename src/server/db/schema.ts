@@ -1761,7 +1761,8 @@ export const classMeetings = pgTable('class_meetings', {
   title: varchar('title', { length: 255 }).notNull(),
   startDateTime: timestamp('start_datetime', { withTimezone: true }).notNull(),
   endDateTime: timestamp('end_datetime', { withTimezone: true }).notNull(),
-  joinUrl: varchar('join_url', { length: 1024 }),
+  // NOT NULL en la base: para "sin enlace" se guarda cadena vacía, no null.
+  joinUrl: varchar('join_url', { length: 1024 }).notNull(),
   weekNumber: integer('week_number'),
   createdAt: timestamp('created_at').defaultNow(),
   meetingId: varchar('meeting_id', { length: 255 }).notNull(),

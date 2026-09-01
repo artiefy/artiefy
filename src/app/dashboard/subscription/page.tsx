@@ -682,151 +682,141 @@ export default function BuscarSuscripcionPage() {
   return (
     <>
       <NotificationToast toasts={toasts} onRemove={removeToast} />
+      {/* Fondo vivo: azul noche de marca, rejilla técnica muy tenue y dos
+          auroras cian que derivan despacio. Todo decorativo y detrás del
+          contenido; se detiene si el sistema pide menos movimiento. */}
       <div
         className="
-          min-h-screen w-full bg-gray-950 px-3 py-4
-          sm:px-4 sm:py-6
-          md:px-6 md:py-8
+          relative flex min-h-screen w-full items-center justify-center
+          overflow-hidden bg-[#04101f] px-4 py-10
         "
       >
+        <div aria-hidden className="rejilla-tenue absolute inset-0" />
         <div
+          aria-hidden
           className="
-            xs:p-5
-            mx-auto w-full max-w-4xl rounded-lg border border-gray-700
-            bg-gray-900 p-4 shadow-xl shadow-cyan-500/10
-            sm:p-6
-            md:p-8
-            lg:p-10
+            aurora pointer-events-none absolute -top-1/4 left-1/4 size-[42rem]
+            rounded-full bg-[#22C4D3]/20 blur-[140px]
           "
-        >
-          {/* Logo */}
-          <div
-            className="
-              xs:mb-5
-              mb-4
-              sm:mb-6
-              md:mb-8
-            "
-          >
-            <div className="mx-auto flex max-w-xs items-center justify-center">
-              <Image
-                src="/artiefy-logo.png"
-                alt="Artiefy"
-                width={220}
-                height={64}
+        />
+        <div
+          aria-hidden
+          className="
+            aurora-lenta pointer-events-none absolute right-1/4 -bottom-1/3
+            size-[38rem] rounded-full bg-[#1c7ed6]/15 blur-[140px]
+          "
+        />
+
+        <div className="relative w-full max-w-2xl">
+          {/* Cabecera: logo pequeño arriba, etiqueta de sección y un título
+              grande. La descripción larga se resume: quien opera la puerta ya
+              sabe para qué sirve esta pantalla. */}
+          <div className="mb-8 flex flex-col items-center text-center">
+            <Image
+              src="/artiefy-logo.png"
+              alt="Artiefy"
+              width={220}
+              height={64}
+              className="mb-6 h-auto w-[130px] object-contain opacity-90"
+              priority
+            />
+
+            <span
+              className="
+                mb-4 inline-flex items-center gap-2 rounded-full border
+                border-[#22C4D3]/25 bg-[#22C4D3]/10 px-3 py-1 text-[11px]
+                font-semibold tracking-[0.14em] text-[#22C4D3] uppercase
+              "
+            >
+              <span className="relative flex size-1.5">
+                <span
+                  className="
+                    absolute inline-flex size-full animate-ping rounded-full
+                    bg-[#22C4D3] opacity-75
+                  "
+                />
+                <span
+                  className="
+                    relative inline-flex size-1.5 rounded-full bg-[#22C4D3]
+                  "
+                />
+              </span>
+              Control de acceso
+            </span>
+
+            <h1
+              className="
+                text-4xl font-bold tracking-tight text-balance text-white
+                sm:text-5xl
+              "
+            >
+              Verificación de{' '}
+              <span
                 className="
-                  xs:w-[140px]
-                  h-auto w-[120px] object-contain
-                  sm:w-[160px]
-                  md:w-[200px]
+                  bg-gradient-to-r from-[#22C4D3] to-[#7ee8f2] bg-clip-text
+                  text-transparent
                 "
-                priority
-              />
-            </div>
+              >
+                suscripción
+              </span>
+            </h1>
+
+            <p className="mt-3 max-w-md text-sm text-white/45">
+              Busca por correo, documento o nombre para registrar el acceso.
+            </p>
           </div>
 
-          {/* Título */}
-          <h1
-            className="
-              xs:text-2xl
-              mb-2 text-center text-xl font-extrabold tracking-tight
-              text-cyan-400
-              sm:mb-3 sm:text-3xl
-              md:text-4xl
-            "
-          >
-            Verificación de Suscripción
-          </h1>
-          <p
-            className="
-              xs:mb-5 xs:text-sm
-              mx-auto mb-4 max-w-3xl text-center text-xs text-gray-300
-              sm:mb-6 sm:text-base
-              md:mb-8
-            "
-          >
-            Busca un usuario por correo electrónico, número de documento o
-            nombre para verificar el estado de su suscripción.
-          </p>
-
-          {/* Formulario de búsqueda */}
+          {/* Formulario, en tarjeta de cristal sobre el fondo vivo. */}
           <div
             className="
-              xs:space-y-4
-              space-y-3
-              sm:space-y-5
-              md:space-y-6
+              space-y-5 rounded-2xl border border-white/10 bg-white/[0.04] p-6
+              shadow-2xl shadow-black/50 backdrop-blur-2xl
+              sm:p-8
             "
           >
-            {/* Selector de tipo de búsqueda */}
+            {/* Selector de tipo de búsqueda: control segmentado, con la
+                pastilla activa marcada en el cian de marca. Ocupa una sola
+                fila y deja claro que son opciones excluyentes. */}
             <div>
-              <label className="mb-2 block text-xs font-medium text-gray-300">
-                Buscar por:
+              <label className="mb-2 block text-xs font-medium text-white/50">
+                Buscar por
               </label>
               <div
                 className="
-                  xs:gap-2.5
-                  flex flex-col gap-2
-                  sm:flex-row sm:flex-wrap sm:gap-3
+                  flex gap-1 rounded-xl border border-white/10 bg-black/20 p-1
                 "
               >
-                <button
-                  type="button"
-                  onClick={() => setSearchType('email')}
-                  className={`
-                    xs:py-2.5 xs:px-4
-                    flex-1 rounded-lg px-3 py-2 text-xs font-medium transition
-                    sm:w-auto sm:text-sm
-                    ${
-                      searchType === 'email'
-                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                        : `
-                          border border-gray-600 bg-gray-800 text-gray-300
-                          hover:border-cyan-500
-                        `
-                    }
-                  `}
-                >
-                  Correo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSearchType('document')}
-                  className={`
-                    xs:py-2.5 xs:px-4
-                    flex-1 rounded-lg px-3 py-2 text-xs font-medium transition
-                    sm:w-auto sm:text-sm
-                    ${
-                      searchType === 'document'
-                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                        : `
-                          border border-gray-600 bg-gray-800 text-gray-300
-                          hover:border-cyan-500
-                        `
-                    }
-                  `}
-                >
-                  Documento
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSearchType('name')}
-                  className={`
-                    xs:py-2.5 xs:px-4
-                    flex-1 rounded-lg px-3 py-2 text-xs font-medium transition
-                    sm:w-auto sm:text-sm
-                    ${
-                      searchType === 'name'
-                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                        : `
-                          border border-gray-600 bg-gray-800 text-gray-300
-                          hover:border-cyan-500
-                        `
-                    }
-                  `}
-                >
-                  Nombre
-                </button>
+                {(
+                  [
+                    ['email', 'Correo'],
+                    ['document', 'Documento'],
+                    ['name', 'Nombre'],
+                  ] as const
+                ).map(([valor, etiqueta]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    onClick={() => setSearchType(valor)}
+                    className={`
+                      flex-1 rounded-lg px-3 py-2 text-xs font-semibold
+                      transition-all duration-200
+                      sm:text-sm
+                      ${
+                        searchType === valor
+                          ? `
+                            bg-[#22C4D3] text-[#04101f]
+                            shadow-lg shadow-[#22C4D3]/25
+                          `
+                          : `
+                            text-white/60
+                            hover:bg-white/5 hover:text-white
+                          `
+                      }
+                    `}
+                  >
+                    {etiqueta}
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -834,7 +824,7 @@ export default function BuscarSuscripcionPage() {
             <div>
               <label
                 htmlFor="search"
-                className="mb-2 block text-xs font-medium text-gray-300"
+                className="mb-2 block text-xs font-medium text-white/50"
               >
                 {searchType === 'email'
                   ? 'Correo electrónico'
@@ -855,21 +845,23 @@ export default function BuscarSuscripcionPage() {
                         ? '1234567890'
                         : 'Juan Pérez'
                   }
+                  onKeyDown={(e) => {
+                    // Enter busca: es un formulario de un solo campo y obliga
+                    // a bajar el ratón hasta el botón sin motivo.
+                    if (e.key === 'Enter' && !loading) void handleRegister();
+                  }}
                   className="
-                    xs:px-4 xs:py-2.5 xs:pr-11
-                    w-full rounded-lg border border-gray-600 bg-gray-800 px-3
-                    py-2 pr-9 text-sm text-white placeholder-gray-500 transition
-                    focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20
-                    focus:outline-none
-                    sm:py-3 sm:pr-12 sm:text-base
+                    w-full rounded-xl border border-white/10 bg-black/25 py-3
+                    pr-4 pl-11 text-base text-white transition-all
+                    placeholder:text-white/30
+                    focus:border-[#22C4D3]/60 focus:bg-black/40
+                    focus:ring-2 focus:ring-[#22C4D3]/25 focus:outline-none
                   "
                 />
                 <Search
                   className="
-                    xs:right-3
-                    absolute top-1/2 right-2.5 size-4 -translate-y-1/2
-                    text-gray-500
-                    sm:right-4 sm:size-5
+                    absolute top-1/2 left-4 size-4 -translate-y-1/2
+                    text-white/40
                   "
                 />
               </div>
@@ -908,27 +900,17 @@ export default function BuscarSuscripcionPage() {
                 type="button"
                 onClick={handleRegister}
                 disabled={loading}
-                className={`
-                  xs:px-5 xs:py-2.5
-                  flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white
-                  shadow-md transition
-                  focus:outline-none
+                className="
+                  flex-1 rounded-xl bg-[#22C4D3] px-6 py-3 text-base
+                  font-bold text-[#04101f] shadow-lg shadow-[#22C4D3]/25
+                  transition-all duration-200
+                  hover:-translate-y-0.5 hover:bg-[#3ad4e2]
+                  hover:shadow-xl hover:shadow-[#22C4D3]/35
+                  focus:ring-2 focus:ring-[#22C4D3]/50 focus:outline-none
                   disabled:cursor-not-allowed disabled:opacity-50
-                  sm:flex-none sm:px-8 sm:py-3 sm:text-lg
-                  ${
-                    result?.user?.hasOpenEntry
-                      ? `
-                        bg-red-600
-                        hover:bg-red-500 hover:shadow-red-400/50
-                        focus:ring-2 focus:ring-red-500
-                      `
-                      : `
-                        bg-green-600
-                        hover:bg-green-500 hover:shadow-green-400/50
-                        focus:ring-2 focus:ring-green-500
-                      `
-                  }
-                `}
+                  disabled:hover:translate-y-0
+                  sm:flex-none sm:px-10
+                "
               >
                 {loading ? (
                   <span
