@@ -106,10 +106,6 @@ export const ScheduledMeetingsList = ({
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [videoToShow, setVideoToShow] = useState<string | null>(null);
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
-  /** Reunión cuyo enlace de clase se está editando. */
-  const [editandoEnlace, setEditandoEnlace] = useState<number | null>(null);
-  const [enlaceBorrador, setEnlaceBorrador] = useState('');
-  const [guardandoEnlace, setGuardandoEnlace] = useState(false);
   /**
    * Acción destructiva pendiente de confirmar.
    *
@@ -144,42 +140,6 @@ export const ScheduledMeetingsList = ({
     },
     []
   );
-
-  /**
-   * Guarda o borra el enlace de clase de una reunión.
-   *
-   * Pasar cadena vacía lo elimina: la API distingue "no enviado" (deja igual)
-   * de "enviado vacío" (borra), así que aquí basta con mandar el borrador.
-   */
-  const guardarEnlace = async (meeting: UIMeeting, valor: string) => {
-    setGuardandoEnlace(true);
-    try {
-      const res = await fetch('/api/super-admin/teams/update-meeting', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: meeting.id, joinUrl: valor.trim() }),
-      });
-      if (!res.ok) throw new Error('Error guardando el enlace');
-
-      setLocalMeetings((prev) =>
-        prev.map((m) =>
-          m.id === meeting.id ? { ...m, joinUrl: valor.trim() || undefined } : m
-        )
-      );
-      setEditandoEnlace(null);
-      // `showToast` se oculta solo a los 3 s; `setToast` a secas lo dejaría
-      // fijo en pantalla.
-      showToast(
-        valor.trim() ? 'Enlace actualizado' : 'Enlace eliminado',
-        'success'
-      );
-    } catch (e) {
-      console.error('[REUNIONES] no se pudo guardar el enlace:', e);
-      showToast('No se pudo guardar el enlace', 'error');
-    } finally {
-      setGuardandoEnlace(false);
-    }
-  };
 
   /**
    * Quita el enlace de grabación externo.
@@ -514,6 +474,20 @@ export const ScheduledMeetingsList = ({
                                 );
                                 const hasVideo = finalVideos.length > 0;
 
+                                /**
+                                 * ¿Hay GRABACIÓN de verdad?
+                                 *
+                                 * Solo cuenta el video subido o el de Teams,
+                                 * no el LINK EXTERNO: ese es el sustituto
+                                 * para cuando la grabación falló, así que
+                                 * mientras exista grabación no debe ofrecerse.
+                                 */
+                                const tieneGrabacion = [
+                                  meeting.video_key,
+                                  meeting.video_key_2,
+                                  meeting.videoUrl,
+                                ].some((v) => (v ?? '').toString().trim());
+
                                 const endShort = new Intl.DateTimeFormat(
                                   'es-CO',
                                   {
@@ -545,101 +519,17 @@ export const ScheduledMeetingsList = ({
                                       )}
                                     </p>
 
-                                    {/* Enlace de clase: abrir, editar,
-                                        reemplazar o quitar. Antes era texto
-                                        fijo, sin forma de corregirlo si
-                                        venía mal. */}
-                                    {editandoEnlace === meeting.id ? (
-                                      <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#22C4D3]/25 bg-black/25 p-2">
-                                        <input
-                                          type="url"
-                                          value={enlaceBorrador}
-                                          onChange={(e) =>
-                                            setEnlaceBorrador(e.target.value)
-                                          }
-                                          placeholder="https://teams.microsoft.com/..."
-                                          className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/30 px-3 py-1.5 text-xs text-white placeholder:text-white/30 focus:border-[#22C4D3]/60 focus:outline-none"
-                                        />
-                                        <button
-                                          type="button"
-                                          disabled={guardandoEnlace}
-                                          onClick={() =>
-                                            void guardarEnlace(
-                                              meeting,
-                                              enlaceBorrador
-                                            )
-                                          }
-                                          className="rounded-lg bg-[#22C4D3] px-3 py-1.5 text-xs font-bold text-[#04101f] transition-colors hover:bg-[#3ad4e2] disabled:opacity-50"
-                                        >
-                                          {guardandoEnlace
-                                            ? 'Guardando…'
-                                            : 'Guardar'}
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setEditandoEnlace(null)
-                                          }
-                                          className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-white"
-                                        >
-                                          Cancelar
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                                        {meeting.joinUrl ? (
-                                          <>
-                                            <a
-                                              href={meeting.joinUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="inline-flex items-center gap-1.5 rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-3 py-1.5 text-xs font-semibold text-[#22C4D3] transition-colors hover:bg-[#22C4D3]/20"
-                                            >
-                                              🔗 Entrar a la clase
-                                            </a>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setEditandoEnlace(meeting.id);
-                                                setEnlaceBorrador(
-                                                  meeting.joinUrl ?? ''
-                                                );
-                                              }}
-                                              className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-[#22C4D3]"
-                                            >
-                                              ✏️ Editar
-                                            </button>
-                                            <button
-                                              type="button"
-                                              disabled={guardandoEnlace}
-                                              onClick={() =>
-                                                setConfirmacion({
-                                                  titulo: 'Quitar enlace',
-                                                  mensaje:
-                                                    'Se eliminará el enlace de esta clase. Podrás volver a añadirlo cuando quieras.',
-                                                  textoConfirmar: 'Quitar',
-                                                  accion: () =>
-                                                    guardarEnlace(meeting, ''),
-                                                })
-                                              }
-                                              className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-red-400 disabled:opacity-50"
-                                            >
-                                              🗑 Quitar
-                                            </button>
-                                          </>
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setEditandoEnlace(meeting.id);
-                                              setEnlaceBorrador('');
-                                            }}
-                                            className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-white/20 px-3 py-1.5 text-xs text-white/50 transition-colors hover:border-[#22C4D3]/50 hover:text-[#22C4D3]"
-                                          >
-                                            + Añadir enlace de clase
-                                          </button>
-                                        )}
-                                      </div>
+                                    {/* Enlace donde ocurre la sesión. Solo
+                                        se abre desde aquí. */}
+                                    {meeting.joinUrl && (
+                                      <a
+                                        href={meeting.joinUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mr-3 inline-block text-blue-400 underline transition hover:text-blue-300"
+                                      >
+                                        🔗 Ver clase
+                                      </a>
                                     )}
 
                                     {hasVideo && (
@@ -683,15 +573,14 @@ export const ScheduledMeetingsList = ({
                                               }}
                                               className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-[#22C4D3]"
                                             >
-                                              ✏️ Editar enlace
+                                              ✏️ Editar link externo
                                             </button>
                                             <button
                                               type="button"
                                               disabled={savingLink}
                                               onClick={() =>
                                                 setConfirmacion({
-                                                  titulo:
-                                                    'Quitar enlace de grabación',
+                                                  titulo: 'Quitar link externo',
                                                   mensaje:
                                                     'Se quitará el enlace externo de esta clase. Las grabaciones subidas no se tocan.',
                                                   textoConfirmar: 'Quitar',
@@ -703,22 +592,20 @@ export const ScheduledMeetingsList = ({
                                               }
                                               className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-red-400 disabled:opacity-50"
                                             >
-                                              🗑 Quitar enlace
+                                              🗑 Quitar link externo
                                             </button>
                                           </>
                                         )}
                                       </div>
                                     )}
 
-                                    {/* Añadir el enlace manual de grabación.
-                                        Solo aparece en clases que aún no
-                                        tienen NADA: ni enlace de clase, ni
-                                        enlace manual, ni grabación subida.
-                                        En cuanto hay algo, se gestiona desde
-                                        los botones de al lado y este sobra. */}
-                                    {!meeting.videoUrlExt &&
-                                      !meeting.joinUrl &&
-                                      !hasVideo && (
+                                    {/* LINK EXTERNO (OPCIONAL): el recambio
+                                        para cuando la clase no se grabó por
+                                        algún fallo. Si ya hay GRABACIÓN no se
+                                        ofrece, y si ya hay un link externo se
+                                        cambia con "Editar enlace". */}
+                                    {!(meeting.videoUrlExt ?? '').trim() &&
+                                      !tieneGrabacion && (
                                         <button
                                           type="button"
                                           onClick={() => {
@@ -740,7 +627,7 @@ export const ScheduledMeetingsList = ({
                                           🔗{' '}
                                           {editingLinkId === meeting.id
                                             ? 'Cancelar'
-                                            : 'Agregar link de grabación'}
+                                            : 'Link externo (opcional)'}
                                         </button>
                                       )}
 
