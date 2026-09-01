@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -10,6 +9,7 @@ import {
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
 import { sortLessons } from '~/utils/lessonSorting';
 
 interface EnrollmentRequestBody {
@@ -63,31 +63,63 @@ export async function POST(req: Request) {
       ? (planType as ValidPlan)
       : 'none';
 
-    const subscriptionEndDate = new Date();
-    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+    const unMesDesdeHoy = new Date();
+    unMesDesdeHoy.setMonth(unMesDesdeHoy.getMonth() + 1);
 
     // Actualiza usuarios
+    //
+    // Matricular NUNCA debe recortar una suscripción existente. Antes esto
+    // escribía "hoy + 1 mes" sin mirar: a un educador que abría su curso —o a
+    // un estudiante que ya había pagado hasta diciembre— se le reducía el
+    // acceso a un mes. Ahora se conserva siempre la fecha más lejana, y el
+    // plan solo se cambia si no había uno activo.
     await Promise.all(
       userIds.map(async (userId) => {
+        const actual = await db.query.users.findFirst({
+          where: eq(users.id, userId),
+          columns: {
+            planType: true,
+            subscriptionStatus: true,
+            subscriptionEndDate: true,
+          },
+        });
+
+        const fechaActual = actual?.subscriptionEndDate
+          ? new Date(actual.subscriptionEndDate)
+          : null;
+
+        const sigueVigente =
+          fechaActual !== null && fechaActual.getTime() > Date.now();
+
+        const nuevaFecha =
+          fechaActual && fechaActual > unMesDesdeHoy
+            ? fechaActual
+            : unMesDesdeHoy;
+
+        // Si ya tenía un plan vigente, se respeta: matricular a un curso no
+        // es motivo para cambiarle el plan que compró.
+        const planFinal =
+          sigueVigente && actual?.planType && actual.planType !== 'none'
+            ? (actual.planType as PlanType)
+            : normalizedPlan;
+
         await db
           .update(users)
           .set({
-            planType: normalizedPlan,
+            planType: planFinal,
             subscriptionStatus: 'active',
-            subscriptionEndDate,
+            subscriptionEndDate: nuevaFecha,
           })
           .where(eq(users.id, userId))
           .execute();
 
-        await clerkClient().then((clerk) =>
-          clerk.users.updateUserMetadata(userId, {
-            publicMetadata: {
-              planType: normalizedPlan,
-              subscriptionStatus: 'active',
-              subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
-            },
-          })
-        );
+        // Fusiona en vez de reemplazar: escribir el objeto entero borraba
+        // `role` y degradaba al educador a estudiante.
+        await fusionarMetadatosPublicos(userId, {
+          planType: planFinal,
+          subscriptionStatus: 'active',
+          subscriptionEndDate: formatDateToClerk(nuevaFecha),
+        });
       })
     );
 

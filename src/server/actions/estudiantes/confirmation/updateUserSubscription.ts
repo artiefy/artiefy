@@ -4,6 +4,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
+import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SUBSCRIPTION_DURATION = 30 * DAY_IN_MS; // 30 días en milisegundos
@@ -113,12 +114,12 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     }
 
     // Actualizar metadata en Clerk
-    await clerk.users.updateUserMetadata(clerkUser.id, {
-      publicMetadata: {
-        subscriptionStatus: 'active',
-        subscriptionEndDate: subscriptionEndDate.toISOString(),
-        planType: planType,
-      },
+    // Fusiona en vez de reemplazar: un educador que renovaba su suscripción
+    // perdía el rol y acababa convertido en estudiante.
+    await fusionarMetadatosPublicos(clerkUser.id, {
+      subscriptionStatus: 'active',
+      subscriptionEndDate: subscriptionEndDate.toISOString(),
+      planType: planType,
     });
 
     console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
