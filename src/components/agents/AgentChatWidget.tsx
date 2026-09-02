@@ -305,7 +305,7 @@ const AGENT_ORDER: AgentId[] = ['artie', 'tutor', 'coach'];
 const AGENT_ROLES: Record<AgentId, string> = {
   artie: 'Consultas generales',
   tutor: 'Cursos',
-  coach: 'Proyectos guiados',
+  coach: 'Proyectos',
 };
 
 interface AgentDefinition {
@@ -358,10 +358,20 @@ export interface AgentProject {
   id: number;
   title: string;
   objectives: AgentObjective[];
+  /**
+   * Which table the id belongs to. `guidedProjects` and `projects` have
+   * independent serial sequences, so the chat route needs this to know which
+   * one to look up. Absent means guided, exactly like every mount before user
+   * projects were supported.
+   */
+  source?: 'guided' | 'user';
 }
 
 export interface AgentChatWidgetProps {
-  /** Present only on guided project routes. Unlocks the Coach objectives tree. */
+  /**
+   * Present on the routes that own a project — guided detail and the user
+   * project workspace. Unlocks the Coach objectives tree and its threads.
+   */
   project?: AgentProject;
 }
 
@@ -417,19 +427,57 @@ function buildQuotaNotice(quota: AgentQuotaPayload): AgentQuotaNotice {
   };
 }
 
+/**
+ * A branch of a project conversation, opened by clicking one activity. It is
+ * not a conversation of its own: it shares the parent's id, scope and entry in
+ * the history, so opening an activity never starts a new session.
+ */
+interface StoredThread {
+  activityId: number;
+  title: string;
+  updatedAt: number;
+  messages: ChatMessage[];
+}
+
 interface StoredConversation {
   id: string;
   agent: AgentId;
   title: string;
   updatedAt: number;
+  /** The root thread: what the chat shows when no activity is open. */
   messages: ChatMessage[];
   /** Absent on conversations stored before scopes existed. */
   scope?: AgentChatScope;
+  /** Absent on conversations stored before per-activity threads existed. */
+  threads?: StoredThread[];
 }
+
+/**
+ * Threads are stored inside their conversation, so a project with dozens of
+ * activities cannot quietly eat the ~5MB `localStorage` gives the whole site.
+ * The list is kept most-recent-first, so the cap drops the least recently
+ * used thread.
+ */
+const MAX_THREADS_PER_CONVERSATION = 12;
 
 /** Conversations saved before scopes existed are read back as general ones. */
 function readScope(conversation: StoredConversation): AgentChatScope {
   return conversation.scope ?? GENERAL_SCOPE;
+}
+
+/** Same fallback for threads: absent means the conversation has none yet. */
+function readThreads(conversation: StoredConversation): StoredThread[] {
+  return conversation.threads ?? [];
+}
+
+function upsertThread(
+  threads: StoredThread[] | undefined,
+  next: StoredThread
+): StoredThread[] {
+  return [
+    next,
+    ...(threads ?? []).filter((item) => item.activityId !== next.activityId),
+  ].slice(0, MAX_THREADS_PER_CONVERSATION);
 }
 
 function formatTime(date: Date) {
@@ -454,6 +502,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [selectedActivityId, setSelectedActivityId] = useState<number | null>(
     null
   );
+  /**
+   * The activity thread on screen, or null for the root thread. It never
+   * changes `conversationId`: a thread is a branch of the open conversation,
+   * not a new one.
+   */
+  const [activeThread, setActiveThread] = useState<{
+    activityId: number;
+    title: string;
+  } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -484,13 +541,21 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   /**
-   * The scope the route itself implies. Guided project pages mount the widget
-   * with their project, so a chat opened there is already about that project.
+   * The scope the route itself implies. Project pages mount the widget with
+   * their project, so a chat opened there is already about that project.
+   * `source` travels with it: without it the chat route resolves the id as a
+   * guided project first, which for a user project would consult an unrelated
+   * row that happens to share the number.
    */
   const routeScope = useMemo<AgentChatScope>(
     () =>
       project
-        ? { kind: 'project', id: project.id, title: project.title }
+        ? {
+            kind: 'project',
+            id: project.id,
+            title: project.title,
+            source: project.source,
+          }
         : GENERAL_SCOPE,
     [project]
   );
@@ -501,6 +566,20 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const loadedHistoryKey = useRef<string | null>(null);
   /** The open conversation, readable from callbacks that outlive a render. */
   const activeConversationRef = useRef<string | null>(null);
+  /**
+   * The open thread inside it, same purpose. A reply is only allowed to land
+   * when both still match what was open when it was sent — otherwise an answer
+   * about activity A appears inside activity B.
+   */
+  const activeThreadRef = useRef<number | null>(null);
+  /**
+   * The root branch while a thread covers it. The history only stores
+   * exchanges that got an answer, so it cannot be the source of truth here: a
+   * message still waiting for its reply would be dropped from the project chat
+   * the moment an activity is opened. The root cannot change while a thread is
+   * on screen, so writing this on the way in is enough to keep it exact.
+   */
+  const rootMessagesRef = useRef<ChatMessage[]>([]);
   /** Cancels the reply in flight when the learner leaves its conversation. */
   const inFlightRef = useRef<AbortController | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -548,7 +627,12 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     inFlightRef.current?.abort();
     inFlightRef.current = null;
     activeConversationRef.current = nextId;
+    activeThreadRef.current = null;
+    rootMessagesRef.current = [];
     setConversationId(nextId);
+    // Threads belong to the conversation being left, so the next one always
+    // opens on its root thread.
+    setActiveThread(null);
     setIsSending(false);
     setUnreadCount(0);
     setPendingDeleteId(null);
@@ -1086,22 +1170,43 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         ? (firstUserMessage?.text.slice(0, 60) ?? 'Nueva conversación')
         : scope.title;
 
-    const entry: StoredConversation = {
-      id: conversationId,
-      agent: agentId,
-      title,
-      updatedAt: Date.now(),
-      messages,
-      scope,
-    };
+    const updatedAt = Date.now();
 
-    setHistory((prev) =>
-      [entry, ...prev.filter((item) => item.id !== conversationId)].slice(
-        0,
-        MAX_STORED_CONVERSATIONS
-      )
-    );
-  }, [messages, conversationId, agentId, scope]);
+    setHistory((prev) => {
+      const stored = prev.find((item) => item.id === conversationId);
+      const rest = prev.filter((item) => item.id !== conversationId);
+
+      // What is on screen belongs to exactly one thread. Writing it over the
+      // whole entry would erase the other threads, so only the branch the
+      // learner is reading is replaced.
+      const entry: StoredConversation = activeThread
+        ? {
+            id: conversationId,
+            agent: agentId,
+            title,
+            updatedAt,
+            messages: rootMessagesRef.current,
+            scope,
+            threads: upsertThread(stored?.threads, {
+              activityId: activeThread.activityId,
+              title: activeThread.title,
+              updatedAt,
+              messages,
+            }),
+          }
+        : {
+            id: conversationId,
+            agent: agentId,
+            title,
+            updatedAt,
+            messages,
+            scope,
+            threads: stored?.threads,
+          };
+
+      return [entry, ...rest].slice(0, MAX_STORED_CONVERSATIONS);
+    });
+  }, [messages, conversationId, agentId, scope, activeThread]);
 
   // Persist on every change except the very first render, which would
   // overwrite stored history before the load effect above has run.
@@ -1140,11 +1245,97 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const openConversation = (conversation: StoredConversation) => {
     leaveConversation(conversation.id);
     setAgentId(conversation.agent);
+    rootMessagesRef.current = conversation.messages;
     setMessages(conversation.messages);
     setDraft('');
     setQuotaNotice(null);
     closeHistoryPanel();
     setScope(readScope(conversation));
+  };
+
+  /**
+   * Swaps the branch on screen without leaving the conversation: the id, the
+   * scope and the history entry stay the same, only the messages change. The
+   * reply still travelling belongs to the branch being left, so it is aborted
+   * here — otherwise it lands in whichever thread is open when it resolves.
+   */
+  const switchThread = (
+    next: { activityId: number; title: string } | null,
+    nextMessages: ChatMessage[]
+  ) => {
+    // Leaving the root branch is the only moment its messages can be captured:
+    // from here on the history entry for it is written from this ref.
+    if (activeThreadRef.current === null) rootMessagesRef.current = messages;
+
+    inFlightRef.current?.abort();
+    inFlightRef.current = null;
+    activeThreadRef.current = next?.activityId ?? null;
+    setActiveThread(next);
+    setMessages(nextMessages);
+    setDraft('');
+    setIsSending(false);
+    setQuotaNotice(null);
+    setUnreadCount(0);
+    setRevealingId(null);
+  };
+
+  /**
+   * Opens the thread of one activity. Never starts a new conversation: the
+   * project chat is one session, and each activity is a branch inside it that
+   * is restored as it was left the next time it is clicked.
+   */
+  const openActivityThread = (activity: AgentActivity) => {
+    setSelectedActivityId(activity.id);
+    if (activeThread?.activityId === activity.id) return;
+
+    // The first thread of a chat that never sent anything still needs an id to
+    // be stored under, since a thread cannot exist outside a conversation.
+    const targetConversationId = conversationId ?? `conv-${Date.now()}`;
+    if (!conversationId) {
+      activeConversationRef.current = targetConversationId;
+      setConversationId(targetConversationId);
+    }
+
+    const stored = history
+      .find((item) => item.id === targetConversationId)
+      ?.threads?.find((thread) => thread.activityId === activity.id);
+
+    if (stored) {
+      switchThread(
+        { activityId: activity.id, title: stored.title },
+        stored.messages
+      );
+      return;
+    }
+
+    const now = new Date();
+    switchThread({ activityId: activity.id, title: activity.name }, [
+      {
+        id: `${now.getTime()}-agent`,
+        role: 'agent',
+        agent: agentId,
+        text: `Abrimos un hilo para «${activity.name}». Cuéntame en qué vas y seguimos solo esta actividad por aquí.`,
+        time: formatTime(now),
+      },
+    ]);
+  };
+
+  /** Back to the conversation itself, with the thread kept for later. */
+  const returnToRootThread = () => {
+    if (!activeThread) return;
+    switchThread(null, rootMessagesRef.current);
+  };
+
+  /** History entry point: opens a conversation straight on one of its threads. */
+  const openConversationThread = (
+    conversation: StoredConversation,
+    thread: StoredThread
+  ) => {
+    openConversation(conversation);
+    activeThreadRef.current = thread.activityId;
+    setActiveThread({ activityId: thread.activityId, title: thread.title });
+    setSelectedActivityId(thread.activityId);
+    setMessages(thread.messages);
   };
 
   /**
@@ -1241,7 +1432,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       ? Math.round((completedActivities / totalActivities) * 100)
       : 0;
 
-  const showTree = Boolean(project) && agentId === 'coach';
+  // The tree belongs to the project this route mounted. Opening a stored
+  // conversation from another project switches `scope` without unmounting the
+  // widget, and showing the tree then would let a click send this project's
+  // activity id alongside the other project's id.
+  const showTree =
+    Boolean(project) &&
+    agentId === 'coach' &&
+    scope.kind === 'project' &&
+    scope.id === project?.id;
 
   const toggleObjective = (objectiveId: number) => {
     setExpandedObjectives((prev) =>
@@ -1269,8 +1468,14 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     if (!conversationId) setConversationId(targetConversationId);
     activeConversationRef.current = targetConversationId;
 
+    // The thread counts as much as the conversation: switching activities mid
+    // answer must not deliver it into the activity that is open by then.
+    const targetThreadActivityId = activeThread?.activityId ?? null;
+    activeThreadRef.current = targetThreadActivityId;
+
     const isStillOpen = () =>
-      activeConversationRef.current === targetConversationId;
+      activeConversationRef.current === targetConversationId &&
+      activeThreadRef.current === targetThreadActivityId;
 
     const controller = new AbortController();
     inFlightRef.current = controller;
@@ -1309,6 +1514,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           activityId:
             scope.kind === 'project' && scope.id === project?.id
               ? activeActivityId
+              : undefined,
+          // Only set once the learner opened a thread, which is what gives it
+          // its own memory on the agent side. A project chat without threads
+          // keeps the single session it has always had. Scoped like
+          // `activityId` above: an activity id only means anything against the
+          // project it belongs to.
+          threadActivityId:
+            scope.kind === 'project' && scope.id === project?.id
+              ? (targetThreadActivityId ?? undefined)
               : undefined,
         }),
       });
@@ -1486,98 +1700,152 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               const conversationAgent = AGENTS[conversation.agent];
               const ConversationIcon = conversationAgent.icon;
               const badge = scopeBadge(readScope(conversation));
+              const threads = readThreads(conversation);
               const lastMessage =
                 conversation.messages[conversation.messages.length - 1];
 
               return (
-                <li
-                  key={conversation.id}
-                  className="flex items-center gap-1 rounded-xl px-1 transition-colors hover:bg-white/[0.04]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => openConversation(conversation)}
-                    className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5 text-left"
+                <li key={conversation.id}>
+                  <div
+                    className="
+                      flex items-center gap-1 rounded-xl px-1
+                      transition-colors
+                      hover:bg-white/[0.04]
+                    "
                   >
-                    <div
-                      className="flex size-8 shrink-0 items-center justify-center rounded-lg"
-                      style={{
-                        background: `${conversationAgent.color}26`,
-                      }}
+                    <button
+                      type="button"
+                      onClick={() => openConversation(conversation)}
+                      className="flex min-w-0 flex-1 items-center gap-3 px-2 py-2.5 text-left"
                     >
-                      <ConversationIcon
-                        className="size-4"
-                        style={{ color: conversationAgent.color }}
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <p className="truncate text-sm text-foreground">
-                          {conversation.title}
-                        </p>
-                        {badge && (
-                          <span
-                            className="
-                              shrink-0 rounded-full px-2 py-0.5
-                              text-[10px] leading-none font-medium
-                            "
-                            style={{
-                              backgroundColor: `${badge.color}1f`,
-                              color: badge.color,
-                            }}
-                          >
-                            {badge.label}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex min-w-0 items-center gap-1.5">
-                        <p className="truncate text-[11px] text-muted-foreground">
-                          {lastMessage?.text ?? conversationAgent.name}
-                        </p>
-                        <span className="shrink-0 text-[11px] text-muted-foreground">
-                          {formatDay(conversation.updatedAt)}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                  {pendingDeleteId === conversation.id ? (
-                    <span className="flex shrink-0 items-center gap-0.5">
-                      <button
-                        type="button"
-                        aria-label={`Confirmar eliminar ${conversation.title}`}
-                        onClick={() => deleteConversation(conversation.id)}
-                        className="
-                          rounded-lg px-2 py-1 text-[11px] font-semibold
-                          text-red-400 transition-colors
-                          hover:bg-red-500/10
-                        "
+                      <div
+                        className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                        style={{
+                          background: `${conversationAgent.color}26`,
+                        }}
                       >
-                        Borrar
-                      </button>
+                        <ConversationIcon
+                          className="size-4"
+                          style={{ color: conversationAgent.color }}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="truncate text-sm text-foreground">
+                            {conversation.title}
+                          </p>
+                          {badge && (
+                            <span
+                              className="
+                                shrink-0 rounded-full px-2 py-0.5
+                                text-[10px] leading-none font-medium
+                              "
+                              style={{
+                                backgroundColor: `${badge.color}1f`,
+                                color: badge.color,
+                              }}
+                            >
+                              {badge.label}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex min-w-0 items-center gap-1.5">
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            {lastMessage?.text ?? conversationAgent.name}
+                          </p>
+                          <span className="shrink-0 text-[11px] text-muted-foreground">
+                            {formatDay(conversation.updatedAt)}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                    {pendingDeleteId === conversation.id ? (
+                      <span className="flex shrink-0 items-center gap-0.5">
+                        <button
+                          type="button"
+                          aria-label={`Confirmar eliminar ${conversation.title}`}
+                          onClick={() => deleteConversation(conversation.id)}
+                          className="
+                            rounded-lg px-2 py-1 text-[11px] font-semibold
+                            text-red-400 transition-colors
+                            hover:bg-red-500/10
+                          "
+                        >
+                          Borrar
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Cancelar"
+                          onClick={() => setPendingDeleteId(null)}
+                          className="
+                            rounded-lg p-1.5 transition-colors
+                            hover:bg-white/[0.06]
+                          "
+                        >
+                          <X className="size-3.5 text-muted-foreground" />
+                        </button>
+                      </span>
+                    ) : (
                       <button
                         type="button"
-                        aria-label="Cancelar"
-                        onClick={() => setPendingDeleteId(null)}
+                        aria-label={`Eliminar ${conversation.title}`}
+                        onClick={() => setPendingDeleteId(conversation.id)}
                         className="
-                          rounded-lg p-1.5 transition-colors
+                          shrink-0 rounded-lg p-2 transition-colors
                           hover:bg-white/[0.06]
                         "
                       >
-                        <X className="size-3.5 text-muted-foreground" />
+                        <Trash2 className="size-3.5 text-muted-foreground" />
                       </button>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      aria-label={`Eliminar ${conversation.title}`}
-                      onClick={() => setPendingDeleteId(conversation.id)}
-                      className="
-                        shrink-0 rounded-lg p-2 transition-colors
-                        hover:bg-white/[0.06]
-                      "
+                    )}
+                  </div>
+
+                  {/* Activity threads hang from their conversation instead of
+                      taking their own row: they are branches of it, and the
+                      history keeps counting conversations, not threads. */}
+                  {threads.length > 0 && (
+                    <ul
+                      className="mb-1 ml-7 space-y-0.5 border-l pl-2"
+                      style={{ borderColor: 'rgba(255, 255, 255, 0.08)' }}
                     >
-                      <Trash2 className="size-3.5 text-muted-foreground" />
-                    </button>
+                      {threads.map((thread) => {
+                        const lastThreadMessage =
+                          thread.messages[thread.messages.length - 1];
+
+                        return (
+                          <li key={thread.activityId}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openConversationThread(conversation, thread)
+                              }
+                              className="
+                                flex w-full min-w-0 items-center gap-2
+                                rounded-lg px-2 py-1.5 text-left
+                                transition-colors
+                                hover:bg-white/[0.04]
+                              "
+                            >
+                              <Target
+                                className="size-3 shrink-0"
+                                style={{ color: conversationAgent.color }}
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-[11px] font-medium text-foreground/90">
+                                  {thread.title}
+                                </span>
+                                <span className="block truncate text-[10px] text-muted-foreground">
+                                  {lastThreadMessage?.text ?? 'Hilo abierto'}
+                                </span>
+                              </span>
+                              <span className="shrink-0 text-[10px] text-muted-foreground">
+                                {formatDay(thread.updatedAt)}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </li>
               );
@@ -1939,9 +2207,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
             {showTree && currentActivity && (
               <button
                 type="button"
-                onClick={() =>
-                  setSelectedActivityId(currentActivity.activity.id)
-                }
+                onClick={() => openActivityThread(currentActivity.activity)}
                 className="mx-3 mt-3 mb-1 flex items-center gap-2.5 rounded-xl border px-3 py-2.5 transition-colors hover:bg-white/[0.04]"
                 style={{
                   borderColor: `${agent.color}40`,
@@ -2080,7 +2346,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                                       key={activity.id}
                                       type="button"
                                       onClick={() =>
-                                        setSelectedActivityId(activity.id)
+                                        openActivityThread(activity)
                                       }
                                       className="flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-white/[0.05]"
                                       style={
@@ -2135,6 +2401,51 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Open thread. Shown independently of the tree: the orchestrator
+                can hand the turn to another agent, and the way back to the
+                project chat has to survive that. */}
+            {activeThread && (
+              <div
+                className="
+                  sticky top-0 z-10 mx-3 mt-3 mb-1 flex items-center gap-2.5
+                  rounded-xl border bg-card px-3 py-2
+                "
+                style={{
+                  borderColor: `${agent.color}40`,
+                  // Tint as a background IMAGE so the opaque `bg-card` layer
+                  // underneath survives: this banner is sticky inside the
+                  // scrolling message list, and a translucent background would
+                  // let the messages read through it as they scroll past.
+                  backgroundImage: `linear-gradient(${agent.color}12, ${agent.color}12)`,
+                }}
+              >
+                <Target
+                  className="size-3.5 shrink-0"
+                  style={{ color: agent.color }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] text-muted-foreground">
+                    Hilo de la actividad
+                  </p>
+                  <p className="truncate text-xs font-semibold text-foreground">
+                    {activeThread.title}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={returnToRootThread}
+                  className="
+                    shrink-0 rounded-lg px-2 py-1 text-[10px] font-semibold
+                    whitespace-nowrap transition-colors
+                    hover:bg-white/[0.06]
+                  "
+                  style={{ color: agent.color }}
+                >
+                  Volver al proyecto
+                </button>
               </div>
             )}
 

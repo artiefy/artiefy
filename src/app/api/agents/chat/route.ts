@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 import { env } from '~/env';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
@@ -13,7 +13,12 @@ import {
   resolveAgentQuotaTier,
 } from '~/server/agents/agentChatQuota';
 import { db } from '~/server/db';
-import { courses, projects } from '~/server/db/schema';
+import {
+  courses,
+  projectActivities,
+  projects,
+  specificObjectives,
+} from '~/server/db/schema';
 
 interface AgentChatRequestBody {
   message?: unknown;
@@ -23,6 +28,12 @@ interface AgentChatRequestBody {
   projectSource?: unknown;
   courseId?: unknown;
   activityId?: unknown;
+  /**
+   * Set by the widget when the learner opened a thread on one activity. It
+   * splits the agent-side memory of that thread from the rest of the project
+   * conversation; absent means the single thread projects have always had.
+   */
+  threadActivityId?: unknown;
 }
 
 /** Specialists the orchestrator can hand a message to. */
@@ -161,15 +172,24 @@ async function buildCourseContext(courseId: number): Promise<string> {
  * Coach counterpart of `buildProjectContext`, for a project the learner
  * created directly on `/proyectos` (no course, no guided curriculum). Same
  * "only source of truth" rule applies: the agent never queries the database
- * itself.
+ * itself, so the objectives and the schedule have to travel inside this block
+ * exactly like the guided curriculum does.
+ *
+ * There is no completion column on `project_activities`: an activity counts as
+ * done once its deliverable was submitted, which is the only signal the schema
+ * carries.
  */
-function buildUserProjectContext(project: {
-  name: string;
-  description: string | null;
-  planteamiento: string;
-  justificacion: string;
-  objetivo_general: string;
-}): string {
+async function buildUserProjectContext(
+  projectId: number,
+  project: {
+    name: string;
+    description: string | null;
+    planteamiento: string;
+    justificacion: string;
+    objetivo_general: string;
+  },
+  activityId: number | null
+): Promise<string> {
   const lines = [`Proyecto: ${project.name}`];
 
   if (project.description) {
@@ -183,6 +203,98 @@ function buildUserProjectContext(project: {
   }
   if (project.objetivo_general) {
     lines.push(`Objetivo general: ${project.objetivo_general}`);
+  }
+
+  const [objectives, activities] = await Promise.all([
+    db.query.specificObjectives.findMany({
+      where: eq(specificObjectives.projectId, projectId),
+      columns: { id: true, description: true },
+      orderBy: [asc(specificObjectives.id)],
+    }),
+    db.query.projectActivities.findMany({
+      where: eq(projectActivities.projectId, projectId),
+      columns: {
+        id: true,
+        objectiveId: true,
+        description: true,
+        startDate: true,
+        endDate: true,
+        deliverableDescription: true,
+        deliverableSubmittedAt: true,
+      },
+      orderBy: [asc(projectActivities.id)],
+    }),
+  ]);
+
+  if (objectives.length === 0 && activities.length === 0) {
+    return lines.join('\n');
+  }
+
+  const done = activities.filter(
+    (activity) => activity.deliverableSubmittedAt !== null
+  ).length;
+  lines.push(`Entregas registradas: ${done}/${activities.length}`);
+
+  const groups: {
+    title: string;
+    activities: typeof activities;
+  }[] = objectives.map((objective) => ({
+    title: objective.description,
+    activities: activities.filter(
+      (activity) => activity.objectiveId === objective.id
+    ),
+  }));
+
+  // `project_activities.objective_id` is nullable, so a user project can hold
+  // activities that hang from no objective. They are listed apart instead of
+  // being silently dropped from the block.
+  const unassigned = activities.filter(
+    (activity) => activity.objectiveId === null
+  );
+  if (unassigned.length > 0) {
+    groups.push({ title: 'Actividades sin objetivo', activities: unassigned });
+  }
+
+  lines.push('');
+  lines.push('Objetivos y actividades:');
+
+  let activeLabel: string | null = null;
+
+  for (const group of groups) {
+    const groupDone = group.activities.filter(
+      (activity) => activity.deliverableSubmittedAt !== null
+    ).length;
+    lines.push(`- ${group.title} (${groupDone}/${group.activities.length})`);
+
+    for (const activity of group.activities) {
+      const isCompleted = activity.deliverableSubmittedAt !== null;
+      const isActive = activityId
+        ? activity.id === activityId
+        : !isCompleted && !activeLabel;
+      const state = isCompleted
+        ? 'completada'
+        : isActive
+          ? 'ACTIVA'
+          : 'pendiente';
+
+      if (isActive && !activeLabel) {
+        activeLabel = `${group.title} > ${activity.description}`;
+      }
+
+      lines.push(`  - ${activity.description} [${state}]`);
+
+      if (activity.startDate && activity.endDate) {
+        lines.push(`    Fechas: ${activity.startDate} a ${activity.endDate}`);
+      }
+      if (isActive && activity.deliverableDescription) {
+        lines.push(`    Entregable: ${activity.deliverableDescription}`);
+      }
+    }
+  }
+
+  if (activeLabel) {
+    lines.push('');
+    lines.push(`Actividad activa: ${activeLabel}`);
   }
 
   return lines.join('\n');
@@ -253,7 +365,14 @@ export async function POST(request: NextRequest) {
   const projectId = Number(body.projectId);
   const courseId = Number(body.courseId);
   const activityId = Number(body.activityId);
+  const threadActivityId = Number(body.threadActivityId);
   const hasProjectContext = Number.isFinite(projectId) && projectId > 0;
+  // A thread is an explicit act: the learner opened the chat on one activity.
+  // A project conversation without one keeps the session id it always had, so
+  // no existing thread on the n8n side loses its memory.
+  const hasThread = Number.isFinite(threadActivityId) && threadActivityId > 0;
+  const withThread = (base: string) =>
+    hasThread ? `${base}:activity:${threadActivityId}` : base;
   // A project always wins: a conversation is about one subject at a time.
   const hasCourseContext =
     !hasProjectContext && Number.isFinite(courseId) && courseId > 0;
@@ -310,7 +429,7 @@ export async function POST(request: NextRequest) {
         guidedProject,
         Number.isFinite(activityId) && activityId > 0 ? activityId : null
       );
-      sessionId = `${userId}:project:${projectId}`;
+      sessionId = withThread(`${userId}:project:${projectId}`);
     } else {
       // The id is absent from `guidedProjects` (or the scope already said
       // "user project"): fall back to the general table. `type` on that row
@@ -338,8 +457,12 @@ export async function POST(request: NextRequest) {
       }
 
       isUserProjectContext = true;
-      context = buildUserProjectContext(userProject);
-      sessionId = `${userId}:userproject:${projectId}`;
+      context = await buildUserProjectContext(
+        projectId,
+        userProject,
+        Number.isFinite(activityId) && activityId > 0 ? activityId : null
+      );
+      sessionId = withThread(`${userId}:userproject:${projectId}`);
     }
   } else if (hasCourseContext && userId) {
     // Same rule as projects: the agents only ever discuss courses the learner
@@ -397,10 +520,18 @@ export async function POST(request: NextRequest) {
         context,
         agent: requestedAgent,
         courseId: hasCourseContext ? courseId : null,
-        // User projects have no document in the RAG store to collide with a
-        // guided one under the same numeric id, so they never reach it.
+        // `projectId` is the guided retrieval scope and only ever carries a
+        // `guided_projects` id: the two tables have independent serial
+        // sequences, so sending a user project under this key would point the
+        // RAG step at a guided project that merely shares the number.
         projectId:
           hasProjectContext && !isUserProjectContext ? projectId : null,
+        // The user project travels on its own key instead. Nothing indexes
+        // user projects yet — `document_embeddings` can only be owned by a
+        // course or a guided project — so the workflow has no documents to
+        // match on it today; the whole project already reaches the agent
+        // through `context`.
+        userProjectId: isUserProjectContext ? projectId : null,
       }),
       signal: AbortSignal.timeout(60_000),
     });
