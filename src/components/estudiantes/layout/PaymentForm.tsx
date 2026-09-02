@@ -21,8 +21,20 @@ type PrepareBuyerAccountResponse = {
   temporaryPassword?: string;
 };
 
+// PayU needs a different generate endpoint per product family. The type is
+// passed explicitly; the legacy `Curso:` name prefix stays as the fallback so
+// existing call sites keep working untouched.
+export type PaymentFormType = 'course' | 'plan' | 'guidedProject';
+
+const GENERATE_ENDPOINTS: Record<PaymentFormType, string> = {
+  course: '/api/generateCoursePayment',
+  plan: '/api/generatePaymentData',
+  guidedProject: '/api/generateGuidedProjectPayment',
+};
+
 const PaymentForm: React.FC<{
   selectedProduct: Product;
+  paymentType?: PaymentFormType;
   requireAuthOnSubmit?: boolean;
   redirectUrlOnAuth?: string;
   persistOnAuth?: { key: string; value: string };
@@ -33,6 +45,7 @@ const PaymentForm: React.FC<{
   variant?: 'default' | 'inline-course-card' | 'inline-plan-card';
 }> = ({
   selectedProduct,
+  paymentType,
   requireAuthOnSubmit = false,
   redirectUrlOnAuth = '',
   persistOnAuth,
@@ -235,9 +248,10 @@ const PaymentForm: React.FC<{
     const timeoutId = window.setTimeout(() => controller.abort(), 10000);
 
     try {
-      const endpoint = selectedProduct.name.startsWith('Curso:')
-        ? '/api/generateCoursePayment'
-        : '/api/generatePaymentData';
+      const resolvedPaymentType: PaymentFormType =
+        paymentType ??
+        (selectedProduct.name.startsWith('Curso:') ? 'course' : 'plan');
+      const endpoint = GENERATE_ENDPOINTS[resolvedPaymentType];
 
       const response = await fetch(endpoint, {
         method: 'POST',

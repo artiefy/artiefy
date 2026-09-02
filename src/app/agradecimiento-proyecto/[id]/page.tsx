@@ -8,11 +8,15 @@ import Script from 'next/script';
 import { useAuth } from '@clerk/nextjs';
 
 import { verifyPayuResponse } from '~/server/actions/estudiantes/confirmation/verifyPayuResponse';
-import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 import '~/styles/confetti.css';
 
-export default function AgradecimientoCursoPage({
+interface PixelResponse {
+  metaPixelId: string | null;
+  title?: string;
+}
+
+export default function AgradecimientoProyectoPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -22,23 +26,13 @@ export default function AgradecimientoCursoPage({
   const { isSignedIn } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [metaPixelId, setMetaPixelId] = useState<string | null>(null);
-  const { id: courseId } = use(params);
-  const [courseTitle, setCourseTitle] = useState<string>('');
+  const { id: projectId } = use(params);
+  const [projectTitle, setProjectTitle] = useState<string>('');
   const [buyerEmail, setBuyerEmail] = useState<string>('');
   // Valor realmente cobrado por PayU: sin esto el evento Purchase llega a Meta
   // con valor 0 y el ROAS de la campaña queda inutilizable.
   const [purchaseValue, setPurchaseValue] = useState<number>(0);
   const [purchaseCurrency, setPurchaseCurrency] = useState<string>('COP');
-
-  useEffect(() => {
-    if (courseId) {
-      getCourseById(courseId)
-        .then((course) => {
-          setCourseTitle(course?.title ?? '');
-        })
-        .catch(() => setCourseTitle(''));
-    }
-  }, [courseId]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -90,10 +84,12 @@ export default function AgradecimientoCursoPage({
           setBuyerEmail(email);
         }
         // Consultar el pixel dinámico desde la API
-        fetch(`/api/courses/${courseId}/pixel`)
+        fetch(`/api/guided-projects/${projectId}/pixel`)
           .then((res) => res.json())
-          .then((data: { metaPixelId: string | null }) => {
-            if (!cancelled) setMetaPixelId(data.metaPixelId);
+          .then((data: PixelResponse) => {
+            if (cancelled) return;
+            setMetaPixelId(data.metaPixelId);
+            setProjectTitle(data.title ?? '');
           })
           .catch(() => {
             if (!cancelled) setMetaPixelId(null);
@@ -106,86 +102,82 @@ export default function AgradecimientoCursoPage({
     return () => {
       cancelled = true;
     };
-  }, [courseId, searchParams, router]);
+  }, [projectId, searchParams, router]);
 
   // Disparar el evento cuando tengamos el pixel ID
   useEffect(() => {
-    if (metaPixelId) {
-      console.log('🔥 Inicializando Facebook Pixel:', metaPixelId);
+    if (!metaPixelId) return;
 
-      // Inicializar fbq manualmente
-      interface FbqFunction {
-        (...args: unknown[]): void;
-        callMethod?: (...args: unknown[]) => void;
-        queue?: unknown[];
-        push?: FbqFunction;
-        loaded?: boolean;
-        version?: string;
-      }
+    console.log('🔥 Inicializando Facebook Pixel:', metaPixelId);
 
-      interface WindowWithFbq extends Window {
-        fbq?: FbqFunction;
-        _fbq?: FbqFunction;
-      }
+    interface FbqFunction {
+      (...args: unknown[]): void;
+      callMethod?: (...args: unknown[]) => void;
+      queue?: unknown[];
+      push?: FbqFunction;
+      loaded?: boolean;
+      version?: string;
+    }
 
-      const win = window as WindowWithFbq;
+    interface WindowWithFbq extends Window {
+      fbq?: FbqFunction;
+      _fbq?: FbqFunction;
+    }
 
-      // Crear función fbq si no existe
-      if (!win.fbq) {
-        const n: FbqFunction = function (...args: unknown[]) {
-          if (n.callMethod) {
-            n.callMethod(...args);
-          } else if (n.queue) {
-            n.queue.push(args);
-          }
-        };
-        win._fbq ??= n;
-        n.push = n;
-        n.loaded = true;
-        n.version = '2.0';
-        n.queue = [];
-        win.fbq = n;
-      }
+    const win = window as WindowWithFbq;
 
-      // Esperar a que el script esté cargado antes de disparar
-      const initPixel = () => {
-        if (win.fbq) {
-          console.log('✅ fbq disponible, disparando eventos...');
-          win.fbq('init', metaPixelId);
-          win.fbq('track', 'PageView');
-          win.fbq('track', 'Purchase', {
-            content_ids: [courseId],
-            content_type: 'product',
-            value: purchaseValue,
-            currency: purchaseCurrency,
-          });
-          console.log('✅ Eventos enviados a pixel:', metaPixelId);
+    // Crear función fbq si no existe (stub oficial de Meta: encola los eventos
+    // hasta que fbevents.js termina de cargar y procesa la cola).
+    if (!win.fbq) {
+      const n: FbqFunction = function (...args: unknown[]) {
+        if (n.callMethod) {
+          n.callMethod(...args);
+        } else if (n.queue) {
+          n.queue.push(args);
         }
       };
-
-      // Intentar múltiples veces por si el script aún está cargando
-      let attempts = 0;
-      const maxAttempts = 10;
-      const interval = setInterval(() => {
-        attempts++;
-        if (win.fbq && typeof win.fbq === 'function') {
-          initPixel();
-          clearInterval(interval);
-        } else if (attempts >= maxAttempts) {
-          console.error(
-            '❌ fbq no se cargó después de',
-            maxAttempts,
-            'intentos'
-          );
-          clearInterval(interval);
-        }
-      }, 200);
-
-      return () => clearInterval(interval);
+      win._fbq ??= n;
+      n.push = n;
+      n.loaded = true;
+      n.version = '2.0';
+      n.queue = [];
+      win.fbq = n;
     }
-  }, [metaPixelId, courseId, purchaseValue, purchaseCurrency]);
+
+    const initPixel = () => {
+      if (!win.fbq) return;
+      console.log('✅ fbq disponible, disparando eventos...');
+      win.fbq('init', metaPixelId);
+      win.fbq('track', 'PageView');
+      win.fbq('track', 'Purchase', {
+        content_ids: [projectId],
+        content_type: 'product',
+        value: purchaseValue,
+        currency: purchaseCurrency,
+      });
+      console.log('✅ Eventos enviados a pixel:', metaPixelId);
+    };
+
+    // Intentar múltiples veces por si el script aún está cargando
+    let attempts = 0;
+    const maxAttempts = 10;
+    const interval = setInterval(() => {
+      attempts++;
+      if (win.fbq && typeof win.fbq === 'function') {
+        initPixel();
+        clearInterval(interval);
+      } else if (attempts >= maxAttempts) {
+        console.error('❌ fbq no se cargó después de', maxAttempts, 'intentos');
+        clearInterval(interval);
+      }
+    }, 200);
+
+    return () => clearInterval(interval);
+  }, [metaPixelId, projectId, purchaseValue, purchaseCurrency]);
 
   const handleContinue = () => {
+    const projectUrl = `/estudiantes/proyectos-guiados/${projectId}`;
+
     if (!isSignedIn) {
       // Si no está logueado, redirigir a login con el email del comprador
       const loginUrl = new URL(
@@ -194,15 +186,11 @@ export default function AgradecimientoCursoPage({
       );
       if (buyerEmail) {
         loginUrl.searchParams.set('email', buyerEmail);
-        loginUrl.searchParams.set(
-          'redirect_url',
-          `/estudiantes/cursos/${courseId}`
-        );
+        loginUrl.searchParams.set('redirect_url', projectUrl);
       }
       router.replace(loginUrl.toString());
     } else {
-      // Si está logueado, ir directamente al curso
-      router.replace(`/estudiantes/cursos/${courseId}`);
+      router.replace(projectUrl);
     }
   };
 
@@ -210,16 +198,13 @@ export default function AgradecimientoCursoPage({
 
   return (
     <>
-      {/* Pixel de Facebook personalizado para el curso (dinámico) */}
+      {/* Pixel de Facebook personalizado para el proyecto guiado (dinámico) */}
       {metaPixelId && (
-        <>
-          {/* Cargar el script base de Facebook Pixel primero */}
-          <Script
-            id="fb-pixel-base"
-            strategy="afterInteractive"
-            src="https://connect.facebook.net/en_US/fbevents.js"
-          />
-        </>
+        <Script
+          id="fb-pixel-base"
+          strategy="afterInteractive"
+          src="https://connect.facebook.net/en_US/fbevents.js"
+        />
       )}
       {metaPixelId && (
         <noscript>
@@ -228,7 +213,7 @@ export default function AgradecimientoCursoPage({
             height="1"
             width="1"
             style={{ display: 'none' }}
-            src={`https://www.facebook.com/tr?id=${metaPixelId}&ev=Purchase&noscript=1&courseId=${courseId}`}
+            src={`https://www.facebook.com/tr?id=${metaPixelId}&ev=Purchase&noscript=1&guidedProjectId=${projectId}`}
             alt=""
           />
         </noscript>
@@ -280,12 +265,12 @@ export default function AgradecimientoCursoPage({
               text-[#00A5C0]
             "
           >
-            Bienvenido al curso{' '}
-            <span className="font-bold text-[#0A2540]">#{courseId}</span>
+            Bienvenido al proyecto guiado{' '}
+            <span className="font-bold text-[#0A2540]">#{projectId}</span>
           </p>
-          {courseTitle && (
+          {projectTitle && (
             <p className="mb-2 text-center text-lg font-bold text-[#1B3A4B]">
-              {courseTitle}
+              {projectTitle}
             </p>
           )}
           <p className="mt-2 mb-8 text-center text-lg font-medium text-[#0A2540]">

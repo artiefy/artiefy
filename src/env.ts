@@ -46,6 +46,9 @@ export const env = createEnv({
     CONFIRMATION_URL: z.url(),
     CONFIRMATION_URL_PLANS: z.url(),
     CONFIRMATION_URL_COURSES: z.url(),
+    // Optional: PayU server-to-server confirmation endpoint for single-payment
+    // guided projects. Falls back to `${NEXT_PUBLIC_BASE_URL}/api/confirmGuidedProjectPayment`.
+    CONFIRMATION_URL_GUIDED_PROJECTS: z.url().optional(),
 
     PASS: z.string().min(1),
 
@@ -151,6 +154,8 @@ export const env = createEnv({
     CONFIRMATION_URL: process.env.CONFIRMATION_URL,
     CONFIRMATION_URL_PLANS: process.env.CONFIRMATION_URL_PLANS,
     CONFIRMATION_URL_COURSES: process.env.CONFIRMATION_URL_COURSES,
+    CONFIRMATION_URL_GUIDED_PROJECTS:
+      process.env.CONFIRMATION_URL_GUIDED_PROJECTS,
 
     PASS: process.env.PASS,
 
