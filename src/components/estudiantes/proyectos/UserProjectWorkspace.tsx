@@ -14,18 +14,25 @@ import type { Project } from '~/types/project';
 
 interface UserProjectWorkspaceProps {
   project: Project;
+  /**
+   * Only the owner edits. A visitor reaching a public project — or an invited
+   * collaborator, who may upload deliverables but not rewrite the project —
+   * gets the same view without `onEditSection`, which is what
+   * `ProjectDetailView` requires to render its section controls.
+   */
+  canEdit?: boolean;
 }
 
 /**
- * Owner-only workspace for a courseless ("+ Nuevo proyecto") project created
- * from `/proyectos`. Reuses the same `ProjectDetailView` course-linked
- * projects get, wired to `ModalResumen` exactly like
- * `ProjectsSection.tsx` does — the pencil on each section reopens the
- * 8-step wizard at that step, `projectId` set so it EDITS this project
- * instead of creating a new one.
+ * Workspace for a courseless ("+ Nuevo proyecto") project created from
+ * `/proyectos`. Reuses the same `ProjectDetailView` course-linked projects
+ * get, wired to `ModalResumen` exactly like `ProjectsSection.tsx` does — the
+ * pencil on each section reopens the 8-step wizard at that step, `projectId`
+ * set so it EDITS this project instead of creating a new one.
  */
 export function UserProjectWorkspace({
   project: initialProject,
+  canEdit = true,
 }: UserProjectWorkspaceProps) {
   const router = useRouter();
   const [project, setProject] = useState(initialProject);
@@ -129,51 +136,53 @@ export function UserProjectWorkspace({
 
       <ProjectDetailView
         project={project}
-        onEditSection={handleEditSection}
+        onEditSection={canEdit ? handleEditSection : undefined}
         addedSections={addedSections}
         onAddedSectionsChange={setAddedSections}
       />
 
-      <ModalResumen
-        isOpen={showModal}
-        onClose={handleModalClose}
-        initialStep={modalStep}
-        titulo={project.name}
-        description={project.description ?? ''}
-        planteamiento={project.planteamiento}
-        justificacion={project.justificacion ?? ''}
-        objetivoGen={project.objetivo_general ?? ''}
-        objetivosEsp={[]}
-        categoriaId={project.categoryId}
-        courseId={undefined}
-        projectId={project.id}
-        coverImageKey={project.coverImageKey ?? undefined}
-        coverVideoKey={undefined}
-        tipoProyecto={project.type_project}
-        onUpdateProject={applyProjectUpdate}
-        fechaInicio={project.fecha_inicio ?? ''}
-        fechaFin={project.fecha_fin ?? ''}
-        actividades={[]}
-        responsablesPorActividad={{}}
-        horasPorActividad={{}}
-        setHorasPorActividad={() => {}}
-        horasPorDiaProyecto={6}
-        setHorasPorDiaProyecto={() => {}}
-        tiempoEstimadoProyecto={0}
-        addedSections={addedSections}
-        onAddedSectionsChange={setAddedSections}
-        setTiempoEstimadoProyecto={() => {}}
-        onProjectCreated={() => {
-          router.refresh();
-        }}
-        setObjetivosEsp={() => {}}
-        setActividades={() => {}}
-        onAnterior={() => {}}
-        setPlanteamiento={() => {}}
-        setJustificacion={() => {}}
-        setObjetivoGen={() => {}}
-        setObjetivosEspProp={() => {}}
-      />
+      {canEdit ? (
+        <ModalResumen
+          isOpen={showModal}
+          onClose={handleModalClose}
+          initialStep={modalStep}
+          titulo={project.name}
+          description={project.description ?? ''}
+          planteamiento={project.planteamiento}
+          justificacion={project.justificacion ?? ''}
+          objetivoGen={project.objetivo_general ?? ''}
+          objetivosEsp={[]}
+          categoriaId={project.categoryId}
+          courseId={undefined}
+          projectId={project.id}
+          coverImageKey={project.coverImageKey ?? undefined}
+          coverVideoKey={undefined}
+          tipoProyecto={project.type_project}
+          onUpdateProject={applyProjectUpdate}
+          fechaInicio={project.fecha_inicio ?? ''}
+          fechaFin={project.fecha_fin ?? ''}
+          actividades={[]}
+          responsablesPorActividad={{}}
+          horasPorActividad={{}}
+          setHorasPorActividad={() => {}}
+          horasPorDiaProyecto={6}
+          setHorasPorDiaProyecto={() => {}}
+          tiempoEstimadoProyecto={0}
+          addedSections={addedSections}
+          onAddedSectionsChange={setAddedSections}
+          setTiempoEstimadoProyecto={() => {}}
+          onProjectCreated={() => {
+            router.refresh();
+          }}
+          setObjetivosEsp={() => {}}
+          setActividades={() => {}}
+          onAnterior={() => {}}
+          setPlanteamiento={() => {}}
+          setJustificacion={() => {}}
+          setObjetivoGen={() => {}}
+          setObjetivosEspProp={() => {}}
+        />
+      ) : null}
     </div>
   );
 }

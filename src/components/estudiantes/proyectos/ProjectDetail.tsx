@@ -259,7 +259,7 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
             retroalimentacion y cronograma. Tiene ruta propia, asi que no
             depende de aterrizar en el curso y que la lista lo abra. */}
         <Link
-          href={`/estudiantes/proyectos/${item.id}/trabajo`}
+          href={`/estudiantes/proyectos/${item.id}/trabajar`}
           className="
               ml-2 inline-flex items-center gap-2 rounded-lg border
               border-primary/40 bg-primary/15 px-3 py-2 text-sm font-semibold
