@@ -485,6 +485,48 @@ body.no-chrome {
   background-color: rgba(255, 255, 255, 0.28);
 }
 
+/* Aurora de fondo: dos manchas de color que se desplazan muy lento.
+   Da sensación de profundidad viva sin distraer ni consumir CPU (solo
+   transform y opacidad, ambas compuestas por la GPU). */
+@keyframes aurora-deriva {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate3d(6%, -4%, 0) scale(1.15);
+    opacity: 0.85;
+  }
+}
+
+.aurora {
+  animation: aurora-deriva 18s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.aurora-lenta {
+  animation: aurora-deriva 26s ease-in-out infinite reverse;
+  will-change: transform, opacity;
+}
+
+/* Quien pida menos movimiento no ve la deriva. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora,
+  .aurora-lenta {
+    animation: none;
+  }
+}
+
+/* Rejilla técnica muy tenue, para que el fondo no sea un plano vacío. */
+.rejilla-tenue {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent);
+}
+
 /* Scroll horizontal discreto, en el color de la marca.
    Para las filas que se desplazan de lado: chips de instructores, pestañas.
    La barra nativa ahí es gruesa y gris, y parte el diseño. */

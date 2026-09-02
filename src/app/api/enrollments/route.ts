@@ -11,6 +11,7 @@ import {
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
@@ -45,28 +46,52 @@ export async function POST(request: Request) {
         ? (planType as 'Pro' | 'Premium' | 'Enterprise')
         : 'none';
 
-    const subscriptionEndDate = new Date();
-    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1);
+    const unMesDesdeHoy = new Date();
+    unMesDesdeHoy.setMonth(unMesDesdeHoy.getMonth() + 1);
 
+    // Matricular no debe recortar una suscripción existente: se conserva la
+    // fecha más lejana, y el plan solo cambia si no había uno vigente.
     for (const userId of userIds) {
+      const actual = await db.query.users.findFirst({
+        where: eq(users.id, userId),
+        columns: {
+          planType: true,
+          subscriptionEndDate: true,
+        },
+      });
+
+      const fechaActual = actual?.subscriptionEndDate
+        ? new Date(actual.subscriptionEndDate)
+        : null;
+
+      const sigueVigente =
+        fechaActual !== null && fechaActual.getTime() > Date.now();
+
+      const nuevaFecha =
+        fechaActual && fechaActual > unMesDesdeHoy
+          ? fechaActual
+          : unMesDesdeHoy;
+
+      const planFinal =
+        sigueVigente && actual?.planType && actual.planType !== 'none'
+          ? actual.planType
+          : normalizedPlanType;
+
       await db
         .update(users)
         .set({
-          planType: normalizedPlanType,
+          planType: planFinal,
           subscriptionStatus: 'active',
-          subscriptionEndDate: subscriptionEndDate,
+          subscriptionEndDate: nuevaFecha,
         })
         .where(eq(users.id, userId))
         .execute();
-    }
-    for (const userId of userIds) {
-      const clerk = await clerkClient();
-      await clerk.users.updateUserMetadata(userId, {
-        publicMetadata: {
-          planType: normalizedPlanType,
-          subscriptionStatus: 'active',
-          subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
-        },
+
+      // Fusiona en vez de reemplazar: si no, se pierde `role`.
+      await fusionarMetadatosPublicos(userId, {
+        planType: planFinal,
+        subscriptionStatus: 'active',
+        subscriptionEndDate: formatDateToClerk(nuevaFecha),
       });
     }
 

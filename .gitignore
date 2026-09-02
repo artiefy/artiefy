@@ -93,3 +93,6 @@ security_best_practices_report.md
 # Exports temporales de transcripciones (generados al probar el servicio)
 /lesson-*.json
 /transcripcion-*.txt
+
+# Credenciales del ESP32 (wifi). La plantilla si se versiona.
+hardware/esp32-puerta/esp32-puerta.ino

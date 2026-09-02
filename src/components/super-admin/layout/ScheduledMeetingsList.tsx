@@ -2,7 +2,12 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { ArrowUpRight, Video } from 'lucide-react';
+
 import { ScheduledMeeting } from '../modals/ModalScheduleMeeting';
+
+import { ConfirmarAccion } from './ConfirmarAccion';
+import { ModalLinkExterno } from './ModalLinkExterno';
 
 type UIMeeting = ScheduledMeeting & {
   id: number;
@@ -64,10 +69,9 @@ const buildFinalVideoUrls = (meeting: UIMeeting, awsBase: string): string[] => {
   const key2 = (meeting.video_key_2 ?? '').toString().trim();
   if (key2) urls.push(`${awsBase}/video_clase/${key2}`);
 
-  const extUrl = (meeting.videoUrlExt ?? '').toString().trim();
-  if (extUrl && /^https?:\/\//i.test(extUrl) && !urls.includes(extUrl)) {
-    urls.push(extUrl);
-  }
+  // `videoUrlExt` NO entra aquí: es el link externo, y tiene su propio botón
+  // y su propio modal. Si se colara, aparecería como una "Grabación" más y
+  // sería imposible distinguir la clase grabada de la que hubo que sustituir.
 
   const rawUrl = (meeting.videoUrl ?? '').toString().trim();
   const isValidRawUrl =
@@ -104,6 +108,23 @@ export const ScheduledMeetingsList = ({
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [videoToShow, setVideoToShow] = useState<string | null>(null);
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
+  /** Clase cuyo LINK EXTERNO se está viendo en el modal. */
+  const [linkExternoAbierto, setLinkExternoAbierto] =
+    useState<UIMeeting | null>(null);
+  /**
+   * Acción destructiva pendiente de confirmar.
+   *
+   * No se usa `window.confirm`: en vistas embebidas y en algunos navegadores
+   * está bloqueado, devuelve false sin avisar, y la acción parecía no
+   * ejecutarse. El diálogo se dibuja en la propia interfaz.
+   */
+  const [confirmacion, setConfirmacion] = useState<{
+    titulo: string;
+    mensaje: string;
+    textoConfirmar?: string;
+    accion: () => void | Promise<void>;
+  } | null>(null);
+  const [confirmando, setConfirmando] = useState(false);
   const [linkForm, setLinkForm] = useState<{
     videoUrlExt: string;
     title: string;
@@ -124,6 +145,61 @@ export const ScheduledMeetingsList = ({
     },
     []
   );
+
+  /**
+   * Quita el enlace de grabación externo.
+   *
+   * Solo afecta a `videoUrlExt`: las grabaciones subidas a S3 (`video_key`)
+   * siguen intactas, porque borrarlas es otra operación con otras
+   * consecuencias.
+   */
+  const quitarEnlaceGrabacion = async (meeting: UIMeeting) => {
+    setSavingLink(true);
+    try {
+      const res = await fetch('/api/super-admin/teams/update-meeting', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: meeting.id, videoUrlExt: '' }),
+      });
+      if (!res.ok) throw new Error('Error quitando el enlace');
+
+      setLocalMeetings((prev) =>
+        prev.map((m) => (m.id === meeting.id ? { ...m, videoUrlExt: null } : m))
+      );
+      showToast('Enlace de grabación eliminado', 'success');
+    } catch (e) {
+      console.error('[REUNIONES] no se pudo quitar el enlace:', e);
+      showToast('No se pudo quitar el enlace', 'error');
+    } finally {
+      setSavingLink(false);
+    }
+  };
+
+  /** Cambia el link externo desde el modal. */
+  const guardarLinkExterno = async (meeting: UIMeeting, nueva: string) => {
+    setSavingLink(true);
+    try {
+      const res = await fetch('/api/super-admin/teams/update-meeting', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: meeting.id, videoUrlExt: nueva.trim() }),
+      });
+      if (!res.ok) throw new Error('Error guardando');
+
+      setLocalMeetings((prev) =>
+        prev.map((m) =>
+          m.id === meeting.id ? { ...m, videoUrlExt: nueva.trim() } : m
+        )
+      );
+      setLinkExternoAbierto(null);
+      showToast('Link externo actualizado', 'success');
+    } catch (e) {
+      console.error('[REUNIONES] no se pudo guardar el link externo:', e);
+      showToast('No se pudo guardar el link externo', 'error');
+    } finally {
+      setSavingLink(false);
+    }
+  };
 
   const handleSaveLink = async (meeting: UIMeeting) => {
     if (!linkForm.videoUrlExt.trim()) return;
@@ -195,11 +271,6 @@ export const ScheduledMeetingsList = ({
 
   const handleDeleteGroup = useCallback(
     async (group: UIMeeting[]) => {
-      const ok = confirm(
-        `¿Seguro que quieres eliminar estas ${group.length} clases y sus videos?`
-      );
-      if (!ok) return;
-
       try {
         for (const meeting of group) {
           const res = await fetch('/api/super-admin/teams/delete', {
@@ -232,9 +303,6 @@ export const ScheduledMeetingsList = ({
 
   const handleDeleteSingle = useCallback(
     async (meeting: UIMeeting) => {
-      const ok = confirm('¿Seguro que quieres eliminar esta clase y su video?');
-      if (!ok) return;
-
       try {
         const res = await fetch('/api/super-admin/teams/delete', {
           method: 'DELETE',
@@ -272,6 +340,51 @@ export const ScheduledMeetingsList = ({
           {toast.message}
         </div>
       )}
+
+      {/* Un único diálogo para todas las acciones destructivas del listado:
+          quitar enlaces y eliminar clases. */}
+      <ConfirmarAccion
+        abierto={confirmacion !== null}
+        titulo={confirmacion?.titulo ?? ''}
+        mensaje={confirmacion?.mensaje ?? ''}
+        textoConfirmar={confirmacion?.textoConfirmar}
+        ocupado={confirmando}
+        onCancelar={() => setConfirmacion(null)}
+        onConfirmar={() => {
+          const pendiente = confirmacion?.accion;
+          if (!pendiente) return;
+          setConfirmando(true);
+          void Promise.resolve(pendiente()).finally(() => {
+            setConfirmando(false);
+            setConfirmacion(null);
+          });
+        }}
+      />
+
+      <ModalLinkExterno
+        abierto={linkExternoAbierto !== null}
+        url={linkExternoAbierto?.videoUrlExt ?? ''}
+        tituloClase={linkExternoAbierto?.title ?? ''}
+        guardando={savingLink}
+        onCerrar={() => setLinkExternoAbierto(null)}
+        onGuardar={(nueva) => {
+          if (linkExternoAbierto) {
+            void guardarLinkExterno(linkExternoAbierto, nueva);
+          }
+        }}
+        onEliminar={() => {
+          const clase = linkExternoAbierto;
+          if (!clase) return;
+          setLinkExternoAbierto(null);
+          setConfirmacion({
+            titulo: 'Eliminar link externo',
+            mensaje:
+              'Se quitará el link externo de esta clase. Las grabaciones subidas no se tocan.',
+            accion: () => quitarEnlaceGrabacion(clase),
+          });
+        }}
+      />
+
       <div className="mt-6 space-y-6">
         {Object.entries(groupedByMainTitle)
           .sort(([, a], [, b]) => {
@@ -348,7 +461,13 @@ export const ScheduledMeetingsList = ({
 
                     <button
                       type="button"
-                      onClick={() => void handleDeleteGroup(groupMeetings)}
+                      onClick={() =>
+                        setConfirmacion({
+                          titulo: 'Eliminar clases',
+                          mensaje: `Se eliminarán ${groupMeetings.length} clases y sus videos. Esta acción no se puede deshacer.`,
+                          accion: () => handleDeleteGroup(groupMeetings),
+                        })
+                      }
                       className="
                       rounded bg-red-600 px-3 py-1 text-sm text-white
                       hover:bg-red-500
@@ -410,6 +529,20 @@ export const ScheduledMeetingsList = ({
                                 );
                                 const hasVideo = finalVideos.length > 0;
 
+                                /**
+                                 * ¿Hay GRABACIÓN de verdad?
+                                 *
+                                 * Solo cuenta el video subido o el de Teams,
+                                 * no el LINK EXTERNO: ese es el sustituto
+                                 * para cuando la grabación falló, así que
+                                 * mientras exista grabación no debe ofrecerse.
+                                 */
+                                const tieneGrabacion = [
+                                  meeting.video_key,
+                                  meeting.video_key_2,
+                                  meeting.videoUrl,
+                                ].some((v) => (v ?? '').toString().trim());
+
                                 const endShort = new Intl.DateTimeFormat(
                                   'es-CO',
                                   {
@@ -441,24 +574,39 @@ export const ScheduledMeetingsList = ({
                                       )}
                                     </p>
 
-                                    {meeting.joinUrl && (
-                                      <a
-                                        href={meeting.joinUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="
-                                        mr-3 inline-block text-blue-400
-                                        underline transition
-                                        hover:text-blue-300
+                                    {/* Los tres accesos en una rejilla de
+                                        columnas iguales: así comparten ancho
+                                        además de alto, y se leen como un
+                                        conjunto y no como botones sueltos. */}
+                                    <div
+                                      className="
+                                        mt-3 grid grid-cols-1 gap-2
+                                        sm:grid-cols-2
+                                        lg:grid-cols-3
                                       "
-                                      >
-                                        🔗 Enlace de clase
-                                      </a>
-                                    )}
+                                    >
+                                      {meeting.joinUrl && (
+                                        <a
+                                          href={meeting.joinUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="group/clase inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22C4D3] to-[#1c9fd6] px-4 py-2 text-sm font-semibold text-[#04101f] shadow-lg shadow-[#22C4D3]/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#22C4D3]/40"
+                                        >
+                                          <Video className="size-4" />
+                                          Ver y grabar clase
+                                          <ArrowUpRight
+                                            className="
+                                            size-4 transition-transform
+                                            duration-200
+                                            group-hover/clase:translate-x-0.5
+                                            group-hover/clase:-translate-y-0.5
+                                          "
+                                          />
+                                        </a>
+                                      )}
 
-                                    {hasVideo && (
-                                      <div className="mt-2 flex flex-wrap gap-2">
-                                        {finalVideos.map(
+                                      {hasVideo &&
+                                        finalVideos.map(
                                           (videoUrl, videoIdx) => (
                                             <button
                                               key={videoUrl}
@@ -466,11 +614,7 @@ export const ScheduledMeetingsList = ({
                                               onClick={() =>
                                                 setVideoToShow(videoUrl)
                                               }
-                                              className="
-                                            inline-block rounded bg-green-600
-                                            px-3 py-1 text-sm text-white
-                                            hover:bg-green-500
-                                          "
+                                              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-400/20"
                                             >
                                               🎥 Grabación{' '}
                                               {finalVideos.length > 1
@@ -479,43 +623,65 @@ export const ScheduledMeetingsList = ({
                                             </button>
                                           )
                                         )}
-                                      </div>
-                                    )}
 
-                                    {/* Botón para abrir el form de link externo */}
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setEditingLinkId(
-                                          meeting.id === editingLinkId
-                                            ? null
-                                            : meeting.id
-                                        );
-                                        setLinkForm({
-                                          videoUrlExt: '',
-                                          title: meeting.title ?? '',
-                                          weekNumber: String(
-                                            meeting.weekNumber ?? ''
-                                          ),
-                                        });
-                                      }}
-                                      className="
-                                      mt-2 inline-block rounded border
-                                      border-cyan-600 px-3 py-1 text-sm
-                                      text-cyan-400 transition
-                                      hover:bg-cyan-600 hover:text-white
-                                    "
-                                    >
-                                      🔗{' '}
-                                      {editingLinkId === meeting.id
-                                        ? 'Cancelar'
-                                        : 'Agregar link externo'}
-                                    </button>
+                                      {/* LINK EXTERNO: botón propio, no una
+                                          "Grabación" más. Se abre en un modal
+                                          donde además se edita o se elimina. */}
+                                      {(meeting.videoUrlExt ?? '').trim() && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setLinkExternoAbierto(meeting)
+                                          }
+                                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-300 transition-all duration-200 hover:-translate-y-0.5 hover:bg-amber-400/20"
+                                        >
+                                          🔗 Ver link externo
+                                        </button>
+                                      )}
+
+                                      {/* LINK EXTERNO (OPCIONAL): el recambio
+                                        para cuando la clase no se grabó por
+                                        algún fallo. Si ya hay GRABACIÓN no se
+                                        ofrece, y si ya hay un link externo se
+                                        cambia con "Editar enlace". */}
+                                      {!(meeting.videoUrlExt ?? '').trim() &&
+                                        !tieneGrabacion && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingLinkId(
+                                                meeting.id === editingLinkId
+                                                  ? null
+                                                  : meeting.id
+                                              );
+                                              setLinkForm({
+                                                videoUrlExt: '',
+                                                title: meeting.title ?? '',
+                                                weekNumber: String(
+                                                  meeting.weekNumber ?? ''
+                                                ),
+                                              });
+                                            }}
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/25 px-4 py-2 text-sm font-semibold text-white/60 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#22C4D3]/60 hover:text-[#22C4D3]"
+                                          >
+                                            🔗{' '}
+                                            {editingLinkId === meeting.id
+                                              ? 'Cancelar'
+                                              : 'Link externo (opcional)'}
+                                          </button>
+                                        )}
+                                    </div>
 
                                     <button
                                       type="button"
                                       onClick={() =>
-                                        void handleDeleteSingle(meeting)
+                                        setConfirmacion({
+                                          titulo: 'Eliminar clase',
+                                          mensaje:
+                                            'Se eliminará esta clase y su video. Esta acción no se puede deshacer.',
+                                          accion: () =>
+                                            handleDeleteSingle(meeting),
+                                        })
                                       }
                                       className="
                                       mt-2 ml-2 rounded bg-red-600 px-3 py-1

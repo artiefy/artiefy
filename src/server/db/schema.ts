@@ -1761,7 +1761,8 @@ export const classMeetings = pgTable('class_meetings', {
   title: varchar('title', { length: 255 }).notNull(),
   startDateTime: timestamp('start_datetime', { withTimezone: true }).notNull(),
   endDateTime: timestamp('end_datetime', { withTimezone: true }).notNull(),
-  joinUrl: varchar('join_url', { length: 1024 }),
+  // NOT NULL en la base: para "sin enlace" se guarda cadena vacía, no null.
+  joinUrl: varchar('join_url', { length: 1024 }).notNull(),
   weekNumber: integer('week_number'),
   createdAt: timestamp('created_at').defaultNow(),
   meetingId: varchar('meeting_id', { length: 255 }).notNull(),
@@ -2138,6 +2139,36 @@ export const accessLogs = pgTable(
   (t) => [
     index('access_logs_user_idx').on(t.userId),
     index('access_logs_entry_idx').on(t.entryTime),
+  ]
+);
+
+/**
+ * Intentos de verificación facial en el control de acceso.
+ *
+ * Tabla aparte de `access_logs` a propósito: allí `entryTime` es obligatorio y
+ * la app deduce quién está dentro por la ausencia de `exitTime`. Un intento
+ * denegado guardado ahí contaría como una entrada real.
+ */
+export const faceVerificationAttempts = pgTable(
+  'face_verification_attempts',
+  {
+    id: serial('id').primaryKey(),
+    /** Null si no se llegó a identificar a nadie. */
+    userId: text('user_id').references(() => users.id),
+    /** Lo que tecleó el operador: cédula, correo o nombre. */
+    searchTerm: text('search_term'),
+    granted: boolean('granted').notNull(),
+    /** Distancia euclídea entre descriptores; menor es más parecido. */
+    distance: real('distance'),
+    /** 'sin_rostro' | 'sin_referencia' | 'no_coincide' */
+    reason: text('reason'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index('face_attempts_user_idx').on(t.userId),
+    index('face_attempts_created_idx').on(t.createdAt),
   ]
 );
 

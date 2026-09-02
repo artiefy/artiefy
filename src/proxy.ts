@@ -67,6 +67,18 @@ function isLegacyEducadorPath(pathname: string): boolean {
   );
 }
 
+/**
+ * Archivos servidos desde /public que el middleware NO debe tocar.
+ *
+ * El matcher excluye css, js e imágenes, pero deja pasar `.json` y `.bin`. Sin
+ * esta salida, la petición de un usuario con rol privilegiado acaba en el
+ * redirect al dashboard, y quien pedía JSON recibe una página HTML. Es lo que
+ * rompía la carga de los modelos de reconocimiento facial.
+ */
+function isPublicAssetPath(pathname: string): boolean {
+  return pathname.startsWith('/models/');
+}
+
 function isDashboardPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard');
 }
@@ -205,6 +217,11 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.next();
     }
 
+    // Archivos estáticos de /public: se sirven tal cual, sin redirecciones.
+    if (isPublicAssetPath(pathname)) {
+      return NextResponse.next();
+    }
+
     const { userId, sessionClaims } = await auth();
     const metadata = sessionClaims?.metadata;
     const role = getUserRole(metadata?.role);
@@ -218,6 +235,10 @@ export default clerkMiddleware(async (auth, req) => {
       const dashboardRoute = getDashboardRouteByRole(role);
       const isInOwnDashboard =
         pathname.startsWith(dashboardRoute) ||
+        // Las rutas públicas del dashboard (el formulario de inscripción) no
+        // son de nadie: se comprueban más abajo, pero el redirect por rol se
+        // ejecuta antes y expulsaba de ahí a educadores y administradores.
+        isPublicDashboardPath(pathname) ||
         (role === 'super-admin' && isSuperAdminSharedDashboardPath(pathname));
       const isAuthRoute =
         pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
