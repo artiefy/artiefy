@@ -7,6 +7,7 @@ import { ArrowUpRight, Video } from 'lucide-react';
 import { ScheduledMeeting } from '../modals/ModalScheduleMeeting';
 
 import { ConfirmarAccion } from './ConfirmarAccion';
+import { ModalLinkExterno } from './ModalLinkExterno';
 
 type UIMeeting = ScheduledMeeting & {
   id: number;
@@ -68,10 +69,9 @@ const buildFinalVideoUrls = (meeting: UIMeeting, awsBase: string): string[] => {
   const key2 = (meeting.video_key_2 ?? '').toString().trim();
   if (key2) urls.push(`${awsBase}/video_clase/${key2}`);
 
-  const extUrl = (meeting.videoUrlExt ?? '').toString().trim();
-  if (extUrl && /^https?:\/\//i.test(extUrl) && !urls.includes(extUrl)) {
-    urls.push(extUrl);
-  }
+  // `videoUrlExt` NO entra aquí: es el link externo, y tiene su propio botón
+  // y su propio modal. Si se colara, aparecería como una "Grabación" más y
+  // sería imposible distinguir la clase grabada de la que hubo que sustituir.
 
   const rawUrl = (meeting.videoUrl ?? '').toString().trim();
   const isValidRawUrl =
@@ -108,6 +108,9 @@ export const ScheduledMeetingsList = ({
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [videoToShow, setVideoToShow] = useState<string | null>(null);
   const [editingLinkId, setEditingLinkId] = useState<number | null>(null);
+  /** Clase cuyo LINK EXTERNO se está viendo en el modal. */
+  const [linkExternoAbierto, setLinkExternoAbierto] =
+    useState<UIMeeting | null>(null);
   /**
    * Acción destructiva pendiente de confirmar.
    *
@@ -167,6 +170,32 @@ export const ScheduledMeetingsList = ({
     } catch (e) {
       console.error('[REUNIONES] no se pudo quitar el enlace:', e);
       showToast('No se pudo quitar el enlace', 'error');
+    } finally {
+      setSavingLink(false);
+    }
+  };
+
+  /** Cambia el link externo desde el modal. */
+  const guardarLinkExterno = async (meeting: UIMeeting, nueva: string) => {
+    setSavingLink(true);
+    try {
+      const res = await fetch('/api/super-admin/teams/update-meeting', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: meeting.id, videoUrlExt: nueva.trim() }),
+      });
+      if (!res.ok) throw new Error('Error guardando');
+
+      setLocalMeetings((prev) =>
+        prev.map((m) =>
+          m.id === meeting.id ? { ...m, videoUrlExt: nueva.trim() } : m
+        )
+      );
+      setLinkExternoAbierto(null);
+      showToast('Link externo actualizado', 'success');
+    } catch (e) {
+      console.error('[REUNIONES] no se pudo guardar el link externo:', e);
+      showToast('No se pudo guardar el link externo', 'error');
     } finally {
       setSavingLink(false);
     }
@@ -328,6 +357,30 @@ export const ScheduledMeetingsList = ({
           void Promise.resolve(pendiente()).finally(() => {
             setConfirmando(false);
             setConfirmacion(null);
+          });
+        }}
+      />
+
+      <ModalLinkExterno
+        abierto={linkExternoAbierto !== null}
+        url={linkExternoAbierto?.videoUrlExt ?? ''}
+        tituloClase={linkExternoAbierto?.title ?? ''}
+        guardando={savingLink}
+        onCerrar={() => setLinkExternoAbierto(null)}
+        onGuardar={(nueva) => {
+          if (linkExternoAbierto) {
+            void guardarLinkExterno(linkExternoAbierto, nueva);
+          }
+        }}
+        onEliminar={() => {
+          const clase = linkExternoAbierto;
+          if (!clase) return;
+          setLinkExternoAbierto(null);
+          setConfirmacion({
+            titulo: 'Eliminar link externo',
+            mensaje:
+              'Se quitará el link externo de esta clase. Las grabaciones subidas no se tocan.',
+            accion: () => quitarEnlaceGrabacion(clase),
           });
         }}
       />
@@ -571,49 +624,19 @@ export const ScheduledMeetingsList = ({
                                           )
                                         )}
 
-                                      {/* El enlace externo sí se puede
-                                            cambiar o quitar; las grabaciones
-                                            subidas a S3 no se tocan desde
-                                            aquí. */}
-                                      {meeting.videoUrlExt && (
-                                        <>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setEditingLinkId(meeting.id);
-                                              setLinkForm({
-                                                videoUrlExt:
-                                                  meeting.videoUrlExt ?? '',
-                                                title: meeting.title ?? '',
-                                                weekNumber: String(
-                                                  meeting.weekNumber ?? ''
-                                                ),
-                                              });
-                                            }}
-                                            className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-[#22C4D3]"
-                                          >
-                                            ✏️ Editar link externo
-                                          </button>
-                                          <button
-                                            type="button"
-                                            disabled={savingLink}
-                                            onClick={() =>
-                                              setConfirmacion({
-                                                titulo: 'Quitar link externo',
-                                                mensaje:
-                                                  'Se quitará el enlace externo de esta clase. Las grabaciones subidas no se tocan.',
-                                                textoConfirmar: 'Quitar',
-                                                accion: () =>
-                                                  quitarEnlaceGrabacion(
-                                                    meeting
-                                                  ),
-                                              })
-                                            }
-                                            className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-red-400 disabled:opacity-50"
-                                          >
-                                            🗑 Quitar link externo
-                                          </button>
-                                        </>
+                                      {/* LINK EXTERNO: botón propio, no una
+                                          "Grabación" más. Se abre en un modal
+                                          donde además se edita o se elimina. */}
+                                      {(meeting.videoUrlExt ?? '').trim() && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setLinkExternoAbierto(meeting)
+                                          }
+                                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-300 transition-all duration-200 hover:-translate-y-0.5 hover:bg-amber-400/20"
+                                        >
+                                          🔗 Ver link externo
+                                        </button>
                                       )}
 
                                       {/* LINK EXTERNO (OPCIONAL): el recambio
