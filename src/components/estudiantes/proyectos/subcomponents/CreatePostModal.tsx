@@ -40,6 +40,13 @@ interface CreatePostModalProps {
   // When set, the modal edits this post instead of creating a new one
   // (pre-filled fields, saved via `PATCH /api/community-posts/[id]`).
   editingPost?: CommunityFeedPost | null;
+  // When set, the destination is fixed to this project: the selector is not
+  // rendered at all. Used by the Posts tab inside a project's detail, where
+  // the destination is the project the reader is already looking at.
+  lockedProject?: { id: number; name: string } | null;
+  // Called after a successful publish/edit. `router.refresh()` alone cannot
+  // update a list that a client component fetched itself.
+  onSaved?: () => void;
 }
 
 const KIND_OPTIONS: Array<{
@@ -66,9 +73,16 @@ export function CreatePostModal({
   isOpen,
   onClose,
   editingPost = null,
+  lockedProject = null,
+  onSaved,
 }: CreatePostModalProps) {
   const router = useRouter();
   const isEditing = Boolean(editingPost);
+  // Read as primitives so an inline `lockedProject={{ ... }}` from the parent
+  // doesn't re-run the reset effect on every render and wipe the draft.
+  const lockedProjectId = lockedProject?.id ?? null;
+  const lockedProjectName = lockedProject?.name ?? null;
+  const isDestinationLocked = lockedProjectId !== null;
 
   const [content, setContent] = useState('');
   const [kind, setKind] = useState<PostKind>('none');
@@ -119,12 +133,16 @@ export function CreatePostModal({
       setImageKey(null);
       setImageFileName(null);
       setImagePreviewUrl(null);
-      setSelectedProject(null);
+      setSelectedProject(
+        lockedProjectId !== null && lockedProjectName !== null
+          ? { id: lockedProjectId, name: lockedProjectName, isOwner: true }
+          : null
+      );
     }
     setIsSelectorOpen(false);
     setProjectQuery('');
     setIsPreviewOpen(false);
-  }, [isOpen, editingPost]);
+  }, [isOpen, editingPost, lockedProjectId, lockedProjectName]);
 
   // Revokes the previous blob preview URL whenever it's replaced or the
   // modal unmounts. Never touches a real (non-blob) URL from `editingPost`.
@@ -138,6 +156,9 @@ export function CreatePostModal({
 
   useEffect(() => {
     if (!isOpen) return;
+    // Con el destino fijo el selector no se renderiza, así que la lista de
+    // proyectos publicables no se llega a usar nunca.
+    if (isDestinationLocked) return;
     let cancelled = false;
     setIsLoadingProjects(true);
     fetch('/api/community-posts/publishable-projects')
@@ -157,7 +178,7 @@ export function CreatePostModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, isDestinationLocked]);
 
   const filteredProjects = useMemo(() => {
     const normalized = projectQuery.trim().toLowerCase();
@@ -278,6 +299,7 @@ export function CreatePostModal({
       setIsPreviewOpen(false);
       onClose();
       router.refresh();
+      onSaved?.();
     } catch (error) {
       console.error('Error al publicar:', error);
       toast.error(
@@ -290,10 +312,14 @@ export function CreatePostModal({
 
   return (
     <>
+      {/* The preview replaces the composer rather than stacking on top of it,
+          so the composer steps aside while it is up. Closing it that way must
+          not be mistaken for the author dismissing the whole thing, hence the
+          guard in onOpenChange. */}
       <Dialog
-        open={isOpen}
+        open={isOpen && !isPreviewOpen}
         onOpenChange={(open) => {
-          if (!open) onClose();
+          if (!open && !isPreviewOpen) onClose();
         }}
       >
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
@@ -316,30 +342,48 @@ export function CreatePostModal({
             <span className="text-sm font-medium text-foreground">Tú</span>
 
             <div className="relative ml-auto">
-              <button
-                type="button"
-                aria-haspopup="menu"
-                aria-expanded={isSelectorOpen}
-                onClick={() => setIsSelectorOpen((prev) => !prev)}
-                className="
-                  flex items-center gap-1.5 rounded-lg bg-secondary/50 px-3 py-1.5
-                  text-xs font-medium text-foreground transition-colors
-                  hover:bg-secondary
-                "
-              >
-                <Globe className="size-3.5 text-muted-foreground" />
-                <span className="max-w-40 truncate">
-                  Publicando en {destinationLabel}
+              {isDestinationLocked ? (
+                <span
+                  className="
+                    flex items-center gap-1.5 rounded-lg bg-secondary/50 px-3 py-1.5
+                    text-xs font-medium text-foreground
+                  "
+                >
+                  {selectedProject ? (
+                    <FolderKanban className="size-3.5 text-muted-foreground" />
+                  ) : (
+                    <Globe className="size-3.5 text-muted-foreground" />
+                  )}
+                  <span className="max-w-40 truncate">
+                    Publicando en {destinationLabel}
+                  </span>
                 </span>
-                <ChevronDown
-                  className={`
-                    size-3.5 text-muted-foreground transition-transform
-                    ${isSelectorOpen ? 'rotate-180' : ''}
-                  `}
-                />
-              </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={isSelectorOpen}
+                  onClick={() => setIsSelectorOpen((prev) => !prev)}
+                  className="
+                    flex items-center gap-1.5 rounded-lg bg-secondary/50 px-3 py-1.5
+                    text-xs font-medium text-foreground transition-colors
+                    hover:bg-secondary
+                  "
+                >
+                  <Globe className="size-3.5 text-muted-foreground" />
+                  <span className="max-w-40 truncate">
+                    Publicando en {destinationLabel}
+                  </span>
+                  <ChevronDown
+                    className={`
+                      size-3.5 text-muted-foreground transition-transform
+                      ${isSelectorOpen ? 'rotate-180' : ''}
+                    `}
+                  />
+                </button>
+              )}
 
-              {isSelectorOpen ? (
+              {isSelectorOpen && !isDestinationLocked ? (
                 <div
                   role="menu"
                   aria-label="Elegir dónde publicar"

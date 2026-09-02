@@ -75,9 +75,16 @@ interface CommunityPostCardProps {
   // Opens `CreatePostModal` pre-filled with this post's values (edit mode) —
   // the modal itself is mounted once by the parent feed view, not per card.
   onEdit: (post: CommunityFeedPost) => void;
+  // Called after a successful delete. `router.refresh()` alone cannot update
+  // a list that a client component fetched itself.
+  onDeleted?: (postId: number) => void;
 }
 
-export function CommunityPostCard({ post, onEdit }: CommunityPostCardProps) {
+export function CommunityPostCard({
+  post,
+  onEdit,
+  onDeleted,
+}: CommunityPostCardProps) {
   const router = useRouter();
   const { user } = useUser();
   const isAuthor = user?.id === post.author.id;
@@ -87,7 +94,20 @@ export function CommunityPostCard({ post, onEdit }: CommunityPostCardProps) {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [isContentOverflowing, setIsContentOverflowing] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLParagraphElement>(null);
+
+  // Whether the clamped content actually overflows is only measurable on the
+  // rendered node, so this effect is a genuine layout measurement (not
+  // derivable state) — same pattern as `ProjectFeedCard.tsx`.
+  useEffect(() => {
+    if (isContentExpanded) return;
+    const node = contentRef.current;
+    if (!node) return;
+    setIsContentOverflowing(node.scrollHeight > node.clientHeight + 1);
+  }, [isContentExpanded, post.content]);
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -129,6 +149,7 @@ export function CommunityPostCard({ post, onEdit }: CommunityPostCardProps) {
       }
       setIsMenuOpen(false);
       router.refresh();
+      onDeleted?.(post.id);
     } catch (error) {
       console.error('Error al eliminar publicación:', error);
       toast.error(
@@ -194,23 +215,51 @@ export function CommunityPostCard({ post, onEdit }: CommunityPostCardProps) {
             />
           </div>
 
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-semibold text-foreground">
+          <div className="min-w-0 flex-1">
+            {/* One line from `sm` up — that is where a long project name
+                used to wrap and push the badge/date row down. Below `sm` the
+                row wraps on purpose: a phone leaves the project name a
+                handful of pixels once the avatar, the author and "publicó en"
+                are subtracted, so forcing one line there would truncate it
+                away to nothing. `min-w-0` on every ancestor is what lets
+                `truncate` work inside these nested flex rows. */}
+            <div
+              className="
+                flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5
+                sm:flex-nowrap
+              "
+            >
+              {/* A general post has no project competing for the row, so the
+                  author only gets capped when there is one. */}
+              <span
+                className={
+                  post.project
+                    ? `
+                      max-w-full min-w-0 truncate font-semibold text-foreground
+                      sm:max-w-[45%]
+                    `
+                    : 'min-w-0 truncate font-semibold text-foreground'
+                }
+              >
                 {post.author.name}
               </span>
               {post.project ? (
                 <>
-                  <span className="text-sm text-muted-foreground">
+                  <span
+                    className="
+                      shrink-0 text-sm whitespace-nowrap text-muted-foreground
+                    "
+                  >
                     publicó en
                   </span>
                   <Link
                     href={`/proyectos/${post.project.id}`}
+                    title={post.project.name}
                     className="
-                    bg-gradient-to-r from-primary to-cyan-400 bg-clip-text
-                    font-semibold text-transparent
-                    hover:underline
-                  "
+                      min-w-0 flex-1 truncate bg-gradient-to-r from-primary
+                      to-cyan-400 bg-clip-text font-semibold text-transparent
+                      hover:underline
+                    "
                   >
                     {post.project.name}
                   </Link>
@@ -297,9 +346,31 @@ export function CommunityPostCard({ post, onEdit }: CommunityPostCardProps) {
         ) : null}
       </div>
 
-      <p className="relative mb-4 text-sm leading-relaxed whitespace-pre-wrap text-foreground">
-        {post.content}
-      </p>
+      <div className="relative mb-4 text-sm leading-relaxed text-foreground">
+        <p
+          ref={contentRef}
+          className={
+            isContentExpanded
+              ? 'whitespace-pre-wrap'
+              : 'line-clamp-3 whitespace-pre-wrap'
+          }
+        >
+          {post.content}
+        </p>
+        {isContentOverflowing ? (
+          <button
+            type="button"
+            onClick={() => setIsContentExpanded((current) => !current)}
+            aria-expanded={isContentExpanded}
+            className="
+              mt-1 text-xs font-semibold text-primary transition-colors
+              hover:text-primary/80
+            "
+          >
+            {isContentExpanded ? 'Ver menos' : 'Ver más'}
+          </button>
+        ) : null}
+      </div>
 
       {post.linkUrl ? (
         <a
