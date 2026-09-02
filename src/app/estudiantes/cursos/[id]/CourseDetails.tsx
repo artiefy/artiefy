@@ -48,6 +48,7 @@ import { useCourseGradeSummary } from '~/hooks/useCourseGradeSummary';
 import { openAgentChatFor } from '~/lib/agents/agentChatBus';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
+import { getExternalClassLink } from '~/utils/externalClassLink';
 import { sortLessons } from '~/utils/lessonSorting';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
@@ -383,11 +384,15 @@ export default function CourseDetails({
     return <FaUserClock className="size-3" />;
   };
 
+  // Mirrors `hasRecording` in CourseContent.tsx so the tab counts match what
+  // each list actually renders.
+  const hasMeetingRecording = (m: ClassMeeting) =>
+    !!m.video_key || !!getExternalClassLink(m.videoUrlExt);
   const recordedCount = Array.isArray(classMeetings)
-    ? classMeetings.filter((m) => !!m.video_key).length
+    ? classMeetings.filter(hasMeetingRecording).length
     : 0;
   const _liveClassesCount = Array.isArray(classMeetings)
-    ? classMeetings.filter((m) => !m.video_key).length
+    ? classMeetings.filter((m) => !hasMeetingRecording(m)).length
     : 0;
   const resourcesCount = Array.isArray(course.lessons)
     ? course.lessons.filter((l) => l.resourceKey && l.resourceKey.trim() !== '')
@@ -1291,6 +1296,15 @@ export default function CourseDetails({
     return sortedLessons[0]?.id ?? null;
   }, [course.lessons]);
 
+  // On a first visit no lesson has any progress yet, so the action is to start
+  // the course, not to resume it.
+  const hasStartedCourse = useMemo(() => {
+    if (!Array.isArray(course.lessons)) return false;
+    return (
+      course.lessons as Array<{ porcentajecompletado?: number | null }>
+    ).some((lesson) => (lesson.porcentajecompletado ?? 0) > 0);
+  }, [course.lessons]);
+
   const handleContinueCourse = () => {
     if (continueLessonId) {
       router.push(`/estudiantes/clases/${continueLessonId}`);
@@ -1900,7 +1914,9 @@ export default function CourseDetails({
                               "
                             >
                               <IoPlayOutline className="mr-2 text-black" />
-                              Continuar curso
+                              {hasStartedCourse
+                                ? 'Continuar curso'
+                                : 'Iniciar curso'}
                             </button>
                             {/* Mostrar frase de planes también cuando está inscrito */}
                             {(_hasPro || _hasPremium) && (
@@ -2461,7 +2477,9 @@ export default function CourseDetails({
                                     "
                                   >
                                     <IoPlayOutline className="mr-2 text-black" />
-                                    Continuar curso
+                                    {hasStartedCourse
+                                      ? 'Continuar curso'
+                                      : 'Iniciar curso'}
                                   </button>
                                 </div>
                               </div>
