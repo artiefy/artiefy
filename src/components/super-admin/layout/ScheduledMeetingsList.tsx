@@ -2,6 +2,8 @@
 
 import React, { useCallback, useMemo, useState } from 'react';
 
+import { ArrowUpRight, Video } from 'lucide-react';
+
 import { ScheduledMeeting } from '../modals/ModalScheduleMeeting';
 
 import { ConfirmarAccion } from './ConfirmarAccion';
@@ -519,22 +521,39 @@ export const ScheduledMeetingsList = ({
                                       )}
                                     </p>
 
-                                    {/* Enlace donde ocurre la sesión. Solo
-                                        se abre desde aquí. */}
-                                    {meeting.joinUrl && (
-                                      <a
-                                        href={meeting.joinUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mr-3 inline-block text-blue-400 underline transition hover:text-blue-300"
-                                      >
-                                        🔗 Ver clase
-                                      </a>
-                                    )}
+                                    {/* Los tres accesos en una rejilla de
+                                        columnas iguales: así comparten ancho
+                                        además de alto, y se leen como un
+                                        conjunto y no como botones sueltos. */}
+                                    <div
+                                      className="
+                                        mt-3 grid grid-cols-1 gap-2
+                                        sm:grid-cols-2
+                                        lg:grid-cols-3
+                                      "
+                                    >
+                                      {meeting.joinUrl && (
+                                        <a
+                                          href={meeting.joinUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="group/clase inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22C4D3] to-[#1c9fd6] px-4 py-2 text-sm font-semibold text-[#04101f] shadow-lg shadow-[#22C4D3]/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#22C4D3]/40"
+                                        >
+                                          <Video className="size-4" />
+                                          Ver y grabar clase
+                                          <ArrowUpRight
+                                            className="
+                                            size-4 transition-transform
+                                            duration-200
+                                            group-hover/clase:translate-x-0.5
+                                            group-hover/clase:-translate-y-0.5
+                                          "
+                                          />
+                                        </a>
+                                      )}
 
-                                    {hasVideo && (
-                                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                                        {finalVideos.map(
+                                      {hasVideo &&
+                                        finalVideos.map(
                                           (videoUrl, videoIdx) => (
                                             <button
                                               key={videoUrl}
@@ -542,7 +561,7 @@ export const ScheduledMeetingsList = ({
                                               onClick={() =>
                                                 setVideoToShow(videoUrl)
                                               }
-                                              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-400/20"
+                                              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm font-semibold text-emerald-300 transition-all duration-200 hover:-translate-y-0.5 hover:bg-emerald-400/20"
                                             >
                                               🎥 Grabación{' '}
                                               {finalVideos.length > 1
@@ -552,84 +571,83 @@ export const ScheduledMeetingsList = ({
                                           )
                                         )}
 
-                                        {/* El enlace externo sí se puede
+                                      {/* El enlace externo sí se puede
                                             cambiar o quitar; las grabaciones
                                             subidas a S3 no se tocan desde
                                             aquí. */}
-                                        {meeting.videoUrlExt && (
-                                          <>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setEditingLinkId(meeting.id);
-                                                setLinkForm({
-                                                  videoUrlExt:
-                                                    meeting.videoUrlExt ?? '',
-                                                  title: meeting.title ?? '',
-                                                  weekNumber: String(
-                                                    meeting.weekNumber ?? ''
+                                      {meeting.videoUrlExt && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingLinkId(meeting.id);
+                                              setLinkForm({
+                                                videoUrlExt:
+                                                  meeting.videoUrlExt ?? '',
+                                                title: meeting.title ?? '',
+                                                weekNumber: String(
+                                                  meeting.weekNumber ?? ''
+                                                ),
+                                              });
+                                            }}
+                                            className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-[#22C4D3]"
+                                          >
+                                            ✏️ Editar link externo
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={savingLink}
+                                            onClick={() =>
+                                              setConfirmacion({
+                                                titulo: 'Quitar link externo',
+                                                mensaje:
+                                                  'Se quitará el enlace externo de esta clase. Las grabaciones subidas no se tocan.',
+                                                textoConfirmar: 'Quitar',
+                                                accion: () =>
+                                                  quitarEnlaceGrabacion(
+                                                    meeting
                                                   ),
-                                                });
-                                              }}
-                                              className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-[#22C4D3]"
-                                            >
-                                              ✏️ Editar link externo
-                                            </button>
-                                            <button
-                                              type="button"
-                                              disabled={savingLink}
-                                              onClick={() =>
-                                                setConfirmacion({
-                                                  titulo: 'Quitar link externo',
-                                                  mensaje:
-                                                    'Se quitará el enlace externo de esta clase. Las grabaciones subidas no se tocan.',
-                                                  textoConfirmar: 'Quitar',
-                                                  accion: () =>
-                                                    quitarEnlaceGrabacion(
-                                                      meeting
-                                                    ),
-                                                })
-                                              }
-                                              className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-red-400 disabled:opacity-50"
-                                            >
-                                              🗑 Quitar link externo
-                                            </button>
-                                          </>
-                                        )}
-                                      </div>
-                                    )}
+                                              })
+                                            }
+                                            className="rounded-lg px-2 py-1.5 text-xs text-white/50 transition-colors hover:text-red-400 disabled:opacity-50"
+                                          >
+                                            🗑 Quitar link externo
+                                          </button>
+                                        </>
+                                      )}
 
-                                    {/* LINK EXTERNO (OPCIONAL): el recambio
+                                      {/* LINK EXTERNO (OPCIONAL): el recambio
                                         para cuando la clase no se grabó por
                                         algún fallo. Si ya hay GRABACIÓN no se
                                         ofrece, y si ya hay un link externo se
                                         cambia con "Editar enlace". */}
-                                    {!(meeting.videoUrlExt ?? '').trim() &&
-                                      !tieneGrabacion && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            setEditingLinkId(
-                                              meeting.id === editingLinkId
-                                                ? null
-                                                : meeting.id
-                                            );
-                                            setLinkForm({
-                                              videoUrlExt: '',
-                                              title: meeting.title ?? '',
-                                              weekNumber: String(
-                                                meeting.weekNumber ?? ''
-                                              ),
-                                            });
-                                          }}
-                                          className="mt-2 inline-block rounded border border-cyan-600 px-3 py-1 text-sm text-cyan-400 transition hover:bg-cyan-600 hover:text-white"
-                                        >
-                                          🔗{' '}
-                                          {editingLinkId === meeting.id
-                                            ? 'Cancelar'
-                                            : 'Link externo (opcional)'}
-                                        </button>
-                                      )}
+                                      {!(meeting.videoUrlExt ?? '').trim() &&
+                                        !tieneGrabacion && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingLinkId(
+                                                meeting.id === editingLinkId
+                                                  ? null
+                                                  : meeting.id
+                                              );
+                                              setLinkForm({
+                                                videoUrlExt: '',
+                                                title: meeting.title ?? '',
+                                                weekNumber: String(
+                                                  meeting.weekNumber ?? ''
+                                                ),
+                                              });
+                                            }}
+                                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/25 px-4 py-2 text-sm font-semibold text-white/60 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#22C4D3]/60 hover:text-[#22C4D3]"
+                                          >
+                                            🔗{' '}
+                                            {editingLinkId === meeting.id
+                                              ? 'Cancelar'
+                                              : 'Link externo (opcional)'}
+                                          </button>
+                                        )}
+                                    </div>
 
                                     <button
                                       type="button"
