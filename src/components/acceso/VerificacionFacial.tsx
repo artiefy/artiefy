@@ -19,10 +19,6 @@ interface Props {
   onResultado: (resultado: ResultadoFacial) => void;
   /** Bloquea el botón mientras el flujo de acceso está ocupado. */
   ocupado?: boolean;
-  /** Persona a la que pertenece la foto de referencia. */
-  userId?: string | null;
-  /** Se llama tras guardar una foto nueva, con su URL pública. */
-  onFotoGuardada?: (url: string) => void;
 }
 
 /**
@@ -36,19 +32,15 @@ export function VerificacionFacial({
   fotoReferencia,
   onResultado,
   ocupado = false,
-  userId,
-  onFotoGuardada,
 }: Props) {
   const { estado, descriptorDe, distanciaEntre } = useFaceApi();
   const videoRef = useRef<HTMLVideoElement>(null);
   const flujoRef = useRef<MediaStream | null>(null);
-  const archivoRef = useRef<HTMLInputElement>(null);
 
   const [camara, setCamara] = useState<'apagada' | 'encendida' | 'error'>(
     'apagada'
   );
   const [verificando, setVerificando] = useState(false);
-  const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
 
   // Encender la cámara en cuanto los modelos estén listos.
@@ -84,108 +76,6 @@ export function VerificacionFacial({
       flujoRef.current = null;
     };
   }, [estado]);
-
-  /** Sube la imagen ya validada y avisa al padre. */
-  const subirReferencia = useCallback(
-    async (imagen: string) => {
-      const res = await fetch('/api/acceso/foto-referencia', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, imagen }),
-      });
-
-      if (!res.ok) {
-        setMensaje('No se pudo guardar la foto.');
-        return;
-      }
-
-      const data = (await res.json()) as { url?: string };
-      setMensaje('Foto de referencia guardada.');
-      if (data.url) onFotoGuardada?.(data.url);
-    },
-    [onFotoGuardada, userId]
-  );
-
-  /**
-   * Foto de referencia desde un archivo del equipo.
-   *
-   * Se comprueba que tenga una cara antes de subirla, igual que con la
-   * cámara: una referencia sin rostro dejaría a esa persona sin poder entrar.
-   */
-  const subirDesdeArchivo = useCallback(
-    async (archivo: File) => {
-      if (!userId) return;
-
-      setGuardando(true);
-      setMensaje(null);
-
-      try {
-        const imagen = await new Promise<string>((resolve, reject) => {
-          const lector = new FileReader();
-          lector.onload = () => resolve(String(lector.result));
-          lector.onerror = () => reject(new Error('no se pudo leer'));
-          lector.readAsDataURL(archivo);
-        });
-
-        const img = new Image();
-        img.src = imagen;
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error('imagen inválida'));
-        });
-
-        if (!(await descriptorDe(img))) {
-          setMensaje('En esa imagen no se distingue una cara.');
-          return;
-        }
-
-        await subirReferencia(imagen);
-      } catch (e) {
-        console.error('[FACIAL] error subiendo el archivo:', e);
-        setMensaje('No se pudo procesar la imagen.');
-      } finally {
-        setGuardando(false);
-        if (archivoRef.current) archivoRef.current.value = '';
-      }
-    },
-    [descriptorDe, subirReferencia, userId]
-  );
-
-  /**
-   * Toma un fotograma de la cámara y lo guarda como foto de referencia.
-   *
-   * Antes de subir comprueba que se distinga una cara: guardar una foto sin
-   * rostro dejaría a esa persona sin poder entrar nunca, y el fallo solo se
-   * notaría al intentar pasar.
-   */
-  const capturarReferencia = useCallback(async () => {
-    if (!videoRef.current || !userId) return;
-
-    setGuardando(true);
-    setMensaje(null);
-
-    try {
-      const rostro = await descriptorDe(videoRef.current);
-      if (!rostro) {
-        setMensaje('No se ve una cara. Acércate y mira de frente.');
-        return;
-      }
-
-      const video = videoRef.current;
-      const lienzo = document.createElement('canvas');
-      lienzo.width = video.videoWidth;
-      lienzo.height = video.videoHeight;
-      lienzo.getContext('2d')?.drawImage(video, 0, 0);
-      const imagen = lienzo.toDataURL('image/jpeg', 0.9);
-
-      await subirReferencia(imagen);
-    } catch (e) {
-      console.error('[FACIAL] error guardando la referencia:', e);
-      setMensaje('Error al guardar la foto.');
-    } finally {
-      setGuardando(false);
-    }
-  }, [descriptorDe, subirReferencia, userId]);
 
   const verificar = useCallback(async () => {
     if (!videoRef.current) return;
@@ -302,54 +192,6 @@ export function VerificacionFacial({
       >
         {verificando ? 'Verificando…' : 'Verificar rostro'}
       </button>
-
-      {userId && (
-        <button
-          type="button"
-          onClick={() => void capturarReferencia()}
-          disabled={estado !== 'listo' || camara !== 'encendida' || guardando}
-          className="
-            w-full max-w-sm rounded-lg border border-cyan-500/40 px-4 py-2
-            text-sm font-semibold text-cyan-300 transition-colors
-            hover:bg-cyan-500/10
-            disabled:cursor-not-allowed disabled:opacity-50
-          "
-        >
-          {guardando
-            ? 'Guardando…'
-            : fotoReferencia
-              ? 'Reemplazar foto de referencia'
-              : 'Tomar foto de referencia'}
-        </button>
-      )}
-
-      {userId && (
-        <>
-          <input
-            ref={archivoRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void subirDesdeArchivo(f);
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => archivoRef.current?.click()}
-            disabled={estado !== 'listo' || guardando}
-            className="
-              w-full max-w-sm rounded-lg border border-white/20 px-4 py-2
-              text-sm text-white/70 transition-colors
-              hover:bg-white/5
-              disabled:cursor-not-allowed disabled:opacity-50
-            "
-          >
-            Subir foto desde el equipo
-          </button>
-        </>
-      )}
 
       {mensaje && (
         <p className="text-center text-sm text-white/70">{mensaje}</p>

@@ -43,8 +43,8 @@ export default function BuscarSuscripcionPage() {
   const [verificacion, setVerificacion] = useState<ResultadoFacial | null>(
     null
   );
-  /** Foto recién capturada, para no tener que volver a buscar a la persona. */
-  const [fotoNueva, setFotoNueva] = useState<string | null>(null);
+  /** true cuando el acceso ya quedó registrado: dispara el reinicio. */
+  const [accesoRegistrado, setAccesoRegistrado] = useState(false);
   const [searchType, setSearchType] = useState<'email' | 'document' | 'name'>(
     'email'
   );
@@ -81,18 +81,26 @@ export default function BuscarSuscripcionPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Limpiar resultado después de 5 segundos de completar la acción
+  /**
+   * Limpia la pantalla para la siguiente persona.
+   *
+   * Solo tras REGISTRAR el acceso, nunca tras buscar. Antes se disparaba en
+   * cuanto terminaba la búsqueda y la ficha desaparecía a los 5 segundos,
+   * con la cámara abierta y sin haber dado tiempo a verificar el rostro.
+   */
   useEffect(() => {
-    if (result && !loading) {
-      const timer = setTimeout(() => {
-        setResult(null);
-        setSearchTerm('');
-        setEsp32Message(null);
-      }, 5000);
+    if (!accesoRegistrado) return;
 
-      return () => clearTimeout(timer);
-    }
-  }, [result, loading]);
+    const timer = setTimeout(() => {
+      setResult(null);
+      setSearchTerm('');
+      setEsp32Message(null);
+      setVerificacion(null);
+      setAccesoRegistrado(false);
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, [accesoRegistrado]);
 
   const handleRegister = async () => {
     if (!searchTerm.trim()) {
@@ -155,7 +163,7 @@ export default function BuscarSuscripcionPage() {
       // solo — antes hay que verificar el rostro (ver registrarAcceso).
       setResult(searchResult);
       setVerificacion(null);
-      setFotoNueva(null);
+      setAccesoRegistrado(false);
       return;
     } catch (err) {
       const errorMsg =
@@ -357,6 +365,9 @@ export default function BuscarSuscripcionPage() {
           setTimeout(() => setEsp32Message(null), 4000);
         }
       }
+      // Registrado: a partir de aquí sí tiene sentido reiniciar la pantalla
+      // para la siguiente persona.
+      setAccesoRegistrado(true);
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : 'Error al registrar acceso';
@@ -445,12 +456,12 @@ export default function BuscarSuscripcionPage() {
             <p className="mb-3 text-center text-sm font-semibold text-cyan-300">
               Verifica el rostro para continuar
             </p>
+            {/* Solo verifica. Subir la foto de referencia se hace desde
+                otro sitio, no en la puerta. */}
             <VerificacionFacial
-              fotoReferencia={fotoNueva ?? fotoReferencia}
+              fotoReferencia={fotoReferencia}
               onResultado={alVerificarRostro}
               ocupado={loading}
-              userId={result?.user?.id ?? null}
-              onFotoGuardada={setFotoNueva}
             />
           </div>
         )}
