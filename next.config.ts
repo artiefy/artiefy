@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
   },
   reactCompiler: false,
   cacheComponents: true,
+  // Cada <Link> precarga el armazón compartido de la app en cuanto entra en
+  // pantalla, así que al hacer clic la estructura ya está y solo se espera por
+  // los datos. Se activó tras comprobar que no hay ningún <Link prefetch>
+  // explícito que dependiera del comportamiento anterior.
+  partialPrefetching: true,
   expireTime: 3600,
   experimental: {
     // Next.js 16.3 turned `useTypeScriptCli` on by default, which makes

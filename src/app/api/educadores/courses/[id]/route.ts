@@ -27,6 +27,7 @@ import {
   spaceOptions,
   users,
 } from '~/server/db/schema';
+import { conCacheTTL, invalidarCache } from '~/server/lib/cache-ttl';
 
 // Agregamos una interfaz para el cuerpo de la solicitud PUT
 
@@ -417,10 +418,10 @@ export async function getCourseByIdWithTypes(courseId: number) {
   };
 }
 
-export async function GET(
+async function obtenerCurso(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+): Promise<NextResponse> {
   try {
     const resolvedParams = await params;
     const courseId = parseInt(resolvedParams.id);
@@ -465,6 +466,10 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Guardar invalida la lectura cacheada: sin esto la pantalla seguiría
+  // mostrando los datos anteriores hasta 30 segundos después de editar.
+  void params.then(({ id }) => invalidarCache(`curso:${id}`)).catch(() => null);
+
   try {
     // Validar autenticación del usuario
     console.log('🔍 [PUT /courses/[id]] Iniciando...');
@@ -971,5 +976,58 @@ export async function DELETE(request: Request) {
       { error: 'Error al eliminar el curso' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Vigencia del detalle del curso.
+ *
+ * Corta a propósito: el curso se edita desde esta misma pantalla y no puede
+ * quedarse desactualizado. Su único fin es que las 2-4 peticiones idénticas
+ * que dispara una sola carga cuesten una.
+ */
+const TTL_CURSO_MS = 30_000;
+
+interface RespuestaCacheada {
+  cuerpo: string;
+  estado: number;
+}
+
+export async function GET(
+  request: Request,
+  ctx: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id } = await ctx.params;
+
+  try {
+    const { cuerpo, estado } = await conCacheTTL<RespuestaCacheada>(
+      `curso:${id}`,
+      TTL_CURSO_MS,
+      async () => {
+        const res = await obtenerCurso(request, ctx);
+        const cuerpo = await res.text();
+
+        // Los fallos no se cachean.
+        if (!res.ok) {
+          throw Object.assign(new Error('Fallo al leer el curso'), {
+            cuerpo,
+            estado: res.status,
+          });
+        }
+
+        return { cuerpo, estado: res.status };
+      }
+    );
+
+    return new NextResponse(cuerpo, {
+      status: estado,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    const fallo = error as { cuerpo?: string; estado?: number };
+    return new NextResponse(fallo.cuerpo ?? '{"error":"Error interno"}', {
+      status: fallo.estado ?? 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

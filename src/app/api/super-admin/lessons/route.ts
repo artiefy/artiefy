@@ -14,11 +14,12 @@ import {
   getLessonsByCourseId,
   updateLesson,
 } from '~/models/educatorsModels/lessonsModels';
+import { conCacheTTL, invalidarCache } from '~/server/lib/cache-ttl';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-export async function GET(request: Request) {
+async function listarClases(request: Request): Promise<NextResponse> {
   try {
     const url = new URL(request.url);
     const courseIdParam = url.searchParams.get('courseId');
@@ -54,6 +55,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(req: NextRequest) {
+  // Crear, editar o borrar una clase invalida la lista cacheada.
+  invalidarCache('clases:');
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -150,6 +154,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  // Crear, editar o borrar una clase invalida la lista cacheada.
+  invalidarCache('clases:');
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -187,6 +194,9 @@ export async function PUT(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  // Crear, editar o borrar una clase invalida la lista cacheada.
+  invalidarCache('clases:');
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -218,6 +228,9 @@ export async function DELETE(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  // Crear, editar o borrar una clase invalida la lista cacheada.
+  invalidarCache('clases:');
+
   try {
     const { userId } = await auth();
     if (!userId) {
@@ -244,5 +257,47 @@ export async function PATCH(req: NextRequest) {
       `Error al actualizar el progreso de la lección: ${errorMessage}`,
       500
     );
+  }
+}
+
+/**
+ * Vigencia de la lista de clases.
+ *
+ * Muy corta: se editan desde la misma pantalla. Solo sirve para que las 4-5
+ * peticiones idénticas de una misma carga cuesten una sola consulta.
+ */
+const TTL_CLASES_MS = 20_000;
+
+export async function GET(request: Request): Promise<NextResponse> {
+  const courseId = new URL(request.url).searchParams.get('courseId') ?? '';
+
+  try {
+    const { cuerpo, estado } = await conCacheTTL<{
+      cuerpo: string;
+      estado: number;
+    }>(`clases:${courseId}`, TTL_CLASES_MS, async () => {
+      const res = await listarClases(request);
+      const cuerpo = await res.text();
+
+      if (!res.ok) {
+        throw Object.assign(new Error('Fallo listando clases'), {
+          cuerpo,
+          estado: res.status,
+        });
+      }
+
+      return { cuerpo, estado: res.status };
+    });
+
+    return new NextResponse(cuerpo, {
+      status: estado,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    const fallo = error as { cuerpo?: string; estado?: number };
+    return new NextResponse(fallo.cuerpo ?? '{"error":"Error interno"}', {
+      status: fallo.estado ?? 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }
