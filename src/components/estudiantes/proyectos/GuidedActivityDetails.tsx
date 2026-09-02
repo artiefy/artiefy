@@ -536,13 +536,15 @@ export function GuidedActivityDetails({
                 <Button
                   asChild
                   variant="default"
-                  size="icon"
-                  className="size-8 rounded-full bg-primary text-background hover:bg-primary/90"
+                  className="h-8 gap-1.5 rounded-full bg-primary px-2 text-sm text-background hover:bg-primary/90 sm:px-3"
                 >
                   <Link
                     href={activityHref(nextActivity.id)}
                     aria-label={`Actividad siguiente: ${nextActivity.name}`}
                   >
+                    {/* Label drops on the narrowest bars, matching the lesson
+                        navigation. */}
+                    <span className="hidden sm:inline">Siguiente</span>
                     <ChevronRight aria-hidden="true" />
                   </Link>
                 </Button>
