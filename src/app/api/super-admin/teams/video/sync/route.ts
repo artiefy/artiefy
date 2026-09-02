@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import { classMeetings } from '~/server/db/schema';
+import { invalidarCache } from '~/server/lib/cache-ttl';
 
 import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web';
 
@@ -189,6 +190,10 @@ function pickClosestRow(
 // ---------------------- POST /sync ----------------------
 
 export async function POST(req: Request) {
+  // Sincronizar a mano debe traer datos frescos: se tira el caché de la
+  // lectura para que la siguiente consulta no devuelva lo de hace 5 minutos.
+  invalidarCache('teams-video:');
+
   const body = (await req.json().catch(() => ({}))) as {
     userId?: string;
     maxUploads?: number;

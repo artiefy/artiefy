@@ -87,14 +87,33 @@ async function getGraphToken() {
   return data.access_token;
 }
 
-// convierte Date a string local sin "Z"
+/**
+ * Convierte un instante a "YYYY-MM-DDTHH:mm:00" en hora de Bogotá.
+ *
+ * Antes usaba `getFullYear`/`getHours`, que devuelven la hora en la zona del
+ * SERVIDOR. En Vercel eso es UTC, así que una clase de las 2:19 p. m. salía
+ * como "19:19" y `parseBogotaLocalToUTC` le sumaba otras 5 horas: quedaba
+ * guardada a las 7:19 p. m. Teams no se veía afectado porque recibe la zona
+ * horaria en un campo aparte.
+ */
 function formatLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${d}T${h}:${min}:00`;
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(date);
+
+  const valor = (tipo: Intl.DateTimeFormatPartTypes) =>
+    partes.find((p) => p.type === tipo)?.value ?? '00';
+
+  // `hour` puede venir como "24" a medianoche en algunos entornos.
+  const hora = valor('hour') === '24' ? '00' : valor('hour');
+
+  return `${valor('year')}-${valor('month')}-${valor('day')}T${hora}:${valor('minute')}:00`;
 }
 
 // "YYYY-MM-DDTHH:mm:00" interpretado como hora local Bogotá
@@ -380,7 +399,14 @@ export async function POST(req: Request) {
     console.log('✅ [VALIDATION] Email tiene formato válido');
 
     // ✅ VALIDAR FECHA
-    const firstStartDate = new Date(startDateTime);
+    //
+    // El modal envía la hora tal como la escribió el usuario, sin zona
+    // ("2026-09-02T14:19"). `new Date()` la interpretaría en la zona del
+    // SERVIDOR: en Vercel eso es UTC y la clase se corría 5 horas. Se
+    // interpreta explícitamente como hora de Bogotá.
+    const firstStartDate = /[Zz]|[+-]\d{2}:\d{2}$/.test(startDateTime)
+      ? new Date(startDateTime)
+      : parseBogotaLocalToUTC(startDateTime.slice(0, 16));
     if (isNaN(firstStartDate.getTime())) {
       console.error(`❌ [VALIDATION] Fecha inválida: ${startDateTime}`);
       throw new Error(

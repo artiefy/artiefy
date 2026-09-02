@@ -69,37 +69,40 @@ export function ModalLinkExterno({
       <div
         onClick={(e) => e.stopPropagation()}
         className="
-          w-full max-w-lg rounded-2xl border border-white/10 bg-[#0b1a2e] p-6
-          shadow-2xl shadow-black/60
+          relative w-full max-w-lg rounded-2xl border border-white/10
+          bg-[#0b1a2e] p-6 shadow-2xl shadow-black/60
         "
       >
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span
-              className="
-                flex size-10 shrink-0 items-center justify-center rounded-xl
-                border border-[#22C4D3]/25 bg-[#22C4D3]/10
-              "
-            >
-              <Link2 className="size-5 text-[#22C4D3]" />
-            </span>
-            <div>
-              <h3 className="text-base font-bold text-white">Link externo</h3>
-              <p className="truncate text-xs text-white/50">{tituloClase}</p>
-            </div>
-          </div>
+        {/* Anclada a la esquina, fuera del flujo: dentro de un flex se
+            desplazaba cuando el nombre de la clase era largo. */}
+        <button
+          type="button"
+          onClick={onCerrar}
+          aria-label="Cerrar"
+          className="
+            absolute top-4 right-4 rounded-lg p-1.5 text-white/50
+            transition-colors
+            hover:bg-white/10 hover:text-white
+          "
+        >
+          <X className="size-4" />
+        </button>
 
-          <button
-            type="button"
-            onClick={onCerrar}
-            aria-label="Cerrar"
+        {/* pr-10 reserva el hueco de la X para que el título no pase por
+            debajo. */}
+        <div className="mb-4 flex items-center gap-3 pr-10">
+          <span
             className="
-              rounded-lg p-1.5 text-white/50 transition-colors
-              hover:bg-white/10 hover:text-white
+              flex size-10 shrink-0 items-center justify-center rounded-xl
+              border border-[#22C4D3]/25 bg-[#22C4D3]/10
             "
           >
-            <X className="size-4" />
-          </button>
+            <Link2 className="size-5 text-[#22C4D3]" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-base font-bold text-white">Link externo</h3>
+            <p className="truncate text-xs text-white/50">{tituloClase}</p>
+          </div>
         </div>
 
         {editando ? (
