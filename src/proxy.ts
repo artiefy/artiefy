@@ -234,6 +234,10 @@ export default clerkMiddleware(async (auth, req) => {
       const dashboardRoute = getDashboardRouteByRole(role);
       const isInOwnDashboard =
         pathname.startsWith(dashboardRoute) ||
+        // Las rutas públicas del dashboard (el formulario de inscripción) no
+        // son de nadie: se comprueban más abajo, pero el redirect por rol se
+        // ejecuta antes y expulsaba de ahí a educadores y administradores.
+        isPublicDashboardPath(pathname) ||
         (role === 'super-admin' && isSuperAdminSharedDashboardPath(pathname));
       const isAuthRoute =
         pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
