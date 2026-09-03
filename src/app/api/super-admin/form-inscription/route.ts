@@ -40,10 +40,20 @@ const PUBLIC_BASE_URL =
    ========================= */
 const ACADEMIC_MAIL = 'secretariaacademica@ciadet.co';
 
+// Todos los correos de Artiefy se autentican con la MISMA cuenta de Gmail,
+// `direcciongeneral@artiefy.com`, y su App Password vive en `PASS`. Antes esta
+// ruta usaba `process.env.EMAIL_USER` como usuario, que en producción quedó en
+// `jsdg1818@gmail.com` — una cuenta distinta a la dueña de `PASS`. Resultado:
+// Gmail rechazaba la autenticación con 535 BadCredentials y no salían ni las
+// credenciales del estudiante ni el aviso a Secretaría Académica, mientras que
+// el resto de la app (que sí usa esta cuenta) enviaba sin problema. Se fija la
+// cuenta para que coincida con `PASS`.
+const MAIL_FROM = 'direcciongeneral@artiefy.com';
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER ?? 'direcciongeneral@artiefy.com',
+    user: MAIL_FROM,
     pass: process.env.PASS,
   },
 });
@@ -175,7 +185,7 @@ async function sendWelcomeEmail(
   const subject = 'Bienvenido a Artiefy - Tus Credenciales de Acceso';
 
   const mailOptions = {
-    from: `"Artiefy" <${process.env.EMAIL_USER}>`,
+    from: `"Artiefy" <${MAIL_FROM}>`,
     to,
     subject,
     replyTo: 'direcciongeneral@artiefy.com',
@@ -256,7 +266,7 @@ Artiefy · Secretaría Académica – Notificación de matrícula/compra
 
   try {
     await transporter.sendMail({
-      from: `"Artiefy – Notificaciones" <${process.env.EMAIL_USER}>`,
+      from: `"Artiefy – Notificaciones" <${MAIL_FROM}>`,
       to,
       subject,
       html,
