@@ -221,7 +221,38 @@ export async function POST(request: Request) {
           }
         } else {
           password = credentials[0].password;
+
+          // Re-sincronizar la contrasena guardada con Clerk.
+          //
+          // Antes se reenviaba la clave guardada sin volver a ponerla en
+          // Clerk. Si la de Clerk habia cambiado (reset, o el propio usuario),
+          // el correo mandaba una clave vieja que ya no servia y la persona no
+          // podia entrar. Al re-establecerla, la clave del correo siempre
+          // coincide con la de Clerk. Si Clerk la rechaza (p. ej. quedo en la
+          // lista de comprometidas), se genera una nueva y se guarda.
+          try {
+            await clerk.users.updateUser(userId, { password });
+          } catch (resyncError) {
+            console.warn(
+              `[CRED] No se pudo re-sincronizar la clave guardada de ${userId}, se genera una nueva:`,
+              resyncError
+            );
+            password = generateRandomPassword();
+            await clerk.users.updateUser(userId, { password });
+            await db
+              .update(userCredentials)
+              .set({ password, email })
+              .where(eq(userCredentials.userId, userId));
+          }
         }
+
+        // El password generado puede contener < > &, que en HTML se
+        // interpretan como etiquetas y harian que la clave mostrada salga
+        // incompleta o cambiada. Se escapa para el cuerpo HTML.
+        const safePassword = password
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
 
         const mailOptions: MailOptions = {
           from: '"Artiefy" <direcciongeneral@artiefy.com>',
@@ -231,11 +262,15 @@ export async function POST(request: Request) {
             <h2>¡Hola ${username}!</h2>
             <p>Aquí están tus credenciales de acceso para Artiefy:</p>
             <ul>
-              <li><strong>Usuario:</strong> ${username}</li>
-              <li><strong>Email:</strong> ${email}</li>
-              <li><strong>Contraseña:</strong> ${password}</li>
+              <li><strong>Correo (con esto inicias sesión):</strong> ${email}</li>
+              <li><strong>Contraseña:</strong> <code>${safePassword}</code></li>
             </ul>
-            <p>Por favor, inicia sesión en <a href="https://artiefy.com/" target="_blank">Artiefy</a></p>
+            <p style="background:#eef6ff;border-left:4px solid #2563eb;padding:8px 12px;">
+              Para entrar, usa tu <strong>correo electrónico</strong> y la
+              contraseña de arriba. El nombre de usuario <em>${username}</em> es
+              solo para mostrar tu perfil; no sirve para iniciar sesión.
+            </p>
+            <p>Inicia sesión en <a href="https://artiefy.com/sign-in" target="_blank">artiefy.com/sign-in</a></p>
             <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
             <hr>
             <p>Equipo de Artiefy 🎨</p>

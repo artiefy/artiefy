@@ -183,11 +183,15 @@ async function sendWelcomeEmail(
       <h2>¡Bienvenido a Artiefy, ${username}!</h2>
       <p>Estas son tus credenciales de acceso:</p>
       <ul>
-        <li><strong>Usuario:</strong> ${username}</li>
-        <li><strong>Email:</strong> ${to}</li>
+        <li><strong>Correo (con esto inicias sesión):</strong> ${to}</li>
         <li><strong>Contraseña:</strong> <code>${safePassword}</code></li>
       </ul>
-      <p>Ingresa a <a href="https://artiefy.com/" target="_blank">Artiefy</a> y cambia tu contraseña lo antes posible.</p>
+      <p style="background:#eef6ff;border-left:4px solid #2563eb;padding:8px 12px;">
+        Para entrar, usa tu <strong>correo electrónico</strong> y la contraseña de
+        arriba. El nombre de usuario <em>${username}</em> es solo para mostrar tu
+        perfil; no sirve para iniciar sesión.
+      </p>
+      <p>Ingresa en <a href="https://artiefy.com/sign-in" target="_blank">artiefy.com/sign-in</a> y cambia tu contraseña lo antes posible.</p>
       <hr/>
       <p>Equipo de Artiefy 🎨</p>
     `,
@@ -195,11 +199,13 @@ async function sendWelcomeEmail(
 Bienvenido a Artiefy, ${username}!
 
 Tus credenciales:
-- Usuario: ${username}
-- Email: ${to}
-- Contraseña: ${password}
+- Correo (con esto inicias sesion): ${to}
+- Contrasena: ${password}
 
-Ingresa a https://artiefy.com/ y cambia tu contraseña.
+Para entrar usa tu CORREO ELECTRONICO y la contrasena de arriba.
+El nombre de usuario (${username}) es solo para tu perfil; no sirve para iniciar sesion.
+
+Ingresa en https://artiefy.com/sign-in y cambia tu contrasena.
     `,
   };
 
