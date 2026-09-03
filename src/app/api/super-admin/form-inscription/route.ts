@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or, sql } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
@@ -330,6 +330,15 @@ const fieldsSchema = z.object({
    ========================= */
 export async function POST(req: Request) {
   console.log('==== [FORM SUBMIT] INICIO ====');
+
+  // Red de seguridad: en cuanto la persona queda escrita en `users`, ningun
+  // fallo posterior puede devolver un 500. Un 500 hace que el formulario no
+  // muestre la pantalla de exito, la persona cree que no quedo, y reenvia —
+  // y cada reenvio chocaba contra la clave primaria del usuario que ya
+  // existia. Mejor responder "guardado, con estos pendientes".
+  let usuarioGuardado = false;
+  let idUsuarioGuardado: string | null = null;
+
   try {
     // 🔥 CAMBIO: Ahora recibimos JSON, no FormData
     const data = await req.json();
@@ -479,12 +488,35 @@ export async function POST(req: Request) {
     // Guarda el id Clerk antes de cualquier cambio
     const clerkUserId = userId;
 
-    // 1) Buscar si ya existe en BD por email (sin ON CONFLICT)
-    const existingUser = await db
+    // 1) Buscar si ya existe en BD, por id de Clerk O por email.
+    //
+    // Antes esto solo comparaba el email con `eq`, que en Postgres distingue
+    // mayusculas. Clerk, en cambio, busca sin distinguirlas: si alguien se
+    // inscribio como "juan@x.com" y luego escribe "Juan@X.com", Clerk devuelve
+    // el usuario que ya existe y reutiliza su id, pero la consulta de aqui no
+    // encontraba la fila y el codigo se iba por la rama del INSERT — con un id
+    // que ya estaba en la tabla. Resultado: "duplicate key value violates
+    // unique constraint users_pkey", 500, y el formulario volviendo a
+    // "Enviar inscripcion" sin guardar nada.
+    //
+    // Comparar tambien por id cierra el otro caso: la fila existe con ese id
+    // pero quedo guardada con un email distinto al que se escribio ahora.
+    const posiblesUsuarios = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, fields.email))
-      .limit(1);
+      .where(
+        or(
+          eq(users.id, clerkUserId),
+          sql`lower(${users.email}) = lower(${fields.email})`
+        )
+      )
+      .limit(2);
+
+    // Si aparecen dos filas (una por id y otra por email), gana la del id de
+    // Clerk: es la que provocaria el choque de clave primaria.
+    const existingUser = posiblesUsuarios.some((u) => u.id === clerkUserId)
+      ? posiblesUsuarios.filter((u) => u.id === clerkUserId)
+      : posiblesUsuarios.slice(0, 1);
 
     // Si no existe: INSERT normal con id Clerk
     if (existingUser.length === 0) {
@@ -583,118 +615,161 @@ export async function POST(req: Request) {
         .where(eq(users.id, dbUserId));
     }
 
-    // 3) user_credentials: upsert manual (sin tocar schema)
-    if (generatedPassword !== null) {
-      console.log('[CRED] Upsert user_credentials para userId:', userId);
-      const existingCred = await db
-        .select({ id: userCredentials.id })
-        .from(userCredentials)
-        .where(eq(userCredentials.userId, userId))
-        .limit(1);
+    // A partir de aqui la persona YA ESTA GUARDADA en la base de datos.
+    //
+    // Todo lo que viene despues (credenciales, detalles, matricula, correos,
+    // pago) es complementario: si algo de eso falla, la inscripcion sigue
+    // siendo valida y hay que decirselo al usuario. Antes cualquiera de esos
+    // pasos podia lanzar y devolver 500 — la persona no veia la pantalla de
+    // exito, no sabia si habia quedado, y volvia a enviar. Uno de los casos
+    // reales acumulo 25 envios del mismo formulario.
+    //
+    // Por eso cada paso se aisla y los fallos se acumulan aqui como avisos.
+    usuarioGuardado = true;
+    idUsuarioGuardado = userId;
+    const advertencias: string[] = [];
 
-      if (existingCred.length > 0) {
-        console.log('[CRED] Existe. UPDATE…');
-        await db
-          .update(userCredentials)
-          .set({
+    // 3) user_credentials: upsert manual (sin tocar schema)
+    try {
+      if (generatedPassword !== null) {
+        console.log('[CRED] Upsert user_credentials para userId:', userId);
+        const existingCred = await db
+          .select({ id: userCredentials.id })
+          .from(userCredentials)
+          .where(eq(userCredentials.userId, userId))
+          .limit(1);
+
+        if (existingCred.length > 0) {
+          console.log('[CRED] Existe. UPDATE…');
+          await db
+            .update(userCredentials)
+            .set({
+              password: generatedPassword,
+              clerkUserId: userId,
+              email: fields.email,
+            })
+            .where(eq(userCredentials.userId, userId));
+        } else {
+          console.log('[CRED] No existe. INSERT…');
+          await db.insert(userCredentials).values({
+            userId,
             password: generatedPassword,
             clerkUserId: userId,
             email: fields.email,
-          })
-          .where(eq(userCredentials.userId, userId));
+          });
+        }
+        console.log('[CRED] Listo.');
       } else {
-        console.log('[CRED] No existe. INSERT…');
-        await db.insert(userCredentials).values({
-          userId,
-          password: generatedPassword,
-          clerkUserId: userId,
-          email: fields.email,
-        });
+        console.log('[CRED] No se generó password (posible reutilización).');
       }
-      console.log('[CRED] Listo.');
-    } else {
-      console.log('[CRED] No se generó password (posible reutilización).');
+    } catch (credErr) {
+      console.error(
+        '❌ [CRED] No se pudieron guardar las credenciales:',
+        credErr
+      );
+      advertencias.push('No se pudieron guardar las credenciales de acceso.');
     }
 
-    const existingDetails = await db
-      .select({ userId: userInscriptionDetails.userId })
-      .from(userInscriptionDetails)
-      .where(eq(userInscriptionDetails.userId, userId))
-      .limit(1);
+    try {
+      const existingDetails = await db
+        .select({ userId: userInscriptionDetails.userId })
+        .from(userInscriptionDetails)
+        .where(eq(userInscriptionDetails.userId, userId))
+        .limit(1);
 
-    const detailsPayload = {
-      userId,
-      identificacionTipo: fields.identificacionTipo,
-      identificacionNumero: fields.identificacionNumero,
-      nivelEducacion: fields.nivelEducacion,
-      tieneAcudiente: fields.tieneAcudiente,
-      acudienteNombre: fields.acudienteNombre,
-      acudienteContacto: fields.acudienteContacto,
-      acudienteEmail: fields.acudienteEmail,
-      programa: fields.programa,
-      fechaInicio: fields.fechaInicio,
-      comercial: fields.comercial,
-      sede: fields.sede,
-      horario: fields.horario,
-      pagoInscripcion: fields.pagoInscripcion,
-      pagoCuota1: fields.pagoCuota1,
-      modalidad: fields.modalidad,
-      numeroCuotas: fields.numeroCuotas,
-      idDocKey,
-      utilityBillKey,
-      diplomaKey,
-      pagareKey,
-    };
+      const detailsPayload = {
+        userId,
+        identificacionTipo: fields.identificacionTipo,
+        identificacionNumero: fields.identificacionNumero,
+        nivelEducacion: fields.nivelEducacion,
+        tieneAcudiente: fields.tieneAcudiente,
+        acudienteNombre: fields.acudienteNombre,
+        acudienteContacto: fields.acudienteContacto,
+        acudienteEmail: fields.acudienteEmail,
+        programa: fields.programa,
+        fechaInicio: fields.fechaInicio,
+        comercial: fields.comercial,
+        sede: fields.sede,
+        horario: fields.horario,
+        pagoInscripcion: fields.pagoInscripcion,
+        pagoCuota1: fields.pagoCuota1,
+        modalidad: fields.modalidad,
+        numeroCuotas: fields.numeroCuotas,
+        idDocKey,
+        utilityBillKey,
+        diplomaKey,
+        pagareKey,
+      };
 
-    if (existingDetails.length > 0) {
-      await db
-        .update(userInscriptionDetails)
-        .set(detailsPayload)
-        .where(eq(userInscriptionDetails.userId, userId));
-    } else {
-      await db.insert(userInscriptionDetails).values(detailsPayload);
-    }
-
-    // 6) Matricular SOLO al programa
-    const programRow = await db.query.programas.findFirst({
-      where: eq(programas.title, fields.programa),
-      columns: { id: true, title: true },
-    });
-    if (!programRow) {
-      console.error('[PROGRAM] No encontrado:', fields.programa);
-      return NextResponse.json(
-        { error: `Programa no encontrado: ${fields.programa}` },
-        { status: 404 }
+      if (existingDetails.length > 0) {
+        await db
+          .update(userInscriptionDetails)
+          .set(detailsPayload)
+          .where(eq(userInscriptionDetails.userId, userId));
+      } else {
+        await db.insert(userInscriptionDetails).values(detailsPayload);
+      }
+    } catch (detErr) {
+      console.error('❌ [DETALLES] No se pudieron guardar:', detErr);
+      advertencias.push(
+        'Los datos de inscripción quedaron incompletos en la ficha del estudiante.'
       );
     }
-    console.log('[PROGRAM] Encontrado:', programRow);
 
-    const alreadyEnrolled = await db
-      .select({ id: enrollmentPrograms.id })
-      .from(enrollmentPrograms)
-      .where(
-        and(
-          eq(enrollmentPrograms.userId, userId),
-          eq(enrollmentPrograms.programaId, programRow.id)
-        )
-      )
-      .limit(1);
+    // 6) Matricular SOLO al programa.
+    //
+    // Si el programa no aparece por titulo esto devolvia 404 — con la persona
+    // ya creada en la base de datos. Ahora se avisa y se sigue: la matricula
+    // se puede completar a mano, pero la inscripcion no se pierde ni se
+    // duplica por reintentos.
+    let programRow: { id: number; title: string } | null = null;
 
-    if (alreadyEnrolled.length === 0) {
-      await db.insert(enrollmentPrograms).values({
-        programaId: programRow.id,
-        userId,
-        enrolledAt: new Date(),
-        completed: false,
-      });
-      console.log(
-        '[PROGRAM] Matriculado userId:',
-        userId,
-        'programaId:',
-        programRow.id
-      );
-    } else {
-      console.log('[PROGRAM] Ya estaba matriculado, no se duplica.');
+    try {
+      programRow =
+        (await db.query.programas.findFirst({
+          where: eq(programas.title, fields.programa),
+          columns: { id: true, title: true },
+        })) ?? null;
+
+      if (!programRow) {
+        console.error('[PROGRAM] No encontrado:', fields.programa);
+        advertencias.push(
+          `No se encontró el programa "${fields.programa}", así que la matrícula quedó pendiente.`
+        );
+      } else {
+        console.log('[PROGRAM] Encontrado:', programRow);
+
+        const alreadyEnrolled = await db
+          .select({ id: enrollmentPrograms.id })
+          .from(enrollmentPrograms)
+          .where(
+            and(
+              eq(enrollmentPrograms.userId, userId),
+              eq(enrollmentPrograms.programaId, programRow.id)
+            )
+          )
+          .limit(1);
+
+        if (alreadyEnrolled.length === 0) {
+          await db.insert(enrollmentPrograms).values({
+            programaId: programRow.id,
+            userId,
+            enrolledAt: new Date(),
+            completed: false,
+          });
+          console.log(
+            '[PROGRAM] Matriculado userId:',
+            userId,
+            'programaId:',
+            programRow.id
+          );
+        } else {
+          console.log('[PROGRAM] Ya estaba matriculado, no se duplica.');
+        }
+      }
+    } catch (progErr) {
+      console.error('❌ [PROGRAM] Falló la matrícula:', progErr);
+      advertencias.push('La matrícula al programa quedó pendiente.');
     }
 
     // 7) Email credenciales (solo si se creó usuario nuevo y hubo contraseña)
@@ -730,13 +805,27 @@ export async function POST(req: Request) {
     }
 
     // ✅ guardar log SIEMPRE - con garantía de persistencia
-    await logCredentialsDelivery({
-      userId,
-      usuario: usernameForEmail,
-      contrasena: generatedPassword ?? null,
-      correo: fields.email,
-      nota: credentialsNote,
-    });
+    try {
+      await logCredentialsDelivery({
+        userId,
+        usuario: usernameForEmail,
+        contrasena: generatedPassword ?? null,
+        correo: fields.email,
+        nota: credentialsNote,
+      });
+    } catch (logCredErr) {
+      console.error(
+        '❌ [CRED LOG] No se pudo registrar la entrega:',
+        logCredErr
+      );
+      advertencias.push('No quedó registro del envío de credenciales.');
+    }
+
+    if (!welcomeEmailOk && generatedPassword) {
+      advertencias.push(
+        `No se pudo enviar el correo con las credenciales a ${fields.email}. Entrégaselas manualmente.`
+      );
+    }
 
     // 8) Notificar a Secretaría Académica
     try {
@@ -750,7 +839,7 @@ export async function POST(req: Request) {
         ciudad: fields.ciudad,
         direccion: fields.direccion,
         nivelEducacion: fields.nivelEducacion,
-        programa: programRow.title,
+        programa: programRow?.title ?? fields.programa,
         fechaInicio: fields.fechaInicio,
         sede: fields.sede,
         horario: fields.horario,
@@ -772,6 +861,7 @@ export async function POST(req: Request) {
         notifyErr
       );
       // Ya está logueado en sendAcademicNotification
+      advertencias.push('No se pudo avisar por correo a Secretaría Académica.');
     }
     // ... después de enviar notificaciones y todo
     // Solo registrar el pago si el usuario indicó que ya pagó la inscripción
@@ -781,7 +871,11 @@ export async function POST(req: Request) {
     );
     const pagoInscripcionEsSi = /^s[ií]$/i.test(fields.pagoInscripcion || '');
 
-    if (pagoInscripcionEsSi) {
+    if (pagoInscripcionEsSi && !programRow) {
+      advertencias.push(
+        'No se registró el pago de inscripción porque falta el programa.'
+      );
+    } else if (pagoInscripcionEsSi && programRow) {
       try {
         const hoy = new Date();
         const fechaStr = hoy.toISOString().split('T')[0]; // "YYYY-MM-DD"
@@ -831,6 +925,7 @@ export async function POST(req: Request) {
         }
       } catch (pagoErr) {
         console.error('❌ Error creando pago automático:', pagoErr);
+        advertencias.push('No se registró el pago de inscripción.');
       }
     } else {
       console.log(
@@ -841,7 +936,10 @@ export async function POST(req: Request) {
 
     console.log('==== [FORM SUBMIT] FIN OK ====');
 
-    console.log('==== [FORM SUBMIT] FIN OK ====');
+    if (advertencias.length > 0) {
+      console.warn('[FORM SUBMIT] Guardado con avisos:', advertencias);
+    }
+
     return NextResponse.json({
       ok: true,
       userId,
@@ -849,7 +947,10 @@ export async function POST(req: Request) {
       message: wasExistingClerkUser
         ? 'El usuario ya existía en Clerk. Se actualizaron los datos en BD.'
         : 'Usuario creado y matriculado correctamente.',
-      program: { id: programRow.id, title: programRow.title },
+      advertencias,
+      ...(programRow
+        ? { program: { id: programRow.id, title: programRow.title } }
+        : {}),
       emailSent: Boolean(generatedPassword),
       s3: {
         idDocKey,
@@ -886,6 +987,24 @@ export async function POST(req: Request) {
       });
     } catch (logErr) {
       console.error('[EMAIL LOG] No se pudo guardar log de error:', logErr);
+    }
+
+    // Si la persona ya estaba guardada, esto no es un fallo de la inscripcion:
+    // fue un paso complementario. Se responde 200 para que vea la pantalla de
+    // exito y NO reenvie el formulario.
+    if (usuarioGuardado) {
+      console.warn(
+        '[FORM SUBMIT] La inscripción sí quedó guardada; falló un paso posterior.'
+      );
+      return NextResponse.json({
+        ok: true,
+        userId: idUsuarioGuardado,
+        message: 'La inscripción quedó guardada.',
+        advertencias: [
+          'La inscripción se guardó, pero algunos pasos quedaron pendientes. No vuelvas a enviar el formulario; avisa a soporte.',
+        ],
+        emailSent: false,
+      });
     }
 
     return NextResponse.json(

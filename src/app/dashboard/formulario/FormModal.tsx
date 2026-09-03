@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -313,6 +313,8 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [submittedOK, setSubmittedOK] = useState<boolean | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string>('');
+  /** El banner de resultado vive arriba del modal; el botón, abajo. */
+  const bannerRef = useRef<HTMLDivElement>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Fields, string>>>(
     {}
   );
@@ -323,6 +325,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const CUOTAS_OPTS = ['1', '2', '3', '4', '8', '10', '12'] as const;
   const [fileErrors, setFileErrors] = useState<Record<string, string>>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  // Pasos que el servidor no pudo completar aunque la inscripcion SI quedo
+  // guardada (correo de credenciales, matricula, registro del pago). Se
+  // muestran en la pantalla de exito para que nadie reenvie el formulario
+  // creyendo que no quedo.
+  const [avisos, setAvisos] = useState<string[]>([]);
 
   const resetForm = () => {
     setFields({ ...defaultFields });
@@ -332,6 +339,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
     setComprobanteInscripcion(null);
     setActaGrado(null);
     setPagare(null);
+    setAvisos([]);
     setShowSuccess(false); // 👈 vuelve al formulario
   };
   // Función para subir UN archivo a S3
@@ -369,7 +377,23 @@ export default function FormModal({ isOpen, onClose }: Props) {
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`Error subiendo archivo: ${uploadResponse.statusText}`);
+        // S3 explica el motivo en el cuerpo (tamaño excedido, política
+        // caducada, tipo no permitido). `statusText` solo dice "Bad Request",
+        // que no ayuda a nadie a entender por qué falló su archivo.
+        const detalle = await uploadResponse.text().catch(() => '');
+        const motivo = /<Message>(.*?)<\/Message>/.exec(detalle)?.[1];
+
+        console.error(
+          '[UPLOAD] Respuesta de S3:',
+          uploadResponse.status,
+          detalle
+        );
+
+        throw new Error(
+          motivo
+            ? `${file.name}: ${motivo}`
+            : `${file.name}: error ${uploadResponse.status} al subir`
+        );
       }
 
       console.log(`[UPLOAD] ✓ ${file.name} subido exitosamente`);
@@ -382,6 +406,23 @@ export default function FormModal({ isOpen, onClose }: Props) {
   }
 
   const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  /**
+   * Lleva el error a la vista.
+   *
+   * El banner se pinta al principio del formulario y el botón de enviar está
+   * al final, en una barra fija. Con el modal desplazado hacia abajo, un fallo
+   * dejaba el mensaje fuera de pantalla: parecía que el botón simplemente
+   * volvía a su estado normal sin guardar ni avisar de nada.
+   */
+  useEffect(() => {
+    if (submittedOK === false && submitMessage) {
+      bannerRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [submittedOK, submitMessage]);
 
   const [comprobanteInscripcion, setComprobanteInscripcion] =
     useState<File | null>(null);
@@ -455,6 +496,13 @@ export default function FormModal({ isOpen, onClose }: Props) {
       'program' in p &&
       isRecord((p as Record<string, unknown>).program)
     );
+  }
+
+  function getAdvertencias(p: unknown): string[] {
+    if (!isRecord(p)) return [];
+    const lista = (p as Record<string, unknown>).advertencias;
+    if (!Array.isArray(lista)) return [];
+    return lista.filter((x): x is string => typeof x === 'string');
   }
 
   function hasEmailSent(p: unknown): p is { emailSent: boolean } {
@@ -747,7 +795,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
             setUploadingFiles(false);
             setSubmittedOK(false);
             setSubmitMessage(
-              `Error subiendo archivo: ${name}. Por favor intenta de nuevo.`
+              err instanceof Error
+                ? `No se pudo subir el archivo — ${err.message}`
+                : `No se pudo subir el archivo de ${name}. Inténtalo de nuevo.`
             );
             return;
           }
@@ -829,6 +879,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
       setSubmittedOK(true);
       setSubmitMessage(successMsg);
+      setAvisos(getAdvertencias(payload));
       setShowSuccess(true);
 
       // Reset de formulario
@@ -855,7 +906,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
     } finally {
       setSubmitting(false);
       setUploadingFiles(false);
-      setTimeout(() => setSubmittedOK(null), 4000);
     }
   };
 
@@ -916,6 +966,31 @@ export default function FormModal({ isOpen, onClose }: Props) {
               <p className="max-w-xl text-sm text-gray-400">{submitMessage}</p>
             )}
 
+            {avisos.length > 0 && (
+              <div
+                className="
+                  max-w-xl rounded border border-amber-500/40 bg-amber-500/10 p-4
+                  text-left
+                "
+              >
+                <p className="text-sm font-semibold text-amber-300">
+                  Tu inscripción quedó guardada. No la vuelvas a enviar.
+                </p>
+                <p className="mt-1 text-xs text-amber-200/80">
+                  Estos pasos quedaron pendientes y los resolverá el equipo:
+                </p>
+                <ul
+                  className="
+                    mt-2 list-disc space-y-1 pl-5 text-xs text-amber-100/90
+                  "
+                >
+                  {avisos.map((aviso) => (
+                    <li key={aviso}>{aviso}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
@@ -963,6 +1038,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
               {/* Banner resultado */}
               {submittedOK !== null && submitMessage && (
                 <div
+                  ref={bannerRef}
                   className={`
                     mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold
                     ${
