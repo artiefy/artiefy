@@ -48,6 +48,7 @@ import {
   users,
   userTimeTracking,
 } from '~/server/db/schema';
+import { generarPasswordSegura } from '~/utils/generatePassword';
 
 export async function deleteUserWithRelations(userId: string) {
   try {
@@ -492,33 +493,6 @@ export async function updateUserInfo(
   }
 }
 
-function generateSecurePassword(length = 14): string {
-  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const lowercase = 'abcdefghjkmnpqrstuvwxyz';
-  const numbers = '23456789';
-  const symbols = '!@#$%^&*()_+-={}[]<>?';
-
-  const allChars = uppercase + lowercase + numbers + symbols;
-
-  let password = '';
-  // Asegurar al menos un carácter de cada tipo
-  password += uppercase[Math.floor(Math.random() * uppercase.length)];
-  password += lowercase[Math.floor(Math.random() * lowercase.length)];
-  password += numbers[Math.floor(Math.random() * numbers.length)];
-  password += symbols[Math.floor(Math.random() * symbols.length)];
-
-  // Completar el resto de la contraseña
-  for (let i = password.length; i < length; i++) {
-    password += allChars[Math.floor(Math.random() * allChars.length)];
-  }
-
-  // Mezclar la contraseña para evitar patrones predecibles
-  return password
-    .split('')
-    .sort(() => 0.5 - Math.random())
-    .join('');
-}
-
 async function generateUniqueUsername(baseUsername: string): Promise<string> {
   const client = await clerkClient();
   let username = baseUsername;
@@ -575,7 +549,7 @@ export async function createUser(
 ) {
   try {
     // 1) Generar password que cumpla políticas
-    const generatedPassword = generateSecurePassword();
+    const generatedPassword = generarPasswordSegura();
 
     // 2) Normalizar email (Clerk trata emails case-insensitive, pero mejor en minúsculas)
     const emailNormalized = (email ?? '').trim().toLowerCase();

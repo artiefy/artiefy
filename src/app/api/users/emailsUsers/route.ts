@@ -10,6 +10,7 @@ import {
   emailLogs,
   userCredentials,
 } from '~/server/db/schema';
+import { generarPasswordSegura } from '~/utils/generatePassword';
 
 // Interfaces and types
 interface MailOptions {
@@ -115,17 +116,6 @@ async function logCredentialsDelivery(data: {
   return logSuccessful;
 }
 
-// Function to generate a random password
-function generateRandomPassword(length = 12): string {
-  const charset =
-    'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
-  let password = '';
-  for (let i = 0; i < length; i++) {
-    password += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return password;
-}
-
 // API Route Handler
 export async function POST(request: Request) {
   try {
@@ -182,7 +172,7 @@ export async function POST(request: Request) {
           .where(eq(userCredentials.userId, userId));
 
         if (credentials.length === 0) {
-          password = generateRandomPassword();
+          password = generarPasswordSegura();
 
           try {
             await clerk.users.updateUser(userId, { password });
@@ -237,7 +227,7 @@ export async function POST(request: Request) {
               `[CRED] No se pudo re-sincronizar la clave guardada de ${userId}, se genera una nueva:`,
               resyncError
             );
-            password = generateRandomPassword();
+            password = generarPasswordSegura();
             await clerk.users.updateUser(userId, { password });
             await db
               .update(userCredentials)

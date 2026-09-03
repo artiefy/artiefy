@@ -2,7 +2,6 @@
 
 import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
-import { randomBytes } from 'node:crypto';
 
 import { sendTicketEmail } from '~/lib/emails/ticketEmails';
 import { db } from '~/server/db';
@@ -15,42 +14,13 @@ import {
   userObjectiveProgress,
   users,
 } from '~/server/db/schema';
+import { generarPasswordSegura } from '~/utils/generatePassword';
 
 type ClerkProvisionResult = {
   clerkUserId: string;
   wasCreated: boolean;
   temporaryPassword?: string;
 };
-
-function generateSecurePassword(length = 14): string {
-  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const lowercase = 'abcdefghijkmnopqrstuvwxyz';
-  const numbers = '23456789';
-  const symbols = '!@#$%*_-';
-  const all = uppercase + lowercase + numbers + symbols;
-
-  const pick = (chars: string) =>
-    chars[randomBytes(1)[0] % Math.max(chars.length, 1)] ?? 'A';
-
-  const required = [
-    pick(uppercase),
-    pick(lowercase),
-    pick(numbers),
-    pick(symbols),
-  ];
-
-  while (required.length < length) {
-    required.push(pick(all));
-  }
-
-  // Fisher-Yates para mezclar
-  for (let i = required.length - 1; i > 0; i -= 1) {
-    const j = randomBytes(1)[0] % (i + 1);
-    [required[i], required[j]] = [required[j]!, required[i]!];
-  }
-
-  return required.join('');
-}
 
 function buildNamesFromEmail(email: string) {
   const local = email.split('@')[0] ?? 'estudiante';
@@ -88,7 +58,7 @@ async function ensureClerkUserByEmail(
   }
 
   const { firstName, lastName } = buildNamesFromEmail(normalizedEmail);
-  const temporaryPassword = generateSecurePassword();
+  const temporaryPassword = generarPasswordSegura();
   const base = normalizedEmail
     .split('@')[0]
     ?.toLowerCase()
