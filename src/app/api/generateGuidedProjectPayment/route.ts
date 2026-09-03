@@ -1,0 +1,59 @@
+import { type NextRequest, NextResponse } from 'next/server';
+
+import { env } from '~/env';
+import { type PaymentFormResponse } from '~/types/payu';
+import { getAuthConfig, getCheckoutUrl } from '~/utils/paygateway/auth';
+import { createFormData } from '~/utils/paygateway/form';
+
+interface RequestBody {
+  productId: number;
+  amount: string;
+  description: string;
+  buyerEmail: string;
+  buyerFullName: string;
+  telephone: string;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = (await req.json()) as RequestBody;
+
+    // Limpiar la descripción - quitar el prefijo del producto
+    const cleanDescription = body.description.replace(
+      /^Proyecto(\s+Guiado)?:\s*/i,
+      ''
+    );
+
+    const auth = getAuthConfig();
+    const formattedAmount = Number(body.amount).toFixed(2);
+
+    const formData = createFormData(
+      auth,
+      {
+        id: body.productId,
+        name: cleanDescription,
+        amount: formattedAmount,
+        description: cleanDescription,
+      },
+      body.buyerEmail,
+      body.buyerFullName,
+      body.telephone,
+      `${env.NEXT_PUBLIC_BASE_URL}/agradecimiento-proyecto/${body.productId}?from=payu&email=${encodeURIComponent(body.buyerEmail)}`, // incluir email del comprador
+      'guidedProject'
+    );
+
+    const payload: PaymentFormResponse = {
+      ...formData,
+      checkoutUrl: getCheckoutUrl(auth.mode),
+    };
+
+    console.log('Generated guided project payment data:', payload);
+    return NextResponse.json(payload);
+  } catch (error) {
+    console.error('Error generating guided project payment data:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate payment data' },
+      { status: 500 }
+    );
+  }
+}

@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
 import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
+import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import {
   GuidedObjectivesAccordion,
   GuidedProjectActivities,
@@ -66,6 +67,7 @@ import { cn } from '~/lib/utils';
 import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollInGuidedProject';
 import { unenrollFromGuidedProject } from '~/server/actions/estudiantes/guided-projects/unenrollFromGuidedProject';
 import { plansPersonas } from '~/types/plans';
+import { createProductFromGuidedProject } from '~/utils/paygateway/products';
 
 import type { GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
@@ -221,6 +223,7 @@ export function GuidedProjectDetails({
     average: 0,
   });
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -241,6 +244,13 @@ export function GuidedProjectDetails({
     userPlanType === 'Pro' ||
     userPlanType === 'Premium' ||
     userPlanType === 'Enterprise';
+
+  // A single PayU purchase of this project grants permanent access, so it must
+  // not be revoked when the buyer has no active subscription — the same rule
+  // the individual course purchase follows.
+  const hasPermanentAccess = project.hasPermanentEnrollment === true;
+  const hasProjectAccess =
+    (isSubscriptionValid && hasValidPlan) || hasPermanentAccess;
 
   // Progress + "current activity" for the subscribed state, derived from the
   // enabled objectives' activities (same visible set as the activity page).
@@ -376,6 +386,17 @@ export function GuidedProjectDetails({
     } finally {
       setIsEnrolling(false);
     }
+  };
+
+  // Single-payment purchase: no login required. PaymentForm provisions the
+  // Clerk account when the buyer has none, exactly like the individual course
+  // checkout, and PayU confirms the enrollment server-to-server.
+  const handleBuyProject = () => {
+    if (!project?.id) {
+      toast.error('Proyecto guiado inválido');
+      return;
+    }
+    setShowPaymentModal(true);
   };
 
   const handleUnenrollDialogChange = (open: boolean) => {
@@ -522,6 +543,22 @@ export function GuidedProjectDetails({
     typeof project.individualPrice === 'number' && project.individualPrice > 0
       ? project.individualPrice
       : null;
+
+  // Someone who already bought this project must not be offered it again.
+  const showIndividualPurchase =
+    individualPriceValue !== null && !hasPermanentAccess;
+
+  const projectProduct = useMemo(
+    () =>
+      individualPriceValue
+        ? createProductFromGuidedProject({
+            id: project.id,
+            title: project.title,
+            individualPrice: individualPriceValue,
+          })
+        : null,
+    [individualPriceValue, project.id, project.title]
+  );
 
   const hasEducatorInfo = Boolean(
     project.instructorName ||
@@ -708,7 +745,7 @@ export function GuidedProjectDetails({
               objectives={objectives}
               isEnrolled={isEnrolled}
               guidedProjectId={project.id}
-              isSubscriptionValid={isSubscriptionValid && hasValidPlan}
+              isSubscriptionValid={hasProjectAccess}
               idPrefix={`guided-project-${project.id}-overview`}
             />
           )}
@@ -968,7 +1005,7 @@ export function GuidedProjectDetails({
         <div
           className={cn(
             'mx-auto grid max-w-3xl gap-4',
-            individualPriceValue ? 'sm:grid-cols-2' : 'max-w-md'
+            showIndividualPurchase ? 'sm:grid-cols-2' : 'max-w-md'
           )}
         >
           <div className="relative rounded-2xl border-2 border-[#22C4D3]/60 bg-[#061c37] p-5">
@@ -1023,7 +1060,7 @@ export function GuidedProjectDetails({
             </button>
           </div>
 
-          {individualPriceValue && (
+          {showIndividualPurchase && individualPriceValue && (
             <div className="rounded-2xl border border-[#1d283a] bg-[#061c37] p-5">
               <h3 className="text-lg font-bold text-white">
                 Proyecto individual
@@ -1053,7 +1090,7 @@ export function GuidedProjectDetails({
               </ul>
               <button
                 type="button"
-                onClick={handleStartNow}
+                onClick={handleBuyProject}
                 disabled={isEnrolling}
                 className="mt-5 flex h-11 w-full items-center justify-center rounded-full border border-[#22C4D3]/40 px-4 text-sm font-semibold text-[#22C4D3] transition hover:bg-[#22C4D3]/10 disabled:opacity-50"
               >
@@ -1233,7 +1270,7 @@ export function GuidedProjectDetails({
   // Chip de estado sobre la portada: solo existe mientras la inscripción está
   // activa, y conserva el mismo disparador del diálogo de cancelación.
   const renderSubscribedBadge = () => {
-    if (!isEnrolled || !isSubscriptionValid || !hasValidPlan) return null;
+    if (!isEnrolled || !hasProjectAccess) return null;
 
     return (
       <div className="absolute top-3 right-3 z-30 inline-flex items-center gap-1.5 rounded-full border border-[#10b9814d] bg-[#061c37]/85 py-1 pr-1 pl-2.5 text-xs font-semibold text-emerald-400 shadow-lg backdrop-blur-sm">
@@ -1265,7 +1302,7 @@ export function GuidedProjectDetails({
       );
     }
 
-    if (!isSubscriptionValid || !hasValidPlan) {
+    if (!hasProjectAccess) {
       return (
         <button
           onClick={() => router.push('/planes')}
@@ -1285,7 +1322,10 @@ export function GuidedProjectDetails({
           className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-sm font-medium text-[#080c16] transition-colors hover:bg-[#1fb0be] disabled:pointer-events-none disabled:opacity-50"
         >
           <IoPlayOutline className="size-5 text-[#080c16]" />
-          Continuar proyecto guiado
+          {/* Nothing completed yet means this is a start, not a resume. */}
+          {completedActivities > 0
+            ? 'Continuar proyecto guiado'
+            : 'Iniciar proyecto guiado'}
         </button>
 
         {visibleActivitiesTotal > 0 && (
@@ -1315,7 +1355,7 @@ export function GuidedProjectDetails({
 
         {/* Aviso de suscripción expirada: mismo mensaje y misma validación que
             el detalle de curso. El contenido sigue visible, pero bloqueado. */}
-        {isEnrolled && (!isSubscriptionValid || !hasValidPlan) && (
+        {isEnrolled && !hasProjectAccess && (
           <div className="mb-6 rounded-xl border border-red-500 bg-red-50 p-5 text-red-600 md:p-6">
             <h3 className="mb-2 text-xl font-bold">
               ¡Tu suscripción ha expirado!
@@ -1510,7 +1550,7 @@ export function GuidedProjectDetails({
                       objectives={objectives}
                       isEnrolled={isEnrolled}
                       guidedProjectId={project.id}
-                      isSubscriptionValid={isSubscriptionValid && hasValidPlan}
+                      isSubscriptionValid={hasProjectAccess}
                       introduction={activitiesIntroduction}
                     />
                   </div>
@@ -1613,6 +1653,55 @@ export function GuidedProjectDetails({
           </div>
         </div>
       </main>
+
+      {/* --- MODAL DE PAGO PARA PROYECTO GUIADO INDIVIDUAL --- */}
+      {showPaymentModal && projectProduct && (
+        <div
+          className="
+            pointer-events-auto fixed inset-0 z-[1000] flex items-center
+            justify-center bg-black/50 p-4
+          "
+        >
+          <div
+            className="
+              relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg
+              bg-white p-4
+            "
+          >
+            <div className="relative mb-4 flex items-center justify-between">
+              <h3
+                className="
+                  w-full text-center text-xl font-semibold text-gray-900
+                "
+              >
+                Llena este formulario
+                <br />
+                <span className="font-bold">{projectProduct.name}</span>
+              </h3>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="
+                  absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500
+                  hover:text-gray-700
+                "
+                type="button"
+                aria-label="Cerrar"
+              >
+                <FaTimes className="size-5" />
+              </button>
+            </div>
+            <div>
+              <PaymentForm
+                selectedProduct={projectProduct}
+                paymentType="guidedProject"
+                requireAuthOnSubmit={false}
+                redirectUrlOnAuth={`/estudiantes/proyectos-guiados/${project.id}`}
+                isIndividualPurchase={true}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <Dialog
         open={showUnenrollDialog}

@@ -68,7 +68,7 @@ const LessonNavigation = ({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="w- h-4"
+          className="size-4"
         >
           <path d="m15 18-6-6 6-6" />
         </svg>
@@ -78,18 +78,29 @@ const LessonNavigation = ({
         onClick={() => onNavigate('next')}
         disabled={!hasNextLesson || isNavigating}
         className={`
-          inline-flex size-8 items-center justify-center gap-2 rounded-full
-          bg-primary text-sm font-medium whitespace-nowrap text-background
+          inline-flex h-8 items-center justify-center gap-1.5 rounded-full
+          bg-primary px-2 text-sm font-medium whitespace-nowrap text-background
           transition-colors
           hover:bg-primary/90
-          focus-visible:ring-2 focus-visible:ring-ring
-          focus-visible:outline-none
-          disabled:pointer-events-none disabled:bg-[#061c37cc]
-          disabled:text-slate-200 disabled:opacity-50
+          focus-visible:ring-2
+          focus-visible:ring-ring focus-visible:outline-none
+          disabled:pointer-events-none
+          disabled:bg-[#061c37cc] disabled:text-slate-200
+          disabled:opacity-50 sm:px-3
           ${isNavigating ? 'opacity-50' : ''}
         `}
         aria-label="Siguiente clase"
       >
+        {/* Hidden on the narrowest bars, where the row is already crowded —
+            same treatment the "Completar" button uses. */}
+        <span
+          className="
+            hidden
+            sm:inline
+          "
+        >
+          Siguiente
+        </span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width="24"

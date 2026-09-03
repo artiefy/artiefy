@@ -120,6 +120,12 @@ export async function getGuidedProjectById(
       ? project.enrollments.some((e) => e.userId === userId)
       : false;
 
+    // A permanent enrollment is a single PayU purchase of this project: it must
+    // keep working even when the buyer has no active Pro/Premium subscription.
+    const hasPermanentEnrollment = userId
+      ? project.enrollments.some((e) => e.userId === userId && e.isPermanent)
+      : false;
+
     const transformedObjectives: GuidedObjective[] = project.objectives
       .sort((a, b) => a.orderIndex - b.orderIndex)
       .map((objective) => {
@@ -241,6 +247,7 @@ export async function getGuidedProjectById(
       porcentajecompletado,
       enrolled: isUserEnrolled,
       canAccessContent,
+      hasPermanentEnrollment,
     } as GuidedProject;
   } catch (error) {
     console.error('Error fetching guided project:', error);

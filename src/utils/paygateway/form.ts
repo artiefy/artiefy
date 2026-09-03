@@ -3,6 +3,43 @@ import { type Auth, type FormData, type Product } from '~/types/payu';
 
 import { calculateSignature } from './signature';
 
+export type PayUPaymentType = 'course' | 'plan' | 'guidedProject';
+
+// PayU only echoes back the reference code, so it is the only field that can
+// carry the product identity into the confirmation webhook. Each payment type
+// owns a prefix so the confirmation routes can never claim another's sale.
+export const GUIDED_PROJECT_REFERENCE_PREFIX = 'GP';
+
+function resolveConfirmationUrl(paymentType: PayUPaymentType): string {
+  if (paymentType === 'course') return env.CONFIRMATION_URL_COURSES;
+  if (paymentType === 'plan') return env.CONFIRMATION_URL_PLANS;
+
+  return (
+    env.CONFIRMATION_URL_GUIDED_PROJECTS ??
+    `${env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, '')}/api/confirmGuidedProjectPayment`
+  );
+}
+
+function buildReferenceCode(
+  paymentType: PayUPaymentType,
+  product: Product,
+  timestamp: number
+): string {
+  if (paymentType === 'course') {
+    // Format: C{courseId}T{timestamp}
+    return `C${product.id}T${timestamp}`;
+  }
+
+  if (paymentType === 'guidedProject') {
+    // Format: GP{guidedProjectId}T{timestamp}
+    return `${GUIDED_PROJECT_REFERENCE_PREFIX}${product.id}T${timestamp}`;
+  }
+
+  // Incluir el nombre del plan en la referencia
+  const cleanProductName = product.name.replace(/\s*Premium\s*/g, '').trim();
+  return `${cleanProductName}_${timestamp}`;
+}
+
 export function createFormData(
   auth: Auth,
   product: Product,
@@ -10,7 +47,7 @@ export function createFormData(
   buyerFullName: string,
   telephone: string,
   responseUrl: string,
-  paymentType: 'course' | 'plan' // Changed from boolean to union type
+  paymentType: PayUPaymentType
 ): FormData {
   // Calcular montos con precisión
   const amount = Number(product.amount);
@@ -19,15 +56,11 @@ export function createFormData(
   const taxReturnBase = (amount - Number(tax)).toFixed(2);
   const currency = 'COP';
 
-  // Generar referenceCode único combinando ID del curso y timestamp
+  // Generar referenceCode único combinando ID del producto y timestamp
   const timestamp = Date.now();
-  const cleanProductName = product.name.replace(/\s*Premium\s*/g, '').trim();
   const cleanDescription =
     paymentType === 'plan' ? `Plan ${product.name}` : product.description;
-  const referenceCode =
-    paymentType === 'course'
-      ? `C${product.id}T${timestamp}` // Format: C{courseId}T{timestamp}
-      : `${cleanProductName}_${timestamp}`; // Incluir el nombre del plan en la referencia
+  const referenceCode = buildReferenceCode(paymentType, product, timestamp);
 
   // Generar signature con formato correcto
   const signature = calculateSignature(
@@ -39,10 +72,7 @@ export function createFormData(
   );
 
   // Select correct confirmation URL based on payment type
-  const confirmationUrl =
-    paymentType === 'course'
-      ? env.CONFIRMATION_URL_COURSES
-      : env.CONFIRMATION_URL_PLANS;
+  const confirmationUrl = resolveConfirmationUrl(paymentType);
 
   return {
     merchantId: auth.merchantId,

@@ -33,8 +33,13 @@ import {
   TooltipTrigger,
 } from '~/components/estudiantes/ui/tooltip';
 import { cn } from '~/lib/utils';
+import {
+  classifyExternalClassLink,
+  getExternalClassLink,
+} from '~/utils/externalClassLink';
 import { sortLessons } from '~/utils/lessonSorting';
 
+import CourseModalExternalClass from './CourseModalExternalClass';
 import CourseModalTeams from './CourseModalTeams';
 
 import type { Activity, ClassMeeting, Course, Lesson } from '~/types';
@@ -62,6 +67,16 @@ const toSafeDate = (value?: string | number | Date | null) => {
   if (Number.isNaN(date.getTime())) return null;
   return date;
 };
+
+// Single predicate shared by the recorded / live / upcoming filters: a meeting
+// counts as recorded when it has an uploaded video OR a valid external link.
+// Using this and its literal negation keeps both lists mutually exclusive.
+//
+// The link counts as soon as it is saved, with no date condition: an educator
+// pastes it precisely because the class was not recorded, and the student has
+// to reach it right away. The meeting's own date keeps showing on the row.
+const hasRecording = (meeting: ClassMeeting) =>
+  !!meeting.video_key || !!getExternalClassLink(meeting.videoUrlExt);
 
 const formatBogota = (
   value: string | number | Date | null | undefined,
@@ -224,9 +239,17 @@ export function CourseContent({
   const [openRecordedModal, setOpenRecordedModal] = useState(false);
   const [currentRecordedVideo, setCurrentRecordedVideo] = useState<{
     title: string;
-    videoKey: string;
+    videoKey?: string;
+    externalUrl?: string;
     progress?: number;
     meetingId?: number; // <-- Añadido para el ID de la reunión
+  } | null>(null);
+  const [externalClass, setExternalClass] = useState<{
+    title: string;
+    url: string;
+    kind: 'video-embed' | 'link';
+    embedUrl?: string;
+    dateLabel?: string;
   } | null>(null);
   const router = useRouter();
   const { user } = useUser();
@@ -379,11 +402,11 @@ export function CourseContent({
   }, [classMeetings]);
 
   const handleOpenRecordedModal = (meeting: ClassMeeting) => {
-    if (meeting.video_key) {
-      // Usa el progreso del estado local o el de la BD como respaldo
-      const currentProgress =
-        meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
+    // Usa el progreso del estado local o el de la BD como respaldo
+    const currentProgress =
+      meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
 
+    if (meeting.video_key) {
       setCurrentRecordedVideo({
         title: meeting.title,
         videoKey: meeting.video_key,
@@ -391,12 +414,40 @@ export function CourseContent({
         meetingId: meeting.id,
       });
       setOpenRecordedModal(true);
+      return;
     }
+
+    // Sin grabación en la plataforma: se abre el link externo del profesor.
+    const external = classifyExternalClassLink(meeting.videoUrlExt);
+    if (!external) return;
+
+    if (external.kind === 'video-file') {
+      setCurrentRecordedVideo({
+        title: meeting.title,
+        externalUrl: external.url,
+        progress: currentProgress,
+        meetingId: meeting.id,
+      });
+      setOpenRecordedModal(true);
+      return;
+    }
+
+    setExternalClass({
+      title: meeting.title,
+      url: external.url,
+      kind: external.kind,
+      embedUrl: external.embedUrl,
+      dateLabel: formatMobileDate(meeting.startDateTime),
+    });
   };
 
   const handleCloseRecordedModal = () => {
     setOpenRecordedModal(false);
     setCurrentRecordedVideo(null);
+  };
+
+  const handleCloseExternalClass = () => {
+    setExternalClass(null);
   };
 
   // Nueva función para actualizar el progreso localmente
@@ -765,7 +816,7 @@ export function CourseContent({
     return Array.isArray(classMeetings)
       ? classMeetings
           .filter((meeting) => {
-            if (meeting.video_key) return false;
+            if (hasRecording(meeting)) return false;
             const start = toSafeDate(meeting.startDateTime);
             if (!start) return false;
             const end = toSafeDate(meeting.endDateTime);
@@ -783,24 +834,22 @@ export function CourseContent({
 
   const recordedMeetings: ClassMeeting[] = useMemo(() => {
     return Array.isArray(classMeetings)
-      ? classMeetings
-          .filter((meeting) => !!meeting.video_key)
-          .sort((a, b) => {
-            const aStart = toSafeDate(a.startDateTime);
-            const bStart = toSafeDate(b.startDateTime);
-            if (!aStart && !bStart) return 0;
-            if (!aStart) return 1;
-            if (!bStart) return -1;
-            return bStart.getTime() - aStart.getTime();
-          })
+      ? classMeetings.filter(hasRecording).sort((a, b) => {
+          const aStart = toSafeDate(a.startDateTime);
+          const bStart = toSafeDate(b.startDateTime);
+          if (!aStart && !bStart) return 0;
+          if (!aStart) return 1;
+          if (!bStart) return -1;
+          return bStart.getTime() - aStart.getTime();
+        })
       : [];
   }, [classMeetings]);
 
-  // Agrega liveMeetings para mostrar todas las clases en vivo (pasadas y futuras, sin video_key)
+  // Agrega liveMeetings para mostrar todas las clases en vivo (pasadas y futuras, sin grabación)
   const liveMeetings: ClassMeeting[] = useMemo(() => {
     return Array.isArray(classMeetings)
       ? classMeetings
-          .filter((meeting) => !meeting.video_key)
+          .filter((meeting) => !hasRecording(meeting))
           .sort((a, b) => {
             const aStart = toSafeDate(a.startDateTime);
             const bStart = toSafeDate(b.startDateTime);
@@ -1899,6 +1948,16 @@ export function CourseContent({
                           formatStartTime(meeting.startDateTime) || '';
                         const isCompleted = currentProgress >= 100;
                         const indexLabel = String(idx + 1).padStart(2, '0');
+                        // Clases sin grabación propia: link externo del profesor.
+                        const externalLink = meeting.video_key
+                          ? null
+                          : classifyExternalClassLink(meeting.videoUrlExt);
+                        const isPlainLink = externalLink?.kind === 'link';
+                        // Solo los videos reproducidos por la plataforma
+                        // reportan progreso; los embeds no emiten timeupdate.
+                        const isTrackable =
+                          !!meeting.video_key ||
+                          externalLink?.kind === 'video-file';
 
                         return (
                           <div key={meeting.id} className="space-y-1">
@@ -1929,12 +1988,21 @@ export function CourseContent({
                                   justify-center rounded-lg bg-accent/20
                                 "
                               >
-                                <Play
-                                  className="
-                                    size-4 text-accent transition-transform
-                                    group-hover:scale-110
-                                  "
-                                />
+                                {isPlainLink ? (
+                                  <LuSquareArrowOutUpRight
+                                    className="
+                                      size-4 text-accent transition-transform
+                                      group-hover:scale-110
+                                    "
+                                  />
+                                ) : (
+                                  <Play
+                                    className="
+                                      size-4 text-accent transition-transform
+                                      group-hover:scale-110
+                                    "
+                                  />
+                                )}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
@@ -1971,17 +2039,18 @@ export function CourseContent({
                                       <span>{timeLabel}</span>
                                     </div>
                                   )}
-                                  {isCompleted ? (
-                                    <FaCheckCircle className="size-4 text-accent" />
-                                  ) : (
-                                    <span
-                                      className="
-                                        text-xs font-semibold text-accent
-                                      "
-                                    >
-                                      {currentProgress}%
-                                    </span>
-                                  )}
+                                  {isTrackable &&
+                                    (isCompleted ? (
+                                      <FaCheckCircle className="size-4 text-accent" />
+                                    ) : (
+                                      <span
+                                        className="
+                                          text-xs font-semibold text-accent
+                                        "
+                                      >
+                                        {currentProgress}%
+                                      </span>
+                                    ))}
                                 </div>
                               </div>
                               <div
@@ -2001,17 +2070,18 @@ export function CourseContent({
                                     <span>{timeLabel}</span>
                                   </div>
                                 )}
-                                {isCompleted ? (
-                                  <FaCheckCircle className="size-4 text-accent" />
-                                ) : (
-                                  <span
-                                    className="
-                                      text-xs font-semibold text-accent
-                                    "
-                                  >
-                                    {currentProgress}%
-                                  </span>
-                                )}
+                                {isTrackable &&
+                                  (isCompleted ? (
+                                    <FaCheckCircle className="size-4 text-accent" />
+                                  ) : (
+                                    <span
+                                      className="
+                                        text-xs font-semibold text-accent
+                                      "
+                                    >
+                                      {currentProgress}%
+                                    </span>
+                                  ))}
                               </div>
                             </button>
                             {!isSubscriptionActive && (
@@ -2148,10 +2218,24 @@ export function CourseContent({
           open={openRecordedModal}
           title={currentRecordedVideo.title}
           videoKey={currentRecordedVideo.videoKey}
+          externalUrl={currentRecordedVideo.externalUrl}
           progress={currentRecordedVideo.progress}
           meetingId={currentRecordedVideo.meetingId}
           onClose={handleCloseRecordedModal}
           onProgressUpdated={handleVideoProgressUpdate} // <-- Pasamos la nueva función
+        />
+      )}
+
+      {/* MODAL para clases con link externo (embed o enlace normal) */}
+      {externalClass && (
+        <CourseModalExternalClass
+          open={!!externalClass}
+          title={externalClass.title}
+          url={externalClass.url}
+          kind={externalClass.kind}
+          embedUrl={externalClass.embedUrl}
+          dateLabel={externalClass.dateLabel}
+          onClose={handleCloseExternalClass}
         />
       )}
     </div>

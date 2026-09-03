@@ -619,6 +619,9 @@ export interface ClassMeeting {
   createdAt?: string | null;
   meetingId: string;
   video_key?: string | null;
+  video_key_2?: string | null;
+  /** External recording link when the live session was not recorded. */
+  videoUrlExt?: string | null;
   progress?: number | null;
 }
 

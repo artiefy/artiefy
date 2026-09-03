@@ -3,25 +3,29 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Player from 'next-video/player';
 
 interface CourseVideoProps {
-  videoKey: string;
+  videoKey?: string;
+  /** Direct video URL, used instead of the S3 key (external recordings). */
+  externalUrl?: string;
   progress?: number;
   onProgressUpdate?: (progress: number) => void;
   startTime?: number; // Nuevo: para reanudar desde el progreso guardado
 }
 
+const hasValidKey = (videoKey?: string) => !!videoKey && videoKey !== 'null';
+
 const CourseVideo: React.FC<CourseVideoProps> = ({
   videoKey,
+  externalUrl,
   onProgressUpdate,
   startTime = 0,
 }) => {
   const videoUrl = useMemo(() => {
-    if (!videoKey || videoKey === 'null') return '';
+    if (externalUrl) return externalUrl;
+    if (!hasValidKey(videoKey)) return '';
     return `https://s3.us-east-2.amazonaws.com/artiefy-upload/video_clase/${videoKey}`;
-  }, [videoKey]);
+  }, [externalUrl, videoKey]);
 
-  const [isLoading, setIsLoading] = useState(() =>
-    !videoKey || videoKey === 'null' ? false : true
-  );
+  const [isLoading, setIsLoading] = useState(() => !!videoUrl);
   const playerRef = useRef<HTMLVideoElement | null>(null);
   const [hasSeeked, setHasSeeked] = useState(false);
 
@@ -61,7 +65,7 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
     left: '0',
   };
 
-  if (!videoKey || videoKey === 'null') {
+  if (!videoUrl) {
     return (
       <div
         className="

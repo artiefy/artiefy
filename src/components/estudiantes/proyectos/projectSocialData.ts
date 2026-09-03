@@ -1,5 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull, or } from 'drizzle-orm';
 
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import getPublicProjects from '~/server/actions/project/getPublicProjects';
@@ -290,16 +290,63 @@ export async function getProjectSocialFeed(): Promise<ProjectSocialItem[]> {
 
 const DEFAULT_COMMUNITY_FEED_LIMIT = 30;
 
+export interface CommunityPostsFeedOptions {
+  // Quien mira. Sus propias publicaciones siguen siendo visibles para él
+  // aunque el proyecto al que cuelgan sea privado.
+  viewerId?: string | null;
+  // Quien administra la plataforma (super-admin / admin / educador) lee el
+  // feed completo, la misma excepción que ya hace `/proyectos/[id]` con los
+  // proyectos privados.
+  canSeeAllProjects?: boolean;
+  // Restringe el feed a un solo proyecto (además de las reglas de
+  // visibilidad, nunca en su lugar).
+  projectId?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface CommunityPostsFeedPage {
+  items: CommunityFeedPost[];
+  hasMore: boolean;
+}
+
+/**
+ * Visibilidad de una publicación de la comunidad. Se resuelve SIEMPRE en el
+ * servidor, nunca filtrando en el cliente: una fila se ve cuando su proyecto
+ * es público, cuando no cuelga de ningún proyecto (publicación general) o
+ * cuando quien mira es su autor. Como `POST /api/community-posts` solo deja
+ * publicar al dueño del proyecto, esa última condición es exactamente "el
+ * dueño ve lo suyo aunque su proyecto sea privado", y al expresarla contra
+ * `communityPosts.userId` ningún parámetro de la petición puede ampliarla.
+ */
+const communityPostVisibility = (
+  viewerId?: string | null,
+  canSeeAllProjects = false
+) => {
+  if (canSeeAllProjects) return undefined;
+  const clauses = [
+    eq(projects.isPublic, true),
+    isNull(communityPosts.projectId),
+  ];
+  if (viewerId) clauses.push(eq(communityPosts.userId, viewerId));
+  return or(...clauses);
+};
+
 // Feeds `CommunityPostCard` — one post-level select, joined with its author
 // and (optionally) its linked project, so `/proyectos` can render a post
 // alongside project cards on first paint without a second client round-trip.
-// Queries the tables directly rather than calling `GET /api/community-posts`
-// internally: this is a Server Component data path, not a client fetch, and
-// it needs `projects.needsCollaborators` (for the one real chip this feed can
-// show), which that route's response shape doesn't include.
-export async function getCommunityPostsFeed(
-  limit = DEFAULT_COMMUNITY_FEED_LIMIT
-): Promise<CommunityFeedPost[]> {
+// `GET /api/community-posts` delegates here too, so the Server Component path
+// and the client-fetched one share a single mapper (and a single visibility
+// rule) instead of drifting apart.
+export async function getCommunityPostsFeedPage({
+  viewerId,
+  canSeeAllProjects = false,
+  projectId,
+  limit = DEFAULT_COMMUNITY_FEED_LIMIT,
+  offset = 0,
+}: CommunityPostsFeedOptions = {}): Promise<CommunityPostsFeedPage> {
+  // One row more than asked for: whether it came back is what tells the
+  // caller there is another page, with no extra COUNT query.
   const rows = await db
     .select({
       id: communityPosts.id,
@@ -319,10 +366,19 @@ export async function getCommunityPostsFeed(
     .from(communityPosts)
     .innerJoin(users, eq(communityPosts.userId, users.id))
     .leftJoin(projects, eq(communityPosts.projectId, projects.id))
+    .where(
+      and(
+        communityPostVisibility(viewerId, canSeeAllProjects),
+        projectId === undefined
+          ? undefined
+          : eq(communityPosts.projectId, projectId)
+      )
+    )
     .orderBy(desc(communityPosts.createdAt))
-    .limit(limit);
+    .limit(limit + 1)
+    .offset(offset);
 
-  return rows.map((row) => ({
+  const items = rows.slice(0, limit).map((row) => ({
     id: row.id,
     content: row.content,
     kind: row.kind,
@@ -344,6 +400,17 @@ export async function getCommunityPostsFeed(
           }
         : null,
   }));
+
+  return { items, hasMore: rows.length > limit };
+}
+
+// Primera (y única) página del feed para `/proyectos`, que no pagina.
+export async function getCommunityPostsFeed(
+  viewerId?: string | null,
+  limit = DEFAULT_COMMUNITY_FEED_LIMIT
+): Promise<CommunityFeedPost[]> {
+  const { items } = await getCommunityPostsFeedPage({ viewerId, limit });
+  return items;
 }
 
 export async function getProjectSocialCollections(

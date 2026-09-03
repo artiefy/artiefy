@@ -65,6 +65,9 @@ export interface GuidedProject {
   porcentajecompletado?: number;
   enrolled?: boolean;
   canAccessContent?: boolean;
+  // True when the current user's enrollment came from a single PayU purchase,
+  // so access must not be revoked when a subscription lapses.
+  hasPermanentEnrollment?: boolean;
 }
 
 export interface GuidedObjective {

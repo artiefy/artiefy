@@ -47,7 +47,7 @@ export default async function ProyectosPage({
     communityPosts,
   ] = await Promise.all([
     getProjectSocialCollections(userId),
-    getCommunityPostsFeed(),
+    getCommunityPostsFeed(userId),
   ]);
 
   return (

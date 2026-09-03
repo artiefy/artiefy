@@ -18,6 +18,7 @@ import {
   TriangleAlert,
   Upload,
   Users,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
@@ -35,6 +36,7 @@ import { Progress } from './ui/progress';
 import AddCustomSectionModal from './AddCustomSectionModal';
 import AddSectionDropdown from './AddSectionDropdown';
 import ProjectFeedbackThread from './ProjectFeedbackThread';
+import ProjectPostsTab from './ProjectPostsTab';
 
 import type { Project } from '~/types/project';
 
@@ -106,21 +108,35 @@ export default function ProjectDetailView({
       ? project.progressPercentage
       : fallbackProgress;
   const isProjectComplete = completedSections === totalSections;
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const canEditProject = Boolean(
     user?.id && project.userId && user.id === project.userId
   );
 
   // Estado para verificar si el usuario es invitado
   const [isInvited, setIsInvited] = useState(false);
+  // Evita que el aviso de "solo lectura" parpadee mientras se resuelve la
+  // consulta de invitación.
+  const [isInviteChecked, setIsInviteChecked] = useState(false);
 
   // Verificar si el usuario actual es invitado al proyecto
   useEffect(() => {
-    if (!user?.id || !project.id) {
-      setIsInvited(false);
+    // Clerk reporta `user: undefined` en el primer render. Marcar la
+    // verificación como terminada ahí dejaría el aviso de visitante encendido
+    // mientras la consulta real todavía viaja, y a un colaborador invitado le
+    // parpadearían los controles de entrega.
+    if (!isUserLoaded) {
+      setIsInviteChecked(false);
       return;
     }
 
+    if (!user?.id || !project.id) {
+      setIsInvited(false);
+      setIsInviteChecked(true);
+      return;
+    }
+
+    setIsInviteChecked(false);
     let isMounted = true;
     const checkIfInvited = async () => {
       try {
@@ -135,13 +151,15 @@ export default function ProjectDetailView({
         if (isMounted) setIsInvited(data.isInvited);
       } catch {
         if (isMounted) setIsInvited(false);
+      } finally {
+        if (isMounted) setIsInviteChecked(true);
       }
     };
     void checkIfInvited();
     return () => {
       isMounted = false;
     };
-  }, [user?.id, project.id]);
+  }, [isUserLoaded, user?.id, project.id]);
 
   const showEditControls = Boolean(
     canEditProject && onEditSection && !isInvited
@@ -149,6 +167,13 @@ export default function ProjectDetailView({
 
   // Permitir que usuarios invitados suban entregables pero no editen el proyecto
   const canUploadDeliverables = Boolean(canEditProject || isInvited);
+
+  // Visitante: ni dueño ni invitado. Ve el proyecto completo, pero sin
+  // controles de edición ni de entrega (el servidor ya rechaza esas
+  // peticiones; esto evita mostrar botones que siempre fallarían).
+  const isReadOnlyViewer = Boolean(
+    isUserLoaded && isInviteChecked && !canUploadDeliverables
+  );
 
   const [timelineView, setTimelineView] = useState<
     'dias' | 'semanas' | 'meses'
@@ -1044,6 +1069,21 @@ export default function ProjectDetailView({
   // Proyecto iniciado: al menos un campo está lleno
   return (
     <section className="space-y-6">
+      {isReadOnlyViewer ? (
+        <div
+          className="
+            flex items-start gap-2 rounded-xl border border-amber-500/30
+            bg-amber-500/10 p-3 text-sm text-amber-200
+          "
+        >
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" />
+          <p>
+            Estás viendo este proyecto como visitante: puedes leer su contenido,
+            pero no editarlo ni subir entregables.
+          </p>
+        </div>
+      ) : null}
+
       {/* Header del proyecto */}
       <div
         className="
@@ -1311,6 +1351,18 @@ export default function ProjectDetailView({
           >
             <Calendar className="size-3.5" />
             Cronograma
+          </TabsTrigger>
+          <TabsTrigger
+            value="posts"
+            className="
+              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
+              text-muted-foreground
+              data-[state=active]:bg-accent data-[state=active]:text-background
+              data-[state=active]:shadow-sm
+            "
+          >
+            <Zap className="size-3.5" />
+            Posts
           </TabsTrigger>
         </TabsList>
 
@@ -2146,60 +2198,62 @@ export default function ProjectDetailView({
                                           rows={3}
                                           placeholder="Describe el entregable..."
                                         />
-                                        <div className="mt-2 flex justify-end">
-                                          <button
-                                            type="button"
-                                            onClick={async () => {
-                                              if (!isEditingDescription) {
-                                                setEditingDescriptions(
-                                                  (prev) => ({
-                                                    ...prev,
-                                                    [activityKey]: true,
-                                                  })
-                                                );
-                                                return;
-                                              }
+                                        {canUploadDeliverables && (
+                                          <div className="mt-2 flex justify-end">
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                if (!isEditingDescription) {
+                                                  setEditingDescriptions(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [activityKey]: true,
+                                                    })
+                                                  );
+                                                  return;
+                                                }
 
-                                              if (!activityId) {
-                                                alert(
-                                                  'Guarda el proyecto para generar la actividad antes de editar la descripción.'
-                                                );
-                                                return;
-                                              }
+                                                if (!activityId) {
+                                                  alert(
+                                                    'Guarda el proyecto para generar la actividad antes de editar la descripción.'
+                                                  );
+                                                  return;
+                                                }
 
-                                              const success =
-                                                await handleDescriptionSave(
-                                                  activityId,
-                                                  activityDescription
-                                                );
-                                              if (success) {
-                                                setEditingDescriptions(
-                                                  (prev) => ({
-                                                    ...prev,
-                                                    [activityKey]: false,
-                                                  })
-                                                );
-                                              }
-                                            }}
-                                            disabled={!activityId || isSaving}
-                                            className="
-                                              inline-flex h-8 items-center
-                                              justify-center rounded-[12px]
-                                              bg-[#22c4d3] px-3 text-xs
-                                              font-semibold text-[#01152d]
-                                              transition-colors
-                                              hover:bg-[#1fb4c2]
-                                              disabled:cursor-not-allowed
-                                              disabled:opacity-70
-                                            "
-                                          >
-                                            {isSaving
-                                              ? 'Guardando...'
-                                              : isEditingDescription
-                                                ? 'Guardar Descripción'
-                                                : 'Editar Descripción'}
-                                          </button>
-                                        </div>
+                                                const success =
+                                                  await handleDescriptionSave(
+                                                    activityId,
+                                                    activityDescription
+                                                  );
+                                                if (success) {
+                                                  setEditingDescriptions(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [activityKey]: false,
+                                                    })
+                                                  );
+                                                }
+                                              }}
+                                              disabled={!activityId || isSaving}
+                                              className="
+                                                inline-flex h-8 items-center
+                                                justify-center rounded-[12px]
+                                                bg-[#22c4d3] px-3 text-xs
+                                                font-semibold text-[#01152d]
+                                                transition-colors
+                                                hover:bg-[#1fb4c2]
+                                                disabled:cursor-not-allowed
+                                                disabled:opacity-70
+                                              "
+                                            >
+                                              {isSaving
+                                                ? 'Guardando...'
+                                                : isEditingDescription
+                                                  ? 'Guardar Descripción'
+                                                  : 'Editar Descripción'}
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
                                       <div className="rounded-lg bg-muted/30 p-3">
                                         <span
@@ -2210,41 +2264,43 @@ export default function ProjectDetailView({
                                         >
                                           Entrega
                                         </span>
-                                        <label
-                                          className="
-                                            inline-flex h-9 cursor-pointer
-                                            items-center gap-2 rounded-[13px]
-                                            bg-[#22c4d3] px-3 text-sm
-                                            font-medium text-[#01152d]
-                                            transition-colors
-                                            hover:bg-[#1fb4c2]
-                                          "
-                                        >
-                                          <Upload className="size-4" />
-                                          {isUploading
-                                            ? 'Subiendo...'
-                                            : 'Subir entregable'}
-                                          <input
-                                            type="file"
-                                            className="hidden"
-                                            onChange={(event) => {
-                                              if (!activityId) {
-                                                alert(
-                                                  'Guarda el proyecto para generar la actividad antes de subir un entregable.'
+                                        {canUploadDeliverables && (
+                                          <label
+                                            className="
+                                              inline-flex h-9 cursor-pointer
+                                              items-center gap-2 rounded-[13px]
+                                              bg-[#22c4d3] px-3 text-sm
+                                              font-medium text-[#01152d]
+                                              transition-colors
+                                              hover:bg-[#1fb4c2]
+                                            "
+                                          >
+                                            <Upload className="size-4" />
+                                            {isUploading
+                                              ? 'Subiendo...'
+                                              : 'Subir entregable'}
+                                            <input
+                                              type="file"
+                                              className="hidden"
+                                              onChange={(event) => {
+                                                if (!activityId) {
+                                                  alert(
+                                                    'Guarda el proyecto para generar la actividad antes de subir un entregable.'
+                                                  );
+                                                  return;
+                                                }
+                                                const selectedFile =
+                                                  event.target.files?.[0];
+                                                if (!selectedFile) return;
+                                                void handleDeliverableUpload(
+                                                  activityId,
+                                                  selectedFile,
+                                                  activityDescription
                                                 );
-                                                return;
-                                              }
-                                              const selectedFile =
-                                                event.target.files?.[0];
-                                              if (!selectedFile) return;
-                                              void handleDeliverableUpload(
-                                                activityId,
-                                                selectedFile,
-                                                activityDescription
-                                              );
-                                            }}
-                                          />
-                                        </label>
+                                              }}
+                                            />
+                                          </label>
+                                        )}
                                         {isUploading && (
                                           <div
                                             className="
@@ -2315,35 +2371,37 @@ export default function ProjectDetailView({
                                                     )}
                                                   </span>
                                                 )}
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    if (!activityId) return;
-                                                    void handleDeliverableRemove(
-                                                      activityId
-                                                    );
-                                                  }}
-                                                  disabled={
-                                                    !activityId || isRemoving
-                                                  }
-                                                  className="
-                                                    inline-flex h-7 items-center
-                                                    justify-center
-                                                    rounded-[10px] border
-                                                    border-red-500/30
-                                                    bg-red-500/10 px-2
-                                                    text-[11px] font-semibold
-                                                    text-red-300
-                                                    transition-colors
-                                                    hover:bg-red-500/20
-                                                    disabled:cursor-not-allowed
-                                                    disabled:opacity-70
-                                                  "
-                                                >
-                                                  {isRemoving
-                                                    ? 'Quitando...'
-                                                    : 'Quitar archivo'}
-                                                </button>
+                                                {canUploadDeliverables && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      if (!activityId) return;
+                                                      void handleDeliverableRemove(
+                                                        activityId
+                                                      );
+                                                    }}
+                                                    disabled={
+                                                      !activityId || isRemoving
+                                                    }
+                                                    className="
+                                                      inline-flex h-7 items-center
+                                                      justify-center
+                                                      rounded-[10px] border
+                                                      border-red-500/30
+                                                      bg-red-500/10 px-2
+                                                      text-[11px] font-semibold
+                                                      text-red-300
+                                                      transition-colors
+                                                      hover:bg-red-500/20
+                                                      disabled:cursor-not-allowed
+                                                      disabled:opacity-70
+                                                    "
+                                                  >
+                                                    {isRemoving
+                                                      ? 'Quitando...'
+                                                      : 'Quitar archivo'}
+                                                  </button>
+                                                )}
                                               </div>
                                             </div>
                                             <div
@@ -3527,60 +3585,62 @@ export default function ProjectDetailView({
                                           rows={3}
                                           placeholder="Describe el entregable..."
                                         />
-                                        <div className="mt-2 flex justify-end">
-                                          <button
-                                            type="button"
-                                            onClick={async () => {
-                                              if (!isEditingDescription) {
-                                                setEditingDescriptions(
-                                                  (prev) => ({
-                                                    ...prev,
-                                                    [activityKey]: true,
-                                                  })
-                                                );
-                                                return;
-                                              }
+                                        {canUploadDeliverables && (
+                                          <div className="mt-2 flex justify-end">
+                                            <button
+                                              type="button"
+                                              onClick={async () => {
+                                                if (!isEditingDescription) {
+                                                  setEditingDescriptions(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [activityKey]: true,
+                                                    })
+                                                  );
+                                                  return;
+                                                }
 
-                                              if (!activityId) {
-                                                alert(
-                                                  'Guarda el proyecto para generar la actividad antes de editar la descripción.'
-                                                );
-                                                return;
-                                              }
+                                                if (!activityId) {
+                                                  alert(
+                                                    'Guarda el proyecto para generar la actividad antes de editar la descripción.'
+                                                  );
+                                                  return;
+                                                }
 
-                                              const success =
-                                                await handleDescriptionSave(
-                                                  activityId,
-                                                  activityDescription
-                                                );
-                                              if (success) {
-                                                setEditingDescriptions(
-                                                  (prev) => ({
-                                                    ...prev,
-                                                    [activityKey]: false,
-                                                  })
-                                                );
-                                              }
-                                            }}
-                                            disabled={!activityId || isSaving}
-                                            className="
-                                              inline-flex h-8 items-center
-                                              justify-center rounded-[12px]
-                                              bg-[#22c4d3] px-3 text-xs
-                                              font-semibold text-[#01152d]
-                                              transition-colors
-                                              hover:bg-[#1fb4c2]
-                                              disabled:cursor-not-allowed
-                                              disabled:opacity-70
-                                            "
-                                          >
-                                            {isSaving
-                                              ? 'Guardando...'
-                                              : isEditingDescription
-                                                ? 'Guardar Descripción'
-                                                : 'Editar Descripción'}
-                                          </button>
-                                        </div>
+                                                const success =
+                                                  await handleDescriptionSave(
+                                                    activityId,
+                                                    activityDescription
+                                                  );
+                                                if (success) {
+                                                  setEditingDescriptions(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [activityKey]: false,
+                                                    })
+                                                  );
+                                                }
+                                              }}
+                                              disabled={!activityId || isSaving}
+                                              className="
+                                                inline-flex h-8 items-center
+                                                justify-center rounded-[12px]
+                                                bg-[#22c4d3] px-3 text-xs
+                                                font-semibold text-[#01152d]
+                                                transition-colors
+                                                hover:bg-[#1fb4c2]
+                                                disabled:cursor-not-allowed
+                                                disabled:opacity-70
+                                              "
+                                            >
+                                              {isSaving
+                                                ? 'Guardando...'
+                                                : isEditingDescription
+                                                  ? 'Guardar Descripción'
+                                                  : 'Editar Descripción'}
+                                            </button>
+                                          </div>
+                                        )}
                                       </div>
                                       <div className="rounded-lg bg-muted/30 p-3">
                                         <span
@@ -3591,41 +3651,43 @@ export default function ProjectDetailView({
                                         >
                                           Entrega
                                         </span>
-                                        <label
-                                          className="
-                                            inline-flex h-9 cursor-pointer
-                                            items-center gap-2 rounded-[13px]
-                                            bg-[#22c4d3] px-3 text-sm
-                                            font-medium text-[#01152d]
-                                            transition-colors
-                                            hover:bg-[#1fb4c2]
-                                          "
-                                        >
-                                          <Upload className="size-4" />
-                                          {isUploading
-                                            ? 'Subiendo...'
-                                            : 'Subir entregable'}
-                                          <input
-                                            type="file"
-                                            className="hidden"
-                                            onChange={(event) => {
-                                              if (!activityId) {
-                                                alert(
-                                                  'Guarda el proyecto para generar la actividad antes de subir un entregable.'
+                                        {canUploadDeliverables && (
+                                          <label
+                                            className="
+                                              inline-flex h-9 cursor-pointer
+                                              items-center gap-2 rounded-[13px]
+                                              bg-[#22c4d3] px-3 text-sm
+                                              font-medium text-[#01152d]
+                                              transition-colors
+                                              hover:bg-[#1fb4c2]
+                                            "
+                                          >
+                                            <Upload className="size-4" />
+                                            {isUploading
+                                              ? 'Subiendo...'
+                                              : 'Subir entregable'}
+                                            <input
+                                              type="file"
+                                              className="hidden"
+                                              onChange={(event) => {
+                                                if (!activityId) {
+                                                  alert(
+                                                    'Guarda el proyecto para generar la actividad antes de subir un entregable.'
+                                                  );
+                                                  return;
+                                                }
+                                                const selectedFile =
+                                                  event.target.files?.[0];
+                                                if (!selectedFile) return;
+                                                void handleDeliverableUpload(
+                                                  activityId,
+                                                  selectedFile,
+                                                  activityDescription
                                                 );
-                                                return;
-                                              }
-                                              const selectedFile =
-                                                event.target.files?.[0];
-                                              if (!selectedFile) return;
-                                              void handleDeliverableUpload(
-                                                activityId,
-                                                selectedFile,
-                                                activityDescription
-                                              );
-                                            }}
-                                          />
-                                        </label>
+                                              }}
+                                            />
+                                          </label>
+                                        )}
                                         {isUploading && (
                                           <div
                                             className="
@@ -3696,35 +3758,37 @@ export default function ProjectDetailView({
                                                     )}
                                                   </span>
                                                 )}
-                                                <button
-                                                  type="button"
-                                                  onClick={() => {
-                                                    if (!activityId) return;
-                                                    void handleDeliverableRemove(
-                                                      activityId
-                                                    );
-                                                  }}
-                                                  disabled={
-                                                    !activityId || isRemoving
-                                                  }
-                                                  className="
-                                                    inline-flex h-7 items-center
-                                                    justify-center
-                                                    rounded-[10px] border
-                                                    border-red-500/30
-                                                    bg-red-500/10 px-2
-                                                    text-[11px] font-semibold
-                                                    text-red-300
-                                                    transition-colors
-                                                    hover:bg-red-500/20
-                                                    disabled:cursor-not-allowed
-                                                    disabled:opacity-70
-                                                  "
-                                                >
-                                                  {isRemoving
-                                                    ? 'Quitando...'
-                                                    : 'Quitar archivo'}
-                                                </button>
+                                                {canUploadDeliverables && (
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                      if (!activityId) return;
+                                                      void handleDeliverableRemove(
+                                                        activityId
+                                                      );
+                                                    }}
+                                                    disabled={
+                                                      !activityId || isRemoving
+                                                    }
+                                                    className="
+                                                      inline-flex h-7 items-center
+                                                      justify-center
+                                                      rounded-[10px] border
+                                                      border-red-500/30
+                                                      bg-red-500/10 px-2
+                                                      text-[11px] font-semibold
+                                                      text-red-300
+                                                      transition-colors
+                                                      hover:bg-red-500/20
+                                                      disabled:cursor-not-allowed
+                                                      disabled:opacity-70
+                                                    "
+                                                  >
+                                                    {isRemoving
+                                                      ? 'Quitando...'
+                                                      : 'Quitar archivo'}
+                                                  </button>
+                                                )}
                                               </div>
                                             </div>
                                             <div
@@ -4171,6 +4235,14 @@ export default function ProjectDetailView({
               );
             })()}
           </div>
+        </TabsContent>
+
+        <TabsContent value="posts" className="space-y-4">
+          <ProjectPostsTab
+            projectId={project.id}
+            projectName={project.name}
+            canPublish={canEditProject}
+          />
         </TabsContent>
       </Tabs>
 

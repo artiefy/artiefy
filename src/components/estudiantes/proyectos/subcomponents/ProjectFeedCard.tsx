@@ -123,7 +123,6 @@ export function ProjectFeedCard({
   }, [item.description]);
 
   const isDescriptionParagraphStructured = descriptionParagraphs.length > 1;
-  const hasMoreParagraphs = descriptionParagraphs.length > 3;
 
   // Line-clamp fallback for unstructured descriptions: only measurable via
   // the actual rendered DOM node, so this effect is a genuine layout
@@ -139,9 +138,11 @@ export function ProjectFeedCard({
     item.description,
   ]);
 
-  const showDescriptionToggle = isDescriptionParagraphStructured
-    ? hasMoreParagraphs
-    : isDescriptionOverflowing;
+  // A paragraph-structured description always hides something while
+  // collapsed — only its first paragraph renders, clamped — so its toggle is
+  // unconditional; the single-block fallback needs the measured overflow.
+  const showDescriptionToggle =
+    isDescriptionParagraphStructured || isDescriptionOverflowing;
 
   useEffect(() => {
     const fetchInteractions = async () => {
@@ -558,22 +559,46 @@ export function ProjectFeedCard({
                 "
               />
             </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-foreground">
+            <div className="min-w-0 flex-1">
+              {/* One line from `sm` up — that is where a long project name
+                  used to wrap and push the badge/date row down. Below `sm`
+                  the row wraps on purpose: once the avatar, the author and
+                  "publicó en" are subtracted, a phone leaves the project
+                  name a handful of pixels, so forcing one line there would
+                  truncate it away to nothing. `min-w-0` on every ancestor is
+                  what lets `truncate` work inside these nested flex rows. */}
+              <div
+                className="
+                  flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5
+                  sm:flex-nowrap
+                "
+              >
+                <span
+                  className="
+                    max-w-full min-w-0 truncate font-semibold text-foreground
+                    sm:max-w-[45%]
+                  "
+                >
                   {item.author.name}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  publicó en
                 </span>
                 <span
                   className="
-                    bg-gradient-to-r from-primary to-cyan-400
-                    bg-clip-text font-semibold text-transparent
+                    shrink-0 text-sm whitespace-nowrap text-muted-foreground
+                  "
+                >
+                  publicó en
+                </span>
+                <Link
+                  href={`/proyectos/${item.id}`}
+                  title={item.title}
+                  className="
+                    min-w-0 flex-1 truncate bg-gradient-to-r from-primary
+                    to-cyan-400 bg-clip-text font-semibold text-transparent
+                    hover:underline
                   "
                 >
                   {item.title}
-                </span>
+                </Link>
               </div>
               <div className="mt-1 flex items-center gap-2">
                 <span
@@ -677,11 +702,15 @@ export function ProjectFeedCard({
             <div className="space-y-2">
               {(isDescriptionExpanded
                 ? descriptionParagraphs
-                : descriptionParagraphs.slice(0, 3)
+                : descriptionParagraphs.slice(0, 1)
               ).map((paragraph, index) => (
                 <p
                   key={`${item.id}-desc-${index}`}
-                  className="whitespace-pre-wrap"
+                  className={
+                    isDescriptionExpanded
+                      ? 'whitespace-pre-wrap'
+                      : 'line-clamp-3 whitespace-pre-wrap'
+                  }
                 >
                   {paragraph}
                 </p>
@@ -693,7 +722,7 @@ export function ProjectFeedCard({
               className={
                 isDescriptionExpanded
                   ? 'whitespace-pre-wrap'
-                  : 'line-clamp-6 whitespace-pre-wrap'
+                  : 'line-clamp-3 whitespace-pre-wrap'
               }
             >
               {item.description}

@@ -62,6 +62,20 @@ export function createProductFromCourse(course: {
   };
 }
 
+// Añadir función para crear producto de proyecto guiado individual
+export function createProductFromGuidedProject(project: {
+  id: number;
+  title: string;
+  individualPrice: number | null;
+}): Product {
+  return {
+    id: project.id,
+    name: `Proyecto: ${project.title}`,
+    amount: (project.individualPrice ?? 0).toFixed(2),
+    description: project.title,
+  };
+}
+
 // ✅ Función para obtener un producto por su ID
 export function getProductById(productId: number): Product | undefined {
   if (!productId || isNaN(productId)) return undefined; // ✅ Validación extra

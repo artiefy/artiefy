@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { desc, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+import { getCommunityPostsFeedPage } from '~/components/estudiantes/proyectos/projectSocialData';
 import { db } from '~/server/db';
-import { communityPosts, projects, users } from '~/server/db/schema';
+import { communityPosts, projects } from '~/server/db/schema';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 const MAX_CONTENT_LENGTH = 2000;
+
+// Mismos roles que `src/app/proyectos/[id]/page.tsx` deja entrar a un
+// proyecto privado: quien administra la plataforma ve el feed completo.
+const STAFF_ROLES = ['super-admin', 'admin', 'educador'];
 
 const createPostSchema = z.object({
   content: z.string().trim().min(1).max(MAX_CONTENT_LENGTH),
@@ -30,55 +35,57 @@ const resolveLimit = (searchParams: URLSearchParams) => {
   return Math.min(Math.max(Math.trunc(parsed), 1), MAX_LIMIT);
 };
 
-// GET /api/community-posts — feed público de publicaciones de la comunidad,
-// más recientes primero, con autor y proyecto (cuando aplica) ya resueltos
-// para poder renderizar "«autor» publicó en «proyecto»".
+const resolveOffset = (searchParams: URLSearchParams) => {
+  const raw = searchParams.get('offset');
+  if (!raw) return 0;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(Math.trunc(parsed), 0);
+};
+
+const resolveProjectId = (searchParams: URLSearchParams) => {
+  const raw = searchParams.get('projectId');
+  if (!raw) return undefined;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return undefined;
+  const projectId = Math.trunc(parsed);
+  return projectId > 0 ? projectId : undefined;
+};
+
+// GET /api/community-posts?limit=&offset=&projectId= — feed de publicaciones
+// de la comunidad, más recientes primero, con autor y proyecto (cuando
+// aplica) ya resueltos para poder renderizar "«autor» publicó en «proyecto»".
+//
+// La visibilidad la decide `getCommunityPostsFeedPage` con el id de quien
+// mira, jamás un parámetro de la petición: `projectId` solo puede reducir el
+// resultado, nunca ampliarlo. No lleva `revalidate` ni `use cache` a
+// propósito — la respuesta depende del visitante y una caché sin esa clave
+// serviría las publicaciones privadas de una persona a otra.
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const limit = resolveLimit(searchParams);
+    const offset = resolveOffset(searchParams);
+    const projectId = resolveProjectId(searchParams);
 
-    const rows = await db
-      .select({
-        id: communityPosts.id,
-        userId: communityPosts.userId,
-        projectId: communityPosts.projectId,
-        kind: communityPosts.kind,
-        content: communityPosts.content,
-        imageKey: communityPosts.imageKey,
-        linkUrl: communityPosts.linkUrl,
-        createdAt: communityPosts.createdAt,
-        updatedAt: communityPosts.updatedAt,
-        authorName: users.name,
-        authorEmail: users.email,
-        projectName: projects.name,
-      })
-      .from(communityPosts)
-      .innerJoin(users, eq(communityPosts.userId, users.id))
-      .leftJoin(projects, eq(communityPosts.projectId, projects.id))
-      .orderBy(desc(communityPosts.createdAt))
-      .limit(limit);
+    // Sin sesión no se responde 401: simplemente se ve la porción más
+    // estricta (proyectos públicos + publicaciones generales).
+    const { userId, sessionClaims } = await auth();
+    const role = String(sessionClaims?.metadata?.role ?? '');
 
-    const items = rows.map((row) => ({
-      id: row.id,
-      content: row.content,
-      kind: row.kind,
-      imageKey: row.imageKey,
-      linkUrl: row.linkUrl,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      author: {
-        id: row.userId,
-        name: row.authorName,
-        email: row.authorEmail,
-      },
-      project:
-        row.projectId !== null
-          ? { id: row.projectId, name: row.projectName }
-          : null,
-    }));
+    const { items, hasMore } = await getCommunityPostsFeedPage({
+      viewerId: userId,
+      canSeeAllProjects: STAFF_ROLES.includes(role),
+      projectId,
+      limit,
+      offset,
+    });
 
-    return NextResponse.json(items);
+    return NextResponse.json({
+      items,
+      hasMore,
+      nextOffset: offset + items.length,
+    });
   } catch (error) {
     console.error('[community-posts][GET] error', error);
     return respondWithError('Error al obtener publicaciones', 500);

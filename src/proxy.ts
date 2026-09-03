@@ -99,6 +99,7 @@ function isPublicAppPath(pathname: string): boolean {
     pathname === '/comunidad' ||
     pathname === '/planes' ||
     pathname.startsWith('/agradecimiento-curso/') ||
+    pathname.startsWith('/agradecimiento-proyecto/') ||
     pathname.startsWith('/sign-in') ||
     pathname.startsWith('/sign-up') ||
     pathname === '/error'

@@ -8,7 +8,9 @@ import CourseVideo from './CourseVideo';
 interface CourseModalTeamsProps {
   open: boolean;
   title: string;
-  videoKey: string;
+  videoKey?: string;
+  /** Direct video URL for external recordings without an S3 key. */
+  externalUrl?: string;
   onClose: () => void;
   progress?: number;
   meetingId?: number;
@@ -40,6 +42,7 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
   open,
   title,
   videoKey,
+  externalUrl,
   onClose,
   progress = 0,
   meetingId,
@@ -164,6 +167,7 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
           <div className="relative mt-3 bg-black">
             <CourseVideo
               videoKey={videoKey}
+              externalUrl={externalUrl}
               onProgressUpdate={setVideoProgress}
               startTime={startTime}
             />
