@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -48,6 +48,7 @@ import { toast } from 'sonner';
 
 import CourseComments from '~/components/estudiantes/layout/coursedetail/CourseComments';
 import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import {
   GuidedObjectivesAccordion,
@@ -224,8 +225,16 @@ export function GuidedProjectDetails({
   });
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  // A click made before Clerk is ready (or before login finishes) is kept
+  // here and replayed, so the intent is never silently dropped.
+  const [pendingStart, setPendingStart] = useState(false);
+  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  // Clerk resolves `isSignedIn` and `user` asynchronously. Acting on them
+  // before they load reads an unauthenticated, plan-less user and bounces a
+  // paying student to /sign-in or /planes, so every gate waits for this.
+  const isClerkReady = isAuthLoaded && isUserLoaded;
   const router = useRouter();
   const carouselRef = useRef<HTMLDivElement>(null);
 
@@ -343,29 +352,37 @@ export function GuidedProjectDetails({
     });
   };
 
-  const handleStartNow = async () => {
-    if (!isSignedIn) {
-      toast.info('Debes iniciar sesión para inscribirte');
-      router.push(
-        `/sign-in?redirect_url=${encodeURIComponent(window.location.href)}`
-      );
-      return;
-    }
-
-    if (!isSubscriptionValid || !hasValidPlan) {
-      toast.error('Se requiere una suscripción Pro o Premium activa.');
-      router.push('/planes');
-      return;
-    }
-
+  const handleStartNow = useCallback(async () => {
     if (!project?.id) {
       toast.error('Proyecto guiado inválido');
       return;
     }
 
+    // Clerk has not resolved the session yet: keep the intent instead of
+    // deciding from an empty user, and let the effect below replay it.
+    if (!isClerkReady) {
+      setPendingStart(true);
+      return;
+    }
+
+    if (!isSignedIn) {
+      setPendingStart(true);
+      setShowLoginModal(true);
+      return;
+    }
+
     setIsEnrolling(true);
     try {
+      // The server action re-reads the subscription from Clerk and is the
+      // authority on access. Gating here on client metadata is what sent
+      // subscribers to /planes, so the decision is left to the action and we
+      // only react to `requiresSubscription`.
       const result = await enrollInGuidedProject(project.id);
+      if (!result.success && result.requiresSubscription) {
+        toast.error(result.message);
+        router.push('/planes');
+        return;
+      }
       if (result.success) {
         toast.success(result.message);
         setIsEnrolled(true);
@@ -386,7 +403,16 @@ export function GuidedProjectDetails({
     } finally {
       setIsEnrolling(false);
     }
-  };
+  }, [isClerkReady, isSignedIn, project?.id, project?.title, router]);
+
+  // Replays a click that arrived before Clerk was ready, and finishes the
+  // enrollment right after the login modal succeeds — the student never has to
+  // press the button twice.
+  useEffect(() => {
+    if (!pendingStart || !isClerkReady || !isSignedIn) return;
+    setPendingStart(false);
+    void handleStartNow();
+  }, [pendingStart, isClerkReady, isSignedIn, handleStartNow]);
 
   // Single-payment purchase: no login required. PaymentForm provisions the
   // Clerk account when the buyer has none, exactly like the individual course
@@ -1653,6 +1679,22 @@ export function GuidedProjectDetails({
           </div>
         </div>
       </main>
+
+      {/* Mini login: mantiene al estudiante en la página del proyecto. Con
+          `redirectUrl` vacío el modal no navega, así el efecto de arriba puede
+          completar la inscripción apenas termina el login. */}
+      <MiniLoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setPendingStart(false);
+        }}
+        onLoginSuccess={() => {
+          setShowLoginModal(false);
+          setPendingStart(true);
+        }}
+        redirectUrl=""
+      />
 
       {/* --- MODAL DE PAGO PARA PROYECTO GUIADO INDIVIDUAL --- */}
       {showPaymentModal && projectProduct && (

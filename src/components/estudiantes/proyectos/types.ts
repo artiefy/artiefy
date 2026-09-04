@@ -71,4 +71,28 @@ export interface CommunityFeedPost {
   createdAt: string;
   author: CommunityFeedPostAuthor;
   project: CommunityFeedPostProject | null;
+  // Comentarios vivos (sin contar los eliminados) de la publicación. Llega
+  // con el propio feed, en la misma consulta, para que la tarjeta pueda
+  // pintar el contador sin una petición por publicación.
+  commentCount: number;
+}
+
+/**
+ * Un comentario de una publicación de la comunidad, ya en forma de árbol.
+ * La anidación no tiene límite: `replies` puede contener nodos que a su vez
+ * tienen respuestas, tantos niveles como haya. El servidor es el único que
+ * arma este árbol (y el único que corta ciclos), así que el cliente solo
+ * recorre `replies`.
+ */
+export interface CommunityPostComment {
+  id: number;
+  parentId: number | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  // `true` cuando el comentario fue borrado pero conserva respuestas: el
+  // texto y el autor originales no salen del servidor.
+  isDeleted: boolean;
+  author: CommunityFeedPostAuthor | null;
+  replies: CommunityPostComment[];
 }

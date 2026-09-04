@@ -11,6 +11,7 @@ import {
   specificObjectives,
   users,
 } from '~/server/db/schema';
+import { stripWrappingQuotes } from '~/utils/projectTitle';
 
 interface ProjectData {
   name: string;
@@ -116,7 +117,7 @@ export async function createProject(
   const insertedProjects = await db
     .insert(projects)
     .values({
-      name: projectData.name,
+      name: stripWrappingQuotes(projectData.name),
       description: projectData.description ?? null,
       planteamiento: projectData.planteamiento,
       justificacion: projectData.justificacion,

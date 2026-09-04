@@ -8,7 +8,7 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
-import { openAgentChatFor } from '~/lib/agents/agentChatBus';
+import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
 import {
   consumePendingCreateEntry,
   requestCreateEntry,
@@ -870,15 +870,7 @@ export function ProjectsSocialView({
           // the instant it opens, so this uses the same soft
           // `router.refresh()` those two flows rely on instead.
           if (createdId) {
-            openAgentChatFor({
-              scope: {
-                kind: 'project',
-                id: createdId,
-                title: createdTitle ?? 'tu proyecto',
-                source: 'user',
-              },
-              greeting: `¡Listo! Soy tu Coach y te acompaño en "${createdTitle ?? 'tu proyecto'}". ¿Quieres que sigamos armándolo juntos?`,
-            });
+            openCoachChatForNewProject({ id: createdId, title: createdTitle });
           }
           router.refresh();
         }}

@@ -52,21 +52,30 @@ const resolveProjectId = (searchParams: URLSearchParams) => {
   return projectId > 0 ? projectId : undefined;
 };
 
-// GET /api/community-posts?limit=&offset=&projectId= — feed de publicaciones
-// de la comunidad, más recientes primero, con autor y proyecto (cuando
-// aplica) ya resueltos para poder renderizar "«autor» publicó en «proyecto»".
+const resolveAuthorId = (searchParams: URLSearchParams) => {
+  const raw = searchParams.get('authorId')?.trim();
+  return raw ? raw : undefined;
+};
+
+// GET /api/community-posts?limit=&offset=&projectId=&authorId= — feed de
+// publicaciones de la comunidad, más recientes primero, con autor y proyecto
+// (cuando aplica) ya resueltos para poder renderizar "«autor» publicó en
+// «proyecto»".
 //
 // La visibilidad la decide `getCommunityPostsFeedPage` con el id de quien
-// mira, jamás un parámetro de la petición: `projectId` solo puede reducir el
-// resultado, nunca ampliarlo. No lleva `revalidate` ni `use cache` a
-// propósito — la respuesta depende del visitante y una caché sin esa clave
-// serviría las publicaciones privadas de una persona a otra.
+// mira, jamás un parámetro de la petición: `projectId` y `authorId` solo
+// pueden reducir el resultado, nunca ampliarlo —pedir el `authorId` de otra
+// persona devuelve únicamente sus publicaciones generales y las de sus
+// proyectos públicos. No lleva `revalidate` ni `use cache` a propósito — la
+// respuesta depende del visitante y una caché sin esa clave serviría las
+// publicaciones privadas de una persona a otra.
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const limit = resolveLimit(searchParams);
     const offset = resolveOffset(searchParams);
     const projectId = resolveProjectId(searchParams);
+    const authorId = resolveAuthorId(searchParams);
 
     // Sin sesión no se responde 401: simplemente se ve la porción más
     // estricta (proyectos públicos + publicaciones generales).
@@ -77,6 +86,7 @@ export async function GET(req: Request) {
       viewerId: userId,
       canSeeAllProjects: STAFF_ROLES.includes(role),
       projectId,
+      authorId,
       limit,
       offset,
     });

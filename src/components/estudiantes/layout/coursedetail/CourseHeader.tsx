@@ -126,7 +126,7 @@ export function CourseHeader({
   onUnenrollAction,
   classMeetings = [],
 }: CourseHeaderProps) {
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn, isLoaded: isClerkReady } = useUser();
   const { signUp } = useSignUp();
   const router = useNextRouter();
   const pathname = usePathname();
@@ -849,6 +849,11 @@ export function CourseHeader({
 
   // Modifica handleEnrollClick para solo usuarios autenticados
   const handleEnrollClick = async () => {
+    // Clerk resolves the session asynchronously. Reading `user` before it
+    // loads reports no plan, which sent active subscribers to /planes; wait
+    // instead of deciding from an empty user.
+    if (!isClerkReady) return;
+
     if (!isSignedIn) {
       const isIndividualCourse =
         course.courseTypeId === 4 ||

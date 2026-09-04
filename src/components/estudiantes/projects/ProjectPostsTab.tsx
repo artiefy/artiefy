@@ -13,12 +13,13 @@ import type { CommunityFeedPost } from '~/components/estudiantes/proyectos/types
 
 const PAGE_SIZE = 10;
 
-// Sin `projectId`: la pestaña muestra el feed social completo, no solo lo
-// publicado bajo este proyecto. Qué entra en ese feed lo decide el servidor
-// con el id de quien mira (proyectos públicos + publicaciones generales + lo
-// propio), nunca un parámetro de la petición.
-const buildPageUrl = (offset: number) =>
-  `/api/community-posts?limit=${PAGE_SIZE}&offset=${offset}`;
+// Acotado a ESTE proyecto: lo publicado bajo un proyecto privado vive aquí
+// dentro y no sale al muro de `/proyectos` hasta que el proyecto se marque
+// como público. `projectId` solo puede reducir el resultado — quién puede ver
+// cada fila lo sigue decidiendo el servidor con el id de quien mira, nunca un
+// parámetro de la petición.
+const buildPageUrl = (projectId: number, offset: number) =>
+  `/api/community-posts?limit=${PAGE_SIZE}&offset=${offset}&projectId=${projectId}`;
 
 interface CommunityPostsPage {
   items: CommunityFeedPost[];
@@ -67,9 +68,10 @@ interface ProjectPostsTabProps {
 
 /**
  * Pestaña "Posts" de la ficha del proyecto. Arriba, para el dueño, un
- * compositor que publica ya apuntando a este proyecto; debajo, el feed social
- * de la comunidad —lo publicado en proyectos públicos— tal y como el servidor
- * se lo deja ver a quien mira.
+ * compositor que publica ya apuntando a este proyecto; debajo, lo publicado
+ * bajo ESTE proyecto. Mientras el proyecto sea privado, esas publicaciones
+ * viven solo aquí; al marcarlo como público también salen al muro de
+ * `/proyectos`.
  *
  * El filtro de visibilidad vive entero en `GET /api/community-posts`: aquí no
  * se descarta ninguna publicación, porque un filtro de cliente no protege
@@ -83,7 +85,7 @@ export default function ProjectPostsTab({
   const { user } = useUser();
 
   const { data, error, isLoading, mutate } = useSWR<CommunityPostsPage, Error>(
-    buildPageUrl(0),
+    buildPageUrl(projectId, 0),
     fetchPage
   );
 
@@ -131,7 +133,7 @@ export default function ProjectPostsTab({
     if (isLoadingMore) return;
     setIsLoadingMore(true);
     try {
-      const page = await fetchPage(buildPageUrl(posts.length));
+      const page = await fetchPage(buildPageUrl(projectId, posts.length));
       setExtraPosts((prev) => {
         const known = new Set(
           [...(data?.items ?? []), ...prev].map((post) => post.id)
@@ -181,12 +183,8 @@ export default function ProjectPostsTab({
         </button>
       ) : null}
 
-      {/* The composer above publishes under THIS project, while the list
-          below is the whole community feed. Without this heading the two read
-          as one thing and the feed looks like it is showing unrelated posts
-          "about this project". */}
       <h3 className="pt-1 text-sm font-semibold text-foreground">
-        Publicaciones de la comunidad
+        Publicaciones del proyecto
       </h3>
 
       {isLoading ? (
@@ -204,7 +202,7 @@ export default function ProjectPostsTab({
       ) : posts.length === 0 ? (
         <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
           <p className="text-sm text-muted-foreground">
-            Aún no hay publicaciones en la comunidad.
+            Aún no hay publicaciones en este proyecto.
           </p>
         </div>
       ) : (

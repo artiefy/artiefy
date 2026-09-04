@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 
 import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailView';
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
+import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
 
 import type { Project } from '~/types/project';
 
@@ -189,6 +190,30 @@ export function ProjectsSection({
       setAddedSections(sections);
     }
     setShowModal(true);
+  };
+
+  /**
+   * El asistente ya guardó el proyecto y sigue abierto en el paso siguiente.
+   * Aquí se abre el chat del Coach sobre ese proyecto —igual que en el flujo
+   * de "+ Nuevo proyecto" (`ProjectsSocialView.tsx`)— y se recarga la lista.
+   */
+  const handleProjectCreated = (createdId?: number, createdTitle?: string) => {
+    if (createdId) {
+      openCoachChatForNewProject({ id: createdId, title: createdTitle });
+    }
+
+    // Recargar la lista de proyectos
+    void fetch(`/api/estudiantes/projects?courseId=${courseId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProjects(Array.isArray(data) ? data : []);
+        if (onProjectsChange) {
+          onProjectsChange();
+        }
+      })
+      .catch((error) => {
+        console.error('Error al recargar proyectos:', error);
+      });
   };
 
   const handleModalClose = async () => {
@@ -383,20 +408,7 @@ export function ProjectsSection({
           objetivosEsp={[]}
           categoriaId={modalProject?.categoryId}
           courseId={courseId}
-          onProjectCreated={() => {
-            // Recargar la lista de proyectos
-            void fetch(`/api/estudiantes/projects?courseId=${courseId}`)
-              .then((res) => res.json())
-              .then((data) => {
-                setProjects(Array.isArray(data) ? data : []);
-                if (onProjectsChange) {
-                  onProjectsChange();
-                }
-              })
-              .catch((error) => {
-                console.error('Error al recargar proyectos:', error);
-              });
-          }}
+          onProjectCreated={handleProjectCreated}
           setObjetivosEsp={() => {}}
           setActividades={() => {}}
           projectId={modalProject?.id}
@@ -774,20 +786,7 @@ export function ProjectsSection({
         objetivosEsp={[]}
         categoriaId={modalProject?.categoryId}
         courseId={courseId}
-        onProjectCreated={() => {
-          // Recargar la lista de proyectos
-          void fetch(`/api/estudiantes/projects?courseId=${courseId}`)
-            .then((res) => res.json())
-            .then((data) => {
-              setProjects(Array.isArray(data) ? data : []);
-              if (onProjectsChange) {
-                onProjectsChange();
-              }
-            })
-            .catch((error) => {
-              console.error('Error al recargar proyectos:', error);
-            });
-        }}
+        onProjectCreated={handleProjectCreated}
         setObjetivosEsp={() => {}}
         setActividades={() => {}}
         projectId={modalProject?.id}
