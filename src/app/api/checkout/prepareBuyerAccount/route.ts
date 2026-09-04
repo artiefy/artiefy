@@ -1,39 +1,16 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { randomBytes } from 'node:crypto';
 
 import { EmailTemplateNewAccount } from '~/components/estudiantes/layout/EmailTemplateNewAccount';
 import { sendTicketEmail } from '~/lib/emails/ticketEmails';
+import { generarPasswordSegura } from '~/utils/generatePassword';
 
 type RequestBody = {
   email?: string;
   firstName?: string;
   lastName?: string;
 };
-
-function generateSecurePassword(length = 8): string {
-  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const lowercase = 'abcdefghijkmnopqrstuvwxyz';
-  const numbers = '23456789';
-  const all = uppercase + lowercase + numbers;
-
-  const pick = (chars: string) =>
-    chars[randomBytes(1)[0] % Math.max(chars.length, 1)] ?? 'A';
-
-  const required = [pick(uppercase), pick(lowercase), pick(numbers)];
-
-  while (required.length < length) {
-    required.push(pick(all));
-  }
-
-  for (let i = required.length - 1; i > 0; i -= 1) {
-    const j = randomBytes(1)[0] % (i + 1);
-    [required[i], required[j]] = [required[j]!, required[i]!];
-  }
-
-  return required.join('');
-}
 
 function buildNames(email: string, firstName?: string, lastName?: string) {
   if (firstName && lastName) {
@@ -86,7 +63,7 @@ export async function POST(req: Request) {
       body.firstName,
       body.lastName
     );
-    const temporaryPassword = generateSecurePassword();
+    const temporaryPassword = generarPasswordSegura();
 
     const usernameBase = normalizedEmail
       .split('@')[0]

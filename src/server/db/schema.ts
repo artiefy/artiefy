@@ -1829,8 +1829,12 @@ export const classMeetings = pgTable('class_meetings', {
     .notNull()
     .references(() => courses.id),
   title: varchar('title', { length: 255 }).notNull(),
-  startDateTime: timestamp('start_datetime', { withTimezone: true }).notNull(),
-  endDateTime: timestamp('end_datetime', { withTimezone: true }).notNull(),
+  // Las columnas reales NO llevan zona horaria: guardan el instante en UTC
+  // como valor "desnudo". Declararlas con `withTimezone: true` hacía que al
+  // leerlas se interpretaran en la zona del proceso, corriendo la hora 5
+  // horas. Con `false`, Drizzle las lee como UTC y el viaje es exacto.
+  startDateTime: timestamp('start_datetime', { withTimezone: false }).notNull(),
+  endDateTime: timestamp('end_datetime', { withTimezone: false }).notNull(),
   // NOT NULL en la base: para "sin enlace" se guarda cadena vacía, no null.
   joinUrl: varchar('join_url', { length: 1024 }).notNull(),
   weekNumber: integer('week_number'),

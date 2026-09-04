@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { db } from '~/server/db';
 import { classMeetings } from '~/server/db/schema';
+import { conCacheTTL } from '~/server/lib/cache-ttl';
 
 import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web';
 
@@ -125,7 +126,7 @@ async function withDbRetry<T>(fn: () => Promise<T>, tries = 4): Promise<T> {
 
 // ---------------------- GET ----------------------
 
-export async function GET(req: Request) {
+async function sincronizarVideos(req: Request): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
 
@@ -448,4 +449,59 @@ export async function GET(req: Request) {
   const payload = Array.from(latestByMeetingId.values());
   console.log('📤 Videos listos para enviar (dedup):', payload.length);
   return NextResponse.json({ videos: payload });
+}
+
+/**
+ * Minutos que se reutiliza el resultado de la sincronización.
+ *
+ * Las grabaciones de Teams no aparecen de un segundo a otro, y esta operación
+ * tarda 7-9 segundos: la página del curso la disparaba media docena de veces
+ * en cada carga.
+ */
+const TTL_VIDEOS_MS = 5 * 60_000;
+
+interface RespuestaCacheada {
+  cuerpo: string;
+  estado: number;
+}
+
+export async function GET(req: Request): Promise<NextResponse> {
+  const userId = new URL(req.url).searchParams.get('userId') ?? '';
+
+  if (!userId) {
+    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+  }
+
+  try {
+    const { cuerpo, estado } = await conCacheTTL<RespuestaCacheada>(
+      `teams-video:${userId}`,
+      TTL_VIDEOS_MS,
+      async () => {
+        const res = await sincronizarVideos(req);
+        const cuerpo = await res.text();
+
+        // Los fallos NO se cachean: se lanzan para que el siguiente intento
+        // vuelva a probar en vez de repetir el error durante cinco minutos.
+        if (!res.ok) {
+          throw Object.assign(new Error('Fallo la sincronización'), {
+            cuerpo,
+            estado: res.status,
+          });
+        }
+
+        return { cuerpo, estado: res.status };
+      }
+    );
+
+    return new NextResponse(cuerpo, {
+      status: estado,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    const fallo = error as { cuerpo?: string; estado?: number };
+    return new NextResponse(fallo.cuerpo ?? '{"error":"Error interno"}', {
+      status: fallo.estado ?? 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 }
