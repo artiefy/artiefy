@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { AgentChatWidget } from '~/components/agents/AgentChatWidget';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { UserProjectWorkspace } from '~/components/estudiantes/proyectos/UserProjectWorkspace';
+import { toAgentProject } from '~/lib/agents/agentProject';
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import { db } from '~/server/db';
 import { projectsTaken } from '~/server/db/schema';
@@ -54,45 +55,9 @@ export default async function TrabajarProyectoPage({
   // él, para no delatar que existe.
   if (!isOwner && !isCollaborator && !project.isPublic) notFound();
 
-  const toAgentActivity = (activity: {
-    id: number;
-    descripcion: string;
-    deliverableSubmittedAt?: string | null;
-  }) => ({
-    id: activity.id,
-    name: activity.descripcion,
-    // `project_activities` carries no completion column: having submitted the
-    // deliverable is the only signal the schema offers.
-    isCompleted: Boolean(activity.deliverableSubmittedAt),
-  });
-
-  const objectives = project.objetivos_especificos.map((objective) => ({
-    id: objective.id,
-    title: objective.description,
-    activities: objective.actividades.map(toAgentActivity),
-  }));
-
-  // `project_activities.objective_id` es nullable, así que un proyecto puede
-  // tener actividades que no cuelgan de ningún objetivo. Sin este grupo
-  // desaparecerían del árbol, aunque el chat sí las recibe en su contexto.
-  const assignedIds = new Set(
-    project.objetivos_especificos.flatMap((objective) =>
-      objective.actividades.map((activity) => activity.id)
-    )
-  );
-  const unassigned = project.actividades.filter(
-    (activity) => !assignedIds.has(activity.id)
-  );
-
-  if (unassigned.length > 0) {
-    objectives.push({
-      // Los ids de `specific_objectives` son seriales positivos, así que este
-      // grupo sintético nunca choca con uno real.
-      id: -1,
-      title: 'Actividades sin objetivo',
-      activities: unassigned.map(toAgentActivity),
-    });
-  }
+  // El mismo mapeo que usa el chat cuando sigue un proyecto recién guardado
+  // desde el asistente, para que el árbol se arme igual en los dos casos.
+  const agentProject = toAgentProject(project);
 
   return (
     <>
@@ -103,18 +68,7 @@ export default async function TrabajarProyectoPage({
           `source: 'user'` es lo que impide que la ruta del chat resuelva el id
           contra `guided_projects`, cuya secuencia serial es independiente y
           puede repetir el número. */}
-      <AgentChatWidget
-        project={
-          isOwner
-            ? {
-                id: project.id,
-                title: project.name,
-                source: 'user',
-                objectives,
-              }
-            : undefined
-        }
-      />
+      <AgentChatWidget project={isOwner ? agentProject : undefined} />
       <Footer />
     </>
   );

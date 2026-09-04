@@ -1,5 +1,7 @@
 'use client';
 
+import type { AgentProject } from '~/lib/agents/agentProject';
+
 /**
  * What a conversation is about. It drives three things: the badge shown in the
  * chat history, the session thread the agents keep on the n8n side, and (once
@@ -28,6 +30,13 @@ export interface AgentChatOpenRequest {
   scope: AgentChatScope;
   /** Opening line, shown in place of the generic welcome menu. */
   greeting: string;
+  /**
+   * Objectives tree for callers that open the chat from a route which mounts
+   * the widget without a project — the wizard's "Guardar Proyecto", above all.
+   * It may start empty: the widget refreshes it from the project itself, so
+   * objectives and activities appear as they are created.
+   */
+  project?: AgentProject;
 }
 
 const EVENT_NAME = 'artiefy:agent-chat-open';
@@ -45,6 +54,32 @@ export function openAgentChatFor(request: AgentChatOpenRequest): void {
   window.dispatchEvent(
     new CustomEvent<AgentChatOpenRequest>(EVENT_NAME, { detail: request })
   );
+}
+
+/**
+ * Opens the Coach on a project the learner has just saved from the wizard.
+ *
+ * The wizard deliberately stays open on its next step, so this is the whole
+ * handoff: one new conversation named after the project, carrying its (still
+ * empty) objectives tree so the widget can follow it as the remaining steps
+ * fill it in.
+ *
+ * `source: 'user'` names the `projects` table, not the `type` column — a
+ * project created inside a course is a row there too, so the course wizard and
+ * the standalone "+ Nuevo proyecto" flow open the chat identically.
+ */
+export function openCoachChatForNewProject(project: {
+  id: number;
+  title?: string;
+}): void {
+  const title = project.title?.trim() ?? '';
+  const name = title || 'tu proyecto';
+
+  openAgentChatFor({
+    scope: { kind: 'project', id: project.id, title: name, source: 'user' },
+    greeting: `¡Listo! Soy tu Coach y te acompaño en "${name}". Aquí verás los objetivos y las actividades a medida que se vayan creando. ¿Seguimos armándolo juntos?`,
+    project: { id: project.id, title: name, source: 'user', objectives: [] },
+  });
 }
 
 /** Returns the unsubscribe function, ready to be a `useEffect` cleanup. */

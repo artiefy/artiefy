@@ -40,6 +40,7 @@ import {
   X,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import useSWR from 'swr';
 
 import { messageHasCode } from '~/components/agents/AgentMessageContent';
 import { AgentRevealedContent } from '~/components/agents/AgentRevealedContent';
@@ -51,6 +52,19 @@ import {
   scopeBadge,
   subscribeToAgentChat,
 } from '~/lib/agents/agentChatBus';
+import {
+  type AgentActivity,
+  type AgentObjective,
+  type AgentProject,
+  toAgentProject,
+  type UserProjectDetails,
+} from '~/lib/agents/agentProject';
+
+export type {
+  AgentActivity,
+  AgentObjective,
+  AgentProject,
+} from '~/lib/agents/agentProject';
 
 gsap.registerPlugin(useGSAP);
 
@@ -342,31 +356,6 @@ const AGENTS: Record<AgentId, AgentDefinition> = {
   },
 };
 
-export interface AgentActivity {
-  id: number;
-  name: string;
-  isCompleted: boolean;
-}
-
-export interface AgentObjective {
-  id: number;
-  title: string;
-  activities?: AgentActivity[];
-}
-
-export interface AgentProject {
-  id: number;
-  title: string;
-  objectives: AgentObjective[];
-  /**
-   * Which table the id belongs to. `guidedProjects` and `projects` have
-   * independent serial sequences, so the chat route needs this to know which
-   * one to look up. Absent means guided, exactly like every mount before user
-   * projects were supported.
-   */
-  source?: 'guided' | 'user';
-}
-
 export interface AgentChatWidgetProps {
   /**
    * Present on the routes that own a project — guided detail and the user
@@ -494,6 +483,26 @@ function formatDay(timestamp: number) {
   });
 }
 
+/**
+ * How often the chat re-reads a project it picked up from the bus. The wizard
+ * saves the project on its first step and writes the objectives and activities
+ * over the later ones, so the tree has to fill in without a reload.
+ *
+ * Its autosave already revalidates this very key (`useProjectAutoSave`), so
+ * this interval only covers what is written elsewhere — the AI generators,
+ * above all. The endpoint runs several queries, so it is deliberately slow and
+ * only ticks while the panel is open.
+ */
+const PROJECT_TREE_REFRESH_MS = 20000;
+
+const fetchProjectDetails = async (
+  url: string
+): Promise<UserProjectDetails> => {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error('No se pudo cargar el proyecto');
+  return (await response.json()) as UserProjectDetails;
+};
+
 export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [agentId, setAgentId] = useState<AgentId>(project ? 'coach' : 'artie');
@@ -560,6 +569,50 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     [project]
   );
   const [scope, setScope] = useState<AgentChatScope>(routeScope);
+
+  /**
+   * A project handed over by `openAgentChatFor` instead of by the route. It is
+   * what lets the globally mounted widget show the tree of a project the
+   * learner just saved from the wizard, on a route that mounts no project of
+   * its own. It arrives with an empty tree: only the identity is known yet.
+   */
+  const [requestedProject, setRequestedProject] = useState<AgentProject | null>(
+    null
+  );
+
+  // Only a project the bus handed over is read from the client. A route that
+  // mounts its own already renders the tree from the server, and a guided
+  // project is not a row in `projects` at all.
+  const followedProjectId =
+    requestedProject?.source === 'user' &&
+    scope.kind === 'project' &&
+    scope.id === requestedProject.id
+      ? requestedProject.id
+      : null;
+
+  const { data: followedProjectDetails } = useSWR<UserProjectDetails>(
+    isOpen && followedProjectId !== null
+      ? `/api/projects/${followedProjectId}?details=true`
+      : null,
+    fetchProjectDetails,
+    { refreshInterval: PROJECT_TREE_REFRESH_MS, revalidateOnFocus: true }
+  );
+
+  /**
+   * The project the tree and the activity threads belong to. The prop always
+   * wins, so the routes that own a project behave exactly as they did before
+   * the bus could carry one.
+   */
+  const activeProject = useMemo<AgentProject | undefined>(() => {
+    if (project) return project;
+    if (!requestedProject) return undefined;
+    // The response can still belong to the previous request while SWR swaps
+    // keys, and a tree from another project must never reach this one.
+    if (followedProjectDetails?.id === requestedProject.id) {
+      return toAgentProject(followedProjectDetails);
+    }
+    return requestedProject;
+  }, [project, requestedProject, followedProjectDetails]);
 
   const hasLoadedHistory = useRef(false);
   /** Storage key the current `history` came from, to detect account switches. */
@@ -1237,6 +1290,9 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     setQuotaNotice(null);
     closeHistoryPanel();
     setScope(routeScope);
+    // The project the bus handed over belonged to the chat being left. The
+    // route's own project, if there is one, is a prop and survives.
+    setRequestedProject(null);
     // A fresh chat always starts at the orchestrator, whoever answered last:
     // it reads the intent and hands off to the specialist on its own.
     setAgentId('artie');
@@ -1251,6 +1307,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
     setQuotaNotice(null);
     closeHistoryPanel();
     setScope(readScope(conversation));
+    // A stored conversation carries its scope but no tree, and the one the bus
+    // handed over belongs to the chat being left — a project id alone does not
+    // prove they are the same project, since `scope.source` may predate it.
+    setRequestedProject(null);
   };
 
   /**
@@ -1345,12 +1405,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
    */
   useEffect(
     () =>
-      subscribeToAgentChat(({ scope: requested, greeting }) => {
+      subscribeToAgentChat(({ scope: requested, greeting, project: seed }) => {
         const now = new Date();
         const specialist: AgentId =
           requested.kind === 'project' ? 'coach' : 'tutor';
 
         setScope(requested);
+        // Callers that own no widget of their own can send the project along,
+        // so the tree opens with the conversation instead of staying hidden.
+        setRequestedProject(seed ?? null);
         setAgentId(specialist);
         leaveConversation(`conv-${now.getTime()}`);
         setMessages([
@@ -1404,7 +1467,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         activity: AgentActivity;
       } | null = null;
 
-      for (const objective of project?.objectives ?? []) {
+      for (const objective of activeProject?.objectives ?? []) {
         for (const activity of objective.activities ?? []) {
           total += 1;
           if (activity.isCompleted) {
@@ -1420,7 +1483,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         completedActivities: completed,
         currentActivity: current,
       };
-    }, [project]);
+    }, [activeProject]);
 
   // The active activity is the selected one, falling back to the first
   // uncompleted activity in objective order.
@@ -1432,15 +1495,16 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
       ? Math.round((completedActivities / totalActivities) * 100)
       : 0;
 
-  // The tree belongs to the project this route mounted. Opening a stored
-  // conversation from another project switches `scope` without unmounting the
-  // widget, and showing the tree then would let a click send this project's
-  // activity id alongside the other project's id.
+  // The tree belongs to the project this route mounted, or to the one the bus
+  // just handed over. Opening a stored conversation from another project
+  // switches `scope` without unmounting the widget, and showing the tree then
+  // would let a click send this project's activity id alongside the other
+  // project's id.
   const showTree =
-    Boolean(project) &&
+    Boolean(activeProject) &&
     agentId === 'coach' &&
     scope.kind === 'project' &&
-    scope.id === project?.id;
+    scope.id === activeProject?.id;
 
   const toggleObjective = (objectiveId: number) => {
     setExpandedObjectives((prev) =>
@@ -1509,10 +1573,10 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           projectId: scope.kind === 'project' ? scope.id : undefined,
           projectSource: scope.kind === 'project' ? scope.source : undefined,
           courseId: scope.kind === 'course' ? scope.id : undefined,
-          // The activity tree only belongs to the project this route mounted;
+          // The activity tree only belongs to the project this chat resolved;
           // a project picked up from an enrollment elsewhere has none loaded.
           activityId:
-            scope.kind === 'project' && scope.id === project?.id
+            scope.kind === 'project' && scope.id === activeProject?.id
               ? activeActivityId
               : undefined,
           // Only set once the learner opened a thread, which is what gives it
@@ -1521,7 +1585,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           // `activityId` above: an activity id only means anything against the
           // project it belongs to.
           threadActivityId:
-            scope.kind === 'project' && scope.id === project?.id
+            scope.kind === 'project' && scope.id === activeProject?.id
               ? (targetThreadActivityId ?? undefined)
               : undefined,
         }),
@@ -1886,16 +1950,23 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
         isPoppedOut
           ? 'js-agent-chat-panel fixed inset-0 z-60'
           : isFullWindow
-            ? 'js-agent-chat-panel fixed inset-0 z-[100010]'
+            ? 'js-agent-chat-panel fixed inset-0 z-[100040]'
             : hasPanelRect
               ? // A panel the learner has dragged or resized is a floating
                 // window they placed on purpose, so it clears the header the
                 // same way full-window mode does.
-                'js-agent-chat-panel fixed z-[100010]'
-              : `
+                'js-agent-chat-panel fixed z-[100040]'
+              : // The desktop card sits above the project wizard overlay
+                // (`z-[100020]` in ModalResumen.tsx) and its select popover
+                // (`z-[100030]` in projects/ui/select.tsx): saving a project
+                // opens this chat while the wizard stays open on the next
+                // step, and a panel behind it would be invisible. The mobile
+                // sheet keeps its own stacking, below the site header.
+                `
                 js-agent-chat-panel fixed inset-0 z-60
-                md:inset-auto md:right-6 md:bottom-6 md:h-[min(70dvh,620px)]
-                md:w-[440px] md:max-w-[calc(100vw-48px)]
+                md:inset-auto md:right-6 md:bottom-6 md:z-[100040]
+                md:h-[min(70dvh,620px)] md:w-[440px]
+                md:max-w-[calc(100vw-48px)]
               `
       }
       style={
@@ -2243,7 +2314,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
               </button>
             )}
 
-            {showTree && project && (
+            {showTree && activeProject && (
               <div className="pt-2">
                 <div
                   className="mx-3 mb-2 overflow-hidden rounded-xl border"
@@ -2297,7 +2368,7 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                       className="space-y-1 border-t px-3 pb-3"
                       style={{ borderColor: `${agent.color}1a` }}
                     >
-                      {project.objectives.map((objective) => {
+                      {activeProject.objectives.map((objective) => {
                         const activities = objective.activities ?? [];
                         const done = activities.filter(
                           (a) => a.isCompleted
