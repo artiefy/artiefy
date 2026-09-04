@@ -64,54 +64,85 @@ export default function CourseSearchPreview({
           >
             Cursos
           </p>
-          {courses.map((course) => (
-            <div
-              key={course.id}
-              className="
-                flex cursor-pointer items-center gap-3 rounded-md px-3 py-2
-                hover:bg-white/5
-              "
-              onClick={() => onSelectCourse?.(course.id)}
-            >
+          {courses.map((course) => {
+            // Courses flagged as inactive are shown as "coming soon" and must
+            // never open the course detail page.
+            const isComingSoon = course.isActive === false;
+
+            return (
               <div
-                className="
+                key={course.id}
+                className={`
+                flex items-center gap-3 rounded-md px-3 py-2
+                ${
+                  isComingSoon
+                    ? 'cursor-default opacity-70'
+                    : 'cursor-pointer hover:bg-white/5'
+                }
+              `}
+                aria-disabled={isComingSoon || undefined}
+                onClick={() => {
+                  if (isComingSoon) return;
+                  onSelectCourse?.(course.id);
+                }}
+              >
+                <div
+                  className="
                   size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
                 "
-              >
-                {course.coverImageKey ? (
-                  <Image
-                    src={getImageUrl(course.coverImageKey)}
-                    alt={course.title}
-                    width={56}
-                    height={56}
-                    className="size-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className="
+                >
+                  {course.coverImageKey ? (
+                    <Image
+                      src={getImageUrl(course.coverImageKey)}
+                      alt={course.title}
+                      width={56}
+                      height={56}
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="
                       flex size-full items-center justify-center text-xs
                       text-gray-400
                     "
+                    >
+                      Sin imagen
+                    </div>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col">
+                  <span
+                    className="
+                    flex flex-wrap items-center gap-2 text-sm font-semibold
+                    text-white
+                  "
                   >
-                    Sin imagen
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-semibold text-white">
-                  {course.title}
-                </span>
-                {(course.typeCourse?.type?.trim() ||
-                  course.modalidad?.name?.trim()) && (
-                  <span className="text-xs text-gray-300">
-                    {[course.typeCourse?.type, course.modalidad?.name]
-                      .filter(Boolean)
-                      .join(' | ')}
+                    {course.title}
+                    {isComingSoon && (
+                      <span
+                        className="
+                        rounded-full border border-yellow-200/70
+                        bg-gradient-to-b from-yellow-300 to-yellow-500 px-2
+                        py-0.5 text-[10px] font-extrabold tracking-wide
+                        text-yellow-950 uppercase
+                      "
+                      >
+                        Muy pronto
+                      </span>
+                    )}
                   </span>
-                )}
+                  {(course.typeCourse?.type?.trim() ||
+                    course.modalidad?.name?.trim()) && (
+                    <span className="text-xs text-gray-300">
+                      {[course.typeCourse?.type, course.modalidad?.name]
+                        .filter(Boolean)
+                        .join(' | ')}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       {hasPrograms && (
