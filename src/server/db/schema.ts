@@ -533,6 +533,47 @@ export const communityPosts = pgTable('community_posts', {
     .$onUpdateFn(() => new Date()),
 });
 
+// Tabla de comentarios de una publicación de la comunidad.
+// Anidamiento ILIMITADO: `parentId` apunta a otro comentario de esta misma
+// tabla (null = comentario de primer nivel, colgado directo de la
+// publicación), al estilo de Facebook. Se distingue de `projectFeedback`,
+// que cuelga de un proyecto y limita la profundidad a 2 re-asociando cada
+// respuesta a su raíz.
+export const communityPostComments = pgTable(
+  'community_post_comments',
+  {
+    id: serial('id').primaryKey(),
+    postId: integer('post_id')
+      .references(() => communityPosts.id, { onDelete: 'cascade' })
+      .notNull(),
+    // null = comentario raíz. El `onDelete: 'cascade'` de la BD es solo la
+    // red de seguridad para cuando se borra la publicación entera: el
+    // borrado normal de un comentario desde la API NO elimina la fila
+    // cuando tiene respuestas, la marca con `deletedAt` para no llevarse por
+    // delante lo que escribieron otras personas.
+    parentId: integer('parent_id').references(
+      (): AnyPgColumn => communityPostComments.id,
+      { onDelete: 'cascade' }
+    ),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    content: text('content').notNull(),
+    // Lápida: con valor, el comentario se muestra como "Comentario
+    // eliminado" y conserva visibles sus respuestas.
+    deletedAt: timestamp('deleted_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at')
+      .defaultNow()
+      .notNull()
+      .$onUpdateFn(() => new Date()),
+  },
+  (table) => [
+    index('community_post_comments_post_idx').on(table.postId),
+    index('community_post_comments_parent_idx').on(table.parentId),
+  ]
+);
+
 // Tabla de objetivos especificos proyectos
 export const specificObjectives = pgTable('specific_objectives', {
   id: serial('id').primaryKey(),
@@ -1379,16 +1420,45 @@ export const postLikesRelations = relations(postLikes, ({ one }) => ({
   }),
 }));
 
-export const communityPostsRelations = relations(communityPosts, ({ one }) => ({
-  user: one(users, {
-    fields: [communityPosts.userId],
-    references: [users.id],
-  }),
-  project: one(projects, {
-    fields: [communityPosts.projectId],
-    references: [projects.id],
-  }),
-}));
+export const communityPostsRelations = relations(
+  communityPosts,
+  ({ one, many }) => ({
+    user: one(users, {
+      fields: [communityPosts.userId],
+      references: [users.id],
+    }),
+    project: one(projects, {
+      fields: [communityPosts.projectId],
+      references: [projects.id],
+    }),
+    comments: many(communityPostComments),
+  })
+);
+
+// El par `relationName` es obligatorio en una auto-relación de Drizzle: sin
+// él, `parent` y `replies` quedan ambiguos y el constructor relacional
+// falla. Mismo idioma que `projectFeedbackRelations`.
+export const communityPostCommentsRelations = relations(
+  communityPostComments,
+  ({ one, many }) => ({
+    post: one(communityPosts, {
+      fields: [communityPostComments.postId],
+      references: [communityPosts.id],
+    }),
+    user: one(users, {
+      fields: [communityPostComments.userId],
+      references: [users.id],
+    }),
+    parent: one(communityPostComments, {
+      fields: [communityPostComments.parentId],
+      references: [communityPostComments.id],
+      relationName: 'communityPostCommentReplies',
+    }),
+    replies: many(communityPostComments, {
+      relationName: 'communityPostCommentReplies',
+    }),
+  })
+);
 
 export const userTimeTracking = pgTable('user_time_tracking', {
   id: serial('id').primaryKey(),
@@ -2488,6 +2558,14 @@ export const guidedProjects = pgTable('guided_projects', {
     .references(() => certificationTypes.id)
     .default(sql`NULL`),
   individualPrice: integer('individual_price'),
+  // Pago unitario: se vende suelto por PayU, sin depender de un plan. Es una
+  // bandera propia y no `courseTypeId -> courseTypes.isPurchasableIndividually`
+  // a propósito: ese campo apunta a la tabla de tipos de CURSO, y los
+  // proyectos guiados que ya tienen precio lo traen en NULL, así que hoy la
+  // intención de venta no se puede leer de forma fiable desde esta tabla.
+  isIndividualPurchase: boolean('is_individual_purchase')
+    .default(false)
+    .notNull(),
   requiresProgram: boolean('requires_program').default(false),
   isActive: boolean('is_active').default(true),
   isTop: boolean('is_top').default(false),
@@ -2670,6 +2748,14 @@ export const guidedEnrollments = pgTable(
     enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
     completed: boolean('completed').default(false),
     isPermanent: boolean('is_permanent').default(false).notNull(),
+    // Rastro de la compra unitaria. `isPermanent` sola es un booleano sin
+    // procedencia: no dice qué se cobró, cuándo, ni con qué referencia de
+    // PayU, así que hoy una compra no se puede conciliar ni reclamar. El
+    // importe se guarda aparte de `guidedProjects.individualPrice` porque ese
+    // precio cambia y el cobrado no.
+    purchaseReference: text('purchase_reference'),
+    purchaseAmount: integer('purchase_amount'),
+    purchasedAt: timestamp('purchased_at'),
   },
   (table) => [
     unique('uniq_guided_enrollment').on(table.userId, table.guidedProjectId),
