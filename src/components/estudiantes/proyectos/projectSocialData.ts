@@ -1,11 +1,12 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, desc, eq, isNull, or } from 'drizzle-orm';
+import { and, count, desc, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import getPublicProjects from '~/server/actions/project/getPublicProjects';
 import { db } from '~/server/db';
 import {
   categories,
+  communityPostComments,
   communityPosts,
   projects,
   projectsTaken,
@@ -301,6 +302,10 @@ export interface CommunityPostsFeedOptions {
   // Restringe el feed a un solo proyecto (además de las reglas de
   // visibilidad, nunca en su lugar).
   projectId?: number;
+  // Restringe el feed a un solo autor (además de las reglas de visibilidad,
+  // nunca en su lugar): pedir el `authorId` de otra persona sigue devolviendo
+  // solo lo que quien mira ya podía ver.
+  authorId?: string;
   limit?: number;
   offset?: number;
 }
@@ -321,14 +326,21 @@ export interface CommunityPostsFeedPage {
  */
 const communityPostVisibility = (
   viewerId?: string | null,
-  canSeeAllProjects = false
+  canSeeAllProjects = false,
+  includeOwnPrivate = false
 ) => {
   if (canSeeAllProjects) return undefined;
   const clauses = [
     eq(projects.isPublic, true),
     isNull(communityPosts.projectId),
   ];
-  if (viewerId) clauses.push(eq(communityPosts.userId, viewerId));
+  // Solo en las vistas ya acotadas a un proyecto o a un autor. En el muro
+  // abierto de `/proyectos` esta cláusula haría que el dueño de un proyecto
+  // privado viera ahí sus propias publicaciones, y lo pedido es que esas se
+  // queden dentro del proyecto hasta que se marque como público.
+  if (includeOwnPrivate && viewerId) {
+    clauses.push(eq(communityPosts.userId, viewerId));
+  }
   return or(...clauses);
 };
 
@@ -342,6 +354,7 @@ export async function getCommunityPostsFeedPage({
   viewerId,
   canSeeAllProjects = false,
   projectId,
+  authorId,
   limit = DEFAULT_COMMUNITY_FEED_LIMIT,
   offset = 0,
 }: CommunityPostsFeedOptions = {}): Promise<CommunityPostsFeedPage> {
@@ -362,16 +375,37 @@ export async function getCommunityPostsFeedPage({
       projectId: projects.id,
       projectName: projects.name,
       projectNeedsCollaborators: projects.needsCollaborators,
+      // Subconsulta escalar correlacionada en vez de un segundo join
+      // agrupado: el select ya arrastra un `leftJoin` a `projects`, la
+      // cláusula de visibilidad y el truco de `limit + 1`, y un `GROUP BY`
+      // obligaría a listar todas esas columnas. Así el contador es aditivo,
+      // sigue siendo UNA sola consulta por página, y Postgres lo resuelve
+      // contra `community_post_comments_post_idx`.
+      commentCount: sql<number>`(
+        select count(*)
+        from ${communityPostComments}
+        where ${communityPostComments.postId} = ${communityPosts.id}
+          and ${communityPostComments.deletedAt} is null
+      )`.mapWith(Number),
     })
     .from(communityPosts)
     .innerJoin(users, eq(communityPosts.userId, users.id))
     .leftJoin(projects, eq(communityPosts.projectId, projects.id))
     .where(
       and(
-        communityPostVisibility(viewerId, canSeeAllProjects),
+        // Una consulta ya acotada a un proyecto o a un autor es la vista
+        // "dentro del proyecto" / "mi perfil": ahí el dueño sí ve lo suyo
+        // aunque el proyecto sea privado. El muro abierto no pasa ninguno de
+        // los dos filtros, así que ahí no entra.
+        communityPostVisibility(
+          viewerId,
+          canSeeAllProjects,
+          projectId !== undefined || authorId !== undefined
+        ),
         projectId === undefined
           ? undefined
-          : eq(communityPosts.projectId, projectId)
+          : eq(communityPosts.projectId, projectId),
+        authorId === undefined ? undefined : eq(communityPosts.userId, authorId)
       )
     )
     .orderBy(desc(communityPosts.createdAt))
@@ -399,9 +433,46 @@ export async function getCommunityPostsFeedPage({
             needsCollaborators: Boolean(row.projectNeedsCollaborators),
           }
         : null,
+    commentCount: row.commentCount,
   }));
 
   return { items, hasMore: rows.length > limit };
+}
+
+/**
+ * ¿Puede quien mira ver esta publicación? Reutiliza literalmente
+ * `communityPostVisibility`, la MISMA regla del feed, para que los endpoints
+ * de comentarios no acaben con una copia que se desincronice: los
+ * comentarios no tienen visibilidad propia, la heredan entera de su
+ * publicación.
+ *
+ * El `leftJoin` con `projects` es obligatorio, no decorativo: el predicado
+ * referencia `projects.isPublic` y sin la unión la consulta no es válida.
+ *
+ * Devuelve `null` cuando la publicación no existe O cuando quien mira no
+ * puede verla: quien llama responde 404 en ambos casos, para no revelar la
+ * existencia de una publicación ajena.
+ */
+export async function canViewCommunityPost(
+  postId: number,
+  viewerId?: string | null,
+  canSeeAllProjects = false
+): Promise<{ id: number; userId: string } | null> {
+  const [post] = await db
+    .select({ id: communityPosts.id, userId: communityPosts.userId })
+    .from(communityPosts)
+    .leftJoin(projects, eq(communityPosts.projectId, projects.id))
+    .where(
+      and(
+        eq(communityPosts.id, postId),
+        // Acotado a UNA publicación concreta: su autor puede comentarla
+        // dentro de su proyecto aunque el proyecto siga siendo privado.
+        communityPostVisibility(viewerId, canSeeAllProjects, true)
+      )
+    )
+    .limit(1);
+
+  return post ?? null;
 }
 
 // Primera (y única) página del feed para `/proyectos`, que no pagina.
@@ -411,6 +482,37 @@ export async function getCommunityPostsFeed(
 ): Promise<CommunityFeedPost[]> {
   const { items } = await getCommunityPostsFeedPage({ viewerId, limit });
   return items;
+}
+
+// Publicaciones de una sola persona, paginadas, para la pestaña "Posts" del
+// perfil. Reutiliza el feed completo con un filtro extra por autor, así que
+// la visibilidad la sigue decidiendo `viewerId`. Como `communityPosts.projectId`
+// apunta a la única tabla `projects` —donde el proyecto de un curso y el
+// proyecto suelto son la misma fila con `courseId` lleno o nulo—, esta consulta
+// cubre los dos tipos y también las publicaciones generales (sin proyecto).
+export async function getCommunityPostsByAuthor(
+  authorId: string,
+  viewerId?: string | null,
+  limit = DEFAULT_COMMUNITY_FEED_LIMIT,
+  offset = 0
+): Promise<CommunityPostsFeedPage> {
+  return getCommunityPostsFeedPage({ viewerId, authorId, limit, offset });
+}
+
+/**
+ * Total de publicaciones de una persona, para el contador del perfil. No
+ * lleva cláusula de visibilidad a propósito: solo se usa donde quien mira ES
+ * el autor, y en ese caso `communityPostVisibility` ya deja pasar todas sus
+ * filas. No reutilizar este contador en un perfil público sin añadirla.
+ */
+export async function countCommunityPostsByAuthor(
+  authorId: string
+): Promise<number> {
+  const [row] = await db
+    .select({ total: count() })
+    .from(communityPosts)
+    .where(eq(communityPosts.userId, authorId));
+  return row?.total ?? 0;
 }
 
 export async function getProjectSocialCollections(

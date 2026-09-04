@@ -1,6 +1,6 @@
 'use server';
 
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { projects } from '~/server/db/schema';
@@ -13,9 +13,13 @@ export interface PublishableProject {
 
 /**
  * Projects a given user may attach a community publication to: the ones they
- * own, private drafts included. Backs the post-composer's "Buscar proyecto..."
+ * own AND have marked public. Backs the post-composer's "Buscar proyecto..."
  * selector, and the create endpoint enforces the same rule, so publishing to
  * somebody else's project is not possible from anywhere.
+ *
+ * A private project is deliberately excluded: a post attached to one is hidden
+ * from the community feed anyway, so offering it here would only produce a
+ * publication nobody — not even its author — can find.
  *
  * Ordered by most recently updated.
  */
@@ -30,7 +34,7 @@ export async function getPublishableProjects(
       updatedAt: projects.updatedAt,
     })
     .from(projects)
-    .where(eq(projects.userId, userId))
+    .where(and(eq(projects.userId, userId), eq(projects.isPublic, true)))
     .orderBy(desc(projects.updatedAt));
 
   const deduped = new Map<number, PublishableProject & { updatedAt: Date }>();
