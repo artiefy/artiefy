@@ -64,6 +64,7 @@ export default function BuscarSuscripcionPage() {
   const [camaraEstado, setCamaraEstado] = useState<
     'apagada' | 'pidiendo' | 'encendida' | 'error'
   >('apagada');
+  const [mensajeCamara, setMensajeCamara] = useState<string | null>(null);
 
   // Reconocimiento facial (modelos en el navegador): dibuja los puntos de IA
   // que siguen el rostro y compara el rostro en vivo contra las fotos de los
@@ -81,18 +82,31 @@ export default function BuscarSuscripcionPage() {
   const descriptoresCache = useRef<Map<string, Float32Array | null>>(new Map());
 
   const abrirCamara = async () => {
+    setMensajeCamara(null);
+
+    // getUserMedia solo existe en contexto seguro (HTTPS o localhost). En el
+    // celular, entrar por IP local (http://192.168.x.x) deja `mediaDevices`
+    // sin definir y el navegador NI pide permiso. Se avisa con claridad.
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
+      setCamaraEstado('error');
+      setMensajeCamara(
+        'La cámara necesita una conexión segura (HTTPS). Entra por https://artiefy.com, no por una IP local.'
+      );
+      return;
+    }
+
     setCamaraEstado('pidiendo');
     try {
       const flujo = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: 640, height: 480 },
+        video: { facingMode: 'user' },
         audio: false,
       });
       flujoAccesoRef.current = flujo;
       // El <video> está montado siempre en el panel, así que el ref ya
-      // existe y podemos engancharle el stream de una vez. Antes el <video>
-      // solo se renderizaba cuando el estado era "encendida", por lo que al
-      // asignar srcObject el ref era null y la imagen quedaba en negro
-      // aunque la cámara sí encendiera.
+      // existe y podemos engancharle el stream de una vez.
       if (videoAccesoRef.current) {
         videoAccesoRef.current.srcObject = flujo;
         await videoAccesoRef.current.play().catch(() => undefined);
@@ -101,6 +115,27 @@ export default function BuscarSuscripcionPage() {
     } catch (err) {
       console.error('[ACCESO] no se pudo abrir la cámara:', err);
       setCamaraEstado('error');
+
+      // Mensaje según el motivo real, para saber qué revisar.
+      const nombre = err instanceof DOMException ? err.name : '';
+      if (nombre === 'NotAllowedError' || nombre === 'SecurityError') {
+        setMensajeCamara(
+          'Permiso de cámara denegado. Habilítalo en el candado del navegador y reintenta.'
+        );
+      } else if (
+        nombre === 'NotFoundError' ||
+        nombre === 'OverconstrainedError'
+      ) {
+        setMensajeCamara('No se encontró ninguna cámara en este dispositivo.');
+      } else if (nombre === 'NotReadableError') {
+        setMensajeCamara(
+          'Otra aplicación está usando la cámara. Ciérrala y reintenta.'
+        );
+      } else {
+        setMensajeCamara(
+          'No se pudo abrir la cámara. Revisa los permisos del navegador.'
+        );
+      }
     }
   };
 
@@ -1136,7 +1171,7 @@ export default function BuscarSuscripcionPage() {
 
             <h1
               className="
-                text-4xl font-bold tracking-tight text-balance text-white
+                text-3xl font-bold tracking-tight text-balance text-white
                 sm:text-5xl
               "
             >
@@ -1152,7 +1187,8 @@ export default function BuscarSuscripcionPage() {
             </h1>
 
             <p className="mt-3 max-w-md text-sm text-white/45">
-              Busca por correo, documento o nombre para registrar el acceso.
+              Activa la cámara para identificar a la persona por su rostro, o
+              busca por correo, documento o nombre.
             </p>
           </div>
 
@@ -1189,9 +1225,9 @@ export default function BuscarSuscripcionPage() {
                     type="button"
                     onClick={() => setSearchType(valor)}
                     className={`
-                      flex-1 rounded-lg px-3 py-2 text-xs font-semibold
+                      flex-1 rounded-lg p-2 text-xs font-semibold
                       transition-all duration-200
-                      sm:text-sm
+                      sm:px-3 sm:text-sm
                       ${
                         searchType === valor
                           ? `
@@ -1258,7 +1294,8 @@ export default function BuscarSuscripcionPage() {
                         {camaraEstado === 'pidiendo'
                           ? 'Solicitando acceso a la cámara…'
                           : camaraEstado === 'error'
-                            ? 'No se pudo abrir la cámara. Revisa los permisos del navegador.'
+                            ? (mensajeCamara ??
+                              'No se pudo abrir la cámara. Revisa los permisos del navegador.')
                             : 'Activa la cámara para verificar'}
                       </span>
                     </div>
