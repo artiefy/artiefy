@@ -20,10 +20,8 @@ import {
   UMBRAL_COINCIDENCIA,
   useFaceApi,
 } from '~/components/acceso/useFaceApi';
-import {
-  type ResultadoFacial,
-  VerificacionFacial,
-} from '~/components/acceso/VerificacionFacial';
+
+import type { ResultadoFacial } from '~/components/acceso/VerificacionFacial';
 
 interface SearchResult {
   found: boolean;
@@ -587,55 +585,9 @@ export default function BuscarSuscripcionPage() {
     }
   };
 
-  /** URL pública de la foto de referencia, o null si no tiene. */
-  const fotoReferencia = (() => {
-    const key = result?.user?.profileImageKey;
-    if (!key) return null;
-    if (key.startsWith('http')) return key;
-    return `https://s3.us-east-2.amazonaws.com/artiefy-upload/${key}`;
-  })();
-
   /**
-   * Veredicto de la verificación facial.
-   *
-   * Todo intento queda registrado, conceda o deniegue: los denegados son
-   * precisamente los que hay que poder auditar después. El registro se hace
-   * en segundo plano y nunca bloquea el acceso de quien sí coincide.
-   */
-  const alVerificarRostro = (resultado: ResultadoFacial) => {
-    setVerificacion(resultado);
-
-    void fetch('/api/acceso/verificacion-facial', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: result?.user?.id ?? null,
-        searchTerm: searchTerm.trim(),
-        granted: resultado.coincide,
-        distance: resultado.distancia,
-        reason: resultado.motivo ?? null,
-      }),
-    }).catch(() => {
-      // El registro es auditoría, no un requisito para abrir la puerta.
-    });
-
-    if (!resultado.coincide) {
-      const detalle =
-        resultado.motivo === 'sin_referencia'
-          ? 'La persona no tiene foto de referencia registrada'
-          : resultado.motivo === 'sin_rostro'
-            ? 'No se detectó un rostro en la cámara'
-            : 'El rostro no coincide con la foto registrada';
-      addToast('Acceso denegado', 'error', 6000, detalle);
-      return;
-    }
-
-    if (result) void registrarAcceso(result);
-  };
-
-  /**
-   * Registra la entrada o salida. Solo se llama cuando la verificación
-   * facial ha dado positivo.
+   * Registra la entrada o salida. Por la cámara se llama tras identificar el
+   * rostro; por búsqueda de datos, con el botón "Registrar acceso".
    */
   const registrarAcceso = async (searchResult: SearchResult) => {
     setLoading(true);
@@ -858,27 +810,34 @@ export default function BuscarSuscripcionPage() {
           md:space-y-5
         "
       >
-        {/* Verificación facial: sin ella no se registra el acceso. La
-            comparación ocurre en este navegador; la cámara no envía la
-            imagen a ningún servidor. */}
-        {!verificacion?.coincide && (
-          <div
-            className="
-              rounded-lg border border-cyan-500/30 bg-slate-900/60 p-4
-            "
-          >
-            <p className="mb-3 text-center text-sm font-semibold text-cyan-300">
-              Verifica el rostro para continuar
-            </p>
-            {/* Solo verifica. Subir la foto de referencia se hace desde
-                otro sitio, no en la puerta. */}
-            <VerificacionFacial
-              fotoReferencia={fotoReferencia}
-              onResultado={alVerificarRostro}
-              ocupado={loading}
-            />
-          </div>
-        )}
+        {/* Búsqueda por datos (correo/documento/nombre): el acceso se registra
+            con este botón, sin verificación facial. Por la cámara el registro
+            es automático tras identificar, así que ahí no aparece. */}
+        {searchType !== 'camera' &&
+          result?.found &&
+          !accesoRegistrado &&
+          !verificacion?.coincide && (
+            <button
+              type="button"
+              onClick={() => {
+                if (result) void registrarAcceso(result);
+              }}
+              disabled={loading}
+              className="
+                w-full rounded-xl bg-[#22C4D3] px-6 py-3 text-base font-bold
+                text-[#04101f] shadow-lg shadow-[#22C4D3]/25 transition-all
+                hover:-translate-y-0.5 hover:bg-[#3ad4e2]
+                focus:ring-2 focus:ring-[#22C4D3]/50 focus:outline-none
+                disabled:cursor-not-allowed disabled:opacity-50
+              "
+            >
+              {loading
+                ? 'Registrando…'
+                : result?.user?.hasOpenEntry
+                  ? 'Registrar salida'
+                  : 'Registrar entrada'}
+            </button>
+          )}
 
         {/* Información del usuario */}
         <div
