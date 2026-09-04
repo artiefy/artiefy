@@ -2143,45 +2143,69 @@ export function GuidedProjectAdminTabs({
                                         key={activity.id}
                                         className="border-b border-[#22C4D3]/10 bg-[#061c37]/70 last:border-b-0"
                                       >
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            setExpandedActivityId(
-                                              isActivityOpen
-                                                ? null
-                                                : activity.id
-                                            )
-                                          }
-                                          className="w-full p-4 text-left transition-colors hover:bg-white/5"
-                                        >
-                                          <span className="mb-1 block text-xs text-white/50">
-                                            Actividad {activityIndex + 1}
-                                          </span>
-                                          <span className="flex items-center justify-between gap-3">
-                                            <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                                              <span className="text-sm font-medium text-white">
-                                                {activity.name}
-                                              </span>
-                                              {activity.weekNumber != null && (
-                                                <span className="flex items-center gap-1 text-xs text-white/50">
-                                                  <CalendarDays className="size-3" />
-                                                  Semana {activity.weekNumber}
+                                        {/* La fila combina el botón que expande
+                                            con un botón "Editar" compacto al lado.
+                                            Van como hermanos —no anidados— porque
+                                            un <button> dentro de otro es HTML
+                                            inválido. */}
+                                        <div className="flex items-center pr-3">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setExpandedActivityId(
+                                                isActivityOpen
+                                                  ? null
+                                                  : activity.id
+                                              )
+                                            }
+                                            className="min-w-0 flex-1 p-4 text-left transition-colors hover:bg-white/5"
+                                          >
+                                            <span className="mb-1 block text-xs text-white/50">
+                                              Actividad {activityIndex + 1}
+                                            </span>
+                                            <span className="flex items-center justify-between gap-3">
+                                              <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                                                <span className="text-sm font-medium text-white">
+                                                  {activity.name}
                                                 </span>
-                                              )}
-                                            </span>
-                                            <span className="flex shrink-0 items-center gap-2">
-                                              {activity.revisada && (
-                                                <CheckCircle2
-                                                  className="size-4 text-emerald-400"
-                                                  aria-label="Revisada"
+                                                {activity.weekNumber !=
+                                                  null && (
+                                                  <span className="flex items-center gap-1 text-xs text-white/50">
+                                                    <CalendarDays className="size-3" />
+                                                    Semana {activity.weekNumber}
+                                                  </span>
+                                                )}
+                                              </span>
+                                              <span className="flex shrink-0 items-center gap-2">
+                                                {activity.revisada && (
+                                                  <CheckCircle2
+                                                    className="size-4 text-emerald-400"
+                                                    aria-label="Revisada"
+                                                  />
+                                                )}
+                                                <ChevronDown
+                                                  className={`size-4 text-white/50 transition-transform ${isActivityOpen ? 'rotate-180' : ''}`}
                                                 />
-                                              )}
-                                              <ChevronDown
-                                                className={`size-4 text-white/50 transition-transform ${isActivityOpen ? 'rotate-180' : ''}`}
-                                              />
+                                              </span>
                                             </span>
-                                          </span>
-                                        </button>
+                                          </button>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setActivityModalObjectiveId(
+                                                objective.id
+                                              );
+                                              setEditingActivityId(activity.id);
+                                              setActivityModalOpen(true);
+                                            }}
+                                            className="flex shrink-0 items-center gap-1.5 rounded-full bg-yellow-400/10 px-3.5 py-1.5 text-xs font-semibold text-yellow-300 ring-1 ring-yellow-400/20 transition-all hover:bg-yellow-400/20 hover:ring-yellow-400/40 active:scale-95"
+                                            aria-label={`Editar ${activity.name}`}
+                                          >
+                                            <Pencil className="size-3.5" />
+                                            Editar
+                                          </button>
+                                        </div>
 
                                         {isActivityOpen && (
                                           <div className="space-y-3 px-4 pb-4">
@@ -2220,27 +2244,13 @@ export function GuidedProjectAdminTabs({
                                               </Link>
 
                                               <button
-                                                onClick={() => {
-                                                  setActivityModalObjectiveId(
-                                                    objective.id
-                                                  );
-                                                  setEditingActivityId(
-                                                    activity.id
-                                                  );
-                                                  setActivityModalOpen(true);
-                                                }}
-                                                className="ml-auto text-xs text-white/50 hover:text-white"
-                                              >
-                                                Editar
-                                              </button>
-                                              <button
                                                 onClick={() =>
                                                   handleDeleteActivity(
                                                     objective.id,
                                                     activity.id
                                                   )
                                                 }
-                                                className="text-xs text-white/50 hover:text-red-400"
+                                                className="ml-auto text-xs text-white/50 hover:text-red-400"
                                               >
                                                 Eliminar
                                               </button>

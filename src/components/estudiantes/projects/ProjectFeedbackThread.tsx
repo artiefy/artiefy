@@ -211,45 +211,91 @@ export default function ProjectFeedbackThread({
       {canStartThread && (
         <div
           className="
-            rounded-xl border border-border/50 bg-card/50 p-4
-            sm:p-5
+            overflow-hidden rounded-2xl border border-border/60
+            bg-gradient-to-br from-card/80 to-card/40 shadow-sm
           "
         >
-          <label
-            htmlFor="project-feedback-new-thread"
-            className="mb-2 block text-sm font-semibold text-foreground"
-          >
-            Iniciar retroalimentación
-          </label>
-          <textarea
-            id="project-feedback-new-thread"
-            value={rootContent}
-            onChange={(event) => setRootContent(event.target.value)}
-            placeholder="Escribe una observación para el equipo del proyecto..."
-            rows={3}
+          <div
             className="
-              min-h-[88px] w-full resize-none rounded-xl bg-secondary/30 p-3
-              text-sm text-foreground
-              placeholder:text-muted-foreground
-              focus:ring-2 focus:ring-primary/50 focus:outline-none
+              flex items-center gap-3 border-b border-border/50 px-4 py-3
+              sm:px-5
             "
-          />
-          <div className="mt-2 flex justify-end">
-            <button
-              type="button"
-              onClick={() => void handleSubmitRoot()}
-              disabled={!rootContent.trim() || isSubmittingRoot}
+          >
+            <div
               className="
-                rounded-lg bg-primary px-4 py-2 text-sm font-semibold
-                text-primary-foreground transition-colors
-                hover:bg-primary/90
-                focus-visible:ring-2 focus-visible:ring-ring
-                focus-visible:ring-offset-2 focus-visible:outline-none
-                disabled:cursor-not-allowed disabled:opacity-50
+                flex size-9 shrink-0 items-center justify-center rounded-xl
+                bg-primary/15 text-primary
               "
             >
-              {isSubmittingRoot ? 'Publicando...' : 'Publicar'}
-            </button>
+              <MessageSquare className="size-4.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                Iniciar retroalimentación
+              </p>
+              <p className="truncate text-xs text-muted-foreground">
+                Comparte una observación con el equipo del proyecto
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 p-4 sm:p-5">
+            <div
+              className="
+                hidden size-9 shrink-0 items-center justify-center rounded-full
+                bg-primary/20 text-xs font-bold text-primary ring-1
+                ring-border/30
+                sm:flex
+              "
+            >
+              {getInitial(user?.fullName ?? user?.firstName ?? 'U')}
+            </div>
+            <div className="min-w-0 flex-1">
+              <label htmlFor="project-feedback-new-thread" className="sr-only">
+                Iniciar retroalimentación
+              </label>
+              <textarea
+                id="project-feedback-new-thread"
+                value={rootContent}
+                onChange={(event) => setRootContent(event.target.value)}
+                placeholder="Escribe una observación para el equipo del proyecto..."
+                rows={3}
+                className="
+                  min-h-[92px] w-full resize-none rounded-xl border
+                  border-border/50 bg-background/40 p-3 text-sm text-foreground
+                  transition-colors
+                  placeholder:text-muted-foreground
+                  focus:border-primary/40 focus:ring-2 focus:ring-primary/30
+                  focus:outline-none
+                "
+              />
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground">
+                  {rootContent.trim().length > 0
+                    ? `${rootContent.trim().length} caracteres`
+                    : 'Se notificará al equipo del proyecto'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void handleSubmitRoot()}
+                  disabled={!rootContent.trim() || isSubmittingRoot}
+                  className="
+                    inline-flex items-center gap-1.5 rounded-lg bg-primary px-4
+                    py-2 text-sm font-semibold text-primary-foreground shadow-sm
+                    transition-all
+                    hover:bg-primary/90
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    active:scale-95
+                    disabled:cursor-not-allowed disabled:opacity-50
+                    disabled:active:scale-100
+                  "
+                >
+                  <Send className="size-3.5" />
+                  {isSubmittingRoot ? 'Publicando...' : 'Publicar'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -261,14 +307,23 @@ export default function ProjectFeedbackThread({
       ) : threads.length === 0 ? (
         <div
           className="
-            rounded-xl border border-border/50 bg-card/50 p-4 text-center
-            sm:p-6
+            flex flex-col items-center gap-3 rounded-2xl border border-dashed
+            border-border/60 bg-card/30 px-4 py-10 text-center
+            sm:px-6
           "
         >
-          <p className="text-muted-foreground">
+          <div
+            className="
+              flex size-12 items-center justify-center rounded-full
+              bg-primary/10 text-primary
+            "
+          >
+            <MessageSquare className="size-6" />
+          </div>
+          <p className="max-w-sm text-sm text-muted-foreground">
             {canStartThread
-              ? 'No hay retroalimentación disponible aún. Inicia el primer hilo para este proyecto.'
-              : 'No hay retroalimentación disponible aún.'}
+              ? 'Aún no hay retroalimentación. Inicia el primer hilo para este proyecto.'
+              : 'Aún no hay retroalimentación disponible.'}
           </p>
         </div>
       ) : (
@@ -280,7 +335,12 @@ export default function ProjectFeedbackThread({
             return (
               <div
                 key={thread.id}
-                className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5"
+                className="
+                  rounded-2xl border border-border/50 bg-card/50 p-4
+                  transition-colors
+                  hover:border-border
+                  sm:p-5
+                "
               >
                 <div className="flex items-start gap-3">
                   <div

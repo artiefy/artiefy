@@ -50,6 +50,12 @@ interface ProjectDetailViewProps {
   onAddedSectionsChange?: (
     sections: Record<string, { name: string; content: string }>
   ) => void;
+  /**
+   * Oculta el aviso de "viendo como visitante". Se usa cuando un
+   * administrador o educador revisa el proyecto de un estudiante desde su
+   * panel: ahí el aviso no aplica y solo estorba.
+   */
+  hideVisitorBanner?: boolean;
 }
 
 export default function ProjectDetailView({
@@ -57,6 +63,7 @@ export default function ProjectDetailView({
   onEditSection,
   addedSections: initialAddedSections = {},
   onAddedSectionsChange,
+  hideVisitorBanner = false,
 }: ProjectDetailViewProps) {
   const { mutate } = useSWRConfig();
   const totalSections = 7;
@@ -1069,7 +1076,7 @@ export default function ProjectDetailView({
   // Proyecto iniciado: al menos un campo está lleno
   return (
     <section className="space-y-6">
-      {isReadOnlyViewer ? (
+      {isReadOnlyViewer && !hideVisitorBanner ? (
         <div
           className="
             flex items-start gap-2 rounded-xl border border-amber-500/30

@@ -28,6 +28,40 @@ const cuerpoSchema = z.object({
 /** Límite generoso para una foto de cara; evita subidas absurdas. */
 const MAX_BYTES = 4 * 1024 * 1024;
 
+/**
+ * GET /api/acceso/foto-referencia?userId=...
+ *
+ * Devuelve la foto biométrica actual de una persona (clave y URL pública) para
+ * mostrarla en el modal de subida antes de reemplazarla.
+ */
+export async function GET(request: NextRequest) {
+  const { userId: operador, sessionClaims } = await auth();
+  const role = String(sessionClaims?.metadata?.role ?? '');
+  if (!operador || (role !== 'super-admin' && role !== 'admin')) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+
+  const persona = request.nextUrl.searchParams.get('userId');
+  if (!persona) {
+    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+  }
+
+  const [fila] = await db
+    .select({ key: users.profileImageKey })
+    .from(users)
+    .where(eq(users.id, persona))
+    .limit(1);
+
+  const key = fila?.key ?? null;
+  const url = key
+    ? key.startsWith('http')
+      ? key
+      : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${key}`
+    : null;
+
+  return NextResponse.json({ key, url });
+}
+
 export async function POST(request: NextRequest) {
   const { userId: operador, sessionClaims } = await auth();
   const role = String(sessionClaims?.metadata?.role ?? '');

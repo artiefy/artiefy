@@ -48,6 +48,7 @@ import { Label } from '~/components/educators/ui/label';
 import { CourseSearchModal } from '~/components/embeddings/CourseSearchModal';
 import { EmbeddingsGenerator } from '~/components/embeddings/EmbeddingsGenerator';
 import { EmbeddingsGeneratorComplete } from '~/components/embeddings/EmbeddingsGeneratorComplete';
+import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailView';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
@@ -65,6 +66,8 @@ import {
 } from '~/components/super-admin/ui/breadcrumb';
 import { esCorreoAutorizado } from '~/lib/permissions/course-deletion';
 import { normalizeSearch } from '~/lib/utils';
+
+import type { Project } from '~/types/project';
 
 import '~/styles/course-detail-system.css';
 
@@ -544,6 +547,39 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
     null
   );
+
+  // Detalle completo del proyecto para mostrar el MISMO ProjectDetailView que
+  // ve el estudiante. La tarjeta del admin solo trae datos básicos, así que se
+  // piden los detalles a /api/projects/[id]?details=true igual que en
+  // ProjectsSection.
+  const [detalleProyecto, setDetalleProyecto] = useState<Project | null>(null);
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+  const [seccionesDetalle, setSeccionesDetalle] = useState<
+    Record<string, { name: string; content: string }>
+  >({});
+
+  const abrirDetalleProyecto = async (project: StudentProject) => {
+    setSelectedProject(project);
+    setDetalleProyecto(null);
+    setSeccionesDetalle({});
+    setCargandoDetalle(true);
+    try {
+      const res = await fetch(`/api/projects/${project.id}?details=true`);
+      if (res.ok) {
+        const data = (await res.json()) as Project;
+        setDetalleProyecto(data);
+      }
+    } catch (error) {
+      console.error('Error al cargar detalle del proyecto:', error);
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
+
+  const cerrarDetalleProyecto = () => {
+    setSelectedProject(null);
+    setDetalleProyecto(null);
+  };
 
   // Función para obtener respuestas de un post
   const fetchPostReplies = useCallback(async () => {
@@ -2945,7 +2981,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             "
           >
             {/* TABS MENU HORIZONTAL */}
-            <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="duration-700 animate-in fade-in slide-in-from-bottom-8">
               {/* Tabs Navigation */}
               <div
                 className="
@@ -3272,7 +3308,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               >
                 {/* Curso Tab - Solo Clase en Vivo */}
                 {activeTab === 'curso' && (
-                  <div className="animate-in fade-in space-y-8 duration-500">
+                  <div className="space-y-8 duration-500 animate-in fade-in">
                     {/* Sobre el educador */}
                     {course.instructorProfileImageKey && (
                       <div
@@ -3414,7 +3450,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 {activeTab === 'lecciones' && (
                   <div
                     className="
-                      animate-in fade-in -mx-1 px-1 duration-500
+                      -mx-1 px-1 duration-500 animate-in fade-in
                       md:-mx-3 md:px-3
                     "
                   >
@@ -3428,7 +3464,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 {activeTab === 'en-vivo' && (
                   <div
                     className="
-                      animate-in fade-in -mx-1 space-y-8 px-1 duration-500
+                      -mx-1 space-y-8 px-1 duration-500 animate-in fade-in
                       md:-mx-3 md:px-3
                     "
                   >
@@ -3573,7 +3609,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 {activeTab === 'estudiantes' && (
                   <div
                     className="
-                      animate-in fade-in -mx-1 px-1 duration-500
+                      -mx-1 px-1 duration-500 animate-in fade-in
                       md:-mx-3 md:px-3
                     "
                   >
@@ -3585,7 +3621,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Foros Tab */}
                 {activeTab === 'foros' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="duration-500 animate-in fade-in">
                     {/* Formulario de creación de foro siempre visible */}
                     <div
                       className="
@@ -5355,7 +5391,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Proyectos Tab */}
                 {activeTab === 'proyectos' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="duration-500 animate-in fade-in">
                     <h2 className="mb-6 text-2xl font-bold text-white">
                       Proyectos de Estudiantes
                     </h2>
@@ -5363,373 +5399,152 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <div className="text-white/60">Cargando proyectos...</div>
                     ) : (
                       <>
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                          {Array.isArray(studentProjects) &&
-                          studentProjects.length > 0 ? (
-                            studentProjects.map((project) => (
-                              <div
-                                key={project.id}
-                                className="
-                                  group rounded-2xl border border-[#22C4D3]/30
-                                  bg-gradient-to-br from-[#061c37]
-                                  via-[#04101f]/30 to-[#04101f]/30 p-6 shadow-xl
-                                  transition-all duration-300
+                        {!selectedProject && (
+                          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {Array.isArray(studentProjects) &&
+                            studentProjects.length > 0 ? (
+                              studentProjects.map((project) => (
+                                <div
+                                  key={project.id}
+                                  onClick={() => abrirDetalleProyecto(project)}
+                                  role="button"
+                                  tabIndex={0}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      void abrirDetalleProyecto(project);
+                                    }
+                                  }}
+                                  className="
+                                  group cursor-pointer rounded-2xl border
+                                  border-[#22C4D3]/30 bg-gradient-to-br
+                                  from-[#061c37] via-[#04101f]/30 to-[#04101f]/30
+                                  p-6 shadow-xl transition-all duration-300
                                   hover:scale-[1.03] hover:border-[#22C4D3]
                                   hover:shadow-2xl
                                 "
-                              >
-                                <div className="mb-4 flex items-center gap-4">
-                                  {project.cover_image_key && (
-                                    <Image
-                                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.cover_image_key}`}
-                                      alt={project.name}
-                                      width={64}
-                                      height={64}
-                                      className="
+                                >
+                                  <div className="mb-4 flex items-center gap-4">
+                                    {project.cover_image_key && (
+                                      <Image
+                                        src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.cover_image_key}`}
+                                        alt={project.name}
+                                        width={64}
+                                        height={64}
+                                        className="
                                         size-16 rounded-xl border
                                         border-[#22C4D3]/30 object-cover shadow
                                       "
-                                      quality={60}
-                                    />
-                                  )}
-                                  <div>
-                                    <h3
-                                      className="
+                                        quality={60}
+                                      />
+                                    )}
+                                    <div>
+                                      <h3
+                                        className="
                                         mb-1 text-xl font-bold text-[#22C4D3]
                                       "
-                                    >
-                                      {project.name}
-                                    </h3>
-                                    <span
-                                      className="
+                                      >
+                                        {project.name}
+                                      </h3>
+                                      <span
+                                        className="
                                         inline-block rounded bg-[#22C4D3]/20 px-2
                                         py-0.5 text-xs font-semibold
                                         text-[#22C4D3]
                                       "
-                                    >
-                                      {project.type_project}
-                                    </span>
+                                      >
+                                        {project.type_project}
+                                      </span>
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="mb-2 flex flex-col gap-1">
-                                  <span className="text-xs text-[#22C4D3]">
-                                    Estudiante:
-                                  </span>
-                                  <span
-                                    className="
+                                  <div className="mb-2 flex flex-col gap-1">
+                                    <span className="text-xs text-[#22C4D3]">
+                                      Estudiante:
+                                    </span>
+                                    <span
+                                      className="
                                       text-xs font-semibold text-white/80
                                     "
-                                  >
-                                    {project.studentName ||
-                                      project.users_name ||
-                                      project.user?.name ||
-                                      project.userId}
-                                  </span>
-                                  {(project.studentEmail ||
-                                    project.users_email ||
-                                    project.user?.email) && (
-                                    <span className="text-xs text-[#22C4D3]">
-                                      {project.studentEmail ||
-                                        project.users_email ||
-                                        project.user?.email}
+                                    >
+                                      {project.studentName ||
+                                        project.users_name ||
+                                        project.user?.name ||
+                                        project.userId}
                                     </span>
-                                  )}
-                                </div>
-                                {/* Abre el proyecto en la vista de
-                                    estudiantes. Estas tarjetas salen de la
-                                    tabla `projects`, cuya pagina publica es
-                                    /estudiantes/proyectos/[id]. */}
-                                <Link
-                                  href={`/estudiantes/proyectos/${project.id}`}
-                                  className="
+                                    {(project.studentEmail ||
+                                      project.users_email ||
+                                      project.user?.email) && (
+                                      <span className="text-xs text-[#22C4D3]">
+                                        {project.studentEmail ||
+                                          project.users_email ||
+                                          project.user?.email}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {/* Al hacer clic en la tarjeta se muestra el
+                                    detalle del proyecto aquí mismo, en el lugar
+                                    de la grilla (ver más abajo). No navega a
+                                    otra página. */}
+                                  <span
+                                    className="
                                     mt-4 block w-full rounded bg-[#22C4D3]/20
                                     px-4 py-2 text-center font-semibold
                                     text-[#22C4D3] transition
-                                    hover:bg-[#22C4D3]/40 hover:text-white
+                                    group-hover:bg-[#22C4D3]/40
+                                    group-hover:text-white
                                   "
-                                >
-                                  Ver más
-                                </Link>
+                                  >
+                                    Ver más
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="col-span-full text-white/60">
+                                {loadingProjects
+                                  ? 'Cargando proyectos...'
+                                  : 'No hay proyectos de estudiantes para este curso o hubo un error al obtenerlos.'}
                               </div>
-                            ))
-                          ) : (
-                            <div className="col-span-full text-white/60">
-                              {loadingProjects
-                                ? 'Cargando proyectos...'
-                                : 'No hay proyectos de estudiantes para este curso o hubo un error al obtenerlos.'}
-                            </div>
-                          )}
-                        </div>
-                        {/* Modal de detalles del proyecto */}
+                            )}
+                          </div>
+                        )}
+                        {/* Detalle del proyecto seleccionado, mostrado en el
+                            mismo lugar de la grilla. Reutiliza EXACTAMENTE el
+                            mismo ProjectDetailView que ve el estudiante, con su
+                            fetch de detalles. No navega ni abre modal flotante. */}
                         {selectedProject && (
-                          <Portal>
-                            <div
+                          <div className="duration-300 animate-in fade-in">
+                            <button
+                              onClick={cerrarDetalleProyecto}
                               className="
-                                fixed inset-0 z-50 flex items-center
-                                justify-center bg-black/60 backdrop-blur-sm
+                                mb-4 inline-flex items-center gap-2 rounded-lg
+                                border border-[#22C4D3]/40 px-3 py-1.5 text-sm
+                                font-semibold text-[#22C4D3] transition
+                                hover:bg-[#22C4D3]/10 hover:text-white
                               "
                             >
-                              <div
-                                className="
-                                  relative w-full max-w-2xl rounded-2xl border
-                                  border-[#22C4D3]/40 bg-[#061c37] p-4 shadow-2xl
-                                  sm:p-8
-                                "
-                                style={{
-                                  maxHeight: '90vh',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                }}
-                              >
-                                <button
-                                  className="
-                                    absolute top-4 right-4 text-[#22C4D3]
-                                    hover:text-white
-                                  "
-                                  onClick={() => setSelectedProject(null)}
-                                >
-                                  ✕
-                                </button>
-                                <h3
-                                  className="
-                                    mb-4 text-center text-2xl font-bold
-                                    break-words text-[#22C4D3]
-                                  "
-                                >
-                                  {selectedProject.name}
-                                </h3>
-                                {/* Imagen y video juntos, una sola vez, lado a lado */}
-                                {(selectedProject.cover_image_key ||
-                                  selectedProject.cover_video_key) && (
-                                  <div
-                                    className="
-                                      mb-6 flex w-full flex-row items-center
-                                      justify-center gap-4
-                                    "
-                                  >
-                                    {selectedProject.cover_image_key && (
-                                      <div
-                                        className="
-                                          flex flex-1 items-center
-                                          justify-center
-                                        "
-                                      >
-                                        <Image
-                                          src={
-                                            selectedProject.cover_image_key.startsWith(
-                                              'http'
-                                            )
-                                              ? selectedProject.cover_image_key
-                                              : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_image_key}`
-                                          }
-                                          alt={selectedProject.name}
-                                          width={400}
-                                          height={240}
-                                          className="
-                                            max-h-60 w-full rounded-xl border
-                                            border-[#22C4D3]/20 object-contain
-                                            shadow
-                                          "
-                                          style={{
-                                            objectFit: 'contain',
-                                            maxWidth: '100%',
-                                          }}
-                                          quality={70}
-                                          unoptimized={selectedProject.cover_image_key.startsWith(
-                                            'http'
-                                          )}
-                                        />
-                                      </div>
-                                    )}
-                                    {selectedProject.cover_video_key && (
-                                      <div
-                                        className="
-                                          flex flex-1 items-center
-                                          justify-center
-                                        "
-                                      >
-                                        <video
-                                          src={
-                                            selectedProject.cover_video_key.startsWith(
-                                              'http'
-                                            )
-                                              ? selectedProject.cover_video_key
-                                              : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_video_key}`
-                                          }
-                                          controls
-                                          className="
-                                            max-h-60 w-full rounded-xl border
-                                            border-[#22C4D3]/20 object-contain
-                                            shadow
-                                          "
-                                          style={{
-                                            objectFit: 'contain',
-                                            maxWidth: '100%',
-                                          }}
-                                        />
-                                      </div>
-                                    )}
-                                  </div>
-                                )}
-                                <div className="mb-2 flex items-center gap-2">
-                                  <span className="font-semibold text-[#22C4D3]">
-                                    Tipo:
-                                  </span>
-                                  <span className="break-words text-[#22C4D3]">
-                                    {selectedProject.type_project}
-                                  </span>
-                                </div>
-                                <div className="mb-2">
-                                  <span className="font-semibold text-[#22C4D3]">
-                                    Estudiante:
-                                  </span>
-                                  <span className="ml-2 break-words text-[#22C4D3]">
-                                    {selectedProject.studentName ||
-                                      selectedProject.users_name ||
-                                      selectedProject.user?.name ||
-                                      selectedProject.userId}
-                                  </span>
-                                  {(selectedProject.studentEmail ||
-                                    selectedProject.users_email ||
-                                    selectedProject.user?.email) && (
-                                    <span className="ml-2 break-words text-[#22C4D3]">
-                                      {selectedProject.studentEmail ||
-                                        selectedProject.users_email ||
-                                        selectedProject.user?.email}
-                                    </span>
-                                  )}
-                                </div>
-                                <div
-                                  className="flex-1 overflow-y-auto pr-1"
-                                  style={{ minHeight: 0 }}
-                                >
-                                  <div className="mb-2">
-                                    <span className="font-semibold text-[#22C4D3]">
-                                      Planteamiento:
-                                    </span>
-                                    <p
-                                      className="
-                                        break-words whitespace-pre-line
-                                        text-white/80
-                                      "
-                                      style={{ wordBreak: 'break-word' }}
-                                    >
-                                      {selectedProject.planteamiento}
-                                    </p>
-                                  </div>
-                                  <div className="mb-2">
-                                    <span className="font-semibold text-[#22C4D3]">
-                                      Justificación:
-                                    </span>
-                                    <p
-                                      className="
-                                        break-words whitespace-pre-line
-                                        text-white/80
-                                      "
-                                      style={{ wordBreak: 'break-word' }}
-                                    >
-                                      {selectedProject.justificacion}
-                                    </p>
-                                  </div>
-                                  <div className="mb-2">
-                                    <span className="font-semibold text-[#22C4D3]">
-                                      Objetivo general:
-                                    </span>
-                                    <p
-                                      className="
-                                        break-words whitespace-pre-line
-                                        text-white/80
-                                      "
-                                      style={{ wordBreak: 'break-word' }}
-                                    >
-                                      {selectedProject.objetivo_general}
-                                    </p>
-                                  </div>
-                                  <div className="mb-2 grid grid-cols-2 gap-2">
-                                    <div>
-                                      <span className="text-xs text-[#22C4D3]">
-                                        Inicio:
-                                      </span>
-                                      <div
-                                        className="
-                                          text-xs break-words text-white/60
-                                        "
-                                      >
-                                        {selectedProject.fecha_inicio}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <span className="text-xs text-[#22C4D3]">
-                                        Fin:
-                                      </span>
-                                      <div
-                                        className="
-                                          text-xs break-words text-white/60
-                                        "
-                                      >
-                                        {selectedProject.fecha_fin}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className="mb-2 flex flex-wrap gap-2">
-                                    <span className="text-xs text-[#22C4D3]">
-                                      Horas/día:
-                                    </span>
-                                    <span
-                                      className="
-                                        text-xs break-words text-white/70
-                                      "
-                                    >
-                                      {selectedProject.horas_por_dia}
-                                    </span>
-                                    <span className="text-xs text-[#22C4D3]">
-                                      Total horas:
-                                    </span>
-                                    <span
-                                      className="
-                                        text-xs break-words text-white/70
-                                      "
-                                    >
-                                      {selectedProject.total_horas}
-                                    </span>
-                                    <span className="text-xs text-[#22C4D3]">
-                                      Días estimados:
-                                    </span>
-                                    <span
-                                      className="
-                                        text-xs break-words text-white/70
-                                      "
-                                    >
-                                      {selectedProject.dias_estimados}
-                                    </span>
-                                  </div>
-                                  {selectedProject.public_comment && (
-                                    <div className="mb-2">
-                                      <span className="text-xs text-[#22C4D3]">
-                                        Comentario público:
-                                      </span>
-                                      <p
-                                        className="
-                                          text-xs break-words
-                                          whitespace-pre-line text-white/60
-                                        "
-                                        style={{ wordBreak: 'break-word' }}
-                                      >
-                                        {selectedProject.public_comment}
-                                      </p>
-                                    </div>
-                                  )}
-                                </div>
+                              ← Volver a proyectos
+                            </button>
+
+                            {cargandoDetalle || !detalleProyecto ? (
+                              <div className="text-white/60">
+                                Cargando proyecto...
                               </div>
-                            </div>
-                          </Portal>
+                            ) : (
+                              <ProjectDetailView
+                                project={detalleProyecto}
+                                addedSections={seccionesDetalle}
+                                onAddedSectionsChange={setSeccionesDetalle}
+                                hideVisitorBanner
+                              />
+                            )}
+                          </div>
                         )}
                       </>
                     )}
                   </div>
                 )}
                 {activeTab === 'recursos' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="duration-500 animate-in fade-in">
                     <h2 className="mb-6 text-2xl font-bold text-white">
                       Recursos del curso
                     </h2>
@@ -5882,7 +5697,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
 
                 {activeTab === 'actividades' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="duration-500 animate-in fade-in">
                     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <h2 className="text-2xl font-bold text-white">
                         Actividades del curso
@@ -6109,7 +5924,7 @@ text-[#94A3B8]
 
                 {/* Embeddings Tab */}
                 {activeTab === 'embeddings' && (
-                  <div className="animate-in fade-in space-y-8 duration-500">
+                  <div className="space-y-8 duration-500 animate-in fade-in">
                     <div>
                       <h2 className="mb-4 text-3xl font-bold text-white">
                         🧠 Sistema de Embeddings Inteligente

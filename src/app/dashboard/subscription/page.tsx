@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import { AlertCircle, CheckCircle, Clock, Search } from 'lucide-react';
+import { AlertCircle, Camera, CheckCircle, Clock, Search } from 'lucide-react';
 
 import { NotificationToast, type ToastType } from './notification-toast';
 
@@ -16,6 +16,10 @@ interface Toast {
   subtitle?: string;
 }
 
+import {
+  UMBRAL_COINCIDENCIA,
+  useFaceApi,
+} from '~/components/acceso/useFaceApi';
 import {
   type ResultadoFacial,
   VerificacionFacial,
@@ -45,9 +49,216 @@ export default function BuscarSuscripcionPage() {
   );
   /** true cuando el acceso ya quedó registrado: dispara el reinicio. */
   const [accesoRegistrado, setAccesoRegistrado] = useState(false);
-  const [searchType, setSearchType] = useState<'email' | 'document' | 'name'>(
-    'email'
-  );
+  const [searchType, setSearchType] = useState<
+    'camera' | 'email' | 'document' | 'name'
+  >('camera');
+
+  // Cámara del control de acceso. Se abre bajo demanda con "Abrir cámara"
+  // para que el navegador pida permisos con un gesto del operador (algunos
+  // bloquean getUserMedia sin interacción). La identificación 1:N contra las
+  // fotos de los usuarios se conecta después, cuando definamos dónde se
+  // guardan esas fotos.
+  const videoAccesoRef = useRef<HTMLVideoElement>(null);
+  const canvasAccesoRef = useRef<HTMLCanvasElement>(null);
+  const flujoAccesoRef = useRef<MediaStream | null>(null);
+  const [camaraEstado, setCamaraEstado] = useState<
+    'apagada' | 'pidiendo' | 'encendida' | 'error'
+  >('apagada');
+
+  // Reconocimiento facial (modelos en el navegador): dibuja los puntos de IA
+  // que siguen el rostro y compara el rostro en vivo contra las fotos de los
+  // usuarios (búsqueda 1:N).
+  const {
+    estado: estadoModelos,
+    detectarLandmarks,
+    descriptorDe,
+    distanciaEntre,
+  } = useFaceApi();
+
+  const [identificando, setIdentificando] = useState(false);
+  // Descriptores de las fotos de los candidatos, calculados una sola vez y
+  // reutilizados entre intentos.
+  const descriptoresCache = useRef<Map<string, Float32Array | null>>(new Map());
+
+  const abrirCamara = async () => {
+    setCamaraEstado('pidiendo');
+    try {
+      const flujo = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: 640, height: 480 },
+        audio: false,
+      });
+      flujoAccesoRef.current = flujo;
+      // El <video> está montado siempre en el panel, así que el ref ya
+      // existe y podemos engancharle el stream de una vez. Antes el <video>
+      // solo se renderizaba cuando el estado era "encendida", por lo que al
+      // asignar srcObject el ref era null y la imagen quedaba en negro
+      // aunque la cámara sí encendiera.
+      if (videoAccesoRef.current) {
+        videoAccesoRef.current.srcObject = flujo;
+        await videoAccesoRef.current.play().catch(() => undefined);
+      }
+      setCamaraEstado('encendida');
+    } catch (err) {
+      console.error('[ACCESO] no se pudo abrir la cámara:', err);
+      setCamaraEstado('error');
+    }
+  };
+
+  const cerrarCamara = () => {
+    flujoAccesoRef.current?.getTracks().forEach((t) => t.stop());
+    flujoAccesoRef.current = null;
+    if (videoAccesoRef.current) videoAccesoRef.current.srcObject = null;
+    setCamaraEstado('apagada');
+  };
+
+  // Puntos de IA que siguen el rostro: mientras la cámara está encendida y los
+  // modelos listos, detecta los 68 landmarks por fotograma y los dibuja sobre
+  // un lienzo superpuesto, con líneas y un recuadro tipo escáner para dar el
+  // aire futurista. Todo ocurre en el navegador; nada se envía a un servidor.
+  useEffect(() => {
+    if (camaraEstado !== 'encendida' || estadoModelos !== 'listo') return;
+
+    const canvasFijo = canvasAccesoRef.current;
+
+    let animId = 0;
+    let activo = true;
+    let procesando = false;
+
+    type Punto = { x: number; y: number };
+    type Caja = { x: number; y: number; width: number; height: number };
+
+    // "objetivo" = última detección real. "suave*" = valores interpolados que
+    // se acercan al objetivo cada fotograma para que el movimiento sea fluido.
+    let objetivoPuntos: Punto[] | null = null;
+    let objetivoCaja: Caja | null = null;
+    let suavePuntos: Punto[] | null = null;
+    let suaveCaja: Caja | null = null;
+    let dims: { ancho: number; alto: number } | null = null;
+    let ultimaDeteccion = 0;
+    let alfa = 0; // aparición/desaparición suave
+
+    // Cuánto se acerca lo suavizado al objetivo por fotograma (0-1).
+    const LERP = 0.35;
+    // Se mantiene visible este tiempo tras la última cara vista, para que un
+    // fotograma sin detección no lo haga parpadear.
+    const GRACIA_MS = 500;
+
+    const lerp = (a: number, b: number) => a + (b - a) * LERP;
+
+    const dibujar = () => {
+      const video = videoAccesoRef.current;
+      const canvas = canvasAccesoRef.current;
+      if (!activo || !video || !canvas) return;
+
+      if (!procesando && video.videoWidth > 0) {
+        procesando = true;
+        void detectarLandmarks(video)
+          .then((res) => {
+            if (res) {
+              objetivoPuntos = res.puntos;
+              objetivoCaja = res.caja;
+              dims = { ancho: res.ancho, alto: res.alto };
+              ultimaDeteccion = performance.now();
+            }
+          })
+          .catch(() => undefined)
+          .finally(() => {
+            procesando = false;
+          });
+      }
+
+      const ctx = canvas.getContext('2d');
+      if (ctx && dims) {
+        if (canvas.width !== dims.ancho || canvas.height !== dims.alto) {
+          canvas.width = dims.ancho;
+          canvas.height = dims.alto;
+        }
+
+        // Interpolar hacia el objetivo.
+        if (objetivoPuntos && objetivoCaja) {
+          if (!suavePuntos || suavePuntos.length !== objetivoPuntos.length) {
+            suavePuntos = objetivoPuntos.map((p) => ({ ...p }));
+            suaveCaja = { ...objetivoCaja };
+          } else {
+            for (let i = 0; i < suavePuntos.length; i++) {
+              suavePuntos[i].x = lerp(suavePuntos[i].x, objetivoPuntos[i].x);
+              suavePuntos[i].y = lerp(suavePuntos[i].y, objetivoPuntos[i].y);
+            }
+            if (suaveCaja) {
+              suaveCaja.x = lerp(suaveCaja.x, objetivoCaja.x);
+              suaveCaja.y = lerp(suaveCaja.y, objetivoCaja.y);
+              suaveCaja.width = lerp(suaveCaja.width, objetivoCaja.width);
+              suaveCaja.height = lerp(suaveCaja.height, objetivoCaja.height);
+            }
+          }
+        }
+
+        const vigente =
+          performance.now() - ultimaDeteccion < GRACIA_MS && !!suavePuntos;
+        // Subir/bajar alfa suavemente.
+        alfa = lerp(alfa, vigente ? 1 : 0);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (alfa > 0.01 && suavePuntos && suaveCaja) {
+          const cian = '#22C4D3';
+          ctx.globalAlpha = alfa;
+          ctx.shadowColor = cian;
+
+          // Recuadro tipo escáner (solo esquinas).
+          const { x, y, width, height } = suaveCaja;
+          const c = Math.min(width, height) * 0.22;
+          ctx.strokeStyle = cian;
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.moveTo(x, y + c);
+          ctx.lineTo(x, y);
+          ctx.lineTo(x + c, y);
+          ctx.moveTo(x + width - c, y);
+          ctx.lineTo(x + width, y);
+          ctx.lineTo(x + width, y + c);
+          ctx.moveTo(x + width, y + height - c);
+          ctx.lineTo(x + width, y + height);
+          ctx.lineTo(x + width - c, y + height);
+          ctx.moveTo(x + c, y + height);
+          ctx.lineTo(x, y + height);
+          ctx.lineTo(x, y + height - c);
+          ctx.stroke();
+
+          // Puntos con brillo.
+          ctx.fillStyle = cian;
+          ctx.shadowBlur = 6;
+          for (const p of suavePuntos) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.globalAlpha = 1;
+          ctx.shadowBlur = 0;
+        }
+      }
+
+      animId = requestAnimationFrame(dibujar);
+    };
+
+    animId = requestAnimationFrame(dibujar);
+
+    return () => {
+      activo = false;
+      cancelAnimationFrame(animId);
+      const ctx = canvasFijo?.getContext('2d');
+      if (canvasFijo && ctx)
+        ctx.clearRect(0, 0, canvasFijo.width, canvasFijo.height);
+    };
+  }, [camaraEstado, estadoModelos, detectarLandmarks]);
+
+  // Apaga la cámara al salir de la página o al cambiar de pestaña.
+  useEffect(() => {
+    if (searchType !== 'camera') cerrarCamara();
+    return () => cerrarCamara();
+  }, [searchType]);
   const [loading, setLoading] = useState(false);
   const [actionType, setActionType] = useState<'entry' | 'exit' | null>(null);
   const [result, setResult] = useState<SearchResult | null>(null);
@@ -101,6 +312,172 @@ export default function BuscarSuscripcionPage() {
 
     return () => clearTimeout(timer);
   }, [accesoRegistrado]);
+
+  /** Calcula el descriptor facial de una foto por URL (con caché por id). */
+  const descriptorDeFoto = async (
+    url: string
+  ): Promise<Float32Array | null> => {
+    // `document.createElement('img')` y no `new Image()`: aquí `Image` es el
+    // componente de next/image, que no es constructor.
+    const img = document.createElement('img');
+    img.crossOrigin = 'anonymous';
+    img.src = url;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error('no se pudo cargar la foto'));
+      });
+      return await descriptorDe(img);
+    } catch {
+      return null;
+    }
+  };
+
+  /**
+   * Identificación 1:N: toma el rostro de la cámara y busca a quién pertenece
+   * entre las personas con foto biométrica. Si encuentra coincidencia, carga
+   * sus datos y marca la verificación como positiva para poder registrar el
+   * acceso. Todo el reconocimiento ocurre en el navegador.
+   */
+  // Convierte la distancia euclídea (0 = idéntico) a un porcentaje de
+  // coincidencia entendible: 100% sería la misma cara.
+  const aPorcentaje = (distancia: number) =>
+    Math.max(0, Math.min(100, Math.round((1 - distancia) * 100)));
+
+  const identificar = async () => {
+    const video = videoAccesoRef.current;
+    if (!video || camaraEstado !== 'encendida') return;
+    if (estadoModelos !== 'listo') {
+      addToast('Cargando modelos…', 'warning', 3000, 'Espera un momento');
+      return;
+    }
+
+    setIdentificando(true);
+    setError(null);
+    try {
+      const enVivo = await descriptorDe(video);
+      if (!enVivo) {
+        addToast(
+          'No se detectó ningún rostro',
+          'error',
+          4000,
+          'Acércate y mira a la cámara'
+        );
+        return;
+      }
+
+      const res = await fetch('/api/acceso/candidatos');
+      const data: unknown = await res.json().catch(() => null);
+      const candidatos =
+        data &&
+        typeof data === 'object' &&
+        'candidatos' in data &&
+        Array.isArray((data as { candidatos: unknown }).candidatos)
+          ? (
+              data as {
+                candidatos: {
+                  id: string;
+                  name: string;
+                  email: string;
+                  fotoUrl: string | null;
+                }[];
+              }
+            ).candidatos
+          : [];
+
+      if (candidatos.length === 0) {
+        addToast(
+          'No hay fotos biométricas registradas',
+          'warning',
+          4000,
+          'Sube fotos desde el administrador de usuarios'
+        );
+        return;
+      }
+
+      let mejorEmail: string | null = null;
+      let mejorDist = Number.POSITIVE_INFINITY;
+
+      for (const c of candidatos) {
+        if (!c.fotoUrl) continue;
+        let desc = descriptoresCache.current.get(c.id);
+        if (desc === undefined) {
+          desc = await descriptorDeFoto(c.fotoUrl);
+          descriptoresCache.current.set(c.id, desc);
+        }
+        if (!desc) continue;
+        const dist = distanciaEntre(enVivo, desc);
+        if (dist < mejorDist) {
+          mejorDist = dist;
+          mejorEmail = c.email;
+        }
+      }
+
+      if (mejorEmail && mejorDist < UMBRAL_COINCIDENCIA) {
+        // Cargar los datos completos (suscripción, etc.) de la persona.
+        const sr = await fetch('/api/super-admin/search-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ searchTerm: mejorEmail, searchType: 'email' }),
+        });
+        const srData: unknown = await sr.json().catch(() => null);
+        if (
+          sr.ok &&
+          srData &&
+          typeof srData === 'object' &&
+          'found' in srData &&
+          (srData as SearchResult).found
+        ) {
+          const identificado = srData as SearchResult;
+          setResult(identificado);
+          setVerificacion({ coincide: true, distancia: mejorDist });
+          addToast(
+            `Identificado: ${identificado.user?.name ?? mejorEmail}`,
+            'success',
+            5000,
+            `Coincidencia ${aPorcentaje(mejorDist)}%`
+          );
+
+          // Auditoría de la verificación (no bloquea el acceso).
+          void fetch('/api/acceso/verificacion-facial', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: identificado.user?.id ?? null,
+              searchTerm: mejorEmail,
+              granted: true,
+              distance: mejorDist,
+              reason: null,
+            }),
+          }).catch(() => undefined);
+
+          // Registrar acceso y activar el ESP32 automáticamente.
+          await registrarAcceso(identificado);
+        } else {
+          addToast(
+            'Rostro reconocido, pero sin datos',
+            'warning',
+            4000,
+            'La persona no aparece en la búsqueda'
+          );
+        }
+      } else {
+        addToast(
+          'No se identificó a la persona',
+          'error',
+          4000,
+          mejorDist < Number.POSITIVE_INFINITY
+            ? `El rostro no coincide (mejor ${aPorcentaje(mejorDist)}%)`
+            : 'No se pudo comparar con ninguna foto'
+        );
+      }
+    } catch (error) {
+      console.error('[ACCESO] error identificando:', error);
+      addToast('Error al identificar', 'error', 4000);
+    } finally {
+      setIdentificando(false);
+    }
+  };
 
   const handleRegister = async () => {
     if (!searchTerm.trim()) {
@@ -302,16 +679,18 @@ export default function BuscarSuscripcionPage() {
           };
         };
 
+        const nombre = searchResult.user?.name ?? 'Usuario';
+
         // Manejo de respuesta ESP32
         if (data.esp32?.ok) {
           setEsp32MessageType('success');
           setEsp32Message(
             type === 'entry'
-              ? '✓ Entrada registrada - Puerta abierta'
-              : '✓ Salida registrada - Puerta abierta'
+              ? `✓ Entrada de ${nombre} — Puerta abierta`
+              : `✓ Salida de ${nombre} — Puerta abierta`
           );
           addToast(
-            data.message,
+            `${type === 'entry' ? 'Entrada' : 'Salida'} de ${nombre}`,
             'success',
             5000,
             'ESP32: Activo • Acceso permitido'
@@ -799,6 +1178,7 @@ export default function BuscarSuscripcionPage() {
               >
                 {(
                   [
+                    ['camera', 'Cámara'],
                     ['email', 'Correo'],
                     ['document', 'Documento'],
                     ['name', 'Nombre'],
@@ -831,52 +1211,167 @@ export default function BuscarSuscripcionPage() {
               </div>
             </div>
 
-            {/* Campo de búsqueda */}
-            <div>
-              <label
-                htmlFor="search"
-                className="mb-2 block text-xs font-medium text-white/50"
-              >
-                {searchType === 'email'
-                  ? 'Correo electrónico'
-                  : searchType === 'document'
-                    ? 'Número de documento'
-                    : 'Nombre del usuario'}
-              </label>
-              <div className="relative">
-                <input
-                  type={searchType === 'email' ? 'email' : 'text'}
-                  id="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder={
-                    searchType === 'email'
-                      ? 'ejemplo@correo.com'
-                      : searchType === 'document'
-                        ? '1234567890'
-                        : 'Juan Pérez'
-                  }
-                  onKeyDown={(e) => {
-                    // Enter busca: es un formulario de un solo campo y obliga
-                    // a bajar el ratón hasta el botón sin motivo.
-                    if (e.key === 'Enter' && !loading) void handleRegister();
-                  }}
+            {/* Panel de cámara: primera opción del control de acceso.
+                La foto capturada NO se envía a ningún servidor; la
+                identificación 1:N se hará en el navegador contra los
+                descriptores precalculados de los usuarios con foto. */}
+            {searchType === 'camera' && (
+              <div>
+                <label className="mb-2 block text-xs font-medium text-white/50">
+                  Foto de verificación
+                </label>
+                <div
                   className="
+                    relative flex aspect-[4/3] w-full items-center
+                    justify-center overflow-hidden rounded-xl border
+                    border-white/10 bg-black/30
+                  "
+                >
+                  {/* El <video> se monta siempre para que su ref exista
+                      cuando enganchamos el stream; se oculta hasta que la
+                      cámara esté encendida. */}
+                  <video
+                    ref={videoAccesoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className={`size-full -scale-x-100 object-cover ${
+                      camaraEstado === 'encendida' ? '' : 'invisible'
+                    }`}
+                  />
+
+                  {/* Lienzo para los puntos de IA que siguen el rostro. */}
+                  <canvas
+                    ref={canvasAccesoRef}
+                    className="pointer-events-none absolute inset-0 size-full -scale-x-100"
+                  />
+
+                  {camaraEstado !== 'encendida' && (
+                    <div
+                      className="
+                        absolute inset-0 flex flex-col items-center
+                        justify-center gap-2 px-4 text-center text-white/40
+                      "
+                    >
+                      <Camera className="size-8" />
+                      <span className="text-sm">
+                        {camaraEstado === 'pidiendo'
+                          ? 'Solicitando acceso a la cámara…'
+                          : camaraEstado === 'error'
+                            ? 'No se pudo abrir la cámara. Revisa los permisos del navegador.'
+                            : 'Activa la cámara para verificar'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={() => void abrirCamara()}
+                    disabled={camaraEstado === 'pidiendo'}
+                    className="
+                      flex w-full items-center justify-center gap-2 rounded-xl
+                      bg-[#22C4D3] px-4 py-2.5 text-sm font-semibold
+                      text-[#04101f] transition-colors
+                      hover:bg-[#3ad4e2]
+                      focus:ring-2 focus:ring-[#22C4D3]/50 focus:outline-none
+                      disabled:cursor-not-allowed disabled:opacity-50
+                    "
+                  >
+                    <Camera className="size-4" />
+                    {camaraEstado === 'encendida'
+                      ? 'Reiniciar cámara'
+                      : 'Abrir cámara'}
+                  </button>
+
+                  {camaraEstado === 'encendida' && (
+                    <button
+                      type="button"
+                      onClick={() => void identificar()}
+                      disabled={identificando || estadoModelos !== 'listo'}
+                      className="
+                        mt-2 flex w-full items-center justify-center gap-2
+                        rounded-xl border border-[#22C4D3]/40 bg-[#22C4D3]/10
+                        px-4 py-2.5 text-sm font-semibold text-[#22C4D3]
+                        transition-colors
+                        hover:bg-[#22C4D3]/20
+                        focus:ring-2 focus:ring-[#22C4D3]/50 focus:outline-none
+                        disabled:cursor-not-allowed disabled:opacity-50
+                      "
+                    >
+                      {identificando ? (
+                        <>
+                          <span className="size-4 animate-spin rounded-full border-2 border-[#22C4D3] border-t-transparent" />
+                          Identificando…
+                        </>
+                      ) : estadoModelos !== 'listo' ? (
+                        'Cargando modelos…'
+                      ) : (
+                        <>
+                          <Search className="size-4" />
+                          Identificar persona
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                <p className="mt-3 text-center text-xs text-white/40">
+                  La identificación automática por rostro se activará en cuanto
+                  registremos las fotos biométricas de los usuarios.
+                </p>
+              </div>
+            )}
+
+            {/* Campo de búsqueda */}
+            {searchType !== 'camera' && (
+              <div>
+                <label
+                  htmlFor="search"
+                  className="mb-2 block text-xs font-medium text-white/50"
+                >
+                  {searchType === 'email'
+                    ? 'Correo electrónico'
+                    : searchType === 'document'
+                      ? 'Número de documento'
+                      : 'Nombre del usuario'}
+                </label>
+                <div className="relative">
+                  <input
+                    type={searchType === 'email' ? 'email' : 'text'}
+                    id="search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder={
+                      searchType === 'email'
+                        ? 'ejemplo@correo.com'
+                        : searchType === 'document'
+                          ? '1234567890'
+                          : 'Juan Pérez'
+                    }
+                    onKeyDown={(e) => {
+                      // Enter busca: es un formulario de un solo campo y obliga
+                      // a bajar el ratón hasta el botón sin motivo.
+                      if (e.key === 'Enter' && !loading) void handleRegister();
+                    }}
+                    className="
                     w-full rounded-xl border border-white/10 bg-black/25 py-3
                     pr-4 pl-11 text-base text-white transition-all
                     placeholder:text-white/30
                     focus:border-[#22C4D3]/60 focus:bg-black/40
                     focus:ring-2 focus:ring-[#22C4D3]/25 focus:outline-none
                   "
-                />
-                <Search
-                  className="
+                  />
+                  <Search
+                    className="
                     absolute top-1/2 left-4 size-4 -translate-y-1/2
                     text-white/40
                   "
-                />
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Error */}
             {error && (
@@ -900,18 +1395,19 @@ export default function BuscarSuscripcionPage() {
             )}
 
             {/* Botón Inteligente - Registrar Acceso */}
-            <div
-              className="
+            {searchType !== 'camera' && (
+              <div
+                className="
                 xs:pt-3
                 flex flex-col gap-3 pt-2
                 sm:flex-row sm:justify-center sm:gap-4 sm:pt-4
               "
-            >
-              <button
-                type="button"
-                onClick={handleRegister}
-                disabled={loading}
-                className="
+              >
+                <button
+                  type="button"
+                  onClick={handleRegister}
+                  disabled={loading}
+                  className="
                   flex-1 rounded-xl bg-[#22C4D3] px-6 py-3 text-base
                   font-bold text-[#04101f] shadow-lg shadow-[#22C4D3]/25
                   transition-all duration-200
@@ -922,52 +1418,53 @@ export default function BuscarSuscripcionPage() {
                   disabled:hover:translate-y-0
                   sm:flex-none sm:px-10
                 "
-              >
-                {loading ? (
-                  <span
-                    className="
+                >
+                  {loading ? (
+                    <span
+                      className="
                       xs:gap-2
                       flex items-center justify-center gap-2
                       sm:gap-2
                     "
-                  >
-                    <svg
-                      className="
+                    >
+                      <svg
+                        className="
                         xs:h-4 xs:w-4
                         size-4 animate-spin
                         sm:size-5
                       "
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    {actionType === 'entry'
-                      ? 'Registrando entrada...'
-                      : actionType === 'exit'
-                        ? 'Registrando salida...'
-                        : 'Buscando...'}
-                  </span>
-                ) : (
-                  // Este botón ya solo busca: el registro ocurre después de
-                  // que la verificación facial dé positivo.
-                  '🔎 Buscar persona'
-                )}
-              </button>
-            </div>
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      {actionType === 'entry'
+                        ? 'Registrando entrada...'
+                        : actionType === 'exit'
+                          ? 'Registrando salida...'
+                          : 'Buscando...'}
+                    </span>
+                  ) : (
+                    // Este botón ya solo busca: el registro ocurre después de
+                    // que la verificación facial dé positivo.
+                    '🔎 Buscar persona'
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Resultados */}

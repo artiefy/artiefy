@@ -89,6 +89,42 @@ export function useFaceApi() {
     []
   );
 
+  /**
+   * Detecta el rostro y devuelve sus 68 puntos de referencia (landmarks) más
+   * el recuadro, en las coordenadas intrínsecas del vídeo. Sirve para dibujar
+   * el efecto de "puntos de IA" que siguen la cara. Devuelve null si no hay
+   * ninguna cara. Es más ligero que `descriptorDe` porque no calcula el
+   * descriptor de 128 números.
+   */
+  const detectarLandmarks = useCallback(
+    async (
+      video: HTMLVideoElement
+    ): Promise<{
+      puntos: { x: number; y: number }[];
+      caja: { x: number; y: number; width: number; height: number };
+      ancho: number;
+      alto: number;
+    } | null> => {
+      const api = apiRef.current;
+      if (!api) return null;
+
+      const deteccion = await api
+        .detectSingleFace(video, new api.TinyFaceDetectorOptions())
+        .withFaceLandmarks();
+
+      if (!deteccion) return null;
+
+      const { box } = deteccion.detection;
+      return {
+        puntos: deteccion.landmarks.positions.map((p) => ({ x: p.x, y: p.y })),
+        caja: { x: box.x, y: box.y, width: box.width, height: box.height },
+        ancho: video.videoWidth,
+        alto: video.videoHeight,
+      };
+    },
+    []
+  );
+
   /** Distancia entre dos rostros. Cuanto menor, más se parecen. */
   const distanciaEntre = useCallback(
     (a: Float32Array, b: Float32Array): number =>
@@ -96,5 +132,5 @@ export function useFaceApi() {
     []
   );
 
-  return { estado, descriptorDe, distanciaEntre };
+  return { estado, descriptorDe, detectarLandmarks, distanciaEntre };
 }

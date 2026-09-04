@@ -8,6 +8,7 @@ import {
   Check,
   Edit,
   Eye,
+  ImageUp,
   Loader2,
   Paperclip,
   Send,
@@ -23,6 +24,7 @@ import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
 import SunEditorCDN from '~/components/SunEditorCDN';
 import { AssignStudentsModal } from '~/components/super-admin/AssignStudentsModal';
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
+import { FotoBiometricaModal } from '~/components/super-admin/FotoBiometricaModal';
 import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
 import BulkUploadUsers from './components/BulkUploadUsers';
@@ -658,6 +660,10 @@ export default function AdminDashboard() {
     );
   });
   const [sendingEmails, setSendingEmails] = useState(false);
+
+  // Modal de foto biométrica de UNA persona seleccionada. La foto se guarda
+  // como foto de referencia del control de acceso (users.profileImageKey).
+  const [showFotoModal, setShowFotoModal] = useState(false);
 
   const fetchPrograms = useCallback(async () => {
     try {
@@ -1996,6 +2002,43 @@ export default function AdminDashboard() {
               />
             )}
           </button>
+
+          {/* Subir foto biométrica: habilitado solo con UNA persona
+              seleccionada. Abre un modal con sus datos y su foto actual, y
+              permite subir/cambiarla. Se guarda en users.profileImageKey vía
+              /api/acceso/foto-referencia y es la fuente del control de acceso
+              facial. */}
+          <button
+            onClick={() => setShowFotoModal(true)}
+            disabled={selectedUsers.length !== 1}
+            title={
+              selectedUsers.length !== 1
+                ? 'Selecciona una sola persona'
+                : 'Ver y subir la foto para el reconocimiento facial'
+            }
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length !== 1
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                    border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]
+                    hover:bg-[#22C4D3]/20
+                  `
+              }
+            `}
+          >
+            <span className="relative z-10 font-medium">Subir foto</span>
+            <ImageUp
+              className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+            />
+          </button>
           <button
             onClick={() => setShowAssignModal(true)}
             className="
@@ -3101,6 +3144,26 @@ export default function AdminDashboard() {
         isOpen={showAssignModal}
         users={users}
         onClose={() => setShowAssignModal(false)}
+      />
+
+      <FotoBiometricaModal
+        abierto={showFotoModal}
+        onCerrar={() => setShowFotoModal(false)}
+        persona={(() => {
+          const u = users.find((x) => x.id === selectedUsers[0]);
+          if (!u) return null;
+          const nombre =
+            `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() ||
+            u.username ||
+            u.email;
+          return {
+            id: u.id,
+            nombre,
+            email: u.email,
+            rol: u.role,
+            telefono: u.phone,
+          };
+        })()}
       />
 
       {/* Contenedor de botones arriba de la tabla */}
