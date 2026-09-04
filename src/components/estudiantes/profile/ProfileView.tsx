@@ -33,8 +33,12 @@ import {
 import { updateMyCover } from '~/server/actions/estudiantes/profile/profileActions';
 
 import { EditProfileModal } from './EditProfileModal';
+import { ProfilePostsTab } from './ProfilePostsTab';
 
-import type { ProjectSocialItem } from '~/components/estudiantes/proyectos/types';
+import type {
+  CommunityFeedPost,
+  ProjectSocialItem,
+} from '~/components/estudiantes/proyectos/types';
 import type { MyProfile } from '~/server/actions/estudiantes/profile/profileActions';
 
 const TABS = [
@@ -87,11 +91,20 @@ export function ProfileView({
   courses,
   programs,
   projects = [],
+  posts = [],
+  postsHasMore = false,
+  postsCount = 0,
 }: {
   profile: MyProfile;
   courses: Course[];
   programs: Program[];
   projects?: ProjectSocialItem[];
+  // Primera página de las publicaciones del dueño del perfil, ya resuelta en
+  // el servidor. `postsCount` es el total, que no coincide con `posts.length`
+  // en cuanto hay más de una página.
+  posts?: CommunityFeedPost[];
+  postsHasMore?: boolean;
+  postsCount?: number;
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>('cursos');
@@ -173,7 +186,7 @@ export function ProfileView({
 
   const stats = [
     { label: 'Proyectos', value: visibleProjects.length },
-    { label: 'Posts', value: 0 },
+    { label: 'Posts', value: postsCount },
     { label: 'Seguidores', value: 0 },
     { label: 'Siguiendo', value: 0 },
   ];
@@ -479,6 +492,15 @@ export function ProfileView({
                   />
                 ))}
               </div>
+            ) : activeTab === 'posts' ? (
+              // La pestaña trae su propio estado vacío porque además monta el
+              // modal de edición que necesitan las tarjetas.
+              <ProfilePostsTab
+                posts={posts}
+                hasMore={postsHasMore}
+                authorId={profile.id}
+                emptyMessage={EMPTY_MESSAGES.posts}
+              />
             ) : (
               <div
                 className="
