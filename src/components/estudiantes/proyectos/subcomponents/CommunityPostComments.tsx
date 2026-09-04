@@ -310,7 +310,7 @@ function CommentNode({
                   type="button"
                   onClick={() => onToggleReply(comment.id)}
                   aria-expanded={isReplyOpen}
-                  aria-controls={replyRegionId}
+                  aria-controls={isReplyOpen ? replyRegionId : undefined}
                   className="
                     inline-flex items-center gap-1 text-[11px] font-semibold
                     text-muted-foreground transition-colors
@@ -425,7 +425,7 @@ function CommentNode({
                 type="button"
                 onClick={() => setAreRepliesOpen((current) => !current)}
                 aria-expanded={areRepliesOpen}
-                aria-controls={repliesRegionId}
+                aria-controls={areRepliesOpen ? repliesRegionId : undefined}
                 className="
                   mt-2 text-[11px] font-semibold text-primary
                   transition-colors

@@ -462,11 +462,14 @@ export function CommunityPostCard({
           >
             <Heart className="size-5" />
           </button>
+          {/* `aria-controls` solo se emite con el hilo abierto: la región se
+              monta de forma condicional, así que apuntar a un id inexistente
+              dejaría la referencia colgando para el lector de pantalla. */}
           <button
             type="button"
             onClick={() => setIsCommentsOpen((current) => !current)}
             aria-expanded={isCommentsOpen}
-            aria-controls={commentsRegionId}
+            aria-controls={isCommentsOpen ? commentsRegionId : undefined}
             title={isCommentsOpen ? 'Ocultar comentarios' : 'Ver comentarios'}
             className="
               action-btn inline-flex items-center gap-1.5 rounded-xl px-3 py-2

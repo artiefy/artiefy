@@ -277,21 +277,17 @@ export async function POST(
         .where(eq(communityPostComments.id, parentId))
         .limit(1);
 
-      if (!parent) {
-        return respond(
-          { error: 'El comentario al que respondes no existe' },
-          400
-        );
-      }
       // Guardia contra el injerto entre publicaciones: sin ella se podría
       // colgar un comentario de un hilo que quien llama no puede leer, o
       // arrastrar un subárbol legible bajo un padre invisible.
-      if (parent.postId !== postId) {
+      //
+      // "No existe" y "existe pero es de otra publicación" responden lo MISMO
+      // a propósito: distinguirlos convertía este endpoint en un oráculo para
+      // enumerar ids de comentarios, incluidos los de publicaciones que quien
+      // pregunta no puede ver.
+      if (!parent || parent.postId !== postId) {
         return respond(
-          {
-            error:
-              'El comentario al que respondes pertenece a otra publicación',
-          },
+          { error: 'El comentario al que respondes no existe' },
           400
         );
       }
