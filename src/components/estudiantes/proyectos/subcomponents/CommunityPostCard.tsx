@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { CommunityPostComments } from './CommunityPostComments';
+
 import type { CommunityFeedPost, CommunityPostKind } from '../types';
 
 // Same "hace X" formatting `ProjectFeedbackThread.tsx` uses, duplicated
@@ -96,6 +98,13 @@ export function CommunityPostCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
   const [isContentOverflowing, setIsContentOverflowing] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  // `post.commentCount` llega con la página del feed y se queda atrás en
+  // cuanto alguien comenta sin recargarla, así que mientras el hilo está
+  // abierto manda el total que reporta el propio hilo.
+  const [liveCommentCount, setLiveCommentCount] = useState<number | null>(null);
+  const commentCount = liveCommentCount ?? post.commentCount;
+  const commentsRegionId = `post-${post.id}-comments`;
   const menuRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLParagraphElement>(null);
 
@@ -431,11 +440,10 @@ export function CommunityPostCard({
         </div>
       ) : null}
 
-      {/* No post-level like/comment/save/share tables exist yet (only
-          project-level ones, which would corrupt project counts if reused
-          here), so every control below is disabled rather than wired to
-          fake data or a project endpoint — see apply-progress for the
-          rationale. */}
+      {/* Comments are wired to `community_post_comments` (their own table —
+          reusing the project-level one would corrupt project counts). No
+          post-level like/save/share tables exist yet, so those three stay
+          disabled rather than wired to fake data or a project endpoint. */}
       <div
         className="
           relative flex items-center justify-between border-t
@@ -456,14 +464,18 @@ export function CommunityPostCard({
           </button>
           <button
             type="button"
-            disabled
-            title="Los comentarios en publicaciones llegarán pronto"
+            onClick={() => setIsCommentsOpen((current) => !current)}
+            aria-expanded={isCommentsOpen}
+            aria-controls={commentsRegionId}
+            title={isCommentsOpen ? 'Ocultar comentarios' : 'Ver comentarios'}
             className="
               action-btn inline-flex items-center gap-1.5 rounded-xl px-3 py-2
-              text-sm font-medium text-muted-foreground/50
+              text-sm font-medium text-muted-foreground transition-colors
+              hover:text-primary
             "
           >
             <MessageCircle className="size-5" />
+            {commentCount > 0 ? commentCount : null}
           </button>
           <button
             type="button"
@@ -486,6 +498,20 @@ export function CommunityPostCard({
           <Share2 className="size-5" />
         </button>
       </div>
+
+      {/* Montaje condicional, no `hidden` por CSS: un hilo que nadie abrió no
+          debe disparar su petición. Vive aquí, dentro de la tarjeta, para que
+          las tres superficies que la renderizan (perfil, feed social y la
+          pestaña "Posts" de un proyecto) tengan comentarios sin repetir el
+          montaje ni poder divergir entre ellas. */}
+      {isCommentsOpen ? (
+        <div id={commentsRegionId} className="relative">
+          <CommunityPostComments
+            postId={post.id}
+            onCountChange={setLiveCommentCount}
+          />
+        </div>
+      ) : null}
     </article>
   );
 }
