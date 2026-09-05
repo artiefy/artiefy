@@ -27,6 +27,24 @@ interface ScheduledMeetingsListProps {
 
 const TIMEZONE = 'America/Bogota';
 
+/**
+ * Reescribe los enlaces de reunión al dominio NUEVO de Teams
+ * (`teams.cloud.microsoft`).
+ *
+ * Microsoft está migrando Teams web a `teams.cloud.microsoft`, y la sesión de
+ * ese dominio NO se comparte con el clásico `teams.microsoft.com`. Como los
+ * enlaces que devuelve Graph usan el dominio clásico, al abrirlos en una
+ * pestaña nueva Teams no encuentra la sesión y pide iniciar sesión (aunque el
+ * staff ya esté dentro en el dominio nuevo). Apuntando al dominio nuevo, el
+ * enlace cae donde vive la sesión y entra directo. Se comprobó a mano que
+ * funciona. Si el enlace no es de Teams, se deja igual.
+ */
+const linkTeamsNuevo = (url: string): string =>
+  url.replace(
+    /^https:\/\/teams\.microsoft\.com\//i,
+    'https://teams.cloud.microsoft/'
+  );
+
 const hasTimezoneInfo = (isoLike: string) =>
   /Z$|[+-]\d{2}:\d{2}$/.test(isoLike);
 
@@ -587,7 +605,7 @@ export const ScheduledMeetingsList = ({
                                     >
                                       {meeting.joinUrl && (
                                         <a
-                                          href={meeting.joinUrl}
+                                          href={linkTeamsNuevo(meeting.joinUrl)}
                                           target="_blank"
                                           rel="noopener noreferrer"
                                           className="group/clase inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#22C4D3] to-[#1c9fd6] px-4 py-2 text-sm font-semibold text-[#04101f] shadow-lg shadow-[#22C4D3]/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-[#22C4D3]/40"
