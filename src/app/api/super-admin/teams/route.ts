@@ -284,6 +284,18 @@ async function createTeamsEventForDate(params: {
       allowRecording: true,
       allowTranscription: true,
       recordAutomatically: true, // 👈 ESTA LÍNEA ES LA CLAVE
+      // Clase abierta tipo universidad: cualquiera entra directo, sin sala de
+      // espera. `scope: 'everyone'` incluye a invitados anónimos (entran
+      // escribiendo su nombre, sin iniciar sesión). Requiere además que el
+      // tenant permita "usuarios anónimos" en el Centro de administración de
+      // Teams; si está desactivado allí, Teams seguirá pidiendo login.
+      lobbyBypassSettings: {
+        scope: 'everyone',
+        isDialInBypassEnabled: true,
+      },
+      // Los asistentes entran como asistentes; solo organizador/co-organizador
+      // presentan y graban.
+      allowedPresenters: 'organization',
       participants: {
         attendees: [
           {
