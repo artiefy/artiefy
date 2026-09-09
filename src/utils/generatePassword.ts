@@ -7,11 +7,11 @@ import { randomInt } from 'node:crypto';
  * dictan por teléfono), así que se priorizó que sean fáciles de leer sin
  * sacrificar seguridad:
  *
- *  - Formato "PalabraPalabraPalabra######": tres palabras en español sin
- *    tildes ni eñes, cada una con la inicial en mayúscula, y seis dígitos al
- *    final. Ej: `HalconAuroraCedro094612`, `VolcanIrisDuna730285`.
+ *  - Formato "PalabraPalabra####": dos palabras en español sin tildes ni
+ *    eñes, cada una con la inicial en mayúscula, y cuatro dígitos al final.
+ *    Ej: `HalconAurora4612`, `VolcanIris7302`.
  *  - Sin símbolos (`!@#$…`) ni caracteres que se confunden al copiar.
- *  - La seguridad viene del tamaño del espacio de búsqueda (~39 bits), no de
+ *  - La seguridad viene del tamaño del espacio de búsqueda (~26 bits), no de
  *    la longitud visible ni de meter símbolos raros.
  *  - Cumple las políticas de Clerk: siempre trae mayúscula, minúscula y dígito.
  *
@@ -123,30 +123,34 @@ function elegir<T>(lista: readonly T[]): T {
 }
 
 /**
- * Devuelve una contraseña del tipo `PalabraPalabraPalabra######`.
+ * Devuelve una contraseña del tipo `PalabraPalabra####`.
  *
- * Se garantiza que las tres palabras sean distintas para no repetir
- * (`SolSolLuna`).
+ * Se garantiza que las dos palabras sean distintas para no repetir (`SolSol`).
  *
- * Sobre el tamaño del espacio de búsqueda: el formato anterior era
- * `PalabraPalabra##`, es decir 83 x 82 x 90 = 612.540 combinaciones, unos 19
- * bits. Eso se agota en segundos con un diccionario, y estas claves llegan por
- * correo a una dirección que quien compró ya conoce. La longitud visible no
- * aportaba nada: con un alfabeto de 83 palabras conocidas, `HalconAurora96`
- * tiene 14 caracteres y la fuerza de tres. Una tercera palabra y seis dígitos
- * llevan el espacio a 83 x 82 x 81 x 10^6 ≈ 5,5 x 10^11, unos 39 bits, sin
- * volverla impronunciable por teléfono.
+ * Sobre el tamaño del espacio de búsqueda: 83 x 82 x 10^4 = 68.060.000
+ * combinaciones, unos 26 bits. Es un punto medio deliberado. El formato
+ * original `PalabraPalabra##` daba 83 x 82 x 90 = 612.540 (19 bits), que se
+ * agota en segundos con un diccionario; el de tres palabras y seis dígitos
+ * daba 39 bits pero producía claves de 23 caracteres que la gente no llegaba
+ * a teclear ni a dictar por teléfono sin equivocarse. Dieciséis caracteres
+ * legibles conservan casi todo el margen práctico.
+ *
+ * ADVERTENCIA: `publicMetadata.mustChangePassword` se escribe al crear la
+ * cuenta pero hoy no lo lee nadie, así que nada obliga a rotar esta clave y en
+ * la práctica puede quedar como la contraseña definitiva. Mientras siga así,
+ * estos 26 bits son la única protección real. Si se refuerza el flujo de
+ * cambio obligatorio, este número puede bajar sin riesgo.
  */
 export function generarPasswordSegura(): string {
   const elegidas: string[] = [];
-  while (elegidas.length < 3) {
+  while (elegidas.length < 2) {
     const palabra = elegir(PALABRAS);
     if (!elegidas.includes(palabra)) elegidas.push(palabra);
   }
 
-  // Seis dígitos con ceros a la izquierda: `000042` es tan válido como
-  // `918273` y mantiene el largo constante.
-  const numero = randomInt(0, 1_000_000).toString().padStart(6, '0');
+  // Cuatro dígitos con ceros a la izquierda: `0042` es tan válido como `9182`
+  // y mantiene el largo constante.
+  const numero = randomInt(0, 10_000).toString().padStart(4, '0');
 
   return `${elegidas.join('')}${numero}`;
 }
