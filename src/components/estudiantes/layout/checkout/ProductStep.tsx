@@ -174,7 +174,7 @@ export function ProductStep({
         type="button"
         disabled={!canContinue}
         onClick={onContinue}
-        className="h-11 w-full gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+        className="h-11 w-full gap-2 rounded-full bg-primary text-sm font-semibold text-background transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
       >
         Continuar
         <ChevronRight className="size-4 opacity-70" />

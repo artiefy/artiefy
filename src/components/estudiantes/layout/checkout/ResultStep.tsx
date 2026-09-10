@@ -137,7 +137,7 @@ function PasswordPanel({
             type="button"
             disabled={newPassword.trim().length < 8 || saving}
             onClick={handleSave}
-            className="h-9 w-full rounded-full bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+            className="h-9 w-full rounded-full bg-primary text-xs font-semibold text-background hover:bg-primary/90"
           >
             {saving ? (
               <>
@@ -250,7 +250,7 @@ export function ResultStep({
         <Button
           type="button"
           onClick={onFinish}
-          className="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+          className="h-11 flex-1 rounded-full bg-primary text-sm font-semibold text-background transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
         >
           {isApproved ? 'Empezar ahora' : 'Cerrar'}
         </Button>

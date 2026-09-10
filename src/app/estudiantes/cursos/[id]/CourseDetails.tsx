@@ -175,6 +175,13 @@ export default function CourseDetails({
   >(null);
   const [authIntent, setAuthIntent] = useState<'login' | 'enroll'>('login');
   const [_pendingOpenPayment, setPendingOpenPayment] = useState(false);
+  /**
+   * Whether the cover video has been started. The play badge is an overlay
+   * stretched across the whole player, so it has to unmount once playback
+   * begins: while it is up it swallows every click meant for the native
+   * controls, which is why the video could not be paused or expanded.
+   */
+  const [coverVideoStarted, setCoverVideoStarted] = useState(false);
   const [oauthSignUpStrategy, setOauthSignUpStrategy] =
     useState<OAuthStrategy | null>(null);
   const [seenSections, setSeenSections] = useState<Record<NavKey, boolean>>({
@@ -1601,6 +1608,8 @@ export default function CourseDetails({
                                 src={coverVideoUrl}
                                 poster={coverImageUrl}
                                 playsInline
+                                controls={coverVideoStarted}
+                                onPlay={() => setCoverVideoStarted(true)}
                               />
                             )
                           ) : (
@@ -1629,54 +1638,59 @@ export default function CourseDetails({
                               }}
                             />
                           )}
-                          {coverVideoUrl && !isImageUrl(coverVideoUrl) && (
-                            <div
-                              className="
+                          {coverVideoUrl &&
+                            !isImageUrl(coverVideoUrl) &&
+                            !coverVideoStarted && (
+                              <div
+                                className="
                                 absolute inset-0 z-30 flex cursor-pointer
                                 items-center justify-center
                               "
-                              role="button"
-                              aria-label="Reproducir video"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                const parent = e.currentTarget.parentElement;
-                                const video = parent?.querySelector(
-                                  'video'
-                                ) as HTMLVideoElement | null;
-                                if (video) {
-                                  video.controls = true;
-                                  video.focus();
-                                  void video.play().catch(() => undefined);
-                                }
-                              }}
-                            >
-                              <div
-                                className="
+                                role="button"
+                                aria-label="Reproducir video"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const parent = e.currentTarget.parentElement;
+                                  const video = parent?.querySelector(
+                                    'video'
+                                  ) as HTMLVideoElement | null;
+                                  // `controls` is driven by state now; `onPlay`
+                                  // clears this overlay so the native controls
+                                  // become reachable.
+                                  setCoverVideoStarted(true);
+                                  if (video) {
+                                    video.focus();
+                                    void video.play().catch(() => undefined);
+                                  }
+                                }}
+                              >
+                                <div
+                                  className="
                                   flex size-16 items-center justify-center
                                   rounded-full bg-primary/90
                                   transition-transform
                                   group-hover:scale-110
                                 "
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="
                                     lucide lucide-play ml-1 size-7 text-black
                                   "
-                                >
-                                  <polygon points="6 3 20 12 6 21 6 3"></polygon>
-                                </svg>
+                                  >
+                                    <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                                  </svg>
+                                </div>
                               </div>
-                            </div>
-                          )}
+                            )}
                         </div>
                       </AspectRatio>
                     </div>
@@ -3025,6 +3039,8 @@ export default function CourseDetails({
                                     src={coverVideoUrl}
                                     poster={coverImageUrl}
                                     playsInline
+                                    controls={coverVideoStarted}
+                                    onPlay={() => setCoverVideoStarted(true)}
                                   />
                                 )
                               ) : (
@@ -3061,7 +3077,8 @@ export default function CourseDetails({
                                 coverVideoUrl &&
                                 !isImageUrl(
                                   course.coverVideoCourseKey as string
-                                ) && (
+                                ) &&
+                                !coverVideoStarted && (
                                   <div
                                     className="
                                       absolute inset-0 z-30 flex cursor-pointer
@@ -3076,8 +3093,11 @@ export default function CourseDetails({
                                       const video = parent?.querySelector(
                                         'video'
                                       ) as HTMLVideoElement | null;
+                                      // `controls` is driven by state now;
+                                      // `onPlay` clears this overlay so the
+                                      // native controls become reachable.
+                                      setCoverVideoStarted(true);
                                       if (video) {
-                                        video.controls = true;
                                         video.focus();
                                         void video
                                           .play()

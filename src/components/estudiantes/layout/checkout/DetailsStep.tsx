@@ -23,7 +23,11 @@ import { CHECKOUT_COUNTRIES, findCountryByDialCode } from './countries';
 
 import type { CheckoutBuyer, CheckoutPaymentMethod } from '~/types/checkout';
 
-const FIELD_CLASS = 'h-10 rounded-lg border-border/50 bg-muted/30 pl-8 text-xs';
+// The placeholder sits at half the muted tone on purpose: at full strength it
+// lands within six points of lightness of a real typed value, so buyers read
+// the example text as something they already filled in.
+const FIELD_CLASS =
+  'h-10 rounded-lg border-border/50 bg-muted/30 pl-8 text-xs placeholder:text-muted-foreground/50';
 const LABEL_CLASS =
   'flex items-center gap-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase';
 
@@ -349,11 +353,11 @@ export function DetailsStep({
       </div>
 
       <div className="space-y-0.5">
-        <label className="flex cursor-pointer items-start gap-2">
+        <label className="flex cursor-pointer items-center gap-2">
           <Checkbox
             checked={termsAccepted}
             onCheckedChange={(checked) => onChangeTerms(checked === true)}
-            className="mt-0.5 size-3.5 rounded border-border/50 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
+            className="rounded-[4px] bg-muted/30 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-background [&_svg]:size-3"
           />
           <span className="text-[10px] leading-tight text-muted-foreground">
             Acepto los{' '}
@@ -396,7 +400,7 @@ export function DetailsStep({
           type="button"
           disabled={!isValid || loading}
           onClick={onSubmit}
-          className="h-11 flex-1 gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+          className="h-11 flex-1 gap-2 rounded-full bg-primary text-sm font-semibold text-background transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
         >
           {loading ? (
             <>

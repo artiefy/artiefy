@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useSignIn, useUser } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
+import { toast } from 'sonner';
 
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import { Dialog, DialogContent } from '~/components/estudiantes/ui/dialog';
@@ -325,6 +326,15 @@ export default function CheckoutModal({
         normalizedEmail,
         payload.temporaryPassword
       );
+
+      // The account is created silently in the middle of the purchase, so say
+      // so here: otherwise the credentials email arrives with no explanation
+      // and reads like a phishing attempt.
+      toast.success('Creamos tu cuenta en Artiefy', {
+        description: `Enviamos tu contraseña a ${normalizedEmail}. Puedes cambiarla al terminar la compra.`,
+        duration: 8000,
+      });
+
       await continueToPayment();
     } catch (prepareError) {
       const message = isClerkAPIResponseError(prepareError)

@@ -13,6 +13,13 @@ import {
 
 import { Button } from '~/components/estudiantes/ui/button';
 import { Input } from '~/components/estudiantes/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/estudiantes/ui/select';
 import { cn } from '~/lib/utils';
 import {
   detectCardNetwork,
@@ -28,7 +35,10 @@ import { formatCop } from './format';
 
 import type { CheckoutCardInput } from '~/types/checkout';
 
-const FIELD_CLASS = 'h-10 rounded-lg border-border/50 bg-muted/30 text-xs';
+// Matches DetailsStep: a full-strength placeholder reads as an already-filled
+// value, which is worse here where the example is a card number.
+const FIELD_CLASS =
+  'h-10 rounded-lg border-border/50 bg-muted/30 text-xs placeholder:text-muted-foreground/50';
 const LABEL_CLASS =
   'text-[10px] font-medium tracking-wide text-muted-foreground uppercase';
 
@@ -189,19 +199,45 @@ export function CardStep({
 
           <div className="space-y-1">
             <label className={LABEL_CLASS}>Cuotas</label>
-            <select
-              value={card.installments}
-              onChange={(event) =>
-                onChangeCard({ installments: Number(event.target.value) })
+            {/* A native <select> renders its open list through the operating
+                system, which ignores the modal's palette and drops a light
+                grey panel over the dark checkout. Radix draws the list itself,
+                so it stays themed on every browser. */}
+            <Select
+              value={String(card.installments)}
+              onValueChange={(value) =>
+                onChangeCard({ installments: Number(value) })
               }
-              className="h-10 w-full rounded-lg border border-border/50 bg-muted/30 px-3 text-xs text-foreground outline-none focus-visible:border-ring"
             >
-              {INSTALLMENT_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option === 1 ? '1 cuota' : `${option} cuotas`}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                // `py-0` and the pinned min/max height are deliberate: the
+                // shared trigger ships `h-9 py-2` while the Input beside it
+                // resolves to `h-10 py-1`, so the two controls only line up if
+                // this one stops carrying its own vertical padding.
+                className={cn(
+                  FIELD_CLASS,
+                  'h-10 max-h-10 min-h-10 w-full justify-between px-3 py-0 [&>span]:text-xs'
+                )}
+                aria-label="Cuotas"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              {/* The dialog overlay sits at z-[100010] and its content at
+                  z-[100011]; the shared SelectContent only reaches z-50, so
+                  without this the list opens *underneath* the modal and the
+                  field looks like it never responds to a click. */}
+              <SelectContent className="z-[100012] border-border/50 bg-card">
+                {INSTALLMENT_OPTIONS.map((option) => (
+                  <SelectItem
+                    key={option}
+                    value={String(option)}
+                    className="text-xs focus:bg-primary/15 focus:text-foreground"
+                  >
+                    {option === 1 ? '1 cuota' : `${option} cuotas`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>
@@ -232,7 +268,7 @@ export function CardStep({
           type="button"
           disabled={!isValid || loading}
           onClick={onSubmit}
-          className="h-11 flex-1 gap-2 rounded-full bg-primary text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
+          className="h-11 flex-1 gap-2 rounded-full bg-primary text-sm font-semibold text-background transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20"
         >
           {loading ? (
             <>
