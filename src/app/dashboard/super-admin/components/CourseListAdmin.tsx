@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -49,6 +53,30 @@ export default function CourseListAdmin({
 }: CourseListAdminProps) {
   console.log('Courses received in CourseListAdmin:', courses);
 
+  // Nombre de cada modalidad (el curso solo trae `modalidadesid`). Se pide una
+  // vez y se reutiliza para todas las tarjetas.
+  const [modalidades, setModalidades] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    let activo = true;
+    void fetch('/api/modalidades')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: unknown) => {
+        if (!activo || !Array.isArray(data)) return;
+        const mapa: Record<number, string> = {};
+        for (const m of data as { id: number; name: string }[]) {
+          if (typeof m?.id === 'number' && typeof m?.name === 'string') {
+            mapa[m.id] = m.name;
+          }
+        }
+        setModalidades(mapa);
+      })
+      .catch(() => undefined);
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   return (
     <div
       className="
@@ -61,7 +89,7 @@ export default function CourseListAdmin({
         return (
           <div key={course.id} className="group relative">
             <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <Card className="zoom-in relative flex h-full flex-col justify-between gap-0 overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37] p-0 py-0 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+            <Card className="relative flex h-full flex-col justify-between gap-0 overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37] p-0 py-0 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
               <CardHeader className="p-0">
                 <AspectRatio ratio={16 / 9}>
                   <div className="relative size-full bg-[#04101f]">
@@ -104,6 +132,17 @@ export default function CourseListAdmin({
                     {course.title}
                   </div>
                 </CardTitle>
+                {modalidades[course.modalidadesid] && (
+                  <span
+                    className="
+                      w-fit rounded-full border border-violet-400/30
+                      bg-violet-400/10 px-2.5 py-0.5 text-xs font-medium
+                      text-violet-300
+                    "
+                  >
+                    {modalidades[course.modalidadesid]}
+                  </span>
+                )}
                 <p className="line-clamp-2 text-sm text-[#94A3B8]">
                   {course.description ?? 'Sin descripción'}
                 </p>

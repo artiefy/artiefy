@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -34,6 +38,30 @@ interface CourseListTeacherProps {
 }
 
 export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
+  // Nombre de cada modalidad (el curso solo trae `modalidadesid`). Se pide una
+  // vez y se reutiliza para todas las tarjetas.
+  const [modalidades, setModalidades] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    let activo = true;
+    void fetch('/api/modalidades')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: unknown) => {
+        if (!activo || !Array.isArray(data)) return;
+        const mapa: Record<number, string> = {};
+        for (const m of data as { id: number; name: string }[]) {
+          if (typeof m?.id === 'number' && typeof m?.name === 'string') {
+            mapa[m.id] = m.name;
+          }
+        }
+        setModalidades(mapa);
+      })
+      .catch(() => undefined);
+    return () => {
+      activo = false;
+    };
+  }, []);
+
   // Retorno la vista del componente que muestra la lista de cursos para los educadores en el dashboard
   return (
     <div
@@ -55,9 +83,9 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
           />
           <Card
             className="
-              zoom-in relative flex h-full flex-col justify-between
-              overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
-              transition-transform duration-300 ease-in-out
+              relative flex h-full flex-col justify-between overflow-hidden
+              border-0 bg-gray-800 px-2 pt-2 text-white transition-transform
+              duration-300 ease-in-out zoom-in
               hover:scale-[1.02]
             "
           >
@@ -89,6 +117,17 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
                   {course.title}
                 </div>
               </CardTitle>
+              {modalidades[Number(course.modalidadesid)] && (
+                <span
+                  className="
+                    w-fit rounded-full border border-violet-400/30
+                    bg-violet-400/10 px-2.5 py-0.5 text-xs font-medium
+                    text-violet-300
+                  "
+                >
+                  {modalidades[Number(course.modalidadesid)]}
+                </span>
+              )}
               <div className="flex items-center">
                 {' '}
                 <Badge
@@ -114,9 +153,6 @@ export default function CourseListTeacher({ courses }: CourseListTeacherProps) {
                 <p className="text-sm font-bold text-gray-300 italic">
                   Educador:{' '}
                   <span className="font-bold italic">{course.instructor}</span>
-                </p>
-                <p className="text-sm font-bold text-red-500">
-                  {course.modalidadesid}
                 </p>
               </div>
               <div className="flex w-full items-center justify-between">
