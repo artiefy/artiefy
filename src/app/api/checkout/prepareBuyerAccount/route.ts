@@ -4,6 +4,7 @@ import { clerkClient } from '@clerk/nextjs/server';
 
 import { EmailTemplateNewAccount } from '~/components/estudiantes/layout/EmailTemplateNewAccount';
 import { sendTicketEmail } from '~/lib/emails/ticketEmails';
+import { grantSignupTrial } from '~/server/actions/estudiantes/subscriptions/grantSignupTrial';
 import { generarPasswordSegura } from '~/utils/generatePassword';
 
 type RequestBody = {
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
       .replace(/[^a-z0-9_]/g, '')
       .slice(0, 16);
 
-    await clerk.users.createUser({
+    const createdUser = await clerk.users.createUser({
       firstName,
       lastName,
       username:
@@ -83,11 +84,29 @@ export async function POST(req: Request) {
       emailAddress: [normalizedEmail],
       publicMetadata: {
         role: 'estudiante',
-        mustChangePassword: true,
+        // Deliberately the locked-out default. `grantSignupTrial` below turns
+        // this into an active Premium trial and adds planType,
+        // subscriptionEndDate and isTrial. If that call fails, the buyer is
+        // left without access rather than with access nobody granted.
         subscriptionStatus: 'inactive',
-        createdFrom: 'payu_pre_payment_account_creation',
       },
     });
+
+    // Same safety net as the default-role route: the Clerk `user.created`
+    // webhook is the primary path for the signup trial, but it may not be
+    // configured and a delivery can fail. This buyer needs the metadata now,
+    // before the payment resolves. `grantSignupTrial` is idempotent, so the
+    // webhook firing as well changes nothing.
+    try {
+      await grantSignupTrial({
+        clerkUserId: createdUser.id,
+        email: normalizedEmail,
+        name: `${firstName} ${lastName}`.trim(),
+      });
+    } catch (trialError) {
+      // Never block the purchase because the trial failed.
+      console.error('❌ Failed to grant signup trial:', trialError);
+    }
 
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||

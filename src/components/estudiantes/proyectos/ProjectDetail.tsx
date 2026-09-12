@@ -322,11 +322,6 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
 
             <div className="flex flex-wrap gap-2">
               <span className="chip">{item.category.name}</span>
-              {item.tags.map((tag) => (
-                <span key={tag} className="chip text-foreground">
-                  {tag}
-                </span>
-              ))}
               {item.needsCollaborators ? (
                 <span
                   className="

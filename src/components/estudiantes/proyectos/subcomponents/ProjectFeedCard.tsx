@@ -772,23 +772,7 @@ export function ProjectFeedCard({
         ) : null}
 
         <div className="mb-4 flex flex-wrap gap-2">
-          <span
-            className="
-              rounded-full border border-blue-500/30 bg-blue-500/15 px-2.5 py-1
-              text-[11px] font-semibold text-blue-300
-            "
-          >
-            {item.stage}
-          </span>
           <span className="chip text-[11px]">{item.category.name}</span>
-          {item.tags.slice(0, 2).map((tag) => (
-            <span
-              key={`${item.id}-${tag}`}
-              className="chip text-[11px] text-foreground"
-            >
-              {tag}
-            </span>
-          ))}
           {item.needsCollaborators ? (
             <span
               className="

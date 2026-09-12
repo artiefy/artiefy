@@ -303,7 +303,7 @@ export default function MiniSignUpModal({
   const { signUp } = useSignUp();
   const { signIn } = useSignIn();
   const { signOut } = useClerk();
-  const { isSignedIn } = useAuth({
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
   const [firstName, setFirstName] = useState('');
@@ -364,12 +364,16 @@ export default function MiniSignUpModal({
     if (!isOpen) return;
     if (signUpStatus !== 'missing_requirements') return;
 
+    // Clearing the fields here is what dropped a half-finished OAuth sign-up
+    // back onto the manual form: `finalize()` resets the SignUp resource, and
+    // the empty resource that replaces it still reports `missing_requirements`
+    // for a moment. Only ever seed fields, never wipe them.
+    if (!signUpMissingKey) return;
+
     // Only the fields are seeded here. Setting an error too would overwrite the
     // real reason a submit failed — "ese usuario ya existe" turning back into
     // the generic "completa los campos faltantes" is exactly that bug.
-    setOauthMissingFields(
-      signUpMissingKey ? signUpMissingKey.split(',') : null
-    );
+    setOauthMissingFields(signUpMissingKey.split(','));
   }, [isOpen, signUpStatus, signUpMissingKey]);
 
   // A sign-up that is already complete only needs converting into a session.
@@ -395,11 +399,21 @@ export default function MiniSignUpModal({
         onSignUpSuccess();
         onClose();
 
-        if (redirectUrl !== '/' && redirectUrl !== '') {
-          const targetUrl = redirectUrl.startsWith('http')
+        // On the /sign-up route there is nothing left to render once the
+        // session exists, so an empty target still has to lead somewhere —
+        // otherwise the learner is parked on a sign-up form they already
+        // completed.
+        const target =
+          redirectUrl && redirectUrl !== '/'
             ? redirectUrl
-            : `${window.location.origin}${redirectUrl}`;
-          window.location.href = targetUrl;
+            : isPageVariant
+              ? '/estudiantes'
+              : '';
+
+        if (target) {
+          window.location.href = target.startsWith('http')
+            ? target
+            : `${window.location.origin}${target}`;
         }
       })();
     }
@@ -409,6 +423,7 @@ export default function MiniSignUpModal({
     onSignUpSuccess,
     onClose,
     isOpen,
+    isPageVariant,
     redirectUrl,
   ]);
 
@@ -1157,6 +1172,22 @@ export default function MiniSignUpModal({
     (field) => !COLLECTABLE_FIELDS.has(field)
   );
 
+  /**
+   * No sign-up form may render before Clerk has answered, or once a session
+   * exists. Rendering it early is how the OAuth continue step (/sign-up/continue)
+   * flashed the manual form, and rendering it after `finalize()` is how an
+   * already-registered learner was asked to fill in name and last name again.
+   */
+  const isAuthReady = isAuthLoaded;
+  const hasActiveSession = isAuthReady && isSignedIn === true;
+  const hidesSignUpForms = !isAuthReady || hasActiveSession;
+  const sessionRedirectTarget =
+    redirectUrl && redirectUrl !== '/'
+      ? redirectUrl
+      : isPageVariant
+        ? '/estudiantes'
+        : '/';
+
   return (
     <div
       className={
@@ -1179,19 +1210,19 @@ export default function MiniSignUpModal({
               sm:max-w-md
             `
             : `
-              data-[state=open]:animate-in
-              data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-              data-[state=open]:fade-in-0
-              data-[state=closed]:zoom-out-95
+              fixed
+              top-[50%] left-[50%]
+              z-50
+              grid
+              w-full
+              max-w-lg
+              translate-[-50%]
+              gap-4
+              overflow-hidden
+              rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl
+              duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]
+              data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]
               data-[state=open]:zoom-in-95
-              data-[state=closed]:slide-out-to-left-1/2
-              data-[state=closed]:slide-out-to-top-[48%]
-              data-[state=open]:slide-in-from-left-1/2
-              data-[state=open]:slide-in-from-top-[48%]
-              fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg
-              translate-[-50%] gap-4 overflow-hidden rounded-[32px] border
-              border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl
-              duration-200
               sm:max-w-md
             `
         }
@@ -1392,7 +1423,28 @@ export default function MiniSignUpModal({
           </ul>
         )}
 
-        {pendingVerification ? (
+        {!isAuthReady ? (
+          <div className="flex flex-col items-center gap-3 py-6">
+            <Icons.spinner className="size-6 text-primary" />
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          </div>
+        ) : hasActiveSession ? (
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
+            <Icons.spinner className="size-6 text-primary" />
+            <p className="text-sm text-muted-foreground">
+              Tu cuenta ya está lista. Te estamos redirigiendo…
+            </p>
+            <a
+              href={sessionRedirectTarget}
+              className="
+                text-sm text-primary
+                hover:underline
+              "
+            >
+              Continuar ahora
+            </a>
+          </div>
+        ) : pendingVerification ? (
           <form onSubmit={onPressVerify} className="space-y-4">
             <div>
               <p className="mb-2 text-sm text-muted-foreground">
@@ -1677,26 +1729,29 @@ export default function MiniSignUpModal({
           </form>
         )}
 
-        {isPageVariant && !pendingVerification && !isOAuthCompletionFlow && (
-          <>
-            <div className="relative my-2">
-              <div className="h-px w-full shrink-0 bg-border/50" />
-              <span
-                className="
+        {isPageVariant &&
+          !hidesSignUpForms &&
+          !pendingVerification &&
+          !isOAuthCompletionFlow && (
+            <>
+              <div className="relative my-2">
+                <div className="h-px w-full shrink-0 bg-border/50" />
+                <span
+                  className="
                   absolute top-1/2 left-1/2 -translate-1/2 bg-background px-3
                   text-xs text-muted-foreground
                 "
-              >
-                o continúa con
-              </span>
-            </div>
-            <div className="flex justify-center gap-4">
-              {OAUTH_PROVIDERS.map(({ strategy, label, Icon }) => (
-                <button
-                  key={strategy}
-                  type="button"
-                  onClick={() => void signUpWith(strategy)}
-                  className="
+                >
+                  o continúa con
+                </span>
+              </div>
+              <div className="flex justify-center gap-4">
+                {OAUTH_PROVIDERS.map(({ strategy, label, Icon }) => (
+                  <button
+                    key={strategy}
+                    type="button"
+                    onClick={() => void signUpWith(strategy)}
+                    className="
                     inline-flex size-12 items-center justify-center rounded-full
                     border border-border/50 bg-background transition-all
                     hover:border-primary/50 hover:bg-muted/50
@@ -1705,21 +1760,21 @@ export default function MiniSignUpModal({
                     disabled:pointer-events-none disabled:opacity-50
                     [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0
                   "
-                  disabled={isSubmitting || Boolean(loadingProvider)}
-                  aria-label={`Continuar con ${label}`}
-                >
-                  {loadingProvider === strategy ? (
-                    <Icons.spinner className="size-5" />
-                  ) : (
-                    <Icon className="size-5" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
+                    disabled={isSubmitting || Boolean(loadingProvider)}
+                    aria-label={`Continuar con ${label}`}
+                  >
+                    {loadingProvider === strategy ? (
+                      <Icons.spinner className="size-5" />
+                    ) : (
+                      <Icon className="size-5" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
-        {onSwitchToLogin && (
+        {onSwitchToLogin && !hidesSignUpForms && (
           <div className="text-center">
             <button
               type="button"
