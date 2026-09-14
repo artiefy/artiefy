@@ -7,8 +7,8 @@ See [customization.md](../customization.md) for theming, CSS variables, and addi
 - Semantic colors
 - Built-in variants first
 - className for layout only
-- No space-x-_ / space-y-_
-- Prefer size-_ over w-_ h-\* when equal
+- No space-x-* / space-y-*
+- Prefer size-* over w-* h-* when equal
 - Prefer truncate shorthand
 - No manual dark: color overrides
 - Use cn() for conditional classes
@@ -106,7 +106,7 @@ To customize a component's appearance, prefer these approaches in order:
 
 ---
 
-## No space-x-_ / space-y-_
+## No space-x-* / space-y-*
 
 Use `gap-*` instead. `space-y-4` → `flex flex-col gap-4`. `space-x-2` → `flex gap-2`.
 
@@ -120,7 +120,7 @@ Use `gap-*` instead. `space-y-4` → `flex flex-col gap-4`. `space-x-2` → `fle
 
 ---
 
-## Prefer size-_ over w-_ h-\* when equal
+## Prefer size-* over w-* h-* when equal
 
 `size-10` not `w-10 h-10`. Applies to icons, avatars, skeletons, etc.
 

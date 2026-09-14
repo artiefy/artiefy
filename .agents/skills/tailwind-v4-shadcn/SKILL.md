@@ -340,7 +340,6 @@ See `reference/dark-mode.md` for ModeToggle component code.
 5. **Use `@apply` directive (deprecated in v4)**
 
 6. **Use `dark:` variants for semantic colors**
-
    ```tsx
    /* WRONG */
    <div className="bg-primary dark:bg-primary-dark" />
