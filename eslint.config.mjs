@@ -177,6 +177,10 @@ export default defineConfig([
     [
       '**/node_modules/**',
       '.agents/**',
+      // Vendored agent tooling: skill templates are standalone snippets that
+      // live outside tsconfig.eslint.json, so type-aware linting cannot parse
+      // them. They are not application code and must never gate the build.
+      '.claude/**',
       '.github/**',
       'Docs/**',
       '.next/**',
