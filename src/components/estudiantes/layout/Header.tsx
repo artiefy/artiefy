@@ -267,6 +267,17 @@ export function Header({
     };
   }, [searchQuery]);
 
+  // Picking a result navigates away, so the dropdown (and the mobile search
+  // panel) must close instead of staying open on top of the new page.
+  const closeSearchPreview = () => {
+    setSearchQuery('');
+    setPreviewCourses([]);
+    setPreviewPrograms([]);
+    setShowPreview(false);
+    setPreviewLoading(false);
+    setShowMobileSearch(false);
+  };
+
   const handleSearch = (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!searchQuery.trim() || searchInProgress) return;
@@ -591,9 +602,11 @@ export function Header({
                             courses={previewCourses}
                             programs={previewPrograms}
                             onSelectCourse={(courseId: number) => {
+                              closeSearchPreview();
                               router.push(`/estudiantes/cursos/${courseId}`);
                             }}
                             onSelectProgram={(programId: string | number) => {
+                              closeSearchPreview();
                               router.push(
                                 `/estudiantes/programas/${programId}`
                               );
@@ -1157,9 +1170,11 @@ export function Header({
                         courses={previewCourses}
                         programs={previewPrograms}
                         onSelectCourse={(courseId: number) => {
+                          closeSearchPreview();
                           router.push(`/estudiantes/cursos/${courseId}`);
                         }}
                         onSelectProgram={(programId: string | number) => {
+                          closeSearchPreview();
                           router.push(`/estudiantes/programas/${programId}`);
                         }}
                       />

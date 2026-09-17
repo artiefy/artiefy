@@ -514,6 +514,16 @@ export default function StudentDetails({
     });
   }, [activeFilter, courses]);
 
+  // Picking a result navigates away, so the dropdown must close instead of
+  // staying open on top of the new page.
+  const closeSearchPreview = useCallback(() => {
+    setSearchQuery('');
+    setPreviewCourses([]);
+    setPreviewPrograms([]);
+    setShowPreview(false);
+    setPreviewLoading(false);
+  }, []);
+
   const handleSearch = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
@@ -732,9 +742,11 @@ export default function StudentDetails({
                           courses={previewCourses}
                           programs={previewPrograms}
                           onSelectCourse={(courseId: number) => {
+                            closeSearchPreview();
                             router.push(`/estudiantes/cursos/${courseId}`);
                           }}
                           onSelectProgram={(programId: string | number) => {
+                            closeSearchPreview();
                             router.push(`/estudiantes/programas/${programId}`);
                           }}
                         />
