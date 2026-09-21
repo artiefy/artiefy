@@ -362,6 +362,10 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Formulario',
       items: [
         {
+          title: 'Documentos de inscripción',
+          link: '/dashboard/super-admin/form-inscription/documentos',
+        },
+        {
           title: 'Fechas inscritas',
           link: '/dashboard/super-admin/form-inscription/dates',
         },
