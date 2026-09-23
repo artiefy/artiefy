@@ -510,17 +510,6 @@ export function NotificationHeader({
           }
           onClick={handleClick}
         >
-          <span
-            className="
-              absolute top-1/2 left-full hidden translate-x-2 -translate-y-1/2
-              rounded bg-white px-2 py-1 text-[10px] whitespace-nowrap text-black
-              opacity-0 transition-opacity
-              group-hover:opacity-100
-              md:block
-            "
-          >
-            Notificaciones
-          </span>
           {unreadCount > 0 ? (
             <>
               <BellRing

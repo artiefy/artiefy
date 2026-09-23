@@ -64,9 +64,13 @@ export function Header({
   >(null);
   const [oauthSignUpStrategy, setOauthSignUpStrategy] =
     useState<OAuthStrategy | null>(null);
-  // Snapshot of "now" for the subscription-expiry check below, captured
-  // once instead of calling Date.now() during render.
-  const [now] = useState(() => Date.now());
+  // "Now" for the subscription-expiry check below. Read after hydration, never
+  // during render: with Cache Components, Date.now() while prerendering a
+  // Client Component aborts the build.
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
@@ -136,7 +140,9 @@ export function Header({
     planType?.toLowerCase() === 'premium' &&
     subscriptionStatus === 'active' &&
     (subscriptionEndTime === null ||
-      (!Number.isNaN(subscriptionEndTime) && subscriptionEndTime > now));
+      (!Number.isNaN(subscriptionEndTime) &&
+        now !== null &&
+        subscriptionEndTime > now));
 
   const renderProfileLink = () => (
     <Link
