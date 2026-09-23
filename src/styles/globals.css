@@ -1354,6 +1354,11 @@ body[data-animate-server-sections='true'] #courses-list-section {
   animation: search-neon-spin 4s linear infinite;
 }
 
+/* The pill has its own clear/close controls; hide the native one. */
+.search-neon input[type='search']::-webkit-search-cancel-button {
+  appearance: none;
+}
+
 .search-neon:focus-within {
   box-shadow: 0 0 18px rgb(34 196 211 / 0.28);
 }

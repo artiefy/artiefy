@@ -1,11 +1,5 @@
 'use client';
-import React, {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -33,7 +27,8 @@ import { FaArrowTrendUp } from 'react-icons/fa6';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { IoLibrarySharp } from 'react-icons/io5';
 
-import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
+import { ArtieSearchDropdown } from '~/components/estudiantes/layout/search/ArtieSearchDropdown';
+import { useArtieSearch } from '~/components/estudiantes/layout/search/useArtieSearch';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
@@ -49,6 +44,7 @@ import {
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
 
+import type { CatalogSearchResult } from '~/server/actions/estudiantes/search/searchCatalogPreview';
 import type { Course, Program } from '~/types';
 
 import '~/styles/filter-button-loader.css';
@@ -187,13 +183,18 @@ export default function StudentDetails({
   }, [initialPrograms]);
   const [_currentSlide, setCurrentSlide] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    results: searchResults,
+    isLoading: searchLoading,
+    isOpen: isSearchOpen,
+    open: openSearch,
+    reset: resetSearch,
+    containerRef: searchContainerRef,
+  } = useArtieSearch();
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
   const [searchBarDisabled, setSearchBarDisabled] = useState<boolean>(false);
-  const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
-  const [previewPrograms, setPreviewPrograms] = useState<Program[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewLoading, setPreviewLoading] = useState(false);
   const [topCoursesApi, setTopCoursesApi] = useState<CarouselApi>();
   const [programsApi, setProgramsApi] = useState<CarouselApi>();
   const [canScrollPrevTop, setCanScrollPrevTop] = useState(false);
@@ -329,50 +330,6 @@ export default function StudentDetails({
     };
   }, [programsApi]);
 
-  // Debounce para evitar demasiadas llamadas
-  useEffect(() => {
-    const trimmed = searchQuery.trim();
-    if (trimmed.length < 2) {
-      setPreviewCourses([]);
-      setPreviewPrograms([]);
-      setShowPreview(false);
-      setPreviewLoading(false);
-      return;
-    }
-    // Guard de carrera: ignoramos la respuesta de esta corrida si el usuario
-    // siguió escribiendo, para que una petición vieja no pise a la nueva.
-    let cancelled = false;
-    setPreviewLoading(true);
-    setShowPreview(true);
-    const timeout = setTimeout(async () => {
-      try {
-        const [{ searchCoursesPreview }, { searchProgramsPreview }] =
-          await Promise.all([
-            import('~/server/actions/estudiantes/courses/searchCoursesPreview'),
-            import('~/server/actions/estudiantes/programs/searchProgramsPreview'),
-          ]);
-        const [courseResults, programResults] = await Promise.all([
-          searchCoursesPreview(trimmed),
-          searchProgramsPreview(trimmed),
-        ]);
-        if (cancelled) return;
-        setPreviewCourses(courseResults);
-        setPreviewPrograms(programResults);
-        setShowPreview(courseResults.length > 0 || programResults.length > 0);
-      } catch (_err) {
-        if (cancelled) return;
-        setPreviewCourses([]);
-        setPreviewPrograms([]);
-        setShowPreview(false);
-      } finally {
-        if (!cancelled) setPreviewLoading(false);
-      }
-    }, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(timeout);
-    };
-  }, [searchQuery]);
   const [_text, setText] = useState(''); // índice del mensaje
   const [index, setIndex] = useState(0); // índice del mensaje
   const [subIndex, setSubIndex] = useState(0); // índice de la letra
@@ -514,37 +471,37 @@ export default function StudentDetails({
     });
   }, [activeFilter, courses]);
 
-  // Picking a result navigates away, so the dropdown must close instead of
-  // staying open on top of the new page.
-  const closeSearchPreview = useCallback(() => {
-    setSearchQuery('');
-    setPreviewCourses([]);
-    setPreviewPrograms([]);
-    setShowPreview(false);
-    setPreviewLoading(false);
-  }, []);
+  const handleSelectResult = useCallback(
+    (result: CatalogSearchResult) => {
+      if (result.isComingSoon) return;
+      resetSearch();
+      router.push(result.href);
+    },
+    [resetSearch, router]
+  );
 
   const handleSearch = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
 
-      if (!searchQuery.trim() || searchInProgress) return;
+      const query = searchQuery.trim();
+      if (!query || searchInProgress) return;
 
       setSearchInProgress(true);
       setSearchBarDisabled(true);
 
       // Emit global search event
       const searchEvent = new CustomEvent('artiefy-search', {
-        detail: { query: searchQuery.trim() },
+        detail: { query },
       });
       window.dispatchEvent(searchEvent);
 
       // Clear the search input
-      setSearchQuery('');
+      resetSearch();
       setSearchInProgress(false);
       setSearchBarDisabled(false);
     },
-    [searchQuery, searchInProgress]
+    [searchQuery, searchInProgress, resetSearch]
   );
 
   // Add event listener in useEffect
@@ -697,6 +654,7 @@ export default function StudentDetails({
             </div>
 
             <form
+              ref={searchContainerRef}
               onSubmit={handleSearch}
               className="relative flex w-full flex-col items-center space-y-2"
             >
@@ -713,7 +671,11 @@ export default function StudentDetails({
                   }
                   type="search"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    openSearch();
+                  }}
+                  onFocus={openSearch}
                   disabled={searchBarDisabled}
                   autoComplete="off"
                 />
@@ -730,29 +692,15 @@ export default function StudentDetails({
                 >
                   <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
                 </svg>
-                {/* Preview de cursos debajo del input */}
-                {showPreview &&
-                  (previewLoading ||
-                    previewCourses.length > 0 ||
-                    previewPrograms.length > 0) && (
-                    <div className="z-50 w-full">
-                      <Suspense fallback={null}>
-                        <CourseSearchPreview
-                          isLoading={previewLoading}
-                          courses={previewCourses}
-                          programs={previewPrograms}
-                          onSelectCourse={(courseId: number) => {
-                            closeSearchPreview();
-                            router.push(`/estudiantes/cursos/${courseId}`);
-                          }}
-                          onSelectProgram={(programId: string | number) => {
-                            closeSearchPreview();
-                            router.push(`/estudiantes/programas/${programId}`);
-                          }}
-                        />
-                      </Suspense>
-                    </div>
-                  )}
+                {isSearchOpen && (
+                  <ArtieSearchDropdown
+                    query={searchQuery}
+                    results={searchResults}
+                    isLoading={searchLoading}
+                    onCreate={() => handleSearch()}
+                    onSelect={handleSelectResult}
+                  />
+                )}
               </div>
 
               {/* Text with sparkles icon below search bar */}
