@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { type ComponentProps, Suspense } from 'react';
 
 import {
   CategoriesSkeleton,
@@ -53,26 +53,34 @@ async function StudentDetailsSection() {
 }
 
 async function CategoriesSection() {
+  let categoriesProps: ComponentProps<typeof StudentCategories> | null = null;
+
   try {
     const [categories, featuredCategories] = await Promise.all([
       getAllCategories(),
       getFeaturedCategories(7),
     ]);
 
-    return (
-      <Reveal>
-        <StudentCategories
-          allCategories={categories}
-          featuredCategories={featuredCategories}
-        />
-      </Reveal>
-    );
+    categoriesProps = {
+      allCategories: categories,
+      featuredCategories,
+    };
   } catch (error) {
     // Categories are non-critical: if the lookup fails, hide the section
     // rather than failing the whole page.
     console.error('Error loading categories section:', error);
     return null;
   }
+
+  if (!categoriesProps) {
+    return null;
+  }
+
+  return (
+    <Reveal>
+      <StudentCategories {...categoriesProps} />
+    </Reveal>
+  );
 }
 
 async function CoursesListSection({ params }: { params: SearchParams }) {

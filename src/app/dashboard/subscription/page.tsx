@@ -301,6 +301,9 @@ export default function BuscarSuscripcionPage() {
     'success' | 'warning' | 'error'
   >('success');
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Monotonic counter instead of Date.now(): keeps toast ids unique without
+  // calling an impure API from component code.
+  const toastIdRef = useRef(0);
 
   useEffect(() => {
     document.body.classList.add('no-chrome');
@@ -317,7 +320,8 @@ export default function BuscarSuscripcionPage() {
     duration = 5000,
     subtitle?: string
   ) => {
-    const id = `toast-${Date.now()}`;
+    toastIdRef.current += 1;
+    const id = `toast-${toastIdRef.current}`;
     setToasts((prev) => [...prev, { id, message, type, duration, subtitle }]);
   };
 

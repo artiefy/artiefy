@@ -113,9 +113,8 @@ const FormActCompletado: React.FC<formSubida> = ({
       });
     }, 400);
 
-    if (!editingQuestion) {
-      formData.id = crypto.randomUUID();
-    }
+    // New questions get their id here; never mutate the form state directly.
+    const questionId = editingQuestion ? formData.id : crypto.randomUUID();
 
     try {
       let archivoKey = formData.archivoKey;
@@ -128,13 +127,12 @@ const FormActCompletado: React.FC<formSubida> = ({
         portadaKey = await uploadToS3(file2);
       }
 
-      formData.archivoKey = archivoKey;
-      formData.portadaKey = portadaKey;
+      const payload = { ...formData, id: questionId, archivoKey, portadaKey };
 
       const response = await fetch('/api/educadores/question/archivos', {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activityId, questionsFilesSubida: formData }),
+        body: JSON.stringify({ activityId, questionsFilesSubida: payload }),
       });
 
       if (!response.ok) {

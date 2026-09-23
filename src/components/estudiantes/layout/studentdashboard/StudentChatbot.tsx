@@ -2160,6 +2160,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     };
   }, []);
 
+  const scrollToBottom = () => {
+    void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -2290,10 +2294,6 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     window.addEventListener('resize', checkDesktop);
     return () => window.removeEventListener('resize', checkDesktop);
   }, []);
-
-  const scrollToBottom = () => {
-    void messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   // Manejo de envío de mensajes
   // Nota: este handle usa ideaRef para decidir si invocar n8n

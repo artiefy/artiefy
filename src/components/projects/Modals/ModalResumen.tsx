@@ -709,6 +709,15 @@ const steps = [
   },
 ];
 
+// Module scope, outside the component: id-generation reads used only from
+// the "add custom section" click handler below (not during render).
+function getUniqueIdSeed(): number {
+  return Date.now();
+}
+function getUniqueIdSuffix(): string {
+  return Math.random().toString(36).slice(2, 6);
+}
+
 const ModalResumen: React.FC<ModalResumenProps> = ({
   isOpen,
   onClose,
@@ -948,9 +957,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const createCustomSectionId = (
     existing: Record<string, { name: string; content: string }>
   ) => {
-    let newId = `custom-${Date.now()}`;
+    let newId = `custom-${getUniqueIdSeed()}`;
     while (existing[newId]) {
-      newId = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      newId = `custom-${getUniqueIdSeed()}-${getUniqueIdSuffix()}`;
     }
     return newId;
   };

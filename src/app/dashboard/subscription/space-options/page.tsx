@@ -29,11 +29,6 @@ export default function SpaceOptionsPage() {
     isActive: true,
   });
 
-  // Fetch spaces
-  useEffect(() => {
-    fetchSpaces();
-  }, []);
-
   const fetchSpaces = async () => {
     try {
       setLoading(true);
@@ -53,6 +48,11 @@ export default function SpaceOptionsPage() {
       setLoading(false);
     }
   };
+
+  // Fetch spaces
+  useEffect(() => {
+    fetchSpaces();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

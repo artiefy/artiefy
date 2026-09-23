@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { type ComponentProps, Suspense } from 'react';
 
 import { type Metadata, type ResolvingMetadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
@@ -150,6 +150,8 @@ export default async function Page({ params }: { params: PageParams }) {
 
 // Componente para renderizar los detalles del curso
 async function CourseContent({ id }: { id: string }) {
+  let courseDetailsProps: ComponentProps<typeof CourseDetails> | null = null;
+
   try {
     const courseId = Number(id);
     if (isNaN(courseId)) {
@@ -226,16 +228,22 @@ async function CourseContent({ id }: { id: string }) {
       enrollments: course.enrollments,
     };
 
-    return (
-      <section>
-        <CourseDetails
-          course={courseForDetails}
-          classMeetings={classMeetings}
-          courseTypeCounts={courseTypeCounts}
-        />
-      </section>
-    );
+    courseDetailsProps = {
+      course: courseForDetails,
+      classMeetings,
+      courseTypeCounts,
+    };
   } catch (error) {
     throw error;
   }
+
+  if (!courseDetailsProps) {
+    notFound();
+  }
+
+  return (
+    <section>
+      <CourseDetails {...courseDetailsProps} />
+    </section>
+  );
 }

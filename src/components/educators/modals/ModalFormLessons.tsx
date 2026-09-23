@@ -148,6 +148,7 @@ const ModalFormLessons = ({
   const [uploadProgresses, setUploadProgresses] = useState<
     Record<string, UploadProgress>
   >({});
+  const [needsVideo, setNeedsVideo] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null); // Referencia al video para capturar un frame
   const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referencia al canvas para capturar un frame
@@ -771,7 +772,13 @@ const ModalFormLessons = ({
     return () => clearTimeout(id);
   }, [procesoTerminado, procesamiento?.fragmentos]);
 
-  const UploadProgressDisplay = () => (
+  // Plain render function (not a component): it closes over `uploadProgresses`
+  // and `procesamiento` from this component's state, so it can't be hoisted.
+  // Calling it inline as `{renderUploadProgressDisplay()}` — instead of
+  // rendering it as `<UploadProgressDisplay />` — keeps its markup part of
+  // this component's own reconciliation instead of remounting as a fresh
+  // component type on every render.
+  const renderUploadProgressDisplay = () => (
     <div
       className="
       fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg
@@ -841,8 +848,6 @@ const ModalFormLessons = ({
       )}
     </div>
   );
-
-  const [needsVideo, setNeedsVideo] = useState(false);
 
   // Renderizar el formulario
   return (
@@ -1145,9 +1150,8 @@ const ModalFormLessons = ({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {(Object.keys(uploadProgresses).length > 0 || procesamiento) && (
-        <UploadProgressDisplay />
-      )}
+      {(Object.keys(uploadProgresses).length > 0 || procesamiento) &&
+        renderUploadProgressDisplay()}
     </>
   );
 };

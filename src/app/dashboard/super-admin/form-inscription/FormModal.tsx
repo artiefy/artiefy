@@ -136,6 +136,80 @@ function isFn(x: unknown): x is () => void {
   return typeof x === 'function';
 }
 
+// Hoisted to module scope: it closes over nothing from FormModal, only its
+// own props. Defining it inside the component re-created it every render.
+function FieldFile({
+  label,
+  onChange,
+  required = false,
+}: {
+  label: string;
+  onChange: (f: File | null) => void;
+  required?: boolean;
+}) {
+  return (
+    <label className="flex flex-col text-white">
+      <span className="mb-1">
+        {label} {required && <span className="text-red-400">*</span>}
+      </span>
+      <input
+        type="file"
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+        className="
+          rounded bg-[#1C2541] p-2 text-sm text-white
+          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+        "
+      />
+    </label>
+  );
+}
+
+// Hoisted to module scope: it closes over nothing from FormModal, only its
+// own props. Defining it inside the component re-created it every render.
+function FieldSelect({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = 'Selecciona una opción',
+  disabled = false,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+  disabled?: boolean;
+  error?: string;
+}) {
+  return (
+    <label className="flex flex-col text-white">
+      <span className="mb-1">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        aria-invalid={!!error}
+        className={`
+          rounded bg-[#1C2541] p-2 text-sm text-white
+          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+          disabled:opacity-60
+          ${error ? 'border border-red-500' : ''}
+        `}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>
+            {opt}
+          </option>
+        ))}
+      </select>
+      {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
+    </label>
+  );
+}
+
 export default function FormModal({ isOpen, onClose }: Props) {
   const handleClose = () => {
     if (isFn(onClose)) onClose(); // ejecuta si realmente es función
@@ -166,31 +240,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [comprobanteInscripcion, setComprobanteInscripcion] =
     useState<File | null>(null);
 
-  function FieldFile({
-    label,
-    onChange,
-    required = false,
-  }: {
-    label: string;
-    onChange: (f: File | null) => void;
-    required?: boolean;
-  }) {
-    return (
-      <label className="flex flex-col text-white">
-        <span className="mb-1">
-          {label} {required && <span className="text-red-400">*</span>}
-        </span>
-        <input
-          type="file"
-          onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-          className="
-            rounded bg-[#1C2541] p-2 text-sm text-white
-            focus:ring-2 focus:ring-cyan-500 focus:outline-none
-          "
-        />
-      </label>
-    );
-  }
   function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
@@ -236,50 +285,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
     };
     if (isOpen) loadPrograms();
   }, [isOpen]);
-
-  function FieldSelect({
-    label,
-    value,
-    onChange,
-    options,
-    placeholder = 'Selecciona una opción',
-    disabled = false,
-    error,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    options: string[];
-    placeholder?: string;
-    disabled?: boolean;
-    error?: string;
-  }) {
-    return (
-      <label className="flex flex-col text-white">
-        <span className="mb-1">{label}</span>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          aria-invalid={!!error}
-          className={`
-            rounded bg-[#1C2541] p-2 text-sm text-white
-            focus:ring-2 focus:ring-cyan-500 focus:outline-none
-            disabled:opacity-60
-            ${error ? 'border border-red-500' : ''}
-          `}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-        {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
-      </label>
-    );
-  }
 
   const handleChange = (key: keyof Fields, value: string) => {
     setFields((prev) => ({ ...prev, [key]: value }));
@@ -437,15 +442,19 @@ export default function FormModal({ isOpen, onClose }: Props) {
       "
     >
       {/* Panel con scroll interno */}
-      <Dialog.Panel className="
+      <Dialog.Panel
+        className="
         max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-xl bg-[#0B132B]
         text-white shadow-xl shadow-cyan-500/20
-      ">
+      "
+      >
         {/* Header sticky */}
-        <div className="
+        <div
+          className="
           sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95 px-6
           py-4 backdrop-blur
-        ">
+        "
+        >
           <Dialog.Title className="text-2xl font-semibold text-cyan-400">
             Formulario de Inscripción
           </Dialog.Title>
@@ -460,10 +469,10 @@ export default function FormModal({ isOpen, onClose }: Props) {
             className={`
               mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold
               ${
-              submittedOK
-                ? 'bg-green-600/20 text-green-300'
-                : 'bg-red-600/20 text-red-300'
-            }
+                submittedOK
+                  ? 'bg-green-600/20 text-green-300'
+                  : 'bg-red-600/20 text-red-300'
+              }
             `}
             role="alert"
           >
@@ -474,10 +483,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
         <form onSubmit={handleSubmit} className="px-6 pt-4 pb-6">
           {/* Datos personales */}
           <Section title="Datos personales">
-            <div className="
+            <div
+              className="
               grid grid-cols-1 gap-4
               sm:grid-cols-2
-            ">
+            "
+            >
               <FieldInput
                 label="Nombres*"
                 value={fields.nombres}
@@ -524,10 +535,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
           {/* Ubicación y educación */}
           <Section title="Ubicación y educación">
-            <div className="
+            <div
+              className="
               grid grid-cols-1 gap-4
               sm:grid-cols-2
-            ">
+            "
+            >
               <FieldSelect
                 label="País de Residencia*"
                 value={fields.pais}
@@ -570,10 +583,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
           {/* Acudiente (opcional) */}
           <Section title="Acudiente o empresa (opcional)">
-            <div className="
+            <div
+              className="
               grid grid-cols-1 gap-4
               sm:grid-cols-2
-            ">
+            "
+            >
               <FieldSelect
                 label="¿Acudiente o empresa?"
                 value={fields.tieneAcudiente}
@@ -611,10 +626,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
           {/* Programa y fechas */}
           <Section title="Programa y fechas">
-            <div className="
+            <div
+              className="
               grid grid-cols-1 gap-4
               sm:grid-cols-2
-            ">
+            "
+            >
               <FieldSelect
                 label={
                   loadingPrograms
@@ -665,10 +682,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
           {/* Sede, modalidad y cuotas */}
           <Section title="Sede y detalles de pago">
-            <div className="
+            <div
+              className="
               grid grid-cols-1 gap-4
               sm:grid-cols-2
-            ">
+            "
+            >
               <FieldSelect
                 label="Sede*"
                 value={fields.sede}
@@ -723,10 +742,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
           </Section>
 
           <Section title="Documentos requeridos">
-            <div className="
+            <div
+              className="
               grid grid-cols-1 gap-4
               sm:grid-cols-2
-            ">
+            "
+            >
               <FieldFile
                 label="Subir Documento de Identidad"
                 required
@@ -745,10 +766,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
           </Section>
 
           {/* Acciones */}
-          <div className="
+          <div
+            className="
             sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30
             bg-[#0B132B] py-4
-          ">
+          "
+          >
             <button
               type="button"
               onClick={handleClose}

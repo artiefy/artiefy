@@ -73,11 +73,6 @@ export default defineConfig([
       '@typescript-eslint/no-use-before-define': 'off',
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/purity': 'off',
-      'react-hooks/static-components': 'off',
-      'react-hooks/immutability': 'off',
-      'react-hooks/preserve-manual-memoization': 'off',
-      'react-hooks/error-boundaries': 'off',
       // The core React rule: hooks must not be called conditionally, in loops,
       // or outside a component. Breaking it corrupts hook state at runtime and
       // no type-checker catches it. Keep this at 'error'.
@@ -99,7 +94,6 @@ export default defineConfig([
         },
       ],
       'simple-import-sort/exports': 'off',
-      'jsx-a11y/alt-text': 'off',
       'no-undef': 'off',
       // Drizzle ORM
       'drizzle/enforce-delete-with-where': [
@@ -137,6 +131,23 @@ export default defineConfig([
     files: ['src/app/dashboard/super-admin/**/CourseDetail.tsx'],
     rules: {
       'react-hooks/rules-of-hooks': 'off',
+    },
+  },
+  {
+    // Narrow carve-out for `jsx-a11y/alt-text`, which is otherwise on
+    // (mapped to also check any JSX element literally named `Image`, to
+    // catch `next/image`).
+    //
+    // These files render PDFs with `@react-pdf/renderer`'s own `Image`
+    // primitive, not a DOM `<img>` or `next/image`. It draws into a PDF
+    // document, not the DOM, and its type has no `alt` prop at all — adding
+    // one would be a type error, not an accessibility fix.
+    files: [
+      'src/components/PDFReport.tsx',
+      'src/components/estudiantes/layout/certification/CertificationStudentPDF.tsx',
+    ],
+    rules: {
+      'jsx-a11y/alt-text': 'off',
     },
   },
   {

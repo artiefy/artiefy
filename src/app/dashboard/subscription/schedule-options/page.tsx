@@ -29,11 +29,6 @@ export default function ScheduleOptionsPage() {
     isActive: true,
   });
 
-  // Fetch schedules
-  useEffect(() => {
-    fetchSchedules();
-  }, []);
-
   const fetchSchedules = async () => {
     try {
       setLoading(true);
@@ -53,6 +48,11 @@ export default function ScheduleOptionsPage() {
       setLoading(false);
     }
   };
+
+  // Fetch schedules
+  useEffect(() => {
+    fetchSchedules();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

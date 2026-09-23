@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { type ComponentProps, Suspense } from 'react';
 
 import { type Metadata, type ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -114,6 +114,10 @@ export default function Page({ params }: { params: Promise<PageParams> }) {
 }
 
 async function ProjectContent({ params }: { params: Promise<PageParams> }) {
+  let guidedProjectProps: ComponentProps<typeof GuidedProjectDetails> | null =
+    null;
+  let agentChatProps: ComponentProps<typeof AgentChatWidget> | null = null;
+
   try {
     const { id } = await params;
     const projectId = Number(id);
@@ -128,39 +132,42 @@ async function ProjectContent({ params }: { params: Promise<PageParams> }) {
       notFound();
     }
 
-    return (
-      <section>
-        <GuidedProjectDetails
-          project={project}
-          initialIsEnrolled={project.enrolled ?? false}
-        />
-        {/* Enrolled learners get the Coach with project context; everyone else
-            still gets the general agent, since the global mount steps aside on
-            this route. */}
-        <AgentChatWidget
-          project={
-            project.enrolled
-              ? {
-                  id: project.id,
-                  title: project.title,
-                  objectives: (project.objectives ?? []).map((objective) => ({
-                    id: objective.id,
-                    title: objective.title,
-                    activities: (objective.activities ?? []).map(
-                      (activity) => ({
-                        id: activity.id,
-                        name: activity.name,
-                        isCompleted: activity.isCompleted ?? false,
-                      })
-                    ),
-                  })),
-                }
-              : undefined
+    guidedProjectProps = {
+      project,
+      initialIsEnrolled: project.enrolled ?? false,
+    };
+    agentChatProps = {
+      project: project.enrolled
+        ? {
+            id: project.id,
+            title: project.title,
+            objectives: (project.objectives ?? []).map((objective) => ({
+              id: objective.id,
+              title: objective.title,
+              activities: (objective.activities ?? []).map((activity) => ({
+                id: activity.id,
+                name: activity.name,
+                isCompleted: activity.isCompleted ?? false,
+              })),
+            })),
           }
-        />
-      </section>
-    );
+        : undefined,
+    };
   } catch (error) {
     throw error;
   }
+
+  if (!guidedProjectProps || !agentChatProps) {
+    notFound();
+  }
+
+  return (
+    <section>
+      <GuidedProjectDetails {...guidedProjectProps} />
+      {/* Enrolled learners get the Coach with project context; everyone else
+          still gets the general agent, since the global mount steps aside on
+          this route. */}
+      <AgentChatWidget {...agentChatProps} />
+    </section>
+  );
 }

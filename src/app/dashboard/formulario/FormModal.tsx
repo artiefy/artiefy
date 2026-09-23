@@ -289,6 +289,116 @@ function isFn(x: unknown): x is () => void {
   return typeof x === 'function';
 }
 
+// Hoisted to module scope: it closes over nothing from FormModal, only its
+// own props (and FileBadge, itself module-scoped above). Defining it inside
+// the component re-created it (and reset its `inputKey` state) every render.
+function FieldFile({
+  label,
+  file,
+  onChange,
+  required = false,
+  accept = 'application/pdf,image/*',
+  error,
+}: {
+  label: string;
+  file: File | null;
+  onChange: (f: File | null) => void;
+  required?: boolean;
+  accept?: string;
+  error?: string;
+}) {
+  const [inputKey, setInputKey] = useState(0);
+
+  const clear = () => {
+    onChange(null);
+    setInputKey((k) => k + 1); // resetea el input file
+  };
+
+  return (
+    <label className="flex flex-col text-white">
+      <span className="mb-1">
+        {label} {required && <span className="text-red-400">*</span>}
+      </span>
+
+      <input
+        key={inputKey}
+        type="file"
+        accept={accept}
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+        aria-required={required}
+        aria-invalid={!!error}
+        className={`
+          rounded bg-[#1C2541] p-2 text-sm text-white
+          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+          ${error ? 'border border-red-500' : ''}
+        `}
+      />
+
+      {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
+
+      {/* Vista del archivo seleccionado */}
+      <FileBadge file={file} onClear={clear} />
+    </label>
+  );
+}
+
+// Hoisted to module scope: it closes over nothing from FormModal, only its
+// own props. Defining it inside the component re-created it (and reset its
+// internal element identity) on every render.
+function FieldSelect({
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = 'Selecciona una opción',
+  disabled = false,
+  error,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  // acepta strings o {value,label}
+  options: (string | { value: string; label: string })[];
+  placeholder?: string;
+  disabled?: boolean;
+  error?: string;
+}) {
+  const toVal = (opt: string | { value: string; label: string }) =>
+    typeof opt === 'string' ? opt : opt.value;
+  const toLabel = (opt: string | { value: string; label: string }) =>
+    typeof opt === 'string' ? opt : opt.label;
+
+  return (
+    <label className="flex flex-col text-white">
+      <span className="mb-1">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        aria-invalid={!!error}
+        className={`
+          rounded bg-[#1C2541] p-2 text-sm text-white
+          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+          disabled:opacity-60
+          ${error ? 'border border-red-500' : ''}
+        `}
+      >
+        <option value="">{placeholder}</option>
+        {options.map((opt) => {
+          const val = toVal(opt);
+          const lab = toLabel(opt);
+          return (
+            <option key={val} value={val}>
+              {lab}
+            </option>
+          );
+        })}
+      </select>
+      {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
+    </label>
+  );
+}
+
 export default function FormModal({ isOpen, onClose }: Props) {
   const handleClose = () => {
     if (isFn(onClose)) onClose(); // ejecuta si realmente es función
@@ -427,56 +537,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
   const [comprobanteInscripcion, setComprobanteInscripcion] =
     useState<File | null>(null);
 
-  function FieldFile({
-    label,
-    file,
-    onChange,
-    required = false,
-    accept = 'application/pdf,image/*',
-    error,
-  }: {
-    label: string;
-    file: File | null;
-    onChange: (f: File | null) => void;
-    required?: boolean;
-    accept?: string;
-    error?: string;
-  }) {
-    const [inputKey, setInputKey] = useState(0);
-
-    const clear = () => {
-      onChange(null);
-      setInputKey((k) => k + 1); // resetea el input file
-    };
-
-    return (
-      <label className="flex flex-col text-white">
-        <span className="mb-1">
-          {label} {required && <span className="text-red-400">*</span>}
-        </span>
-
-        <input
-          key={inputKey}
-          type="file"
-          accept={accept}
-          onChange={(e) => onChange(e.target.files?.[0] ?? null)}
-          aria-required={required}
-          aria-invalid={!!error}
-          className={`
-            rounded bg-[#1C2541] p-2 text-sm text-white
-            focus:ring-2 focus:ring-cyan-500 focus:outline-none
-            ${error ? 'border border-red-500' : ''}
-          `}
-        />
-
-        {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
-
-        {/* Vista del archivo seleccionado */}
-        <FileBadge file={file} onClear={clear} />
-      </label>
-    );
-  }
-
   function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null;
   }
@@ -554,60 +614,6 @@ export default function FormModal({ isOpen, onClose }: Props) {
     };
     if (isOpen) loadPrograms();
   }, [isOpen]);
-
-  function FieldSelect({
-    label,
-    value,
-    onChange,
-    options,
-    placeholder = 'Selecciona una opción',
-    disabled = false,
-    error,
-  }: {
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    // acepta strings o {value,label}
-    options: (string | { value: string; label: string })[];
-    placeholder?: string;
-    disabled?: boolean;
-    error?: string;
-  }) {
-    const toVal = (opt: string | { value: string; label: string }) =>
-      typeof opt === 'string' ? opt : opt.value;
-    const toLabel = (opt: string | { value: string; label: string }) =>
-      typeof opt === 'string' ? opt : opt.label;
-
-    return (
-      <label className="flex flex-col text-white">
-        <span className="mb-1">{label}</span>
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          aria-invalid={!!error}
-          className={`
-            rounded bg-[#1C2541] p-2 text-sm text-white
-            focus:ring-2 focus:ring-cyan-500 focus:outline-none
-            disabled:opacity-60
-            ${error ? 'border border-red-500' : ''}
-          `}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((opt) => {
-            const val = toVal(opt);
-            const lab = toLabel(opt);
-            return (
-              <option key={val} value={val}>
-                {lab}
-              </option>
-            );
-          })}
-        </select>
-        {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
-      </label>
-    );
-  }
 
   // Normaliza según el campo: trim siempre; en textos colapsa espacios internos.
   function sanitizeValueByKey(key: keyof Fields, value: string) {

@@ -197,10 +197,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     'from-orange-400 via-pink-500 to-red-500',
   ];
 
-  type BadgeGradientFunction = () => string;
+  type BadgeGradientFunction = (seed: string) => string;
 
-  const getBadgeGradient: BadgeGradientFunction = () => {
-    return BADGE_GRADIENTS[Math.floor(Math.random() * BADGE_GRADIENTS.length)];
+  // Deterministic pick instead of Math.random(): the same materia always
+  // gets the same gradient, so this stays pure to call during render (no
+  // hydration mismatch between server and client).
+  const getBadgeGradient: BadgeGradientFunction = (seed) => {
+    let hash = 0;
+    for (let i = 0; i < seed.length; i++) {
+      hash = (hash << 5) - hash + seed.charCodeAt(i);
+      hash |= 0;
+    }
+    return BADGE_GRADIENTS[Math.abs(hash) % BADGE_GRADIENTS.length];
   };
 
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -308,7 +316,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setLoading(false);
       }
     }
-  }, [courseIdNumber]);
+  }, [courseIdNumber, setCurrentInstructors]);
 
   // Add this function after fetchCourse
   const fetchEducators = async () => {
@@ -787,8 +795,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         />
         <Card
           className={`
-            zoom-in relative mt-3 h-auto overflow-hidden border-none p-4
-            transition-transform duration-300 ease-in-out
+            relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform
+            duration-300 ease-in-out zoom-in
             sm:p-6
           `}
           style={{
@@ -1222,7 +1230,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           variant="secondary"
                           className={`
                             bg-gradient-to-r
-                            ${getBadgeGradient()}
+                            ${getBadgeGradient(String(materia.id))}
                             text-white transition-all duration-300
                             hover:scale-105 hover:shadow-lg
                           `}

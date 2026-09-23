@@ -236,7 +236,11 @@ export default function CourseComments({
     };
   }, [openMenuId]);
 
-  const RequirementsMessage = () => {
+  // Plain render function (not a component): it closes over `isSignedIn` and
+  // `localIsEnrolled` from this component's state, so it can't be hoisted.
+  // Called inline below as `{renderRequirementsMessage()}` instead of
+  // rendered as `<RequirementsMessage />`.
+  const renderRequirementsMessage = () => {
     if (!isSignedIn) {
       return (
         <div className="mb-4 rounded-md bg-yellow-50 p-4">
@@ -441,7 +445,7 @@ export default function CourseComments({
         </p>
       </div>
 
-      <RequirementsMessage />
+      {renderRequirementsMessage()}
 
       <form onSubmit={handleSubmit}>
         <div

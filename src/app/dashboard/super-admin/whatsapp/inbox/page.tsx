@@ -436,6 +436,10 @@ export default function WhatsAppInboxPage({
   >('all');
   const [showFilters, setShowFilters] = useState(false);
   const [isDesktop, setIsDesktop] = useState(true); // Default true para evitar hidratación
+  // Snapshot of "now" for window/expiry calculations below. Captured once at
+  // mount and refreshed on the same 4s poll cadence as `load()`, instead of
+  // calling Date.now() directly inside useMemo (impure during render).
+  const [now, setNow] = useState(() => Date.now());
   const [userSelectedChat, setUserSelectedChat] = useState(false); // Track if user manually selected
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -449,7 +453,6 @@ export default function WhatsAppInboxPage({
       map.get(key)!.push(it);
     }
 
-    const now = Date.now();
     const ONE_DAY = 24 * 60 * 60 * 1000;
     const TWO_HOURS = 2 * 60 * 60 * 1000;
 
@@ -490,7 +493,7 @@ export default function WhatsAppInboxPage({
       });
     }
     return list.sort((a, b) => b.lastTs - a.lastTs);
-  }, [inbox]);
+  }, [inbox, now]);
 
   const waidsKey = useMemo(
     () =>
@@ -543,7 +546,6 @@ export default function WhatsAppInboxPage({
       : null;
     const toMs = filterTo ? new Date(filterTo).setHours(23, 59, 59, 999) : null;
     const withinHours = filterHours ? Number(filterHours) : null;
-    const now = Date.now();
 
     return threads.filter((t) => {
       if (hiddenWaids.has(t.waid)) return false;
@@ -587,6 +589,7 @@ export default function WhatsAppInboxPage({
     hiddenWaids,
     tagFilter,
     tagAssignmentsCache,
+    now,
   ]);
 
   useEffect(() => {
@@ -610,6 +613,7 @@ export default function WhatsAppInboxPage({
     let cancel = false;
     const load = async () => {
       try {
+        setNow(Date.now());
         const res = await fetch(
           `/api/super-admin/whatsapp/inbox?session=${sessionName}`,
           {
@@ -744,8 +748,7 @@ export default function WhatsAppInboxPage({
 
       if (!res.ok) {
         const errorData = (await res.json().catch(() => ({}))) as
-          | ApiError
-          | Record<string, unknown>;
+          ApiError | Record<string, unknown>;
         const errMsg = isApiError(errorData)
           ? (errorData.error ?? 'Error enviando archivo')
           : 'Error enviando archivo';
