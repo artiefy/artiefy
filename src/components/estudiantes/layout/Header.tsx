@@ -29,6 +29,7 @@ import { ensureCurrentUserStudentRole, getUserRole } from '~/utils/roles';
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
 import { ArtieSearchDropdown } from './search/ArtieSearchDropdown';
+import { NeonSearchShell } from './search/NeonSearchShell';
 import { useArtieSearch } from './search/useArtieSearch';
 import { MobileBottomNav } from './MobileBottomNav';
 import { NotificationHeader } from './NotificationHeader';
@@ -63,6 +64,9 @@ export function Header({
   >(null);
   const [oauthSignUpStrategy, setOauthSignUpStrategy] =
     useState<OAuthStrategy | null>(null);
+  // Snapshot of "now" for the subscription-expiry check below, captured
+  // once instead of calling Date.now() during render.
+  const [now] = useState(() => Date.now());
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
@@ -132,19 +136,17 @@ export function Header({
     planType?.toLowerCase() === 'premium' &&
     subscriptionStatus === 'active' &&
     (subscriptionEndTime === null ||
-      (!Number.isNaN(subscriptionEndTime) && subscriptionEndTime > Date.now()));
+      (!Number.isNaN(subscriptionEndTime) && subscriptionEndTime > now));
 
   const renderProfileLink = () => (
     <Link
       href="/estudiantes/perfil"
       aria-label={`Ir al perfil de ${profileName}`}
       className="
-        group/profile inline-flex min-h-10 max-w-56 min-w-0 items-center
-        gap-2.5 rounded-full border border-border/50 bg-secondary/30 px-2.5
-        py-1.5 text-left transition-colors
-        hover:border-primary/50 hover:bg-primary/10
+        flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1
+        text-muted-foreground transition-all duration-200
+        hover:bg-muted/50 hover:text-foreground
         focus-visible:ring-2 focus-visible:ring-primary
-        focus-visible:ring-offset-2 focus-visible:ring-offset-background
         focus-visible:outline-none
       "
     >
@@ -152,56 +154,79 @@ export function Header({
         <Image
           src={user.imageUrl}
           alt=""
-          width={32}
-          height={32}
-          className="size-8 shrink-0 rounded-full object-cover"
+          width={28}
+          height={28}
+          className="
+            size-7 shrink-0 rounded-full border border-border/30 object-cover
+            shadow-[0_0_10px_rgb(34_196_211/0.15)]
+          "
         />
       ) : (
         <span
           aria-hidden="true"
-          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary"
+          className="
+            flex size-7 shrink-0 items-center justify-center rounded-full border
+            border-border/30 bg-primary/15 text-xs font-semibold text-primary
+          "
         >
           {profileName.charAt(0).toUpperCase()}
         </span>
       )}
-      <span className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
-        <span className="min-w-0 truncate text-sm font-semibold text-foreground">
-          {profileName}
-        </span>
-        {hasActivePremiumPlan ? (
-          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-amber-400">
-            <FaCrown className="size-3" aria-hidden="true" />
-            Premium
-          </span>
-        ) : null}
+      <span
+        className="
+          hidden max-w-[96px] truncate text-xs font-medium
+          xl:block
+        "
+      >
+        {profileName}
       </span>
+      {hasActivePremiumPlan ? (
+        <FaCrown
+          className="size-3 shrink-0 text-amber-400"
+          aria-label="Premium"
+        />
+      ) : null}
     </Link>
   );
 
   const renderAccountMenuButton = (floating = false) => (
     <div
       className={`
-        group/account relative flex size-10 shrink-0 items-center justify-center
-        overflow-hidden rounded-full border transition-colors
-        focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2
-        focus-within:ring-offset-background
+        group/account relative flex shrink-0 items-center justify-center
+        overflow-hidden transition-colors
+        focus-within:ring-2 focus-within:ring-primary
+        focus-within:ring-offset-2 focus-within:ring-offset-background
         ${
           floating
             ? `
-              liquid-glass mobile-header-floating-control border-white/10
-              !bg-[#01152d]/55 !backdrop-blur-2xl !backdrop-saturate-150
+              liquid-glass mobile-header-floating-control size-10 rounded-full
+              border border-white/10 !bg-[#01152d]/55 !backdrop-blur-2xl
+              !backdrop-saturate-150
               hover:!border-primary hover:!bg-primary
             `
             : `
-              border-border/50 bg-secondary/30 hover:border-primary
-              hover:bg-primary
+              size-7 rounded-lg
+              hover:bg-muted/50
             `
         }
       `}
       title="Abrir menú de cuenta"
     >
-      <span className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center text-muted-foreground transition-colors group-hover/account:text-slate-950">
-        <IoSettingsOutline className="size-[22px]" aria-hidden="true" />
+      <span
+        className={`
+          pointer-events-none absolute inset-0 z-[1] flex items-center
+          justify-center text-muted-foreground transition-colors
+          ${
+            floating
+              ? 'group-hover/account:text-slate-950'
+              : 'group-hover/account:text-foreground'
+          }
+        `}
+      >
+        <IoSettingsOutline
+          className={floating ? 'size-[22px]' : 'size-4'}
+          aria-hidden="true"
+        />
       </span>
       <div className="absolute inset-0 opacity-0 [&_.cl-rootBox]:!size-full [&_.cl-rootBox]:!max-w-full [&_.cl-rootBox]:!min-w-0 [&_.cl-userButtonBox]:!size-full [&_.cl-userButtonBox]:!max-w-full [&_.cl-userButtonBox]:!min-w-0 [&_.cl-userButtonBox]:!justify-center [&_.cl-userButtonOuterIdentifier]:!hidden [&_.cl-userButtonTrigger]:!size-full [&_.cl-userButtonTrigger]:!max-w-full [&_.cl-userButtonTrigger]:!min-w-0 [&_.cl-userButtonTrigger]:!p-0 [&>div]:!size-full">
         <Suspense fallback={null}>
@@ -253,17 +278,23 @@ export function Header({
   };
 
   const navLinkClass = (isActive: boolean) => `
-    relative px-2.5 py-2 text-sm font-medium whitespace-nowrap
-    transition-colors
-    after:absolute after:inset-x-2.5 after:-bottom-0.5 after:h-0.5
-    after:rounded-full after:transition-colors
-    focus-visible:text-white focus-visible:outline-none
-    ${
-      isActive
-        ? 'text-white after:bg-white'
-        : 'text-slate-300 after:bg-transparent hover:text-primary'
-    }
+    group/nav relative block whitespace-nowrap rounded-md px-2 py-1.5 text-xs
+    font-medium transition-colors duration-200
+    hover:text-foreground
+    focus-visible:text-foreground focus-visible:outline-none
+    ${isActive ? 'text-primary' : 'text-muted-foreground'}
   `;
+
+  const navUnderline = (
+    <span
+      aria-hidden="true"
+      className="
+        absolute inset-x-2 -bottom-0.5 h-px scale-x-0 bg-primary
+        transition-transform duration-200
+        group-hover/nav:scale-x-100 group-focus-visible/nav:scale-x-100
+      "
+    />
+  );
 
   const renderNavItem = (item: { href: string | null; label: string }) => {
     const { href } = item;
@@ -277,6 +308,7 @@ export function Header({
             className={navLinkClass(false)}
           >
             {item.label}
+            {navUnderline}
           </button>
         </li>
       );
@@ -291,26 +323,11 @@ export function Header({
           <div className="group relative">
             <Link
               href={href}
-              className={`inline-flex items-center gap-1 ${navLinkClass(isActive)}`}
+              aria-current={isActive ? 'page' : undefined}
+              className={navLinkClass(isActive)}
             >
               {item.label}
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="
-                              mt-0.5 size-3.5 transition-transform duration-200
-                              group-hover:rotate-180
-                            "
-              >
-                <path d="m6 9 6 6 6-6" />
-              </svg>
+              {navUnderline}
             </Link>
 
             <div
@@ -520,8 +537,13 @@ export function Header({
             </div>
           </div>
         ) : (
-          <Link href={href} className={navLinkClass(isActive)}>
+          <Link
+            href={href}
+            aria-current={isActive ? 'page' : undefined}
+            className={navLinkClass(isActive)}
+          >
             {item.label}
+            {navUnderline}
           </Link>
         )}
       </li>
@@ -598,9 +620,9 @@ export function Header({
             </Show>
 
             <Show when="signed-in">
-              <div className="mr-4 hidden items-center gap-2 md:mr-6 md:flex">
-                <div className="campana-header relative md:text-white">
-                  <NotificationHeader />
+              <div className="hidden shrink-0 items-center gap-0.5 md:flex">
+                <div className="relative">
+                  <NotificationHeader compact />
                 </div>
                 {renderAccountMenuButton()}
                 {renderProfileLink()}
@@ -690,7 +712,9 @@ export function Header({
     <>
       <nav
         className="
-        fixed inset-x-0 z-[100] mb-0 w-full bg-transparent md:bg-[#01152d]
+        fixed inset-x-0 z-[100] mb-0 w-full bg-transparent
+        md:border-b md:border-border/30 md:bg-background/60
+        md:backdrop-blur-md
       "
         style={{ top: 'var(--subscription-banner-height, 0px)' }}
       >
@@ -760,59 +784,61 @@ export function Header({
           </div>
         ) : null}
         <div
+          aria-hidden="true"
           className="
-          container mx-auto flex h-16 max-w-screen-2xl items-center
-          justify-between gap-12 px-4
+          absolute inset-x-0 top-0 hidden h-px bg-gradient-to-r
+          from-transparent via-primary/60 to-transparent
+          md:block
+        "
+        />
+        <div
+          className="
+          container mx-auto flex h-16 max-w-screen-2xl items-center px-4
           sm:px-6
+          md:h-14
         "
         >
           {!isMobileViewport ? (
-            <div className="hidden w-full items-center justify-between gap-6 md:flex">
-              {/* Logo */}
-              <Link
-                href="/"
-                className="
-              ml-0 flex shrink-0 items-center gap-2
-              md:-ml-8
+            <div
+              className="
+              hidden w-full grid-cols-[minmax(max-content,1fr)_minmax(220px,430px)_minmax(max-content,1fr)]
+              items-center gap-5
+              md:grid
             "
-              >
-                <div className="relative h-8 w-32">
+            >
+              <div className="flex min-w-0 items-center gap-1">
+                <Link href="/" className="mr-2 flex shrink-0 items-center">
                   <Image
                     src="/artiefy-logo.svg"
-                    alt="Logo Artiefy"
-                    fill
+                    alt="Artiefy"
+                    width={96}
+                    height={24}
                     unoptimized
-                    className="object-contain"
-                    sizes="128px"
+                    className="h-6 w-auto"
                   />
-                </div>
-              </Link>
+                </Link>
+                <ul
+                  className="
+                hidden min-w-0 items-center gap-0.5
+                lg:flex
+              "
+                >
+                  {leftNavItems.map(renderNavItem)}
+                </ul>
+              </div>
 
-              {/* Primary navigation */}
-              <ul
-                className="
-              hidden shrink-0 items-center gap-1
-              lg:flex
-            "
-              >
-                {leftNavItems.map(renderNavItem)}
-              </ul>
-
-              {/* Search Bar - Hidden on mobile */}
               <form
                 ref={searchContainerRef}
                 onSubmit={handleCreateWithArtie}
-                className="
-              relative mx-auto hidden max-w-xl min-w-0 flex-1
-              md:block
-            "
+                className="relative w-full"
               >
-                <div className="search-neon">
+                <NeonSearchShell>
                   <Search
                     aria-hidden="true"
                     className="
-                  pointer-events-none absolute top-1/2 left-4 size-4
-                  -translate-y-1/2 text-muted-foreground
+                  size-3.5 shrink-0 text-muted-foreground transition-colors
+                  duration-300
+                  group-focus-within:text-primary
                 "
                   />
                   <input
@@ -826,14 +852,13 @@ export function Header({
                     }}
                     onFocus={openSearch}
                     className="
-                  w-full rounded-full bg-[#0b1a2e] py-2.5 pr-4 pl-10 text-sm
-                  text-foreground transition-colors
-                  placeholder:text-gray-400
-                  focus:bg-[#0e2036] focus:outline-none
+                  neon-search-input ml-2.5 size-full bg-transparent text-xs
+                  text-foreground outline-none
+                  placeholder:text-muted-foreground
                 "
                     autoComplete="off"
                   />
-                </div>
+                </NeonSearchShell>
                 {isSearchOpen && (
                   <ArtieSearchDropdown
                     query={searchQuery}
@@ -845,16 +870,10 @@ export function Header({
                 )}
               </form>
 
-              {/* Secondary navigation & Auth */}
-              <div
-                className="
-              mr-0 flex shrink-0 items-center gap-3
-              md:-mr-8
-            "
-              >
+              <div className="flex min-w-0 items-center justify-end gap-0.5">
                 <ul
                   className="
-                hidden items-center gap-1
+                mr-1 hidden min-w-0 items-center gap-0.5
                 lg:flex
               "
                 >
@@ -1053,44 +1072,45 @@ export function Header({
             <form
               ref={searchContainerRef}
               onSubmit={handleCreateWithArtie}
-              className="search-neon w-full"
+              className="relative w-full"
             >
-              <input
-                type="search"
-                placeholder="¿Qué quieres hacer?"
-                aria-label="Buscar o crear con Artie"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  openSearch();
-                }}
-                onFocus={openSearch}
-                className="
-                w-full rounded-full bg-[#0b1a2e] px-10 py-2.5 text-sm
-                text-foreground transition-colors
-                placeholder:text-gray-400
-                focus:bg-[#0e2036] focus:outline-none
-              "
-                autoComplete="off"
-              />
-              <button
-                type="submit"
-                className="absolute top-1/2 right-3 -translate-y-1/2"
-                aria-label="Crear con Artie"
-              >
-                <Search className="size-4 text-primary/70" />
-              </button>
-              <button
-                type="button"
-                className="absolute top-1/2 left-3 -translate-y-1/2"
-                onClick={() => {
-                  resetSearch();
-                  setShowMobileSearch(false);
-                }}
-                aria-label="Cerrar búsqueda"
-              >
-                <X className="size-4 text-primary/70" />
-              </button>
+              <NeonSearchShell>
+                <button
+                  type="button"
+                  className="shrink-0"
+                  onClick={() => {
+                    resetSearch();
+                    setShowMobileSearch(false);
+                  }}
+                  aria-label="Cerrar búsqueda"
+                >
+                  <X className="size-4 text-primary/70" />
+                </button>
+                <input
+                  type="search"
+                  placeholder="¿Qué quieres hacer?"
+                  aria-label="Buscar o crear con Artie"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    openSearch();
+                  }}
+                  onFocus={openSearch}
+                  className="
+                  neon-search-input mx-2.5 size-full bg-transparent text-sm
+                  text-foreground outline-none
+                  placeholder:text-muted-foreground
+                "
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  className="shrink-0"
+                  aria-label="Crear con Artie"
+                >
+                  <Search className="size-4 text-primary/70" />
+                </button>
+              </NeonSearchShell>
               {isSearchOpen && (
                 <ArtieSearchDropdown
                   query={searchQuery}

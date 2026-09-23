@@ -1330,47 +1330,58 @@ body[data-animate-server-sections='true'] #courses-list-section {
   }
 }
 
-/* Header search: neon arc that travels around the pill border. */
-@property --search-neon-angle {
+/* Header search: a beam of light that travels the whole pill border. */
+@property --neon-search-angle {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
 
-.search-neon {
-  position: relative;
-  border-radius: 9999px;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--search-neon-angle),
-    rgb(34 196 211 / 0.25) 0%,
-    rgb(34 196 211 / 0.25) 60%,
-    rgb(34 196 211 / 0.95) 85%,
-    rgb(34 196 211) 88%,
-    rgb(34 196 211 / 0.25) 92%,
-    rgb(34 196 211 / 0.25) 100%
-  );
-  box-shadow: 0 0 14px rgb(34 196 211 / 0.12);
-  animation: search-neon-spin 4s linear infinite;
+.neon-search-ring,
+.neon-search-glow {
+  background:
+    conic-gradient(
+      from var(--neon-search-angle),
+      transparent 0%,
+      transparent 45%,
+      rgb(34 196 211 / 0.45) 70%,
+      rgb(34 196 211) 88%,
+      rgb(255 255 255) 93%,
+      rgb(34 196 211) 97%,
+      transparent 100%
+    ),
+    rgb(34 196 211 / 0.45);
+  animation: neon-search-travel 3s linear infinite;
+}
+
+/* Halo behind the ring: the whole pill glows softly and the beam glows
+   brighter as it travels. */
+.neon-search-glow {
+  background:
+    conic-gradient(
+      from var(--neon-search-angle),
+      transparent 0%,
+      transparent 55%,
+      rgb(34 196 211 / 0.6) 85%,
+      rgb(34 196 211) 93%,
+      transparent 100%
+    ),
+    rgb(34 196 211 / 0.25);
+  filter: blur(10px);
+  opacity: 0.8;
 }
 
 /* The pill has its own clear/close controls; hide the native one. */
-.search-neon input[type='search']::-webkit-search-cancel-button {
+.neon-search-input::-webkit-search-cancel-button {
   appearance: none;
 }
 
-.search-neon:focus-within {
-  box-shadow: 0 0 18px rgb(34 196 211 / 0.28);
-}
-
-@keyframes search-neon-spin {
+@keyframes neon-search-travel {
   to {
-    --search-neon-angle: 360deg;
+    --neon-search-angle: 360deg;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .search-neon {
-    animation: none;
-  }
-}
+/* Intentionally not disabled under prefers-reduced-motion: it is a slow,
+   non-flashing ambient loop, and Windows turns that flag on for every user
+   who switches off "Animation effects", which hid the effect entirely. */

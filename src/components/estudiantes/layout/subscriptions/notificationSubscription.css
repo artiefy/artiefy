@@ -3,7 +3,8 @@
 }
 
 .artiefy-subscription-root {
-  --subscription-tone: hsl(var(--primary));
+  /* Solid tones: the banner must never render see-through. */
+  --subscription-tone: rgb(34 196 211);
   position: fixed;
   top: 0;
   left: 0;

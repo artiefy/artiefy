@@ -94,7 +94,12 @@ const renderNotificationDescription = (notification: Notification) => {
   return baseMessage;
 };
 
-export function NotificationHeader() {
+export function NotificationHeader({
+  compact = false,
+}: {
+  /** Small ghost icon button used by the desktop header. */
+  compact?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
@@ -454,64 +459,97 @@ export function NotificationHeader() {
   // Solo renderiza el modal si deleteId !== null
   return (
     <div className="notification-menu">
-      <button
-        className={`
-          group notification-button relative flex size-10 items-center
-          justify-center rounded-full border border-border/50 p-0 text-primary
-          transition-colors hover:border-primary hover:bg-primary
-          focus-visible:ring-2 focus-visible:ring-primary
-          focus-visible:ring-offset-2 focus-visible:ring-offset-background
-          focus-visible:outline-none
-          md:ml-2
-          ${isAnimating ? 'active' : ''}
-        `}
-        type="button"
-        aria-label={
-          unreadCount > 0
-            ? `Notificaciones: ${unreadCount} pendientes`
-            : 'Notificaciones'
-        }
-        onClick={handleClick}
-      >
-        <span
-          className="
-            absolute top-1/2 left-full hidden translate-x-2 -translate-y-1/2
-            rounded bg-white px-2 py-1 text-[10px] whitespace-nowrap text-black
-            opacity-0 transition-opacity
-            group-hover:opacity-100
-            md:block
-          "
+      {compact ? (
+        <button
+          className={`
+            notification-button relative rounded-lg p-1.5
+            text-muted-foreground transition-colors
+            hover:bg-muted/50 hover:text-foreground
+            focus-visible:ring-2 focus-visible:ring-primary
+            focus-visible:outline-none
+            ${isAnimating ? 'active' : ''}
+          `}
+          type="button"
+          aria-label={
+            unreadCount > 0
+              ? `Notificaciones: ${unreadCount} pendientes`
+              : 'Notificaciones'
+          }
+          onClick={handleClick}
         >
-          Notificaciones
-        </span>
-        {unreadCount > 0 ? (
-          <>
-            <BellRing
+          <Bell className="size-4" />
+          {unreadCount > 0 && (
+            <span
+              className="
+                absolute -top-1 -right-1 flex h-4 min-w-4 items-center
+                justify-center rounded-full bg-primary px-0.5 text-[9px]
+                font-bold text-primary-foreground
+              "
+            >
+              {unreadLabel}
+            </span>
+          )}
+        </button>
+      ) : (
+        <button
+          className={`
+            group notification-button relative flex size-10 items-center
+            justify-center rounded-full border border-border/50 p-0 text-primary
+            transition-colors hover:border-primary hover:bg-primary
+            focus-visible:ring-2 focus-visible:ring-primary
+            focus-visible:ring-offset-2 focus-visible:ring-offset-background
+            focus-visible:outline-none
+            md:ml-2
+            ${isAnimating ? 'active' : ''}
+          `}
+          type="button"
+          aria-label={
+            unreadCount > 0
+              ? `Notificaciones: ${unreadCount} pendientes`
+              : 'Notificaciones'
+          }
+          onClick={handleClick}
+        >
+          <span
+            className="
+              absolute top-1/2 left-full hidden translate-x-2 -translate-y-1/2
+              rounded bg-white px-2 py-1 text-[10px] whitespace-nowrap text-black
+              opacity-0 transition-opacity
+              group-hover:opacity-100
+              md:block
+            "
+          >
+            Notificaciones
+          </span>
+          {unreadCount > 0 ? (
+            <>
+              <BellRing
+                className="
+                  notification-icon size-6 text-primary transition-colors
+                  group-hover:text-slate-950
+                "
+              />
+              <span
+                className="
+                  absolute -top-1 -right-1 z-10 flex h-5 min-w-5
+                  items-center justify-center rounded-full border
+                  border-[#01152d] bg-red-500 px-1 text-[10px] leading-none
+                  font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]
+                "
+              >
+                {unreadLabel}
+              </span>
+            </>
+          ) : (
+            <Bell
               className="
                 notification-icon size-6 text-primary transition-colors
                 group-hover:text-slate-950
               "
             />
-            <span
-              className="
-                absolute -top-1 -right-1 z-10 flex h-5 min-w-5
-                items-center justify-center rounded-full border
-                border-[#01152d] bg-red-500 px-1 text-[10px] leading-none
-                font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]
-              "
-            >
-              {unreadLabel}
-            </span>
-          </>
-        ) : (
-          <Bell
-            className="
-              notification-icon size-6 text-primary transition-colors
-              group-hover:text-slate-950
-            "
-          />
-        )}
-      </button>
+          )}
+        </button>
+      )}
 
       {/* On mobile the header bell lives inside a backdrop-filtered pill, which
           traps position:fixed descendants; portal the panel to <body> so it
