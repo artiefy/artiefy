@@ -7,13 +7,12 @@ import { usePathname } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { X } from 'lucide-react';
-import { FaCrown, FaStar } from 'react-icons/fa';
 
 import { checkSubscriptionStatus } from '~/server/actions/estudiantes/subscriptions/checkSubscriptionStatus';
 
 import './notificationSubscription.css';
 
-type NotificationSeverity = 'medium' | 'high' | 'expired';
+type NotificationSeverity = 'medium' | 'high' | 'grace' | 'expired';
 
 // Clave para persistir el cierre del aviso durante la sesión de navegación.
 // Se guarda la severidad cerrada para que, si el estado escala (p. ej. de
@@ -43,26 +42,28 @@ const getNotificationCopy = (
   daysLeft: number
 ) => {
   const planType = normalizePlanType(rawPlanType);
-  const isPremium = planType === 'Premium';
-  const pluralSuffix = daysLeft === 1 ? '' : 's';
+  const days = `${daysLeft} día${daysLeft === 1 ? '' : 's'}`;
 
   if (severity === 'expired') {
     return {
-      compactMessage: `${planType} expirado`,
-      ctaLabelDesktop: 'Renovar ahora',
-      desktopMessage: `Tu suscripción ${planType} ha expirado`,
-      desktopSupport:
-        'Renueva ahora para continuar accediendo a todos los cursos.',
-      isPremium,
+      compactMessage: `${planType} vencido`,
+      ctaLabel: 'Renovar ahora',
+      desktopMessage: `Tu suscripción ${planType} ha vencido`,
+    };
+  }
+
+  if (severity === 'grace') {
+    return {
+      compactMessage: `${planType} vencido · ${days} de gracia`,
+      ctaLabel: 'Renovar plan',
+      desktopMessage: `Tu suscripción ${planType} venció · te quedan ${days} de gracia`,
     };
   }
 
   return {
-    compactMessage: `${planType} expira en ${daysLeft} día${pluralSuffix}`,
-    ctaLabelDesktop: 'Renovar plan',
-    desktopMessage: `Tu suscripción ${planType} expira en ${daysLeft} día${pluralSuffix}`,
-    desktopSupport: 'Mantén tu acceso ininterrumpido renovando tu plan.',
-    isPremium,
+    compactMessage: `${planType} expira en ${days}`,
+    ctaLabel: 'Renovar plan',
+    desktopMessage: `Tu suscripción ${planType} expira en ${days}`,
   };
 };
 
@@ -166,9 +167,12 @@ export function NotificationSubscription() {
     return null;
   }
 
-  const PlanIcon = notificationCopy.isPremium ? FaCrown : FaStar;
-  const shouldUseWarningColor =
-    notification.severity !== 'expired' && notification.daysLeft <= 2;
+  const tone =
+    notification.severity === 'expired'
+      ? 'expired'
+      : notification.severity === 'grace'
+        ? 'grace'
+        : 'upcoming';
 
   return (
     <>
@@ -177,122 +181,51 @@ export function NotificationSubscription() {
       )}
       <div
         ref={rootRef}
-        className={`
-          artiefy-subscription-root
-          severity-${shouldUseWarningColor ? 'warning' : notification.severity}
-        `}
+        className={`artiefy-subscription-root tone-${tone}`}
         role="alert"
       >
-        <div aria-hidden="true" className="subscription-banner__sweep" />
-        <div className="subscription-banner__line subscription-banner__line--top" />
         <div
           className="
-            subscription-banner__line subscription-banner__line--bottom
-          "
-        />
-
-        <div
-          className="
-            relative container flex items-center justify-between gap-2 py-2
-            sm:gap-3 sm:px-4 sm:py-2.5
+            relative container flex flex-nowrap items-center justify-between
+            gap-2 py-1
+            sm:gap-3
           "
         >
-          <div
+          <p
             className="
-              flex min-w-0 flex-1 items-center gap-2
-              sm:gap-3
+              min-w-0 truncate text-xs leading-none font-semibold
+              text-foreground
+              sm:text-[13px]
             "
           >
-            <div
-              className={`
-                subscription-plan-icon
-                ${notificationCopy.isPremium ? 'is-premium' : 'is-pro'}
-                ${notification.severity === 'expired' ? 'is-expired' : ''}
-                ${notification.severity === 'expired' ? 'is-static' : 'is-animated'}
-                flex size-8 flex-shrink-0 items-center justify-center rounded-lg
-                sm:size-9 sm:rounded-xl
-              `}
-            >
-              <PlanIcon
-                className="
-                  size-3.5 drop-shadow-[0_0_4px_currentColor]
-                  sm:size-4
-                "
-              />
-            </div>
-
-            <p
+            <span className="sm:hidden">{notificationCopy.compactMessage}</span>
+            <span
               className="
-                truncate text-[13px] font-semibold text-foreground
-                sm:hidden
+                hidden
+                sm:inline
               "
             >
-              {notificationCopy.compactMessage}
-            </p>
+              {notificationCopy.desktopMessage}
+            </span>
+          </p>
 
-            <div
-              className="
-                hidden min-w-0
-                sm:flex sm:items-center sm:gap-2
-              "
-            >
-              <p className="truncate text-sm font-semibold text-foreground">
-                {notificationCopy.desktopMessage}
-              </p>
-              <span
-                className="
-                  hidden text-xs text-muted-foreground
-                  md:inline
-                "
-              >
-                · {notificationCopy.desktopSupport}
-              </span>
-            </div>
-          </div>
-
-          <div
-            className="
-              flex flex-shrink-0 items-center gap-1.5
-              sm:gap-2
-            "
-          >
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
             <Link
               href="/planes"
               className="
-                group relative overflow-hidden rounded-full bg-gradient-to-r
-                from-primary via-primary/90 to-primary px-3 py-1.5 text-[11px]
-                font-semibold whitespace-nowrap text-background
-                shadow-[0_0_15px_hsl(var(--primary)/0.35)] transition-all
-                hover:scale-[1.04]
-                hover:shadow-[0_0_25px_hsl(var(--primary)/0.6)]
-                sm:px-5 sm:text-sm
+                subscription-banner__cta text-xs leading-none font-semibold
+                whitespace-nowrap underline-offset-4
+                hover:underline
+                sm:text-[13px]
               "
             >
-              <span className="relative z-10">
-                <span className="sm:hidden">Renovar</span>
-                <span
-                  className="
-                    hidden
-                    sm:inline
-                  "
-                >
-                  {notificationCopy.ctaLabelDesktop}
-                </span>
-              </span>
-              <span
-                className="
-                  absolute inset-0 -translate-x-full bg-gradient-to-r
-                  from-transparent via-white/30 to-transparent
-                  transition-transform duration-700
-                  group-hover:translate-x-full
-                "
-              />
+              {notificationCopy.ctaLabel}
             </Link>
 
             <button
               type="button"
               className="
-                flex size-7 items-center justify-center rounded-full
+                flex size-5 items-center justify-center rounded-full
                 text-muted-foreground transition-colors
                 hover:bg-white/10 hover:text-foreground
               "
@@ -307,7 +240,7 @@ export function NotificationSubscription() {
                 }
               }}
             >
-              <X className="size-4" />
+              <X className="size-3" />
             </button>
           </div>
         </div>

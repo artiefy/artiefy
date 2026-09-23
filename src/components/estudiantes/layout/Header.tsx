@@ -563,33 +563,33 @@ export function Header({
             "
               >
                 <div className="relative">
-                  <input
-                    type="search"
-                    placeholder="¡Aprende con IA!"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="
-                  w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3
-                  pr-10 pl-4 text-sm text-foreground transition-all
-                  placeholder:text-gray-400
-                  hover:border-[#334155]
-                  focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
-                  focus:ring-[#3AF4EF]/50 focus:outline-none
-                "
-                    autoComplete="off"
-                  />
-                  <Search
-                    className="
-                  absolute top-1/2 right-3 size-4 -translate-y-1/2
-                  cursor-pointer text-primary/70 transition-colors
-                  hover:text-primary
-                "
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (!searchQuery.trim()) return;
-                      handleSearch();
-                    }}
-                  />
+                  <div className="search-neon">
+                    <input
+                      type="search"
+                      placeholder="¡Aprende con IA!"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="
+                    w-full rounded-full bg-[#0b1a2e] py-2.5 pr-10 pl-4 text-sm
+                    text-foreground transition-colors
+                    placeholder:text-gray-400
+                    focus:bg-[#0e2036] focus:outline-none
+                  "
+                      autoComplete="off"
+                    />
+                    <Search
+                      className="
+                    absolute top-1/2 right-3 size-4 -translate-y-1/2
+                    cursor-pointer text-primary/70 transition-colors
+                    hover:text-primary
+                  "
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!searchQuery.trim()) return;
+                        handleSearch();
+                      }}
+                    />
+                  </div>
                   {/* Preview de cursos debajo del input */}
                   {showPreview &&
                     (previewLoading ||
@@ -1122,7 +1122,7 @@ export function Header({
                 handleSearch();
                 setShowMobileSearch(false);
               }}
-              className="relative w-full"
+              className="search-neon w-full"
             >
               <input
                 type="search"
@@ -1130,12 +1130,10 @@ export function Header({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="
-                w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] px-10
-                py-3 text-sm text-foreground transition-all
+                w-full rounded-full bg-[#0b1a2e] px-10 py-2.5 text-sm
+                text-foreground transition-colors
                 placeholder:text-gray-400
-                hover:border-[#334155]
-                focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
-                focus:ring-[#3AF4EF]/50 focus:outline-none
+                focus:bg-[#0e2036] focus:outline-none
               "
                 autoComplete="off"
               />

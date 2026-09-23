@@ -2,6 +2,7 @@ import { format, parseISO } from 'date-fns';
 import { toDate } from 'date-fns-tz';
 
 const TIMEZONE = 'America/Bogota';
+const GRACE_PERIOD_DAYS = 5;
 
 type SubscriptionData = {
   subscriptionStatus?: string | null;
@@ -168,34 +169,14 @@ export async function checkSubscriptionStatus(
       }
     }
 
-    if (diffDays <= 7 && diffDays > 3) {
+    // The banner only shows during the last 5 days before expiration.
+    if (diffDays <= 5 && diffDays > 0) {
       return {
         shouldNotify: true,
         message: `Tu suscripción ${planName} expirará en ${diffDays} días`,
-        severity: 'medium',
+        severity: diffDays <= 2 ? 'high' : 'medium',
         daysLeft: diffDays,
       };
-    }
-
-    if (diffDays <= 3 && diffDays > 0) {
-      if (diffDays >= 1) {
-        return {
-          shouldNotify: true,
-          message: `¡ATENCIÓN! Tu suscripción ${planName} expirará en ${diffDays} días`,
-          severity: 'high',
-          daysLeft: diffDays,
-        };
-      } else {
-        const hours = Math.round(
-          (endDate.getTime() - bogotaNow.getTime()) / (1000 * 60 * 60)
-        );
-        return {
-          shouldNotify: true,
-          message: `¡ATENCIÓN! Tu suscripción ${planName} expirará en ${hours} horas`,
-          severity: 'high',
-          daysLeft: diffDays,
-        };
-      }
     }
   }
 
@@ -215,6 +196,17 @@ export async function checkSubscriptionStatus(
         kind: 'expired',
       });
     }
+    // Grace period: the 5 days right after the end date.
+    const graceDaysLeft = GRACE_PERIOD_DAYS + diffDays;
+    if (diffDays <= 0 && graceDaysLeft > 0) {
+      return {
+        shouldNotify: true,
+        message: `Tu suscripción ${planName} venció. Tienes ${graceDaysLeft} días de gracia`,
+        severity: 'grace',
+        daysLeft: graceDaysLeft,
+      };
+    }
+
     return {
       shouldNotify: true,
       message: `Tu suscripción ${planName} ha expirado`,
