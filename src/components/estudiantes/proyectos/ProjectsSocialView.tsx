@@ -8,6 +8,10 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
+import {
+  type ProjectAiSeed,
+  ProjectModeChooser,
+} from '~/components/projects/Modals/ProjectModeChooser';
 import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
 import {
   consumePendingCreateEntry,
@@ -119,6 +123,10 @@ export function ProjectsSocialView({
     useState<ProjectSocialItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  // "Crear > Proyecto" opens the mode chooser first; its idea seeds the
+  // wizard's AI-generated title and description.
+  const [isModeChooserOpen, setIsModeChooserOpen] = useState(false);
+  const [createAiSeed, setCreateAiSeed] = useState<ProjectAiSeed | null>(null);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<CommunityFeedPost | null>(
     null
@@ -130,11 +138,11 @@ export function ProjectsSocialView({
   // `?create=` query param isn't an option on this route).
   useEffect(() => {
     const pending = consumePendingCreateEntry();
-    if (pending === 'project') setIsCreateModalOpen(true);
+    if (pending === 'project') setIsModeChooserOpen(true);
     if (pending === 'post') setIsPostModalOpen(true);
 
     return subscribeToCreateEntry((action) => {
-      if (action === 'project') setIsCreateModalOpen(true);
+      if (action === 'project') setIsModeChooserOpen(true);
       if (action === 'post') setIsPostModalOpen(true);
     });
   }, []);
@@ -849,7 +857,9 @@ export function ProjectsSocialView({
         isOpen={isCreateModalOpen}
         onClose={() => {
           setIsCreateModalOpen(false);
+          setCreateAiSeed(null);
         }}
+        aiSeed={createAiSeed}
         titulo=""
         description=""
         planteamiento=""
@@ -891,6 +901,21 @@ export function ProjectsSocialView({
         setJustificacion={() => {}}
         setObjetivoGen={() => {}}
         setObjetivosEspProp={() => {}}
+      />
+
+      <ProjectModeChooser
+        isOpen={isModeChooserOpen}
+        onOpenChange={setIsModeChooserOpen}
+        onContinue={(seed) => {
+          setIsModeChooserOpen(false);
+          setCreateAiSeed(seed);
+          setIsCreateModalOpen(true);
+        }}
+        onAdvanced={() => {
+          setIsModeChooserOpen(false);
+          setCreateAiSeed(null);
+          setIsCreateModalOpen(true);
+        }}
       />
 
       <CreatePostModal

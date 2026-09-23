@@ -44,6 +44,9 @@ export function subscribeToCreateEntry(
   handler: (action: CreateEntryAction) => void
 ): () => void {
   const listener = (event: Event) => {
+    // Handled live, so drop the cross-route fallback; otherwise the next
+    // mount of `ProjectsSocialView` (e.g. a reload) would reopen the modal.
+    sessionStorage.removeItem(STORAGE_KEY);
     handler((event as CustomEvent<CreateEntryAction>).detail);
   };
 

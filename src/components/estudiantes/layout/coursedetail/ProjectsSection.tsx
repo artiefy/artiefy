@@ -13,6 +13,10 @@ import { toast } from 'sonner';
 
 import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailView';
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
+import {
+  type ProjectAiSeed,
+  ProjectModeChooser,
+} from '~/components/projects/Modals/ProjectModeChooser';
 import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
 
 import type { Project } from '~/types/project';
@@ -37,6 +41,10 @@ export function ProjectsSection({
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [modalStep, setModalStep] = useState<number | undefined>(undefined);
+  // New projects start in the mode chooser; its idea seeds the wizard's
+  // AI-generated title and description.
+  const [isModeChooserOpen, setIsModeChooserOpen] = useState(false);
+  const [createAiSeed, setCreateAiSeed] = useState<ProjectAiSeed | null>(null);
   const [addedSections, setAddedSections] = useState<
     Record<string, { name: string; content: string }>
   >({});
@@ -154,6 +162,12 @@ export function ProjectsSection({
       toast.error('Tu suscripción ha expirado. Renueva para crear proyectos.');
       return;
     }
+    setIsModeChooserOpen(true);
+  };
+
+  const openCreateWizard = (seed: ProjectAiSeed | null) => {
+    setIsModeChooserOpen(false);
+    setCreateAiSeed(seed);
     setModalProject(null);
     setModalStep(1);
     setShowModal(true);
@@ -776,7 +790,9 @@ export function ProjectsSection({
           setShowModal(false);
           setModalStep(undefined);
           setModalProject(null);
+          setCreateAiSeed(null);
         }}
+        aiSeed={createAiSeed}
         initialStep={modalStep}
         titulo={modalProject?.name ?? ''}
         description={modalProject?.description ?? ''}
@@ -809,6 +825,13 @@ export function ProjectsSection({
         setJustificacion={() => {}}
         setObjetivoGen={() => {}}
         setObjetivosEspProp={() => {}}
+      />
+
+      <ProjectModeChooser
+        isOpen={isModeChooserOpen}
+        onOpenChange={setIsModeChooserOpen}
+        onContinue={openCreateWizard}
+        onAdvanced={() => openCreateWizard(null)}
       />
     </>
   );
