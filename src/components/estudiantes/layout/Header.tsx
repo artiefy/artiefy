@@ -85,9 +85,9 @@ export function Header({
   // `href: null` items are shown but have no destination yet.
   const leftNavItems = [
     { href: '/', label: 'Inicio' },
-    { href: '/estudiantes', label: 'Explorar' },
+    { href: null, label: 'Explorar' },
     { href: '/proyectos', label: 'Proyectos' },
-    { href: null, label: 'Educación' },
+    { href: '/estudiantes', label: 'Educación' },
   ];
   const rightNavItems = [
     { href: '/planes', label: 'Planes' },
@@ -325,7 +325,7 @@ export function Header({
 
     return (
       <li key={item.label}>
-        {item.label === 'Explorar' && hasActiveStudentAccess ? (
+        {item.label === 'Educación' && hasActiveStudentAccess ? (
           <div className="group relative">
             <Link
               href={href}
