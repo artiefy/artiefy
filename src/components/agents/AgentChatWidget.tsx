@@ -20,6 +20,7 @@ import gsap from 'gsap';
 import {
   AlignLeft,
   ArrowDown,
+  ArrowRight,
   Brain,
   ChevronDown,
   ChevronRight,
@@ -47,6 +48,7 @@ import { AgentRevealedContent } from '~/components/agents/AgentRevealedContent';
 import { ArtiefyMark } from '~/components/agents/ArtiefyMark';
 import { useDocumentPictureInPicture } from '~/hooks/useDocumentPictureInPicture';
 import {
+  type AgentChatAction,
   type AgentChatScope,
   GENERAL_SCOPE,
   scopeBadge,
@@ -59,6 +61,7 @@ import {
   toAgentProject,
   type UserProjectDetails,
 } from '~/lib/agents/agentProject';
+import { readProjectMode } from '~/lib/agents/projectMode';
 
 export type {
   AgentActivity,
@@ -370,6 +373,8 @@ interface ChatMessage {
   agent: AgentId;
   text: string;
   time: string;
+  /** Button under an agent message; only greetings from the bus carry one. */
+  action?: AgentChatAction;
 }
 
 type AgentQuotaTier = 'anon' | 'free' | 'premium';
@@ -1405,32 +1410,35 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
    */
   useEffect(
     () =>
-      subscribeToAgentChat(({ scope: requested, greeting, project: seed }) => {
-        const now = new Date();
-        const specialist: AgentId =
-          requested.kind === 'project' ? 'coach' : 'tutor';
+      subscribeToAgentChat(
+        ({ scope: requested, greeting, action, project: seed }) => {
+          const now = new Date();
+          const specialist: AgentId =
+            requested.kind === 'project' ? 'coach' : 'tutor';
 
-        setScope(requested);
-        // Callers that own no widget of their own can send the project along,
-        // so the tree opens with the conversation instead of staying hidden.
-        setRequestedProject(seed ?? null);
-        setAgentId(specialist);
-        leaveConversation(`conv-${now.getTime()}`);
-        setMessages([
-          {
-            id: `${now.getTime()}-agent`,
-            role: 'agent',
-            agent: specialist,
-            text: greeting,
-            time: formatTime(now),
-          },
-        ]);
-        setDraft('');
-        setQuotaNotice(null);
-        // Only the overlay hides the new conversation; a docked column does not.
-        if (!hasRoomForHistoryRef.current) setIsHistoryOpen(false);
-        setIsOpen(true);
-      }),
+          setScope(requested);
+          // Callers that own no widget of their own can send the project along,
+          // so the tree opens with the conversation instead of staying hidden.
+          setRequestedProject(seed ?? null);
+          setAgentId(specialist);
+          leaveConversation(`conv-${now.getTime()}`);
+          setMessages([
+            {
+              id: `${now.getTime()}-agent`,
+              role: 'agent',
+              agent: specialist,
+              text: greeting,
+              time: formatTime(now),
+              action,
+            },
+          ]);
+          setDraft('');
+          setQuotaNotice(null);
+          // Only the overlay hides the new conversation; a docked column does not.
+          if (!hasRoomForHistoryRef.current) setIsHistoryOpen(false);
+          setIsOpen(true);
+        }
+      ),
     [leaveConversation]
   );
 
@@ -1572,6 +1580,12 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           agent: agentId,
           projectId: scope.kind === 'project' ? scope.id : undefined,
           projectSource: scope.kind === 'project' ? scope.source : undefined,
+          // How much the Coach should do, as picked when the project was
+          // generated from an idea. Only user projects carry one.
+          projectMode:
+            scope.kind === 'project' && scope.source === 'user'
+              ? readProjectMode(scope.id)
+              : undefined,
           courseId: scope.kind === 'course' ? scope.id : undefined,
           // The activity tree only belongs to the project this chat resolved;
           // a project picked up from an enrollment elsewhere has none loaded.
@@ -2604,6 +2618,41 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                           active={message.id === revealingId}
                           onRevealTick={handleRevealTick}
                         />
+                        {message.action ? (
+                          <Link
+                            href={message.action.href}
+                            className="
+                              mt-3 flex items-center gap-3 rounded-xl border
+                              px-3 py-2.5 transition-colors
+                              hover:bg-white/5
+                              focus-visible:ring-2 focus-visible:ring-ring
+                              focus-visible:outline-none
+                            "
+                            style={{
+                              borderColor: `${messageAgent.color}66`,
+                              backgroundColor: `${messageAgent.color}14`,
+                            }}
+                          >
+                            <CircleCheck
+                              className="size-5 shrink-0"
+                              style={{ color: messageAgent.color }}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-semibold text-foreground">
+                                {message.action.label}
+                              </span>
+                              {message.action.hint ? (
+                                <span className="block text-xs text-muted-foreground">
+                                  {message.action.hint}
+                                </span>
+                              ) : null}
+                            </span>
+                            <ArrowRight
+                              className="size-4 shrink-0"
+                              style={{ color: messageAgent.color }}
+                            />
+                          </Link>
+                        ) : null}
                         <span className="mt-1 block text-[10px] text-muted-foreground/60">
                           {message.time}
                         </span>

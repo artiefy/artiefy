@@ -8,6 +8,7 @@ export type CreateEntryAction = 'project' | 'post';
 
 const EVENT_NAME = 'artiefy:create-entry-request';
 const STORAGE_KEY = 'artiefy:pending-create-entry';
+const IDEA_STORAGE_KEY = 'artiefy:pending-create-idea';
 
 /**
  * Requests that the `/proyectos` creation flow open a specific modal.
@@ -31,9 +32,22 @@ const STORAGE_KEY = 'artiefy:pending-create-entry';
  * same function, same code path as the cross-route mobile case, just
  * without needing the `sessionStorage` fallback to actually do anything.
  */
-export function requestCreateEntry(action: CreateEntryAction): void {
+export function requestCreateEntry(
+  action: CreateEntryAction,
+  options?: {
+    /** Pre-fills the project idea, e.g. with what was typed in the search. */
+    idea?: string;
+  }
+): void {
   if (typeof window === 'undefined') return;
   sessionStorage.setItem(STORAGE_KEY, action);
+  // Unlike the action, the idea is only dropped once read: a live listener
+  // and a post-navigation mount both pick it up through the same call.
+  if (options?.idea) {
+    sessionStorage.setItem(IDEA_STORAGE_KEY, options.idea);
+  } else {
+    sessionStorage.removeItem(IDEA_STORAGE_KEY);
+  }
   window.dispatchEvent(
     new CustomEvent<CreateEntryAction>(EVENT_NAME, { detail: action })
   );
@@ -64,4 +78,12 @@ export function consumePendingCreateEntry(): CreateEntryAction | null {
   if (!pending) return null;
   sessionStorage.removeItem(STORAGE_KEY);
   return pending === 'project' || pending === 'post' ? pending : null;
+}
+
+/** Reads and clears the idea sent along with a `'project'` request. */
+export function consumePendingCreateIdea(): string {
+  if (typeof window === 'undefined') return '';
+  const idea = sessionStorage.getItem(IDEA_STORAGE_KEY) ?? '';
+  sessionStorage.removeItem(IDEA_STORAGE_KEY);
+  return idea;
 }

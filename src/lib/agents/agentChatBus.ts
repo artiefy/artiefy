@@ -26,10 +26,20 @@ export type AgentChatScope =
 
 export const GENERAL_SCOPE: AgentChatScope = { kind: 'general' };
 
+/** A call to action rendered as a button under an agent message. */
+export interface AgentChatAction {
+  label: string;
+  /** Secondary line under the label, e.g. where the button leads. */
+  hint?: string;
+  href: string;
+}
+
 export interface AgentChatOpenRequest {
   scope: AgentChatScope;
   /** Opening line, shown in place of the generic welcome menu. */
   greeting: string;
+  /** Optional button shown under the greeting. */
+  action?: AgentChatAction;
   /**
    * Objectives tree for callers that open the chat from a route which mounts
    * the widget without a project — the wizard's "Guardar Proyecto", above all.
@@ -78,6 +88,47 @@ export function openCoachChatForNewProject(project: {
   openAgentChatFor({
     scope: { kind: 'project', id: project.id, title: name, source: 'user' },
     greeting: `¡Listo! Soy tu Coach y te acompaño en "${name}". Aquí verás los objetivos y las actividades a medida que se vayan creando. ¿Seguimos armándolo juntos?`,
+    project: { id: project.id, title: name, source: 'user', objectives: [] },
+  });
+}
+
+const GENERATED_PROJECT_GREETINGS: Record<
+  'guided' | 'copilot',
+  (name: string, hasObjectives: boolean) => string
+> = {
+  guided: (name) =>
+    `¡Tu proyecto "${name}" ya está creado! Vamos en modo Guiado: yo te enseño y tú tomas las decisiones. Ya tienes el problema, la justificación y el objetivo general. Ahora armemos juntos los objetivos específicos: ¿qué resultados concretos quieres lograr con tu proyecto? Escríbeme una primera idea y la pulimos.`,
+  copilot: (name, hasObjectives) =>
+    hasObjectives
+      ? `¡Tu proyecto "${name}" ya está creado! Vamos en modo Copiloto: te dejé un primer borrador de objetivos y actividades, que ves en el panel del proyecto. Revisémoslo juntos: abre cualquier actividad para trabajarla conmigo, o dime qué quieres ajustar.`
+      : `¡Tu proyecto "${name}" ya está creado! Vamos en modo Copiloto: todavía no tiene objetivos ni actividades. Dime "propónme un borrador" y armamos la primera versión juntos.`,
+};
+
+/**
+ * Opens the Coach on a project generated in the background from the mode
+ * chooser's idea. Same fresh conversation as `openCoachChatForNewProject`,
+ * with a greeting tuned to the mode and a button to the project itself.
+ */
+export function openCoachChatForGeneratedProject(project: {
+  id: number;
+  title: string;
+  mode: 'guided' | 'copilot';
+  href: string;
+  hasObjectives: boolean;
+}): void {
+  const name = project.title.trim() || 'tu proyecto';
+
+  openAgentChatFor({
+    scope: { kind: 'project', id: project.id, title: name, source: 'user' },
+    greeting: GENERATED_PROJECT_GREETINGS[project.mode](
+      name,
+      project.hasObjectives
+    ),
+    action: {
+      label: 'Tu proyecto ha sido creado',
+      hint: 'Ver el detalle del proyecto',
+      href: project.href,
+    },
     project: { id: project.id, title: name, source: 'user', objectives: [] },
   });
 }

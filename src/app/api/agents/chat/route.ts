@@ -34,7 +34,26 @@ interface AgentChatRequestBody {
    * conversation; absent means the single thread projects have always had.
    */
   threadActivityId?: unknown;
+  /**
+   * How much the Coach should do on a user project, as picked in the project
+   * mode chooser. Client-side state (see `projectMode.ts`), so it only tunes
+   * the conversation and is validated against the known modes here.
+   */
+  projectMode?: unknown;
 }
+
+/** Modes the Coach knows how to follow; `autonomous` is not offered yet. */
+const PROJECT_MODE_LINES = {
+  guided:
+    'Modo de trabajo: Guiado. El estudiante quiere aprender haciendo: enséñale paso a paso a definir sus objetivos específicos y actividades, y deja que él los escriba.',
+  copilot:
+    'Modo de trabajo: Copiloto. El estudiante construye junto a ti: revisa el borrador de objetivos y actividades, propón mejoras concretas y completa lo que falte.',
+} as const;
+
+type ProjectMode = keyof typeof PROJECT_MODE_LINES;
+
+const isProjectMode = (value: unknown): value is ProjectMode =>
+  value === 'guided' || value === 'copilot';
 
 /** Specialists the orchestrator can hand a message to. */
 const AGENT_IDS = ['artie', 'tutor', 'coach'] as const;
@@ -188,9 +207,14 @@ async function buildUserProjectContext(
     justificacion: string;
     objetivo_general: string;
   },
-  activityId: number | null
+  activityId: number | null,
+  mode: ProjectMode | null
 ): Promise<string> {
   const lines = [`Proyecto: ${project.name}`];
+
+  if (mode) {
+    lines.push(PROJECT_MODE_LINES[mode]);
+  }
 
   if (project.description) {
     lines.push(`Descripción: ${project.description}`);
@@ -460,7 +484,8 @@ export async function POST(request: NextRequest) {
       context = await buildUserProjectContext(
         projectId,
         userProject,
-        Number.isFinite(activityId) && activityId > 0 ? activityId : null
+        Number.isFinite(activityId) && activityId > 0 ? activityId : null,
+        isProjectMode(body.projectMode) ? body.projectMode : null
       );
       sessionId = withThread(`${userId}:userproject:${projectId}`);
     }

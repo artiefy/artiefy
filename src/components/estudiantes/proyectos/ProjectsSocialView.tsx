@@ -8,16 +8,15 @@ import { Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
-import {
-  type ProjectAiSeed,
-  ProjectModeChooser,
-} from '~/components/projects/Modals/ProjectModeChooser';
+import { ProjectModeChooser } from '~/components/projects/Modals/ProjectModeChooser';
 import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
 import {
   consumePendingCreateEntry,
+  consumePendingCreateIdea,
   requestCreateEntry,
   subscribeToCreateEntry,
 } from '~/lib/creation/createEntryBus';
+import { generateProjectFromIdea } from '~/lib/projects/generateProjectFromIdea';
 
 import { CommunityPostCard } from './subcomponents/CommunityPostCard';
 import { CreatePostModal } from './subcomponents/CreatePostModal';
@@ -123,10 +122,12 @@ export function ProjectsSocialView({
     useState<ProjectSocialItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  // "Crear > Proyecto" opens the mode chooser first; its idea seeds the
-  // wizard's AI-generated title and description.
+  // "Crear > Proyecto" opens the mode chooser first: "Nuevo proyecto" builds
+  // the whole project in the background, "Modo avanzado" opens the wizard.
   const [isModeChooserOpen, setIsModeChooserOpen] = useState(false);
-  const [createAiSeed, setCreateAiSeed] = useState<ProjectAiSeed | null>(null);
+  // Remounts the chooser with the idea sent along the request (the header
+  // search's "Modo avanzado" passes what was typed).
+  const [chooserSeed, setChooserSeed] = useState({ key: 0, idea: '' });
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<CommunityFeedPost | null>(
     null
@@ -137,12 +138,20 @@ export function ProjectsSocialView({
   // needs a cross-route signal — see `createEntryBus.ts` for why a
   // `?create=` query param isn't an option on this route).
   useEffect(() => {
+    const openModeChooser = () => {
+      setChooserSeed((prev) => ({
+        key: prev.key + 1,
+        idea: consumePendingCreateIdea(),
+      }));
+      setIsModeChooserOpen(true);
+    };
+
     const pending = consumePendingCreateEntry();
-    if (pending === 'project') setIsModeChooserOpen(true);
+    if (pending === 'project') openModeChooser();
     if (pending === 'post') setIsPostModalOpen(true);
 
     return subscribeToCreateEntry((action) => {
-      if (action === 'project') setIsModeChooserOpen(true);
+      if (action === 'project') openModeChooser();
       if (action === 'post') setIsPostModalOpen(true);
     });
   }, []);
@@ -855,11 +864,7 @@ export function ProjectsSocialView({
 
       <ModalResumen
         isOpen={isCreateModalOpen}
-        onClose={() => {
-          setIsCreateModalOpen(false);
-          setCreateAiSeed(null);
-        }}
-        aiSeed={createAiSeed}
+        onClose={() => setIsCreateModalOpen(false)}
         titulo=""
         description=""
         planteamiento=""
@@ -904,16 +909,22 @@ export function ProjectsSocialView({
       />
 
       <ProjectModeChooser
+        key={chooserSeed.key}
+        initialIdea={chooserSeed.idea}
         isOpen={isModeChooserOpen}
         onOpenChange={setIsModeChooserOpen}
         onContinue={(seed) => {
           setIsModeChooserOpen(false);
-          setCreateAiSeed(seed);
-          setIsCreateModalOpen(true);
+          // Runs outside this component: it keeps going if the learner
+          // navigates away, and the Coach opens on the project when it is
+          // saved.
+          void generateProjectFromIdea({
+            seed,
+            onCreated: () => router.refresh(),
+          });
         }}
         onAdvanced={() => {
           setIsModeChooserOpen(false);
-          setCreateAiSeed(null);
           setIsCreateModalOpen(true);
         }}
       />

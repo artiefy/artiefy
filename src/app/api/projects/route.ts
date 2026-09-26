@@ -15,6 +15,8 @@ interface ProjectData {
   planteamiento: string;
   justificacion: string;
   objetivo_general: string;
+  /** JSON array of strings, the same shape `ModalResumen` saves. */
+  requirements?: string;
   objetivos_especificos?: { id: string; title: string }[]; // <-- Cambia a array de objetos
   actividades?: {
     descripcion: string;
@@ -260,6 +262,8 @@ export async function POST(req: Request) {
       planteamiento: body.planteamiento,
       justificacion: body.justificacion,
       objetivo_general: body.objetivo_general,
+      requirements:
+        typeof body.requirements === 'string' ? body.requirements : undefined,
       type_project: body.type_project,
       projectTypeId: body.projectTypeId ?? undefined, // Nuevo campo normalizado
       categoryId: body.categoryId,

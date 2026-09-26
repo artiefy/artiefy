@@ -37,12 +37,15 @@ import {
 } from '~/components/projects/ui/select';
 import { useGenerateContent } from '~/hooks/useGenerateContent';
 import { useProjectAutoSave } from '~/hooks/useProjectAutoSave';
+import {
+  AI_MODE_DESCRIPTION_GUIDE,
+  cleanGeneratedTitle,
+  dedupeRequirements,
+  normalizeRequirementLine,
+} from '~/lib/projects/projectAiText';
 import { ObjetivosInput, SpecificObjective } from '~/types/objectives';
 
-import type {
-  ProjectAiMode,
-  ProjectAiSeed,
-} from '~/components/projects/Modals/ProjectModeChooser';
+import type { ProjectAiSeed } from '~/components/projects/Modals/ProjectModeChooser';
 
 import '~/styles/select-custom.css';
 import '~/styles/ai-generate-loader.css';
@@ -99,35 +102,6 @@ const buildProjectContext = (title?: string, description?: string) => {
     .filter((value): value is string => Boolean(value));
   if (parts.length === 0) return null;
   return parts.join(' - ');
-};
-
-const normalizeRequirementLine = (line: string) => {
-  let cleaned = line.trim();
-  if (!cleaned) return '';
-  // Remove common bullet characters
-  cleaned = cleaned.replace(/^[-*•]+\s*/u, '');
-  // Remove numeric list markers like "1.", "2)", "3 -"
-  cleaned = cleaned.replace(/^\d+\s*[.)-]\s*/u, '');
-  // Remove letter list markers only when followed by punctuation like "a." or "b)"
-  cleaned = cleaned.replace(/^[a-zA-Z]\s*[.)-]\s*/u, '');
-  cleaned = cleaned.trim();
-  if (!cleaned) return '';
-  const lower = cleaned.toLowerCase();
-  if (lower === 'requisitos' || lower === 'requisito') return '';
-  if (cleaned.endsWith(':')) return '';
-  // Capitalize first letter
-  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-  return cleaned;
-};
-
-const dedupeRequirements = (items: string[]) => {
-  const seen = new Set<string>();
-  return items.filter((item) => {
-    const key = item.toLowerCase();
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -657,22 +631,6 @@ interface ModalResumenProps {
    */
   aiSeed?: ProjectAiSeed | null;
 }
-
-const AI_MODE_DESCRIPTION_GUIDE: Record<ProjectAiMode, string> = {
-  guided:
-    'El estudiante quiere aprender haciendo: explica qué va a construir y para qué, pero deja abiertas las decisiones de cómo hacerlo.',
-  copilot:
-    'El estudiante trabajará junto a la IA: equilibra la visión general con algunas funcionalidades concretas.',
-  autonomous:
-    'La IA hará la mayor parte del trabajo: sé concreto, con alcance claro y funcionalidades clave definidas.',
-};
-
-const cleanGeneratedTitle = (value: string) =>
-  value
-    .split('\n')[0]!
-    .replace(/^(t[ií]tulo\s*:\s*)/iu, '')
-    .replace(/^["'“”«»*]+|["'“”«»*.]+$/gu, '')
-    .trim();
 
 const steps = [
   {

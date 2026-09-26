@@ -23,6 +23,8 @@ interface ArtieSearchDropdownProps {
   isLoading: boolean;
   onCreate: () => void;
   onSelect: (result: CatalogSearchResult) => void;
+  /** "Modo avanzado": open the project creation modal with the query. */
+  onAdvanced: () => void;
   className?: string;
 }
 
@@ -56,6 +58,7 @@ export function ArtieSearchDropdown({
   isLoading,
   onCreate,
   onSelect,
+  onAdvanced,
   className = '',
 }: ArtieSearchDropdownProps) {
   const trimmed = query.trim();
@@ -179,15 +182,14 @@ export function ArtieSearchDropdown({
         </div>
       )}
 
-      {/* Advanced mode is not available yet; the entry is shown on purpose. */}
       <button
         type="button"
-        aria-disabled="true"
-        title="Próximamente"
+        onClick={onAdvanced}
         className="
-          flex w-full cursor-default items-center gap-4 border-t
-          border-border/50 px-4 py-3 text-left transition-colors
+          flex w-full items-center gap-4 border-t border-border/50 px-4 py-3
+          text-left transition-colors
           hover:bg-white/5
+          focus-visible:bg-white/5 focus-visible:outline-none
         "
       >
         <SlidersHorizontal className="size-5 shrink-0 text-muted-foreground" />

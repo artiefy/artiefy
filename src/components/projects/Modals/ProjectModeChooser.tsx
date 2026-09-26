@@ -5,10 +5,10 @@ import { useState } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import {
   ArrowLeft,
-  ArrowRight,
   Bot,
   GraduationCap,
   Pencil,
+  Plus,
   SlidersHorizontal,
   WandSparkles,
   X,
@@ -17,9 +17,8 @@ import {
 export type ProjectAiMode = 'guided' | 'copilot' | 'autonomous';
 
 /**
- * What the learner typed in the chooser. `ModalResumen` turns it into an
- * AI-generated title and description the moment it opens. A fresh object is
- * created on every "Continuar", so its identity doubles as the run trigger.
+ * What the learner typed in the chooser. "Nuevo proyecto" hands it to
+ * `generateProjectFromIdea`, which builds the whole project in the background.
  */
 export interface ProjectAiSeed {
   idea: string;
@@ -35,6 +34,8 @@ interface ModeOption {
   description: string;
   userShare: number;
   badge?: string;
+  /** Shown but not selectable yet. */
+  disabled?: boolean;
 }
 
 const MODE_OPTIONS: ModeOption[] = [
@@ -62,16 +63,22 @@ const MODE_OPTIONS: ModeOption[] = [
     description: 'Artie ejecuta, tú decides en los puntos clave.',
     userShare: 20,
     badge: 'Desarrollo',
+    disabled: true,
   },
 ];
 
 interface ProjectModeChooserProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  /** "Continuar": open the project wizard pre-filled by AI from the idea. */
+  /** "Nuevo proyecto": generate the whole project from the idea with AI. */
   onContinue: (seed: ProjectAiSeed) => void;
   /** "Modo avanzado": open the project wizard as-is, without AI pre-fill. */
   onAdvanced: () => void;
+  /**
+   * Pre-filled idea. Read once on mount, so callers remount the chooser (via
+   * `key`) to hand it a new one.
+   */
+  initialIdea?: string;
 }
 
 /**
@@ -85,8 +92,9 @@ export function ProjectModeChooser({
   onOpenChange,
   onContinue,
   onAdvanced,
+  initialIdea = '',
 }: ProjectModeChooserProps) {
-  const [idea, setIdea] = useState('');
+  const [idea, setIdea] = useState(initialIdea);
   const [details, setDetails] = useState('');
   const [mode, setMode] = useState<ProjectAiMode>('guided');
 
@@ -265,19 +273,25 @@ export function ProjectModeChooser({
                       type="button"
                       role="radio"
                       aria-checked={isActive}
-                      onClick={() => setMode(option.id)}
+                      disabled={option.disabled}
+                      title={option.disabled ? 'Disponible pronto' : undefined}
+                      onClick={() => {
+                        if (!option.disabled) setMode(option.id);
+                      }}
                       className={`
                         relative flex h-10 flex-1 items-center justify-center
                         gap-2 rounded-full border px-3 py-2 text-xs font-medium
                         whitespace-nowrap transition-colors
                         focus-visible:ring-2 focus-visible:ring-ring
                         focus-visible:outline-none
+                        disabled:cursor-not-allowed disabled:opacity-50
                         ${
                           isActive
                             ? 'border-primary/50 bg-primary/20 text-primary'
                             : `
                               border-transparent text-muted-foreground
-                              hover:bg-secondary/70 hover:text-foreground
+                              enabled:hover:bg-secondary/70
+                              enabled:hover:text-foreground
                             `
                         }
                       `}
@@ -345,8 +359,8 @@ export function ProjectModeChooser({
                 disabled:cursor-not-allowed disabled:opacity-50
               "
             >
-              Continuar
-              <ArrowRight className="size-4" />
+              <Plus className="size-4" />
+              Nuevo proyecto
             </button>
           </div>
         </DialogPrimitive.Content>

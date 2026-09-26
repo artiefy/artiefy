@@ -43,6 +43,7 @@ import {
   CarouselPrevious,
 } from '~/components/estudiantes/ui/carousel';
 import { blurDataURL } from '~/lib/blurDataUrl';
+import { requestCreateEntry } from '~/lib/creation/createEntryBus';
 
 import type { CatalogSearchResult } from '~/server/actions/estudiantes/search/searchCatalogPreview';
 import type { Course, Program } from '~/types';
@@ -480,6 +481,15 @@ export default function StudentDetails({
     [resetSearch, router]
   );
 
+  // "Modo avanzado": opens the project creation modal on /proyectos with
+  // what was typed as the idea, same as the header search.
+  const handleAdvancedCreate = () => {
+    const idea = searchQuery.trim();
+    resetSearch();
+    requestCreateEntry('project', { idea });
+    router.push('/proyectos');
+  };
+
   const handleSearch = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
@@ -699,6 +709,7 @@ export default function StudentDetails({
                     isLoading={searchLoading}
                     onCreate={() => handleSearch()}
                     onSelect={handleSelectResult}
+                    onAdvanced={handleAdvancedCreate}
                   />
                 )}
               </div>

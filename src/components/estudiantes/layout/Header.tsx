@@ -24,13 +24,16 @@ import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { requestCreateEntry } from '~/lib/creation/createEntryBus';
 import { ensureCurrentUserStudentRole, getUserRole } from '~/utils/roles';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
+import { AnimatedPlaceholder } from './search/AnimatedPlaceholder';
 import { ArtieSearchDropdown } from './search/ArtieSearchDropdown';
 import { NeonSearchShell } from './search/NeonSearchShell';
 import { useArtieSearch } from './search/useArtieSearch';
+import { useRotatingPlaceholder } from './search/useRotatingPlaceholder';
 import { MobileBottomNav } from './MobileBottomNav';
 import { NotificationHeader } from './NotificationHeader';
 
@@ -38,6 +41,12 @@ import type { EnrolledCourse } from '~/server/actions/estudiantes/courses/getEnr
 import type { CatalogSearchResult } from '~/server/actions/estudiantes/search/searchCatalogPreview';
 
 import '~/styles/barsicon.css';
+
+const SEARCH_PLACEHOLDERS = [
+  '¿Qué quieres hacer?',
+  '¿Qué quieres crear?',
+  '¿Cómo puedo ayudarte?',
+] as const;
 
 export function Header({
   onEspaciosClickAction,
@@ -57,6 +66,13 @@ export function Header({
     reset: resetSearch,
     containerRef: searchContainerRef,
   } = useArtieSearch();
+  const searchPlaceholder = useRotatingPlaceholder(SEARCH_PLACEHOLDERS);
+  const placeholderOverlay = searchQuery ? null : (
+    <AnimatedPlaceholder
+      text={searchPlaceholder.text}
+      phase={searchPlaceholder.phase}
+    />
+  );
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [activeAuthModal, setActiveAuthModal] = useState<
@@ -274,6 +290,23 @@ export function Header({
     );
     resetSearch();
     setShowMobileSearch(false);
+  };
+
+  // "Modo avanzado": the creation modals live on /proyectos, so the request
+  // goes through the same bus as the mobile "+" sheet, carrying what was
+  // typed as the project idea.
+  const handleAdvancedCreate = () => {
+    const idea = searchQuery.trim();
+    resetSearch();
+    setShowMobileSearch(false);
+
+    if (isAuthLoaded && !user) {
+      handleOpenLoginModal();
+      return;
+    }
+
+    requestCreateEntry('project', { idea });
+    if (pathname !== '/proyectos') router.push('/proyectos');
   };
 
   const handleSelectResult = (result: CatalogSearchResult) => {
@@ -847,23 +880,24 @@ export function Header({
                   group-focus-within:text-primary
                 "
                   />
-                  <input
-                    type="search"
-                    placeholder="¿Qué quieres hacer?"
-                    aria-label="Buscar o crear con Artie"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      openSearch();
-                    }}
-                    onFocus={openSearch}
-                    className="
-                  neon-search-input ml-2.5 size-full bg-transparent text-xs
-                  text-foreground outline-none
-                  placeholder:text-muted-foreground
-                "
-                    autoComplete="off"
-                  />
+                  <div className="relative ml-2.5 flex h-full min-w-0 flex-1 items-center text-xs">
+                    <input
+                      type="search"
+                      aria-label="Buscar o crear con Artie"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        openSearch();
+                      }}
+                      onFocus={openSearch}
+                      className="
+                    neon-search-input size-full bg-transparent text-xs
+                    text-foreground outline-none
+                  "
+                      autoComplete="off"
+                    />
+                    {placeholderOverlay}
+                  </div>
                 </NeonSearchShell>
                 {isSearchOpen && (
                   <ArtieSearchDropdown
@@ -872,6 +906,7 @@ export function Header({
                     isLoading={searchLoading}
                     onCreate={() => handleCreateWithArtie()}
                     onSelect={handleSelectResult}
+                    onAdvanced={handleAdvancedCreate}
                   />
                 )}
               </form>
@@ -1092,23 +1127,24 @@ export function Header({
                 >
                   <X className="size-4 text-primary/70" />
                 </button>
-                <input
-                  type="search"
-                  placeholder="¿Qué quieres hacer?"
-                  aria-label="Buscar o crear con Artie"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    openSearch();
-                  }}
-                  onFocus={openSearch}
-                  className="
-                  neon-search-input mx-2.5 size-full bg-transparent text-sm
-                  text-foreground outline-none
-                  placeholder:text-muted-foreground
-                "
-                  autoComplete="off"
-                />
+                <div className="relative mx-2.5 flex h-full min-w-0 flex-1 items-center text-sm">
+                  <input
+                    type="search"
+                    aria-label="Buscar o crear con Artie"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      openSearch();
+                    }}
+                    onFocus={openSearch}
+                    className="
+                    neon-search-input size-full bg-transparent text-sm
+                    text-foreground outline-none
+                  "
+                    autoComplete="off"
+                  />
+                  {placeholderOverlay}
+                </div>
                 <button
                   type="submit"
                   className="shrink-0"
@@ -1124,6 +1160,7 @@ export function Header({
                   isLoading={searchLoading}
                   onCreate={() => handleCreateWithArtie()}
                   onSelect={handleSelectResult}
+                  onAdvanced={handleAdvancedCreate}
                 />
               )}
             </form>
