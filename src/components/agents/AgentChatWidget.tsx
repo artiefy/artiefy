@@ -1508,9 +1508,11 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   // switches `scope` without unmounting the widget, and showing the tree then
   // would let a click send this project's activity id alongside the other
   // project's id.
+  //
+  // It follows the scope, not the agent: the orchestrator reports whoever
+  // answered, and an Artie reply used to hide the tree mid-conversation.
   const showTree =
     Boolean(activeProject) &&
-    agentId === 'coach' &&
     scope.kind === 'project' &&
     scope.id === activeProject?.id;
 
@@ -2382,6 +2384,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                       className="space-y-1 border-t px-3 pb-3"
                       style={{ borderColor: `${agent.color}1a` }}
                     >
+                      {/* A new Guided project starts with no objectives:
+                          the learner writes them with the Coach. */}
+                      {activeProject.objectives.length === 0 && (
+                        <p className="pt-3 text-xs leading-relaxed text-muted-foreground">
+                          Aún no hay objetivos. Escríbele al Coach tu primera
+                          idea y aparecerán aquí cuando los agregues a tu
+                          proyecto.
+                        </p>
+                      )}
                       {activeProject.objectives.map((objective) => {
                         const activities = objective.activities ?? [];
                         const done = activities.filter(
