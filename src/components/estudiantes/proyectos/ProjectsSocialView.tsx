@@ -16,6 +16,7 @@ import {
   requestCreateEntry,
   subscribeToCreateEntry,
 } from '~/lib/creation/createEntryBus';
+import { ensureCanCreateProject } from '~/lib/projects/ensureCanCreateProject';
 import { generateProjectFromIdea } from '~/lib/projects/generateProjectFromIdea';
 
 import { CommunityPostCard } from './subcomponents/CommunityPostCard';
@@ -138,12 +139,15 @@ export function ProjectsSocialView({
   // needs a cross-route signal — see `createEntryBus.ts` for why a
   // `?create=` query param isn't an option on this route).
   useEffect(() => {
+    // Every entry point (desktop "Crear", mobile "+", the header search's
+    // "Modo avanzado") ends here, so the subscription gate lives here too.
     const openModeChooser = () => {
-      setChooserSeed((prev) => ({
-        key: prev.key + 1,
-        idea: consumePendingCreateIdea(),
-      }));
-      setIsModeChooserOpen(true);
+      const idea = consumePendingCreateIdea();
+      void ensureCanCreateProject().then((allowed) => {
+        if (!allowed) return;
+        setChooserSeed((prev) => ({ key: prev.key + 1, idea }));
+        setIsModeChooserOpen(true);
+      });
     };
 
     const pending = consumePendingCreateEntry();

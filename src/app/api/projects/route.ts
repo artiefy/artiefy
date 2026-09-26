@@ -4,6 +4,7 @@ import { auth } from '@clerk/nextjs/server';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 
+import { getProjectCreationAccess } from '~/server/actions/estudiantes/projects/projectCreationAccess';
 import { createProject } from '~/server/actions/project/createProject';
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import getPublicProjects from '~/server/actions/project/getPublicProjects';
@@ -83,6 +84,17 @@ export async function POST(req: Request) {
     if (!userId) {
       console.error('No autorizado: No se encontró userId en Clerk');
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
+    // Subscription gate: no plan, an expired plan or a spent trial allowance
+    // cannot create new projects. Editing existing ones goes through
+    // /api/projects/[id] and is not affected.
+    const access = await getProjectCreationAccess(userId);
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: access.message, reason: access.reason },
+        { status: 403 }
+      );
     }
 
     // Detectar draft=true en query string

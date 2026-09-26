@@ -15,6 +15,7 @@ import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailVi
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
 import { ProjectModeChooser } from '~/components/projects/Modals/ProjectModeChooser';
 import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
+import { ensureCanCreateProject } from '~/lib/projects/ensureCanCreateProject';
 import { generateProjectFromIdea } from '~/lib/projects/generateProjectFromIdea';
 
 import type { Project } from '~/types/project';
@@ -159,6 +160,8 @@ export function ProjectsSection({
       toast.error('Tu suscripción ha expirado. Renueva para crear proyectos.');
       return;
     }
+    // Also covers the signup trial's project allowance.
+    if (!(await ensureCanCreateProject())) return;
     setIsModeChooserOpen(true);
   };
 

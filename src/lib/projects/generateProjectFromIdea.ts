@@ -7,6 +7,7 @@ import {
 } from '~/hooks/useGenerateContent';
 import { openCoachChatForGeneratedProject } from '~/lib/agents/agentChatBus';
 import { rememberProjectMode } from '~/lib/agents/projectMode';
+import { ensureCanCreateProject } from '~/lib/projects/ensureCanCreateProject';
 import {
   AI_MODE_DESCRIPTION_GUIDE,
   cleanGeneratedTitle,
@@ -57,9 +58,71 @@ async function generateField(options: GenerateContentOptions) {
 }
 
 /**
- * Picks the category whose name (and, more weakly, description) shares the
- * most words with the project. Deterministic on purpose: the n8n generator
- * only knows how to write text fields, not how to choose from a list.
+ * Words that say nothing about the subject: Spanish connectors plus the
+ * boilerplate every category description repeats ("Cursos relacionados
+ * con…"). Matching on them is what once filed a recycling app under
+ * "Cosmetología", whose description happens to contain "para".
+ */
+const STOPWORDS = new Set([
+  'and',
+  'area',
+  'categoria',
+  'como',
+  'con',
+  'curso',
+  'cursos',
+  'del',
+  'desde',
+  'dirigido',
+  'donde',
+  'educacion',
+  'entre',
+  'esta',
+  'este',
+  'for',
+  'las',
+  'los',
+  'mas',
+  'mis',
+  'muy',
+  'para',
+  'pero',
+  'por',
+  'programa',
+  'programas',
+  'que',
+  'relacionada',
+  'relacionadas',
+  'relacionado',
+  'relacionados',
+  'sobre',
+  'son',
+  'sus',
+  'the',
+  'tiene',
+  'tipo',
+  'todo',
+  'una',
+  'unas',
+  'uno',
+  'unos',
+]);
+
+const tokensOf = (value: string) =>
+  new Set(
+    normalizeText(value)
+      .split(/[^a-z0-9]+/)
+      .filter((word) => word.length >= 3 && !STOPWORDS.has(word))
+  );
+
+/** Used when no category shares a word with the project. */
+const FALLBACK_CATEGORY = 'tecnologia';
+
+/**
+ * Picks the category that shares the most whole words with the project, the
+ * name weighing more than the description. Deterministic on purpose: the n8n
+ * generator only knows how to write text fields, not how to choose from a
+ * list.
  */
 async function pickCategoryId(text: string): Promise<number | undefined> {
   try {
@@ -76,23 +139,21 @@ async function pickCategoryId(text: string): Promise<number | undefined> {
     );
     if (categories.length === 0) return undefined;
 
-    const haystack = normalizeText(text);
-    const wordsOf = (value: string) =>
-      new Set(
-        normalizeText(value)
-          .split(/[^a-z0-9]+/)
-          .filter((word) => word.length > 3)
-      );
+    const projectWords = tokensOf(text);
+    const fallback =
+      categories.find(
+        (category) => normalizeText(category.name) === FALLBACK_CATEGORY
+      ) ?? categories[0]!;
 
-    let best = categories[0]!;
+    let best = fallback;
     let bestScore = 0;
     for (const category of categories) {
       let score = 0;
-      for (const word of wordsOf(category.name)) {
-        if (haystack.includes(word)) score += 2;
+      for (const word of tokensOf(category.name)) {
+        if (projectWords.has(word)) score += 3;
       }
-      for (const word of wordsOf(category.description ?? '')) {
-        if (haystack.includes(word)) score += 1;
+      for (const word of tokensOf(category.description ?? '')) {
+        if (projectWords.has(word)) score += 1;
       }
       if (score > bestScore) {
         best = category;
@@ -204,6 +265,10 @@ export async function generateProjectFromIdea(
   options: GenerateProjectOptions
 ): Promise<void> {
   const { seed, courseId, onCreated } = options;
+
+  // Checked again here, before any AI call: the chooser may have sat open
+  // while the plan expired, and a refused save would waste the whole run.
+  if (!(await ensureCanCreateProject())) return;
   const mode = seed.mode === 'copilot' ? 'copilot' : 'guided';
   const draftsObjectives = mode === 'copilot';
   const toastId = `project-generation-${Date.now()}`;
@@ -231,9 +296,6 @@ export async function generateProjectFromIdea(
     ? `Idea: "${seed.idea}". Detalles: "${seed.details}".`
     : `Idea: "${seed.idea}".`;
 
-  // Categories do not depend on the AI, so they load while it writes.
-  const categoryPromise = pickCategoryId(`${seed.idea} ${seed.details}`);
-
   const rawTitle = await generateField({
     type: 'titulo',
     prompt: `${ideaContext} Genera un título claro, atractivo y profesional (máximo 8 palabras) para un proyecto estudiantil basado en esta idea. Solo responde con el título, sin comillas ni explicaciones.`,
@@ -258,6 +320,12 @@ export async function generateProjectFromIdea(
     ? 'Definiendo el problema, los objetivos y las actividades…'
     : 'Definiendo el problema, la justificación y el objetivo general…';
   advance();
+
+  // Picked from the generated text too: the idea alone is often a few words.
+  // It loads while the remaining fields are written.
+  const categoryPromise = pickCategoryId(
+    `${seed.idea} ${seed.details} ${title} ${description}`
+  );
 
   const context = `Título: ${title}\nDescripción: ${description}`;
   const fieldBase = { titulo: title, descripcion: description };
@@ -356,14 +424,22 @@ export async function generateProjectFromIdea(
     );
 
     if (!response.ok) {
+      // 403 is the subscription gate: its message says why, and retrying
+      // would only be refused again.
+      const refusal =
+        response.status === 403
+          ? ((await response.json().catch(() => null)) as {
+              error?: string;
+            } | null)
+          : null;
       showProjectGenerationToast(toastId, {
         status: 'error',
         message:
           response.status === 401
             ? 'Inicia sesión para crear tu proyecto.'
-            : 'No se pudo guardar. Inténtalo de nuevo.',
+            : (refusal?.error ?? 'No se pudo guardar. Inténtalo de nuevo.'),
         onRetry:
-          response.status === 401
+          response.status === 401 || response.status === 403
             ? undefined
             : () => void generateProjectFromIdea(options),
       });
