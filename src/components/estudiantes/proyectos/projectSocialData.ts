@@ -746,6 +746,13 @@ export async function getProjectSocialById(
   if (!project) return null;
   if (!project.isPublic && !permitirPrivado) return null;
 
+  // `getProjectById` carries no owner name; without this every detail page
+  // fell back to "Comunidad Artiefy" as its author.
+  const owner = await db.query.users.findFirst({
+    where: eq(users.id, project.userId),
+    columns: { name: true, email: true },
+  });
+
   return mapToSocialItem({
     id: project.id,
     name: project.name,
@@ -765,8 +772,8 @@ export async function getProjectSocialById(
     userId: project.userId,
     user: {
       id: project.userId,
-      name: undefined,
-      email: undefined,
+      name: owner?.name ?? undefined,
+      email: owner?.email ?? undefined,
     },
     category: {
       id: project.categoryId,
