@@ -103,7 +103,7 @@ export async function checkSubscriptionStatus(
 
     return {
       shouldNotify: true,
-      message: `Tu suscripción ${subscriptionData.planType ?? 'Plan actual'} ha expirado`,
+      message: `Tu suscripción ${subscriptionData.planType ?? 'Plan actual'} expiró`,
       severity: 'expired',
       daysLeft: 0,
     };
@@ -201,7 +201,7 @@ export async function checkSubscriptionStatus(
     if (diffDays <= 0 && graceDaysLeft > 0) {
       return {
         shouldNotify: true,
-        message: `Tu suscripción ${planName} venció. Tienes ${graceDaysLeft} días de gracia`,
+        message: `Tu suscripción ${planName} expiró. Tienes ${graceDaysLeft} días para renovarla`,
         severity: 'grace',
         daysLeft: graceDaysLeft,
       };
@@ -209,7 +209,7 @@ export async function checkSubscriptionStatus(
 
     return {
       shouldNotify: true,
-      message: `Tu suscripción ${planName} ha expirado`,
+      message: `Tu suscripción ${planName} expiró`,
       severity: 'expired',
       daysLeft: 0,
     };

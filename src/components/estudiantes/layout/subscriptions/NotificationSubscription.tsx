@@ -44,21 +44,25 @@ const getNotificationCopy = (
   const planType = normalizePlanType(rawPlanType);
   const days = `${daysLeft} día${daysLeft === 1 ? '' : 's'}`;
 
+  // Red: more than 5 days past the end date.
   if (severity === 'expired') {
     return {
-      compactMessage: `${planType} vencido`,
+      compactMessage: `${planType} expiró`,
       ctaLabel: 'Renovar ahora',
-      desktopMessage: `Tu suscripción ${planType} ha vencido`,
+      desktopMessage: `Tu suscripción ${planType} expiró`,
     };
   }
 
+  // Yellow: from the end date itself, counting down the 5 days left to renew.
   if (severity === 'grace') {
     return {
-      compactMessage: `${planType} vencido · ${days} de gracia`,
+      compactMessage: `${planType} expiró · ${days} para renovar`,
       ctaLabel: 'Renovar plan',
-      desktopMessage: `Tu suscripción ${planType} venció · te quedan ${days} de gracia`,
+      desktopMessage: `Tu suscripción ${planType} expiró, tienes ${days} para renovarla`,
     };
   }
+
+  // Blue: the last 5 days before the end date.
 
   return {
     compactMessage: `${planType} expira en ${days}`,
