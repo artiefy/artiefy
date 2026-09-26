@@ -181,6 +181,20 @@ export function ProjectModeChooser({
                 Elige cómo quieres construirlo
               </p>
             </div>
+            <button
+              type="button"
+              onClick={handleAdvanced}
+              aria-label="Modo avanzado"
+              className="
+                inline-flex h-8 items-center gap-1.5 rounded-md border
+                border-border/60 border-t-primary bg-secondary/30 px-2.5
+                text-xs font-medium text-foreground transition-colors
+                hover:border-primary/40 hover:bg-primary/10 hover:text-primary
+              "
+            >
+              <SlidersHorizontal className="size-3.5 text-primary" />
+              <span className="hidden sm:inline">Modo avanzado</span>
+            </button>
             <DialogPrimitive.Close
               type="button"
               aria-label="Cerrar"
@@ -197,9 +211,15 @@ export function ProjectModeChooser({
             </DialogPrimitive.Close>
           </div>
 
-          <div className="space-y-5 overflow-y-auto p-5 sm:px-7 sm:py-6">
-            <section className="rounded-lg border border-primary/35 bg-primary/5 p-4">
-              <div className="mb-2 flex items-center justify-between gap-3">
+          <div
+            className="
+              [scrollbar-width:none] space-y-4 overflow-y-auto p-5
+              sm:px-7 sm:py-5
+              [&::-webkit-scrollbar]:hidden
+            "
+          >
+            <section className="rounded-lg border border-primary/35 bg-primary/5 p-3.5">
+              <div className="mb-1 flex items-center justify-between gap-3">
                 <span className="text-[11px] font-semibold text-primary uppercase">
                   Tu idea
                 </span>
@@ -235,22 +255,6 @@ export function ProjectModeChooser({
                 "
               />
             </section>
-
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={handleAdvanced}
-                className="
-                  inline-flex items-center gap-1.5 rounded-md border
-                  border-border/60 border-t-primary bg-secondary/30 px-3 py-1.5
-                  text-xs font-medium text-foreground transition-colors
-                  hover:border-primary/40 hover:bg-primary/10 hover:text-primary
-                "
-              >
-                <SlidersHorizontal className="size-3.5 text-primary" />
-                Modo avanzado
-              </button>
-            </div>
 
             <section>
               <h3 className="mb-3 text-sm font-semibold text-foreground">
@@ -319,14 +323,14 @@ export function ProjectModeChooser({
               </div>
             </section>
 
-            <section className="rounded-lg border border-border/60 bg-secondary/25 p-4">
+            <section className="rounded-lg border border-border/60 bg-secondary/25 p-3.5">
               <h3 className="font-semibold text-foreground">
                 {selected.title}
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {selected.description}
               </p>
-              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className="
                     h-full rounded-full bg-gradient-to-r from-primary to-accent
@@ -349,7 +353,7 @@ export function ProjectModeChooser({
               onClick={handleContinue}
               disabled={!canContinue}
               className="
-                inline-flex h-12 w-full items-center justify-center gap-2
+                inline-flex h-11 w-full items-center justify-center gap-2
                 rounded-lg bg-primary px-4 py-2 text-sm font-semibold
                 text-slate-950 shadow-lg shadow-primary/20
                 transition-colors

@@ -105,10 +105,7 @@ export function Header({
     { href: '/proyectos', label: 'Proyectos' },
     { href: '/estudiantes', label: 'Educación' },
   ];
-  const rightNavItems = [
-    { href: '/planes', label: 'Planes' },
-    { href: '/comunidad', label: 'Espacios' },
-  ];
+  const rightNavItems = [{ href: '/planes', label: 'Planes' }];
   const brandMenuRef = useRef<HTMLDivElement>(null);
 
   const planType = user?.publicMetadata?.planType as string | undefined;
