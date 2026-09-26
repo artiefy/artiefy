@@ -208,7 +208,12 @@
   },
   "overrides": {
     "@n8n/chat": {
-      "markdown-it": "14.2.0"
+      "markdown-it": "14.2.0",
+      "@tiptap/core": "3.31.3",
+      "element-plus": "2.14.6"
+    },
+    "satori": {
+      "fflate": "0.7.5"
     },
     "esbuild": "^0.28.0"
   },
