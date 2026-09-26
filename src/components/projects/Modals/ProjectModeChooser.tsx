@@ -351,7 +351,7 @@ export function ProjectModeChooser({
               className="
                 inline-flex h-12 w-full items-center justify-center gap-2
                 rounded-lg bg-primary px-4 py-2 text-sm font-semibold
-                text-primary-foreground shadow-lg shadow-primary/20
+                text-slate-950 shadow-lg shadow-primary/20
                 transition-colors
                 hover:bg-primary/90
                 focus-visible:ring-2 focus-visible:ring-ring
