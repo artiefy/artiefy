@@ -256,6 +256,7 @@ export async function GET(req: Request) {
         comercial: users.comercial,
         sede: users.sede,
         horario: users.horario,
+        grupos: users.grupos,
         numeroCuotas: users.numeroCuotas,
         pagoInscripcion: users.pagoInscripcion,
         pagoCuota1: users.pagoCuota1,

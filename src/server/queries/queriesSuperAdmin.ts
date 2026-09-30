@@ -298,12 +298,7 @@ export async function updateMultipleUserStatus(
 export async function updateEnrollmentStatus(
   id: string,
   enrollmentStatus:
-    | 'Nuevo'
-    | 'Estudiante'
-    | 'Graduando'
-    | 'Egresado'
-    | 'Aplaza'
-    | 'Retirado'
+    'Nuevo' | 'Estudiante' | 'Graduando' | 'Egresado' | 'Aplaza' | 'Retirado'
 ) {
   try {
     await db
@@ -722,6 +717,7 @@ export interface FullUserUpdateInput {
   comercial?: string | null;
   sede?: string | null;
   horario?: string | null;
+  grupos?: string | null;
   numeroCuotas?: string | null;
   pagoInscripcion?: string | null;
   pagoCuota1?: string | null;
@@ -808,6 +804,7 @@ export async function updateFullUser(
     comercial,
     sede,
     horario,
+    grupos,
     numeroCuotas,
     pagoInscripcion,
     pagoCuota1,
@@ -881,10 +878,7 @@ export async function updateFullUser(
       const newMetadataRaw = {
         ...existingMetadata,
         role: (role ?? 'estudiante') as
-          | 'admin'
-          | 'educador'
-          | 'super-admin'
-          | 'estudiante',
+          'admin' | 'educador' | 'super-admin' | 'estudiante',
         planType: planType ?? 'none',
         subscriptionStatus: normalizedStatus,
         subscriptionEndDate: formattedEndDate ?? null,
@@ -903,28 +897,54 @@ export async function updateFullUser(
       // 1) Actualiza nombre
       await client.users.updateUser(userId, { firstName, lastName });
 
-      // 2) Marca el email como verificado y primario (como en la UI)
+      // 2) Cambia el email en Clerk SIN cambiar el id: se agrega el nuevo
+      //    correo como verificado+primario y se elimina el anterior. Así las
+      //    matrículas y el progreso (que dependen del id) no se afectan.
       if (email) {
+        const target = email.trim().toLowerCase();
         const u = await client.users.getUser(userId);
-        const target = email.toLowerCase();
-        const ea = u.emailAddresses.find(
+        const anterioresIds = u.emailAddresses.map((e) => e.id);
+        const yaLoTiene = u.emailAddresses.find(
           (e) => e.emailAddress.toLowerCase() === target
         );
 
-        if (ea) {
-          // ✅ ya existe: hazlo verificado y primario
-          await client.emailAddresses.updateEmailAddress(ea.id, {
-            verified: true,
-            primary: true,
-          });
-        } else {
-          // ✅ no existe: créalo directamente como verificado y primario
-          await client.emailAddresses.createEmailAddress({
-            userId,
-            emailAddress: email,
-            verified: true,
-            primary: true,
-          });
+        try {
+          let nuevoId: string;
+          if (yaLoTiene) {
+            await client.emailAddresses.updateEmailAddress(yaLoTiene.id, {
+              verified: true,
+              primary: true,
+            });
+            nuevoId = yaLoTiene.id;
+          } else {
+            const creado = await client.emailAddresses.createEmailAddress({
+              userId,
+              emailAddress: email,
+              verified: true,
+              primary: true,
+            });
+            nuevoId = creado.id;
+          }
+          // Elimina los correos anteriores para que quede solo el nuevo.
+          for (const oldId of anterioresIds) {
+            if (oldId !== nuevoId) {
+              try {
+                await client.emailAddresses.deleteEmailAddress(oldId);
+              } catch (delErr) {
+                console.warn('No se pudo borrar email anterior:', delErr);
+              }
+            }
+          }
+        } catch (emailErr: unknown) {
+          const e = emailErr as { errors?: { code?: string }[] };
+          const enUso = e.errors?.some(
+            (x) => x.code === 'form_identifier_exists'
+          );
+          throw new Error(
+            enUso
+              ? 'Ese correo ya está en uso por otro usuario.'
+              : 'No se pudo cambiar el correo en Clerk.'
+          );
         }
       }
 
@@ -983,10 +1003,13 @@ export async function updateFullUser(
         acudienteEmail: acudienteEmail ?? null,
 
         programa: programa ?? null,
-        fechaInicio: toDateOrNull(fechaInicio)?.toISOString() ?? null,
+        // Solo el día ("YYYY-MM-DD"): con hora se duplicaban las fechas.
+        fechaInicio:
+          toDateOrNull(fechaInicio)?.toISOString().slice(0, 10) ?? null,
         comercial: comercial ?? null,
         sede: sede ?? null,
         horario: horario ?? null,
+        grupos: grupos ?? null,
         numeroCuotas: numeroCuotas ?? null,
         pagoInscripcion: pagoInscripcion ?? null,
         pagoCuota1: pagoCuota1 ?? null,
@@ -1138,7 +1161,9 @@ export async function updateFullUser(
     return true;
   } catch (error) {
     console.error('❌ Error actualizando datos en BD:', error);
-    return false;
+    // Propaga el error real para que la UI muestre el motivo (correo en uso,
+    // etc.) en vez de un "Error interno" genérico.
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }
 
@@ -1173,31 +1198,36 @@ export async function updateMultipleUsers(
         : 'active'
     ) as 'active' | 'inactive' | 'activo' | 'inactivo' | 'no verificado';
 
-    const result = await updateFullUser({
-      userId,
-      firstName: user.name?.split(' ')[0] ?? 'Usuario',
-      lastName: user.name?.split(' ').slice(1).join(' ') ?? 'Desconocido',
-      email: user.email ?? '', // <-- Add email property from user object
-      role: user.role ?? 'estudiante',
-      status: statusValue,
-      permissions: input.permissions ?? [],
-      phone: user.phone ?? null,
-      address: user.address ?? null,
-      city: user.city ?? null,
-      country: user.country ?? null,
-      birthDate: user.birthDate ?? null,
-      planType: input.planType ?? user.planType ?? 'none',
-      purchaseDate: user.purchaseDate?.toISOString() ?? null,
-      subscriptionEndDate:
-        input.subscriptionEndDate ??
-        user.subscriptionEndDate?.toISOString() ??
-        null,
-      customFields: input.customFields ?? {},
-      programId: input.programId,
-      courseId: input.courseId,
-    });
-    if (result) success.push(userId);
-    else failed.push(userId);
+    try {
+      const result = await updateFullUser({
+        userId,
+        firstName: user.name?.split(' ')[0] ?? 'Usuario',
+        lastName: user.name?.split(' ').slice(1).join(' ') ?? 'Desconocido',
+        email: user.email ?? '', // <-- Add email property from user object
+        role: user.role ?? 'estudiante',
+        status: statusValue,
+        permissions: input.permissions ?? [],
+        phone: user.phone ?? null,
+        address: user.address ?? null,
+        city: user.city ?? null,
+        country: user.country ?? null,
+        birthDate: user.birthDate ?? null,
+        planType: input.planType ?? user.planType ?? 'none',
+        purchaseDate: user.purchaseDate?.toISOString() ?? null,
+        subscriptionEndDate:
+          input.subscriptionEndDate ??
+          user.subscriptionEndDate?.toISOString() ??
+          null,
+        customFields: input.customFields ?? {},
+        programId: input.programId,
+        courseId: input.courseId,
+      });
+      if (result) success.push(userId);
+      else failed.push(userId);
+    } catch (e) {
+      console.error('updateMultipleUsers: usuario falló', userId, e);
+      failed.push(userId);
+    }
   }
 
   return { success, failed };

@@ -55,3 +55,31 @@ export function formatDateColombiaAdminTicket(date: Date | string): string {
     hour12: true,
   });
 }
+
+/**
+ * Fecha larga en español: "junio 20, 2026".
+ * Las fechas "YYYY-MM-DD…" se leen como día local (sin corrimiento de zona).
+ * Si el valor no es una fecha válida, se devuelve tal cual.
+ */
+export function formatFechaLarga(
+  valor: Date | string | null | undefined
+): string {
+  if (valor == null || valor === '') return '';
+  let d: Date;
+  if (typeof valor === 'string') {
+    // "2026-06-20" o "2026-06-20T00:00:00.000Z": se toma solo el día.
+    const soloFecha = /^(\d{4})-(\d{2})-(\d{2})(?:T|$)/.exec(valor.trim());
+    d = soloFecha
+      ? new Date(
+          Number(soloFecha[1]),
+          Number(soloFecha[2]) - 1,
+          Number(soloFecha[3])
+        )
+      : new Date(valor);
+  } else {
+    d = valor;
+  }
+  if (Number.isNaN(d.getTime())) return String(valor);
+  const mes = d.toLocaleDateString('es-CO', { month: 'long' });
+  return `${mes} ${d.getDate()}, ${d.getFullYear()}`;
+}

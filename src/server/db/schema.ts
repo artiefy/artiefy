@@ -81,6 +81,9 @@ export const users = pgTable(
     comercial: text('comercial'),
     sede: text('sede'),
     horario: text('horario'),
+    // Grupo del estudiante: campo libre (no ligado a la tabla `grupos`).
+    // La columna ya existía en la BD como `grupo`.
+    grupos: text('grupo'),
     numeroCuotas: text('numero_cuotas'),
     pagoInscripcion: text('pago_inscripcion'),
     pagoCuota1: text('pago_cuota1'),
@@ -3003,3 +3006,127 @@ export const forumRelations = relations(forums, ({ one, many }) => ({
   }),
   posts: many(posts),
 }));
+
+// ============================================================================
+// GRUPOS DE ESTUDIANTES (control tipo Excel de la coordinación)
+//
+// Cada grupo replica una "hoja" del Excel: se arma filtrando estudiantes por
+// programa + una columna/valor, se le pueden agregar estudiantes sueltos,
+// asignar a un curso, generar un enlace de Teams y llevar asistencia por
+// sesiones.
+// ============================================================================
+
+export const grupos = pgTable('grupos', {
+  id: serial('id').primaryKey(),
+  nombre: text('nombre').notNull(),
+  // Grupo padre: si está set, este registro es una "hoja" (sub-grupo) dentro
+  // de otro grupo. Null = grupo de nivel superior (contenedor).
+  parentId: integer('parent_id'),
+  // Filtro con el que se creó (informativo y para re-aplicar).
+  programa: text('programa'),
+  filtroColumna: text('filtro_columna'), // 'sede' | 'horario' | ... | 'curso'
+  filtroValor: text('filtro_valor'),
+  // Curso al que se asignó el grupo (matricula a sus miembros).
+  courseId: integer('course_id').references(() => courses.id, {
+    onDelete: 'set null',
+    onUpdate: 'cascade',
+  }),
+  // Enlace de reunión de Teams del grupo.
+  teamsJoinUrl: text('teams_join_url'),
+  teamsMeetingId: text('teams_meeting_id'),
+  // Cabecera de la planilla de asistencia (editable por grupo/"hoja").
+  espacio: text('espacio'),
+  empresa: text('empresa'),
+  educador: text('educador'),
+  horario: text('horario'),
+  curso: text('curso'),
+  fechaInicio: date('fecha_inicio'),
+  fechaFin: date('fecha_fin'),
+  archivado: boolean('archivado').default(false).notNull(),
+  createdBy: text('created_by').references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const grupoEstudiantes = pgTable(
+  'grupo_estudiantes',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Campos de la planilla editables por alumno dentro del grupo/"hoja".
+    modalidad: text('modalidad'),
+    observaciones: text('observaciones'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('uniq_grupo_estudiante').on(t.grupoId, t.userId),
+    index('grupo_estudiantes_grupo_idx').on(t.grupoId),
+  ]
+);
+
+export const grupoCursos = pgTable(
+  'grupo_cursos',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => courses.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Enlace de Teams por hoja (curso).
+    teamsJoinUrl: text('teams_join_url'),
+    teamsMeetingId: text('teams_meeting_id'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('uniq_grupo_curso').on(t.grupoId, t.courseId),
+    index('grupo_cursos_grupo_idx').on(t.grupoId),
+  ]
+);
+
+export const grupoSesiones = pgTable(
+  'grupo_sesiones',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Curso (hoja) al que pertenece la sesión. Null = sesión general del grupo.
+    courseId: integer('course_id').references(() => courses.id, {
+      onDelete: 'cascade',
+    }),
+    fecha: date('fecha').notNull(),
+    titulo: text('titulo'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [index('grupo_sesiones_grupo_idx').on(t.grupoId)]
+);
+
+export const grupoAsistencia = pgTable(
+  'grupo_asistencia',
+  {
+    id: serial('id').primaryKey(),
+    sesionId: integer('sesion_id')
+      .references(() => grupoSesiones.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    estado: text('estado', {
+      enum: ['presente', 'ausente', 'tarde'],
+    })
+      .default('presente')
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('uniq_sesion_asistencia').on(t.sesionId, t.userId),
+    index('grupo_asistencia_sesion_idx').on(t.sesionId),
+  ]
+);

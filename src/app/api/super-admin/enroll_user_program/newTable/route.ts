@@ -7,7 +7,7 @@ import { db } from '~/server/db';
 
 // Validación de entrada
 const requestBodySchema = z.object({
-  userId: z.string(),
+  userId: z.string().optional(),
   fieldKey: z.string().min(1, 'fieldKey requerido'),
   fieldValue: z.string().default(''),
   fieldType: z
@@ -95,16 +95,18 @@ export async function POST(req: Request) {
     }
 
     // 4) Actualizar el valor de esa columna para el usuario indicado
-    let valueToSet: unknown = fieldValue;
-    if (
-      fieldType !== 'text' &&
-      (fieldValue === '' || fieldValue === null || fieldValue === undefined)
-    ) {
-      valueToSet = null;
+    if (userId) {
+      let valueToSet: unknown = fieldValue;
+      if (
+        fieldType !== 'text' &&
+        (fieldValue === '' || fieldValue === null || fieldValue === undefined)
+      ) {
+        valueToSet = null;
+      }
+      await db.execute(
+        sql`UPDATE "users" SET ${sql.raw(`"${column}"`)} = ${valueToSet} WHERE "id" = ${userId}`
+      );
     }
-    await db.execute(
-      sql`UPDATE "users" SET ${sql.raw(`"${column}"`)} = ${valueToSet} WHERE "id" = ${userId}`
-    );
 
     return NextResponse.json({ success: true, column, userId });
   } catch (err: unknown) {

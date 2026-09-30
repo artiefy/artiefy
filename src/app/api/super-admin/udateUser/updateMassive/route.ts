@@ -111,11 +111,12 @@ export async function PATCH(req: Request) {
     ]);
 
     // Columnas fecha conocidas (conversión a Date)
+    // fechaInicio NO va aquí: en `users` es texto y un Date se guardaba como
+    // "2024-07-13T00:00:00.000Z", duplicando fechas. Se guarda "YYYY-MM-DD".
     const DATE_KEYS = new Set([
       'birthDate',
       'purchaseDate',
       'subscriptionEndDate',
-      'fechaInicio',
       'createdAt',
       'updatedAt',
     ]);
@@ -282,6 +283,13 @@ export async function PATCH(req: Request) {
                       : JSON.stringify(value)
                 )
               : null;
+          continue;
+        }
+        if (key === 'fechaInicio') {
+          const texto = typeof value === 'string' ? value.trim() : '';
+          userUpdateFields[key] = /^\d{4}-\d{2}-\d{2}/.test(texto)
+            ? texto.slice(0, 10)
+            : texto || null;
           continue;
         }
         if (DATE_KEYS.has(key)) {

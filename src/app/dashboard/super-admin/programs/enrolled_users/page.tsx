@@ -1,17 +1,45 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
-import { Check, ChevronDown, Loader2, Search, Users, X } from 'lucide-react';
+import {
+  Check,
+  ChevronDown,
+  ClipboardPaste,
+  Columns3,
+  Copy,
+  Download,
+  GraduationCap,
+  Loader2,
+  Mail,
+  MessageCircle,
+  MessageSquare,
+  Pencil,
+  Plus,
+  Search,
+  SlidersHorizontal,
+  UserPlus,
+  Users,
+  X,
+} from 'lucide-react';
 import Select, { type SingleValue } from 'react-select';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
 import { InfoDialog } from '~/app/dashboard/super-admin/components/InfoDialog';
+import { CampoFechaLarga } from '~/components/shared/CampoFechaLarga';
+import { formatFechaLarga } from '~/lib/formatDate';
 
 import { AdvancedFilterMenu } from './AdvancedFilterMenu';
 
@@ -72,6 +100,7 @@ const studentSchema = z
     comercial: strNullOpt,
     sede: strNullOpt,
     horario: strNullOpt,
+    grupos: strNullOpt,
     numeroCuotas: strNullOpt,
     pagoInscripcion: strNullOpt,
     pagoCuota1: strNullOpt,
@@ -181,6 +210,7 @@ interface Student {
   comercial?: string | null;
   sede?: string | null;
   horario?: string | null;
+  grupos?: string | null;
   numeroCuotas?: string | null;
   pagoInscripcion?: string | null;
   pagoCuota1?: string | null;
@@ -368,9 +398,62 @@ function SearchableSelectField({
   );
 }
 
+/**
+ * Celda de fecha: muestra "junio 20, 2026" y al hacer clic abre el selector
+ * nativo (el input type="date" siempre usa el formato del navegador).
+ */
+function FechaCelda({
+  valor,
+  onGuardar,
+}: {
+  valor: string;
+  onGuardar: (valor: string) => void;
+}) {
+  const [editando, setEditando] = useState(false);
+
+  if (editando) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        defaultValue={valor}
+        onBlur={(e) => {
+          setEditando(false);
+          if (e.target.value !== valor) onGuardar(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') setEditando(false);
+        }}
+        className="
+          w-full rounded-lg border border-blue-500/40 bg-white/5 px-2 py-1
+          text-xs text-gray-300
+          focus:ring-1 focus:ring-blue-500/20 focus:outline-none
+        "
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setEditando(true)}
+      title="Editar fecha"
+      className="
+        w-full rounded-md border border-transparent px-0 py-0.5 text-left
+        text-[12px] whitespace-nowrap text-white/90 transition-all duration-150
+        hover:border-white/10 hover:bg-white/5
+      "
+    >
+      {formatFechaLarga(valor) || ' '}
+    </button>
+  );
+}
+
 const allColumns: Column[] = [
   // Básicos
   { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
+  { id: 'grupos', label: 'Grupos', defaultVisible: true, type: 'text' },
   { id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
   { id: 'phone', label: 'Teléfono', defaultVisible: true, type: 'text' },
   {
@@ -576,6 +659,17 @@ const allColumns: Column[] = [
   { id: 'pagareKey', label: 'Pagaré key', defaultVisible: false, type: 'text' },
 ];
 
+// Color del badge de "Estado" (enrollmentStatus), como en la referencia.
+const COLOR_ESTADO: Record<string, string> = {
+  Nuevo: 'border-cyan-500/30 bg-cyan-500/15 text-cyan-400',
+  Estudiante: 'border-sky-500/30 bg-sky-500/15 text-sky-400',
+  Graduando: 'border-violet-500/30 bg-violet-500/15 text-violet-400',
+  Egresado: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
+  Aplaza: 'border-orange-500/30 bg-orange-500/15 text-orange-400',
+  Retirado: 'border-rose-500/30 bg-rose-500/15 text-rose-400',
+  Pendiente: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
+};
+
 // Helper function for safe string conversion
 function safeToString(value: unknown): string {
   if (value === null || value === undefined) return '';
@@ -637,7 +731,13 @@ function isErrorResponse(x: unknown): x is { error: string } {
 // CustomFieldForm: declarado a nivel de módulo para evitar que se recree
 // en cada render de EnrolledUsersPage (React trataría cada render como
 // un componente "nuevo" causando unmount/remount y pérdida de estado).
-function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
+function CustomFieldForm({
+  selectedUserId,
+  onSaved,
+}: {
+  selectedUserId?: string;
+  onSaved?: () => void;
+}) {
   const [fieldKey, setFieldKey] = useState('');
   const [fieldType, setFieldType] = useState('text');
   const [fieldDescription, setFieldDescription] = useState('');
@@ -651,11 +751,10 @@ function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: selectedUserId,
+          ...(selectedUserId ? { userId: selectedUserId, fieldValue } : {}),
           fieldKey,
           fieldType,
           fieldDescription,
-          fieldValue,
         }),
       });
 
@@ -665,6 +764,7 @@ function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
         setFieldType('text');
         setFieldDescription('');
         setFieldValue('');
+        onSaved?.();
       } else {
         const json: unknown = await res.json();
         const errorData = errorResponseSchema.parse(json);
@@ -723,17 +823,19 @@ function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
         <option value="date">Fecha</option>
         <option value="timestamp">Fecha y hora</option>
       </select>
-      <input
-        type="text"
-        placeholder="Valor inicial (opcional)"
-        value={fieldValue}
-        onChange={(e) => setFieldValue(e.target.value)}
-        className="
-          w-full rounded border border-gray-700 bg-gray-800 p-2 transition
-          focus:ring-2 focus:ring-blue-500 focus:outline-none
-          sm:flex-1
-        "
-      />
+      {selectedUserId && (
+        <input
+          type="text"
+          placeholder="Valor inicial (opcional)"
+          value={fieldValue}
+          onChange={(e) => setFieldValue(e.target.value)}
+          className="
+            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+            focus:ring-2 focus:ring-blue-500 focus:outline-none
+            sm:flex-1
+          "
+        />
+      )}
       <button
         disabled={loading || !fieldKey}
         onClick={handleSubmit}
@@ -1600,7 +1702,9 @@ export default function EnrolledUsersPage() {
     }).format(n || 0);
   }
 
-  const [limit] = useState(10);
+  // Filas que se pintan por "página" del scroll infinito. Con la tabla de
+  // alto fijo tienen que alcanzar a llenarla para que aparezca el scroll.
+  const [limit] = useState(50);
   const [filteredCourseResults, setFilteredCourseResults] = useState<Course[]>(
     []
   );
@@ -1732,6 +1836,7 @@ export default function EnrolledUsersPage() {
   >([]);
   const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showAddColumnModal, setShowAddColumnModal] = useState(false);
   const [newUser, setNewUser] = useState({
     firstName: '',
     lastName: '',
@@ -2597,6 +2702,63 @@ export default function EnrolledUsersPage() {
   };
 
   // useEffect de autocompletado eliminado: openCarteraModal ya lo maneja
+
+  // ?embed=1 (iframe desde la planilla de asistencia): solo se ven las
+  // ventanas de cartera, sobre fondo transparente. Al cerrar la cartera se
+  // avisa a la página que la abrió para que cierre el iframe.
+  const [embebido, setEmbebido] = useState(false);
+  useEffect(() => {
+    if (new URL(window.location.href).searchParams.get('embed') !== '1') return;
+    setEmbebido(true);
+    document.documentElement.classList.add('cartera-embed');
+    return () => document.documentElement.classList.remove('cartera-embed');
+  }, []);
+  const carteraFueAbierta = useRef(false);
+  useEffect(() => {
+    if (!embebido) return;
+    if (showCarteraModal) {
+      carteraFueAbierta.current = true;
+      window.parent.postMessage(
+        { type: 'cartera-abierta' },
+        window.location.origin
+      );
+      return;
+    }
+    if (carteraFueAbierta.current) {
+      window.parent.postMessage(
+        { type: 'cartera-cerrada' },
+        window.location.origin
+      );
+    }
+  }, [embebido, showCarteraModal]);
+
+  // ?cartera=<userId> (p. ej. desde la planilla de un grupo): abre la ventana
+  // de cartera de ese estudiante apenas carga la lista, una sola vez.
+  // Filtros por columna en la cabecera: ocultos por defecto (diseño limpio).
+  const [mostrarFiltrosCol, setMostrarFiltrosCol] = useState(false);
+
+  const carteraDesdeUrl = useRef(false);
+  useEffect(() => {
+    if (carteraDesdeUrl.current || students.length === 0) return;
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get('cartera');
+    if (!id) return;
+    carteraDesdeUrl.current = true;
+    if (!students.some((st) => st.id === id)) {
+      if (url.searchParams.get('embed') === '1') {
+        window.parent.postMessage(
+          { type: 'cartera-cerrada', error: 'Estudiante no encontrado' },
+          window.location.origin
+        );
+      }
+      return;
+    }
+    url.searchParams.delete('cartera');
+    window.history.replaceState(null, '', url.toString());
+    void openCarteraModal(id);
+    // openCarteraModal no es estable; solo interesa cuando llega la lista.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [students]);
   useEffect(() => {
     localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
   }, [visibleColumns]);
@@ -2897,7 +3059,14 @@ export default function EnrolledUsersPage() {
             ? getCarteraUiStatus(student.carteraStatus)
             : getValueForColumn(student, col.id);
         if (value !== null && value !== undefined) {
-          values.push(safeToString(value));
+          let str = safeToString(value);
+          // Fechas: una opción por día (el filtro compara con `includes`, así
+          // que "2026-10-02" sigue encontrando "2026-10-02T05:00:00.000Z").
+          if (col.type === 'date' && str) {
+            const d = new Date(str);
+            if (!isNaN(d.getTime())) str = d.toISOString().split('T')[0];
+          }
+          values.push(str);
         }
       });
       options[col.id] = values;
@@ -2983,13 +3152,14 @@ export default function EnrolledUsersPage() {
         })
 
         // Filtros generales (nombre, email, estado, fechas)
-        .filter((s) =>
-          filters.name
-            ? normalizeFilterValue(s.name).includes(
-                normalizeFilterValue(filters.name)
-              )
-            : true
-        )
+        // Buscador unificado: nombre, documento, correo o teléfono.
+        .filter((s) => {
+          if (!filters.name) return true;
+          const q = normalizeFilterValue(filters.name);
+          return [s.name, s.identificacionNumero, s.email, s.phone].some((v) =>
+            normalizeFilterValue(v).includes(q)
+          );
+        })
         .filter((s) =>
           filters.email
             ? normalizeFilterValue(s.email).includes(
@@ -3222,6 +3392,7 @@ export default function EnrolledUsersPage() {
         comercial: updatedStudent.comercial,
         sede: updatedStudent.sede,
         horario: updatedStudent.horario,
+        grupos: updatedStudent.grupos,
         numeroCuotas: updatedStudent.numeroCuotas,
         pagoInscripcion: updatedStudent.pagoInscripcion,
         pagoCuota1: updatedStudent.pagoCuota1,
@@ -3299,12 +3470,17 @@ export default function EnrolledUsersPage() {
     [students, programs, availableCourses, setStudents, setSuccessMessage]
   );
 
-  const updateStudentsMassiveField = async (fields: Record<string, string>) => {
+  // `userIds` por defecto: los seleccionados (edición masiva). La fila nueva
+  // lo usa con el id del usuario recién creado.
+  const updateStudentsMassiveField = async (
+    fields: Record<string, string>,
+    userIds: string[] = selectedStudents
+  ) => {
     const payload: {
       userIds: string[];
       fields: Record<string, unknown>;
     } = {
-      userIds: selectedStudents,
+      userIds,
       fields: {},
     };
 
@@ -3347,7 +3523,82 @@ export default function EnrolledUsersPage() {
     await fetchData();
 
     // 🎉 Retorna el número de usuarios actualizados para mostrar en el mensaje
-    return selectedStudents.length;
+    return userIds.length;
+  };
+
+  // ── Fila nueva (botón "Fila"): un usuario nuevo editable en la tabla ──
+  const [filaNueva, setFilaNueva] = useState<Record<string, string> | null>(
+    null
+  );
+  const [guardandoFila, setGuardandoFila] = useState(false);
+  // Columnas calculadas (no se escriben a mano en la fila nueva).
+  const COLS_NO_EDITABLES = new Set([
+    'enrolledInCourseLabel',
+    'nivelNombre',
+    'carteraStatus',
+  ]);
+
+  const guardarFilaNueva = async () => {
+    if (!filaNueva || guardandoFila) return;
+    const nombre = (filaNueva.name ?? '').trim();
+    const email = (filaNueva.email ?? '').trim();
+    // showNotification no se pinta en esta página: se usa el InfoDialog.
+    const avisar = (msg: string) => {
+      setInfoDialogTitle('Fila nueva');
+      setInfoDialogMessage(msg);
+      setInfoDialogOpen(true);
+    };
+    if (!nombre || !email) {
+      avisar('Escribe al menos el nombre y el correo.');
+      return;
+    }
+    const [firstName = '', ...apellidos] = nombre.split(/\s+/);
+    setGuardandoFila(true);
+    try {
+      // 1) Crea el usuario (Clerk + BD), igual que "Crear Usuario".
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName: apellidos.join(' '),
+          email,
+          role: 'estudiante',
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as {
+        user?: { id?: string; username?: string };
+        generatedPassword?: string;
+        error?: string;
+      } | null;
+      const nuevoId = data?.user?.id;
+      if (!res.ok || !nuevoId) {
+        throw new Error(data?.error ?? 'No se pudo crear el usuario');
+      }
+
+      // 2) El resto de campos llenados en la fila, en una sola actualización.
+      const extra = Object.fromEntries(
+        Object.entries(filaNueva).filter(
+          ([k, v]) => k !== 'name' && k !== 'email' && v.trim() !== ''
+        )
+      );
+      if (Object.keys(extra).length > 0) {
+        await updateStudentsMassiveField(extra, [nuevoId]);
+      } else {
+        await fetchData();
+      }
+
+      setFilaNueva(null);
+      setInfoDialogTitle('Usuario Creado');
+      setInfoDialogMessage(
+        `Se ha creado el usuario "${data?.user?.username ?? email}" con la contraseña: ${data?.generatedPassword ?? ''}`
+      );
+      setInfoDialogOpen(true);
+    } catch (e) {
+      avisar(e instanceof Error ? e.message : 'No se pudo crear el usuario');
+    } finally {
+      setGuardandoFila(false);
+    }
   };
 
   const headerRef = useRef<HTMLDivElement>(null);
@@ -3481,13 +3732,11 @@ export default function EnrolledUsersPage() {
 
     if (column.type === 'date') {
       return (
-        <input
-          type="date"
-          value={currentValue}
+        <CampoFechaLarga
+          valor={currentValue}
+          placeholder={`Selecciona ${column.label.toLowerCase()}`}
+          onCambio={(v) => handleMassiveFieldValueChange(column.id, v)}
           className={commonInputClassName}
-          onChange={(e) =>
-            handleMassiveFieldValueChange(column.id, e.target.value)
-          }
         />
       );
     }
@@ -3530,20 +3779,38 @@ export default function EnrolledUsersPage() {
 
   return (
     <>
+      {embebido && (
+        <style>{`
+          html.cartera-embed, html.cartera-embed body {
+            background: transparent !important;
+            overflow: hidden !important;
+          }
+          html.cartera-embed body * { visibility: hidden; }
+          html.cartera-embed .cartera-embed-visible,
+          html.cartera-embed .cartera-embed-visible * { visibility: visible; }
+          html.cartera-embed .showCarteraModal {
+            background: transparent !important;
+          }
+        `}</style>
+      )}
+
       {/* Este InfoDialog SÍ quedará “montado” y React lo mostrará cuando isOpen===true */}
-      <InfoDialog
-        isOpen={infoDialogOpen}
-        title={infoDialogTitle}
-        message={infoDialogMessage}
-        onClose={() => setInfoDialogOpen(false)}
-      />
+      <div className="cartera-embed-visible">
+        <InfoDialog
+          isOpen={infoDialogOpen}
+          title={infoDialogTitle}
+          message={infoDialogMessage}
+          onClose={() => setInfoDialogOpen(false)}
+        />
+      </div>
 
       {/* ✅ Toast de mensaje de éxito */}
       {successMessage && (
         <div
           className="
-            animate-in fade-in fixed right-6 bottom-6 z-50 rounded-lg
-            bg-green-600 px-6 py-3 text-white shadow-lg
+            cartera-embed-visible fixed right-6 bottom-6 z-50 rounded-lg
+            bg-green-600 px-6
+            py-3 text-white shadow-lg animate-in fade-in
           "
         >
           {successMessage}
@@ -3552,120 +3819,106 @@ export default function EnrolledUsersPage() {
 
       <div
         className="
-          min-h-screen space-y-8 bg-gray-900 p-6 text-white
-          print:hidden
+          -mt-[44px] flex h-dvh w-full flex-col gap-1.5 overflow-hidden
+          bg-[#01152d] px-[22px] py-2 text-white print:hidden
         "
       >
-        <div ref={headerRef} className="flex flex-col gap-6">
+        <div ref={headerRef} className="flex flex-col gap-2">
           {/* Título + métricas */}
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-bold tracking-tight text-white">
-              Gestión de Estudiantes
-            </h1>
-            <p className="text-sm text-gray-400">
-              Administra matrículas, pagos y seguimiento académico
-            </p>
-          </div>
-
-          {/* Chips de métricas */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: 'Total', value: students.length, color: 'text-white' },
-              {
-                label: 'Activos',
-                value: students.filter((s) => s.subscriptionStatus === 'active')
-                  .length,
-                color: 'text-emerald-400',
-              },
-              {
-                label: 'En cartera',
-                value: students.filter((s) => s.carteraStatus === 'inactivo')
-                  .length,
-                color: 'text-red-400',
-              },
-              {
-                label: 'Nuevos',
-                value: students.filter((s) => s.isNew).length,
-                color: 'text-cyan-400',
-              },
-            ].map(({ label, value, color }, i) => (
-              <div
-                key={`${label}-${i}`}
-                className="
-                  flex items-center gap-2 rounded-xl border border-white/10
-                  bg-white/5 px-3 py-1.5
-                "
-              >
-                <span className="text-xs text-gray-400">{label}</span>
-                <span
-                  className={`
-                    text-sm font-bold
-                    ${color}
-                  `}
-                >
-                  {value}
-                </span>
-              </div>
-            ))}
-          </div>
+          <h1 className="flex items-center gap-2 text-lg font-bold text-white">
+            Gestión de Builders
+            <ChevronDown className="size-4 text-white/50" />
+          </h1>
 
           {/* Botones de acción */}
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Grupo unificado */}
-            <div className="flex overflow-hidden rounded-xl border border-white/10">
-              {(
-                [
-                  {
-                    label: 'Crear Usuario',
-                    onClick: () => setShowCreateForm(true),
+          <div className="grid w-full grid-cols-3 items-center gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+            {(
+              [
+                {
+                  label: 'Crear Usuario',
+                  icon: <UserPlus className="size-4" />,
+                  tono: 'border-[#1d283a]/60 bg-[#061c37]/70 text-white hover:border-[#22C4D3]/50 hover:text-[#22C4D3]',
+                  onClick: () => setShowCreateForm(true),
+                },
+                {
+                  label: 'Correo',
+                  icon: <Mail className="size-4" />,
+                  tono: 'border-[#1d283a]/60 bg-[#061c37]/70 text-white hover:border-[#22C4D3]/50 hover:text-[#22C4D3]',
+                  onClick: () => {
+                    setSendWhatsapp(false);
+                    setShowPhoneModal(true);
                   },
-                  {
-                    label: 'Correo',
-                    onClick: () => {
-                      setSendWhatsapp(false);
-                      setShowPhoneModal(true);
-                    },
+                },
+                {
+                  label: 'WhatsApp',
+                  icon: <MessageCircle className="size-4" />,
+                  tono: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25',
+                  onClick: () => {
+                    setSendWhatsapp(true);
+                    setShowPhoneModal(true);
                   },
-                  {
-                    label: 'WhatsApp',
-                    onClick: () => {
-                      setSendWhatsapp(true);
-                      setShowPhoneModal(true);
-                    },
+                },
+                {
+                  label: 'Editar Masivamente',
+                  icon: <Pencil className="size-4" />,
+                  tono: 'border-amber-500/50 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20',
+                  onClick: () => setShowMassiveEditModal(true),
+                  disabled: selectedStudents.length === 0,
+                },
+                {
+                  label: 'Matricular a Curso',
+                  icon: <GraduationCap className="size-4" />,
+                  tono: 'border-blue-500/50 bg-blue-500/15 text-blue-400 hover:bg-blue-500/25',
+                  onClick: () => {
+                    setSelectedCourses([]);
+                    setShowModal(true);
                   },
-                ] as { label: string; onClick: () => void }[]
-              ).map(({ label, onClick }, i) => (
-                <button
-                  key={`${label}-${i}`}
-                  onClick={onClick}
-                  className={`
-                    bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-200
-                    transition-all duration-150
-                    hover:bg-white/10 hover:text-white
-                    ${i !== 0 ? 'border-l border-white/10' : ''}
-                  `}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+                  disabled: selectedStudents.length === 0,
+                },
+              ] as {
+                label: string;
+                icon: React.ReactNode;
+                tono: string;
+                onClick: () => void;
+                disabled?: boolean;
+              }[]
+            ).map(({ label, icon, tono, onClick, disabled }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={onClick}
+                disabled={disabled}
+                className={`
+                  inline-flex h-7 w-full items-center justify-center gap-1
+                  rounded-full border px-2 text-[10px] font-medium
+                  transition-colors disabled:cursor-not-allowed
+                  disabled:opacity-40 [&_svg]:size-3
+                  ${tono}
+                `}
+              >
+                {icon}
+                {label}
+              </button>
+            ))}
 
             {/* Botón columnas */}
             <button
               onClick={() => setShowColumnSelector((v) => !v)}
               className="
-                flex items-center gap-2 rounded-xl border border-white/10
-                bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-200
-                transition-all duration-150
-                hover:bg-white/10 hover:text-white
+                inline-flex h-7 w-full items-center justify-center gap-1 rounded-full border
+                border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
+                font-medium text-white transition-all duration-150
+                hover:bg-white/10
+                [&_svg]:size-3
               "
             >
+              <Columns3 className="size-4" />
               <span>Columnas</span>
               {visibleColumns.length < totalColumns.length && (
                 <span
                   className="
-                    rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px]
-                    font-bold text-blue-300
+                    rounded-md bg-[#22C4D3]/15 px-1 py-px text-[9px]
+                    font-bold text-[#22C4D3]
                   "
                 >
                   {totalColumns.length - visibleColumns.length} ocultas
@@ -3674,15 +3927,141 @@ export default function EnrolledUsersPage() {
             </button>
 
             <button
-              onClick={handlePrint}
+              onClick={downloadSelectedAsExcel}
               className="
-                rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm
-                font-medium text-gray-200 transition-all duration-150
-                hover:bg-white/10 hover:text-white
+                inline-flex h-7 w-full items-center justify-center gap-1 rounded-full border
+                border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
+                font-medium text-white transition-all duration-150
+                hover:bg-white/10
+                [&_svg]:size-3
               "
             >
-              Imprimir
+              <Download className="size-4" />
+              Exportar
             </button>
+            <button
+              type="button"
+              disabled
+              className="
+                inline-flex h-7 w-full items-center justify-center gap-1 rounded-full border
+                border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
+                font-medium text-white/35 [&_svg]:size-3
+              "
+            >
+              <MessageSquare className="size-4" />
+              Comentarios
+            </button>
+          </div>
+          {/* TABS DE ESTADO DE INSCRIPCIÓN */}
+          <div className="flex [scrollbar-width:none] gap-1.5 overflow-x-auto pb-1 [&::-webkit-scrollbar]:hidden">
+            {[
+              { key: '', label: 'Todos', color: 'sky' },
+              ...enrollmentStatusOptions
+                .filter(
+                  (s) =>
+                    ![
+                      'Activo',
+                      'Inactivo',
+                      'Pendiente',
+                      'Suspendido',
+                      'Cancelado',
+                    ].includes(s)
+                )
+                .map((s) => ({ key: s, label: s, color: 'slate' as const })),
+            ].map(({ key, label, color }) => {
+              const isActive = filters.enrollmentStatus === key;
+              const tonos: Record<string, { chip: string; num: string }> = {
+                sky: {
+                  chip: 'border-emerald-500/70 bg-emerald-500/15 font-semibold text-emerald-400',
+                  num: 'bg-emerald-500/20',
+                },
+                emerald: {
+                  chip: 'border-emerald-500/70 bg-emerald-500/15 font-semibold text-emerald-400',
+                  num: 'bg-emerald-500/20',
+                },
+                red: {
+                  chip: 'border-red-500/70 bg-red-500/15 font-semibold text-red-400',
+                  num: 'bg-red-500/20',
+                },
+                amber: {
+                  chip: 'border-amber-500/70 bg-amber-500/15 font-semibold text-amber-400',
+                  num: 'bg-amber-500/20',
+                },
+                slate: {
+                  chip: 'border-[#22C4D3]/70 bg-[#22C4D3]/15 font-semibold text-[#22C4D3]',
+                  num: 'bg-[#22C4D3]/20',
+                },
+              };
+              const tono = tonos[color] ?? tonos.slate!;
+              const count =
+                key === ''
+                  ? sortedStudents.length
+                  : (enrollmentStatusCounts[key] ?? 0);
+              return (
+                <Fragment key={key}>
+                  <button
+                    onClick={() =>
+                      setFilters({ ...filters, enrollmentStatus: key })
+                    }
+                    className={`
+                  inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5
+                  text-[10px] whitespace-nowrap transition-all
+                  ${
+                    isActive
+                      ? tono.chip
+                      : `
+                        border-[#1d283a]/60 bg-[#061c37]/50 text-slate-400
+                        hover:border-white/30 hover:text-white
+                      `
+                  }
+                `}
+                  >
+                    {label}
+                    <span
+                      className={`
+                    rounded-md px-1 py-px text-[9px] font-semibold tabular-nums
+                    ${isActive ? tono.num : 'bg-white/5 text-slate-400'}
+                  `}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                  {key === '' &&
+                    [
+                      {
+                        label: 'Activos',
+                        value: students.filter(
+                          (s) => s.subscriptionStatus === 'active'
+                        ).length,
+                      },
+                      {
+                        label: 'En cartera',
+                        value: students.filter(
+                          (s) => s.carteraStatus === 'inactivo'
+                        ).length,
+                      },
+                    ].map((m) => (
+                      <span
+                        key={m.label}
+                        className="
+                        inline-flex h-8 items-center gap-1.5 rounded-full border
+                        border-[#1d283a]/60 bg-[#061c37]/50 px-2 text-[11px] whitespace-nowrap text-slate-400
+                      "
+                      >
+                        {m.label}
+                        <span
+                          className="
+                          rounded-md bg-white/5 px-1 py-px text-[9px]
+                          font-semibold text-slate-400 tabular-nums
+                        "
+                        >
+                          {m.value}
+                        </span>
+                      </span>
+                    ))}
+                </Fragment>
+              );
+            })}
           </div>
         </div>
 
@@ -3833,337 +4212,295 @@ export default function EnrolledUsersPage() {
         )}
 
         {/* Filtros */}
-        <div
-          className="
-            grid grid-cols-1 gap-4
-            sm:grid-cols-2
-            md:grid-cols-3
-            lg:grid-cols-4
-          "
-        >
-          <input
-            type="text"
-            placeholder="Nombre"
-            value={filters.name}
-            onChange={(e) => setFilters({ ...filters, name: e.target.value })}
-            className="rounded border border-gray-700 bg-gray-800 p-2"
-          />
-          <input
-            type="email"
-            placeholder="Correo"
-            value={filters.email}
-            onChange={(e) => setFilters({ ...filters, email: e.target.value })}
-            className="rounded border border-gray-700 bg-gray-800 p-2"
-          />
-          <select
-            value={filters.subscriptionStatus}
-            onChange={(e) =>
-              setFilters({ ...filters, subscriptionStatus: e.target.value })
-            }
-            className="rounded border border-gray-700 bg-gray-800 p-2"
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[260px] flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, documento, correo…"
+              value={filters.name}
+              onChange={(e) => setFilters({ ...filters, name: e.target.value })}
+              className="h-9 w-full rounded-full border border-[#1d283a]/60 bg-[#061c37]/70 pr-2.5 pl-8 text-[12px] text-white placeholder:text-slate-400 focus:border-[#22C4D3]/60 focus:outline-none"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setFilaNueva((f) => f ?? {});
+              document
+                .querySelector('table.table-auto')
+                ?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px] font-medium hover:bg-white/10"
           >
-            <option value="">Estado Suscripción</option>
-            <option value="active">Activa</option>
-            <option value="inactive">Inactiva</option>
-          </select>
+            <Plus className="size-4" /> Fila
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const selected = students.filter((student) =>
+                selectedStudents.includes(student.id)
+              );
+              const rows = [
+                'Nombre\tCorreo',
+                ...selected.map(
+                  (student) => `${student.name}\t${student.email}`
+                ),
+              ];
+              void navigator.clipboard.writeText(rows.join('\n'));
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px] font-medium hover:bg-white/10"
+          >
+            <Copy className="size-4" /> Copiar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void navigator.clipboard
+                .readText()
+                .then((text) => {
+                  const firstRow = text
+                    .split(/\r?\n/)
+                    .find(
+                      (row) => row.trim() && !/^nombre\s+correo$/i.test(row)
+                    );
+                  if (!firstRow) return;
+                  const [name = '', email = ''] = firstRow.split('\t');
+                  const [firstName = '', ...lastNames] = name
+                    .trim()
+                    .split(/\s+/);
+                  if (!firstName || !email) return;
+                  setNewUser({
+                    firstName,
+                    lastName: lastNames.join(' '),
+                    email: email.trim(),
+                    role: 'estudiante',
+                  });
+                  setShowCreateForm(true);
+                })
+                .catch(() => undefined);
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px] font-medium hover:bg-white/10"
+          >
+            <ClipboardPaste className="size-4" /> Pegar
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddColumnModal(true)}
+            className="inline-flex h-9 items-center gap-1.5 rounded-full border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px] font-medium hover:bg-white/10"
+          >
+            <Columns3 className="size-4" /> Agregar columna
+          </button>
+          <button
+            type="button"
+            onClick={() => setMostrarFiltrosCol((visible) => !visible)}
+            title="Filtros por columna"
+            aria-label="Filtros por columna"
+            className={`inline-flex size-9 items-center justify-center rounded-full border ${
+              mostrarFiltrosCol
+                ? 'border-[#22C4D3]/60 bg-[#22C4D3]/15 text-[#22C4D3]'
+                : 'border-[#1d283a]/60 bg-[#061c37]/70 text-white/70 hover:bg-white/10'
+            }`}
+          >
+            <SlidersHorizontal className="size-4" />
+          </button>
+        </div>
 
-          <input
-            type="date"
-            value={filters.purchaseDateFrom}
-            onChange={(e) =>
-              setFilters({ ...filters, purchaseDateFrom: e.target.value })
-            }
-            className="rounded border border-gray-700 bg-gray-800 p-2"
-          />
-
-          <input
-            type="date"
-            value={filters.purchaseDateTo}
-            onChange={(e) =>
-              setFilters({ ...filters, purchaseDateTo: e.target.value })
-            }
-            className="rounded border border-gray-700 bg-gray-800 p-2"
-          />
-
-          {/* Filtro: Programas (multiselect con búsqueda y chips) */}
-          <div ref={programRef} className="relative">
-            <label className="mb-1 block text-sm text-gray-300">
-              Programas
-            </label>
-
-            {/* “Input” con chips + búsqueda */}
-            <div
-              onClick={() => setProgramOpen(true)}
-              className="
-                flex min-h-[40px] w-full cursor-text flex-wrap items-center
-                gap-1 rounded border border-gray-700 bg-gray-800 px-2 py-1
-                focus-within:ring-2 focus-within:ring-blue-500
-              "
+        {/* Más filtros (botón "Filtros") */}
+        {mostrarFiltrosCol && (
+          <div className="flex flex-wrap items-start gap-2">
+            <select
+              value={filters.subscriptionStatus}
+              onChange={(e) =>
+                setFilters({ ...filters, subscriptionStatus: e.target.value })
+              }
+              className="h-7 w-44 rounded-md border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[11px] text-white placeholder:text-slate-400 focus:border-[#22C4D3]/60 focus:outline-none [&>option]:bg-[#061c37]"
             >
-              {selectedPrograms.length === 0 && (
-                <span className="px-1 text-sm text-gray-400">
-                  Selecciona programas…
-                </span>
-              )}
+              <option value="">Estado Suscripción</option>
+              <option value="active">Activa</option>
+              <option value="inactive">Inactiva</option>
+            </select>
 
-              {/* Chips seleccionados (reducidos / truncados) */}
-              {selectedPrograms.map((p) => (
-                <span
-                  key={p}
-                  className="
-                    group inline-flex max-w-[160px] items-center gap-1 truncate
-                    rounded bg-blue-700/70 px-2 py-0.5 text-xs
-                  "
-                  title={p}
-                >
-                  <span className="truncate">{p}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeProgram(p);
-                    }}
-                    className="
-                      opacity-80 transition
-                      group-hover:opacity-100
-                    "
-                    aria-label={`Quitar ${p}`}
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
+            <CampoFechaLarga
+              valor={filters.purchaseDateFrom}
+              placeholder="Compra desde"
+              onCambio={(v) => setFilters({ ...filters, purchaseDateFrom: v })}
+              className="h-7 !w-44 rounded-md border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[11px] text-white placeholder:text-slate-400 focus:border-[#22C4D3]/60 focus:outline-none"
+            />
 
-              {/* Input de búsqueda dentro del “input” */}
-              <input
-                type="text"
-                value={programQuery}
-                onChange={(e) => setProgramQuery(e.target.value)}
-                onFocus={() => setProgramOpen(true)}
-                placeholder={selectedPrograms.length ? '' : ''}
-                className="
-                  min-w-[80px] flex-1 bg-transparent text-sm text-white
-                  outline-none
-                  placeholder:text-gray-500
-                "
-              />
-            </div>
+            <CampoFechaLarga
+              valor={filters.purchaseDateTo}
+              placeholder="Compra hasta"
+              onCambio={(v) => setFilters({ ...filters, purchaseDateTo: v })}
+              className="h-7 !w-44 rounded-md border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[11px] text-white placeholder:text-slate-400 focus:border-[#22C4D3]/60 focus:outline-none"
+            />
 
-            {/* Dropdown de opciones */}
-            {programOpen && (
+            {/* Filtro: Programas (multiselect con búsqueda y chips) */}
+            <div ref={programRef} className="relative w-60">
+              {/* “Input” con chips + búsqueda */}
               <div
+                onClick={() => setProgramOpen(true)}
                 className="
-                  absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded
-                  border border-gray-700 bg-gray-800 shadow-xl
+                  flex min-h-7 w-full cursor-text flex-wrap items-center
+                  gap-1 rounded-md border border-[#1d283a]/60 bg-[#061c37]/70 px-2 py-1
+                  text-[11px]
+                  focus-within:border-[#22C4D3]/60
                 "
               >
-                {filteredProgramOptions.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-gray-400">
-                    Sin resultados
-                  </div>
-                ) : (
-                  filteredProgramOptions.map((opt) => (
+                {selectedPrograms.length === 0 && (
+                  <span className="px-1 text-sm text-white/35">Programas…</span>
+                )}
+
+                {/* Chips seleccionados (reducidos / truncados) */}
+                {selectedPrograms.map((p) => (
+                  <span
+                    key={p}
+                    className="
+                      group inline-flex max-w-[160px] items-center gap-1 truncate
+                      rounded-full bg-[#22C4D3]/15 px-2 py-0.5 text-xs
+                      text-[#22C4D3]
+                    "
+                    title={p}
+                  >
+                    <span className="truncate">{p}</span>
                     <button
-                      key={opt}
                       type="button"
-                      onClick={() => {
-                        toggleProgram(opt);
-                        setProgramQuery('');
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeProgram(p);
                       }}
                       className="
-                        flex w-full items-center justify-between px-3 py-2
-                        text-left text-sm
-                        hover:bg-gray-700
+                        opacity-80 transition
+                        group-hover:opacity-100
                       "
+                      aria-label={`Quitar ${p}`}
                     >
-                      <span>{opt}</span>
-                      {selectedPrograms.includes(opt) && <span>✓</span>}
+                      ×
                     </button>
-                  ))
-                )}
+                  </span>
+                ))}
+
+                {/* Input de búsqueda dentro del “input” */}
+                <input
+                  type="text"
+                  value={programQuery}
+                  onChange={(e) => setProgramQuery(e.target.value)}
+                  onFocus={() => setProgramOpen(true)}
+                  placeholder={selectedPrograms.length ? '' : ''}
+                  className="
+                    min-w-[80px] flex-1 bg-transparent text-sm text-white
+                    outline-none
+                    placeholder:text-gray-500
+                  "
+                />
               </div>
-            )}
 
-            {selectedPrograms.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSelectedPrograms([])}
-                className="mt-1 rounded bg-gray-700 px-2 py-1 text-xs"
-              >
-                Limpiar selección
-              </button>
-            )}
-          </div>
-
-          {/* Botón para limpiar todos los filtros */}
-          {(filters.name ||
-            filters.email ||
-            filters.subscriptionStatus ||
-            filters.enrollmentStatus ||
-            filters.purchaseDateFrom ||
-            filters.purchaseDateTo ||
-            selectedPrograms.length > 0) && (
-            <button
-              type="button"
-              onClick={() => {
-                setFilters({
-                  name: '',
-                  email: '',
-                  subscriptionStatus: '',
-                  enrollmentStatus: '',
-                  purchaseDateFrom: '',
-                  purchaseDateTo: '',
-                });
-                setSelectedPrograms([]);
-              }}
-              className="
-                rounded bg-red-700 px-4 py-2 text-sm font-medium text-white
-                hover:bg-red-600
-                active:bg-red-800
-              "
-              title="Limpiar todos los filtros"
-            >
-              🗑️ Limpiar Filtros
-            </button>
-          )}
-        </div>
-
-        {/* TABS DE ESTADO DE INSCRIPCIÓN */}
-        <div className="flex flex-wrap gap-1.5">
-          {[
-            { key: '', label: 'Todos', color: 'sky' },
-            { key: 'Activo', label: 'Activo', color: 'emerald' },
-            { key: 'Inactivo', label: 'Inactivo', color: 'red' },
-            { key: 'Pendiente', label: 'Pendiente', color: 'amber' },
-            ...enrollmentStatusOptions
-              .filter(
-                (s) =>
-                  ![
-                    'Activo',
-                    'Inactivo',
-                    'Pendiente',
-                    'Suspendido',
-                    'Cancelado',
-                  ].includes(s)
-              )
-              .map((s) => ({ key: s, label: s, color: 'slate' as const })),
-          ].map(({ key, label, color }) => {
-            const isActive = filters.enrollmentStatus === key;
-            const count =
-              key === ''
-                ? sortedStudents.length
-                : (enrollmentStatusCounts[key] ?? 0);
-            return (
-              <button
-                key={key}
-                onClick={() =>
-                  setFilters({ ...filters, enrollmentStatus: key })
-                }
-                className={`
-                  flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs
-                  font-medium transition-all duration-150
-                  ${
-                    isActive
-                      ? `
-                        bg-${color}-500/20
-                        
-                        text-${color}-300
-                        ring-1
-                        ring-${color}-500/40
-                      `
-                      : `
-                        bg-white/5 text-gray-400
-                        hover:bg-white/10 hover:text-gray-200
-                      `
-                  }
-                `}
-              >
-                {label}
-                <span
-                  className={`
-                    rounded-full px-1.5 py-0.5 text-[10px] font-bold
-                    ${
-                      isActive
-                        ? `
-                          bg-${color}-500/30
-                          
-                          text-${color}-200
-                        `
-                        : 'bg-white/10 text-gray-500'
-                    }
-                  `}
+              {/* Dropdown de opciones */}
+              {programOpen && (
+                <div
+                  className="
+                    absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-xl
+                    border border-white/10 bg-[#0b1a2f] shadow-xl
+                  "
                 >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  {filteredProgramOptions.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-gray-400">
+                      Sin resultados
+                    </div>
+                  ) : (
+                    filteredProgramOptions.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => {
+                          toggleProgram(opt);
+                          setProgramQuery('');
+                        }}
+                        className="
+                          flex w-full items-center justify-between px-3 py-2
+                          text-left text-sm
+                          hover:bg-white/5
+                        "
+                      >
+                        <span>{opt}</span>
+                        {selectedPrograms.includes(opt) && <span>✓</span>}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
 
-        <div>
-          <h2 className="mb-2 text-xl font-semibold">
-            Seleccionar Estudiantes
-          </h2>
-          <div
-            className="
-              mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-300
-              sm:text-sm
-            "
-          >
-            <span>
-              Seleccionados: <strong>{selectedStudents.length}</strong> /{' '}
-              {sortedStudents.length}
-            </span>
-            <span className="opacity-70">
-              (Visibles: {displayedStudents.length})
-            </span>
-            {selectedStudents.length > 0 && (
+              {selectedPrograms.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedPrograms([])}
+                  className="
+                    mt-1 rounded-full bg-white/10 px-2.5 py-0.5 text-xs
+                    text-white/70
+                    hover:bg-white/15
+                  "
+                >
+                  Limpiar selección
+                </button>
+              )}
+            </div>
+
+            {/* Botón para limpiar todos los filtros */}
+            {(filters.name ||
+              filters.email ||
+              filters.subscriptionStatus ||
+              filters.enrollmentStatus ||
+              filters.purchaseDateFrom ||
+              filters.purchaseDateTo ||
+              selectedPrograms.length > 0) && (
               <button
                 type="button"
-                onClick={() => setSelectedStudents([])}
+                onClick={() => {
+                  setFilters({
+                    name: '',
+                    email: '',
+                    subscriptionStatus: '',
+                    enrollmentStatus: '',
+                    purchaseDateFrom: '',
+                    purchaseDateTo: '',
+                  });
+                  setSelectedPrograms([]);
+                }}
                 className="
-                  rounded bg-gray-700 px-2 py-1 text-xs
-                  hover:bg-gray-600
+                  inline-flex h-7 items-center justify-center gap-1
+                  rounded-md border border-red-500/40 bg-red-500/10 px-2.5 text-[11px]
+                  font-medium text-red-300
+                  hover:bg-red-500/20
                 "
-                title="Limpiar selección"
+                title="Limpiar todos los filtros"
               >
-                Limpiar
-              </button>
-            )}
-            {Object.keys(advancedFilters).some(
-              (k) => (advancedFilters[k]?.length ?? 0) > 0
-            ) && (
-              <button
-                type="button"
-                onClick={() => setAdvancedFilters({})}
-                className="
-                  rounded bg-blue-700 px-2 py-1 text-xs font-medium
-                  hover:bg-blue-600
-                "
-                title="Limpiar filtros avanzados"
-              >
-                ✓ Limpiar filtros avanzados
+                <X className="size-4" /> Limpiar filtros
               </button>
             )}
           </div>
+        )}
 
+        {/* La página ocupa exactamente la pantalla (sin scroll propio) y la
+            tabla llena el alto que queda: sus barras de scroll horizontal y
+            vertical siempre están a la vista. */}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <div
             className="
-              modern-scrollbar max-h-[60vh] w-full overflow-auto rounded-lg
-              border border-gray-700
+              modern-scrollbar min-h-0 w-full max-w-full flex-1 overflow-auto
+              border border-[#1d283a]/60 bg-[#061c37]/40
             "
             onScroll={handleScroll}
           >
             <table className="w-full min-w-max table-auto border-collapse">
               {/* Cabecera fija */}
-              <thead className="sticky top-0 z-10 bg-gray-900">
+              <thead className="sticky top-0 z-10 bg-[#061c37]">
                 <tr
                   className="
-                    border-b border-white/10 bg-gray-900/95 text-xs
-                    text-gray-400
+                    bg-[#061c37] text-[11px]
+                    font-semibold tracking-wide text-slate-400 uppercase
                   "
                 >
-                  <th className="w-12 px-4 py-2">
+                  <th className="w-8 border-r border-b border-[#1d283a]/60 px-2 py-1">
                     <input
                       type="checkbox"
                       checked={
@@ -4186,7 +4523,7 @@ export default function EnrolledUsersPage() {
                           );
                         }
                       }}
-                      className="rounded border-white/20"
+                      className="size-4 rounded-[3px] border-slate-400/60 accent-slate-400"
                     />
                   </th>
                   {totalColumns
@@ -4194,7 +4531,7 @@ export default function EnrolledUsersPage() {
                     .map((col) => (
                       <th
                         key={col.id}
-                        className="px-4 py-2 text-left font-medium"
+                        className="group/th border-r border-b border-[#1d283a]/60 px-3 py-1 text-left font-semibold"
                       >
                         <div className="space-y-1">
                           <div className="flex items-center justify-between gap-1">
@@ -4216,12 +4553,13 @@ export default function EnrolledUsersPage() {
                                 ${
                                   (advancedFilters[col.id]?.length ?? 0) > 0
                                     ? `
-                                      bg-blue-600
-                                      hover:bg-blue-700
+                                      bg-[#22C4D3]/20 text-[#22C4D3]
+                                      hover:bg-[#22C4D3]/30
                                     `
                                     : `
-                                      bg-gray-700
-                                      hover:bg-gray-600
+                                      text-white/40 opacity-0
+                                      group-hover/th:opacity-100
+                                      hover:bg-white/10
                                     `
                                 }
                               `}
@@ -4235,135 +4573,151 @@ export default function EnrolledUsersPage() {
                               )}
                             </button>
                           </div>
-                          {col.type === 'select' ? (
-                            <div className="relative">
-                              {/* Input que muestra chips seleccionados */}
-                              <div
-                                onClick={(e) => {
-                                  const elem = document.getElementById(
-                                    `multi-${col.id}`
-                                  );
-                                  if (!elem) return;
+                          {mostrarFiltrosCol &&
+                            (col.type === 'select' ? (
+                              <div className="relative">
+                                {/* Input que muestra chips seleccionados */}
+                                <div
+                                  onClick={(e) => {
+                                    const elem = document.getElementById(
+                                      `multi-${col.id}`
+                                    );
+                                    if (!elem) return;
 
-                                  const isHidden =
-                                    elem.classList.contains('hidden');
+                                    const isHidden =
+                                      elem.classList.contains('hidden');
 
-                                  // Cerrar todos los demás dropdowns
-                                  document
-                                    .querySelectorAll('[id^="multi-"]')
-                                    .forEach((el) => {
-                                      if (el.id !== `multi-${col.id}`)
-                                        el.classList.add('hidden');
-                                    });
+                                    // Cerrar todos los demás dropdowns
+                                    document
+                                      .querySelectorAll('[id^="multi-"]')
+                                      .forEach((el) => {
+                                        if (el.id !== `multi-${col.id}`)
+                                          el.classList.add('hidden');
+                                      });
 
-                                  if (isHidden) {
-                                    // Posicionar el dropdown justo debajo del input
-                                    const rect =
-                                      e.currentTarget.getBoundingClientRect();
-                                    elem.style.top = `${rect.bottom + 4}px`;
-                                    elem.style.left = `${rect.left}px`;
-                                    elem.style.width = `${rect.width}px`;
-                                    elem.classList.remove('hidden');
-                                  } else {
-                                    elem.classList.add('hidden');
-                                  }
-                                }}
-                                className="
-                                  flex min-h-[32px] w-full cursor-pointer
-                                  flex-wrap items-center gap-1 rounded
-                                  bg-gray-700 px-2 py-1 text-xs
-                                  sm:text-sm
+                                    if (isHidden) {
+                                      // Posicionar el dropdown justo debajo del input
+                                      const rect =
+                                        e.currentTarget.getBoundingClientRect();
+                                      elem.style.top = `${rect.bottom + 4}px`;
+                                      elem.style.left = `${rect.left}px`;
+                                      elem.style.width = `${rect.width}px`;
+                                      elem.classList.remove('hidden');
+                                    } else {
+                                      elem.classList.add('hidden');
+                                    }
+                                  }}
+                                  className="
+                                  flex min-h-[30px] w-full cursor-pointer
+                                  flex-wrap items-center gap-1 rounded-lg
+                                  bg-white/5 px-2 py-1 text-xs tracking-normal
+                                  normal-case
                                 "
-                              >
-                                {(columnFiltersMulti[col.id] || []).length ===
-                                  0 && (
-                                  <span className="text-gray-400">Todos</span>
-                                )}
-                                {(columnFiltersMulti[col.id] || []).map(
-                                  (val) => (
-                                    <span
-                                      key={val}
-                                      className="
+                                >
+                                  {(columnFiltersMulti[col.id] || []).length ===
+                                    0 && (
+                                    <span className="text-gray-400">Todos</span>
+                                  )}
+                                  {(columnFiltersMulti[col.id] || []).map(
+                                    (val) => (
+                                      <span
+                                        key={val}
+                                        className="
                                         inline-flex items-center gap-1 rounded
                                         bg-blue-600 px-2 py-0.5 text-xs
                                       "
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setColumnFiltersMulti((prev) => ({
-                                          ...prev,
-                                          [col.id]: (prev[col.id] || []).filter(
-                                            (v) => v !== val
-                                          ),
-                                        }));
-                                      }}
-                                    >
-                                      {val}
-                                      <span className="cursor-pointer">×</span>
-                                    </span>
-                                  )
-                                )}
-                              </div>
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setColumnFiltersMulti((prev) => ({
+                                            ...prev,
+                                            [col.id]: (
+                                              prev[col.id] || []
+                                            ).filter((v) => v !== val),
+                                          }));
+                                        }}
+                                      >
+                                        {val}
+                                        <span className="cursor-pointer">
+                                          ×
+                                        </span>
+                                      </span>
+                                    )
+                                  )}
+                                </div>
 
-                              {/* Dropdown de opciones - AHORA CON POSITION FIXED */}
-                              <div
-                                id={`multi-${col.id}`}
-                                className="
+                                {/* Dropdown de opciones - AHORA CON POSITION FIXED */}
+                                <div
+                                  id={`multi-${col.id}`}
+                                  className="
                                   fixed z-[60] hidden max-h-64 overflow-auto
                                   rounded border border-gray-600 bg-gray-800
                                   shadow-2xl
                                 "
-                                style={{ minWidth: '200px' }}
-                              >
-                                {col.options?.map((opt) => {
-                                  const isSelected = (
-                                    columnFiltersMulti[col.id] || []
-                                  ).includes(opt);
-                                  return (
-                                    <button
-                                      key={opt}
-                                      type="button"
-                                      onClick={() => {
-                                        setColumnFiltersMulti((prev) => {
-                                          const current = prev[col.id] || [];
-                                          return {
-                                            ...prev,
-                                            [col.id]: isSelected
-                                              ? current.filter((v) => v !== opt)
-                                              : [...current, opt],
-                                          };
-                                        });
-                                      }}
-                                      className="
+                                  style={{ minWidth: '200px' }}
+                                >
+                                  {col.options?.map((opt) => {
+                                    const isSelected = (
+                                      columnFiltersMulti[col.id] || []
+                                    ).includes(opt);
+                                    return (
+                                      <button
+                                        key={opt}
+                                        type="button"
+                                        onClick={() => {
+                                          setColumnFiltersMulti((prev) => {
+                                            const current = prev[col.id] || [];
+                                            return {
+                                              ...prev,
+                                              [col.id]: isSelected
+                                                ? current.filter(
+                                                    (v) => v !== opt
+                                                  )
+                                                : [...current, opt],
+                                            };
+                                          });
+                                        }}
+                                        className="
                                         flex w-full items-center justify-between
                                         px-3 py-2 text-left text-xs
                                         hover:bg-gray-700
                                         sm:text-sm
                                       "
-                                    >
-                                      <span>{opt}</span>
-                                      {isSelected && <span>✓</span>}
-                                    </button>
-                                  );
-                                })}
+                                      >
+                                        <span>{opt}</span>
+                                        {isSelected && <span>✓</span>}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            <input
-                              type={col.type}
-                              value={columnFilters[col.id] || ''}
-                              onChange={(e) =>
-                                setColumnFilters((prev) => ({
-                                  ...prev,
-                                  [col.id]: e.target.value,
-                                }))
-                              }
-                              placeholder={`Filtrar ${col.label.toLowerCase()}…`}
-                              className="
-                                w-full rounded bg-gray-700 p-1 text-xs
-                                sm:text-sm
+                            ) : col.type === 'date' ? (
+                              <CampoFechaLarga
+                                valor={columnFilters[col.id] || ''}
+                                placeholder={`Filtrar ${col.label.toLowerCase()}…`}
+                                onCambio={(v) =>
+                                  setColumnFilters((prev) => ({
+                                    ...prev,
+                                    [col.id]: v,
+                                  }))
+                                }
+                              />
+                            ) : (
+                              <input
+                                type={col.type}
+                                value={columnFilters[col.id] || ''}
+                                onChange={(e) =>
+                                  setColumnFilters((prev) => ({
+                                    ...prev,
+                                    [col.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder={`Filtrar ${col.label.toLowerCase()}…`}
+                                className="
+                                w-full rounded-lg bg-white/5 p-1 text-xs
+                                normal-case
                               "
-                            />
-                          )}
+                              />
+                            ))}
                         </div>
                       </th>
                     ))}
@@ -4396,17 +4750,107 @@ export default function EnrolledUsersPage() {
                     </tr>
                   ))}
 
+                {/* Fila nueva: usuario nuevo con los campos vacíos */}
+                {filaNueva && (
+                  <tr className="h-7 bg-[#22C4D3]/[0.07] text-[13px] text-white [&>td]:border-r [&>td]:border-b [&>td]:border-[#22C4D3]/30">
+                    <td className="px-1.5 py-px align-middle">
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => void guardarFilaNueva()}
+                          disabled={guardandoFila}
+                          title="Guardar (Enter)"
+                          aria-label="Guardar usuario"
+                          className="flex size-6 items-center justify-center rounded-md bg-[#22C4D3] text-[#04101f] hover:bg-[#3ad4e2] disabled:opacity-50"
+                        >
+                          {guardandoFila ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <Check className="size-3.5" />
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFilaNueva(null)}
+                          disabled={guardandoFila}
+                          title="Cancelar (Esc)"
+                          aria-label="Cancelar"
+                          className="flex size-6 items-center justify-center rounded-md text-white/50 hover:bg-white/10 hover:text-white"
+                        >
+                          <X className="size-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                    {totalColumns
+                      .filter((col) => visibleColumns.includes(col.id))
+                      .map((col, i) => {
+                        const valor = filaNueva[col.id] ?? '';
+                        const poner = (v: string) =>
+                          setFilaNueva((f) => ({ ...(f ?? {}), [col.id]: v }));
+                        const teclas = (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter') void guardarFilaNueva();
+                          if (e.key === 'Escape') setFilaNueva(null);
+                        };
+                        const campo =
+                          'w-full rounded-md border border-transparent bg-white/5 px-1.5 py-0.5 text-[13px] text-white placeholder:text-white/30 focus:border-[#22C4D3]/60 focus:outline-none';
+                        if (COLS_NO_EDITABLES.has(col.id)) {
+                          return <td key={col.id} className="px-2 py-px" />;
+                        }
+                        return (
+                          <td key={col.id} className="px-2 py-px align-middle">
+                            {col.type === 'select' && col.options ? (
+                              <select
+                                value={valor}
+                                onChange={(e) => poner(e.target.value)}
+                                onKeyDown={teclas}
+                                className={`${campo} [&>option]:bg-[#061c37]`}
+                              >
+                                <option value="">—</option>
+                                {col.options.map((opt) => (
+                                  <option key={opt} value={opt}>
+                                    {opt}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                type={
+                                  col.type === 'date'
+                                    ? 'date'
+                                    : col.id === 'email'
+                                      ? 'email'
+                                      : 'text'
+                                }
+                                autoFocus={i === 0}
+                                value={valor}
+                                onChange={(e) => poner(e.target.value)}
+                                onKeyDown={teclas}
+                                placeholder={
+                                  col.id === 'name' || col.id === 'email'
+                                    ? `${col.label} *`
+                                    : col.label
+                                }
+                                className={`${campo} [color-scheme:dark]`}
+                              />
+                            )}
+                          </td>
+                        );
+                      })}
+                  </tr>
+                )}
+
                 {!isLoading &&
                   displayedStudents.map((student) => (
                     <tr
                       key={student.id}
                       className={`
-                        border-b border-white/5 transition-colors duration-100
-                        hover:bg-white/[0.04]
-                        ${selectedStudents.includes(student.id) ? 'bg-blue-500/[0.08]' : ''}
+                        group h-7 text-[13px] text-white
+                        transition-colors duration-100 [&>td]:border-r
+                        [&>td]:border-b [&>td]:border-[#1d283a]/40
+                        ${selectedStudents.includes(student.id) ? 'bg-[#22C4D3]/[0.07]' : ''}
                     `}
                     >
-                      <td className="px-4 py-2 align-top">
+                      <td className="border-r border-b border-[#1d283a]/40 px-2 py-px align-middle group-hover:bg-[#22C4D3]/5">
                         <input
                           type="checkbox"
                           checked={selectedStudents.includes(student.id)}
@@ -4417,7 +4861,7 @@ export default function EnrolledUsersPage() {
                                 : [...prev, student.id]
                             )
                           }
-                          className="rounded border-white/20"
+                          className="size-4 rounded-[3px] border-slate-400/60 accent-slate-400"
                         />
                       </td>
 
@@ -4437,7 +4881,7 @@ export default function EnrolledUsersPage() {
                               <td
                                 key={col.id}
                                 className="
-                                  px-4 py-2 align-top whitespace-nowrap
+                                  border-r border-b border-[#1d283a]/40 px-2 py-px align-middle whitespace-nowrap group-hover:bg-[#22C4D3]/5
                                 "
                               >
                                 <select
@@ -4556,7 +5000,7 @@ export default function EnrolledUsersPage() {
                               <td
                                 key={col.id}
                                 className="
-                                  px-4 py-2 align-top whitespace-nowrap
+                                  border-r border-b border-[#1d283a]/40 px-2 py-px align-middle whitespace-nowrap group-hover:bg-[#22C4D3]/5
                                 "
                               >
                                 <span
@@ -4599,7 +5043,7 @@ export default function EnrolledUsersPage() {
                               <td
                                 key={col.id}
                                 className="
-                                  px-4 py-2 align-top whitespace-nowrap
+                                  border-r border-b border-[#1d283a]/40 px-2 py-px align-middle whitespace-nowrap group-hover:bg-[#22C4D3]/5
                                 "
                               >
                                 <select
@@ -4648,8 +5092,8 @@ export default function EnrolledUsersPage() {
                             <td
                               key={col.id}
                               className="
-                                px-4 py-2 align-top break-words
-                                whitespace-normal
+                                border-r border-b border-[#1d283a]/40 px-2 py-px align-middle break-words whitespace-normal
+                                group-hover:bg-[#22C4D3]/5
                               "
                             >
                               {col.type === 'select' && col.options ? (
@@ -4662,15 +5106,14 @@ export default function EnrolledUsersPage() {
                                       e.target.value
                                     )
                                   }
-                                  className="
-                                    w-full rounded-lg border border-transparent
-                                    bg-transparent px-2 py-1 text-xs
-                                    text-gray-300 transition-all duration-150
-                                    hover:border-white/10 hover:bg-white/5
-                                    focus:border-blue-500/40 focus:bg-white/5
-                                    focus:ring-1 focus:ring-blue-500/20
-                                    focus:outline-none
-                                  "
+                                  className={
+                                    col.id === 'enrollmentStatus'
+                                      ? `field-sizing-content cursor-pointer appearance-none rounded-full border px-2 py-0.5 text-[11px] font-medium focus:outline-none [&>option]:bg-[#061c37] [&>option]:text-white ${
+                                          COLOR_ESTADO[raw] ??
+                                          'border-white/15 bg-white/5 text-white/70'
+                                        }`
+                                      : `w-full rounded-lg border border-transparent bg-transparent px-0 py-0.5 text-[12px] text-white/90 transition-all duration-150 hover:border-white/10 hover:bg-white/5 focus:border-[#22C4D3]/40 focus:bg-white/5 focus:outline-none [&>option]:bg-[#061c37]`
+                                  }
                                 >
                                   <option value="">-- Seleccionar --</option>
                                   {col.options.map((opt) => (
@@ -4680,25 +5123,11 @@ export default function EnrolledUsersPage() {
                                   ))}
                                 </select>
                               ) : col.type === 'date' ? (
-                                <input
-                                  type="date"
-                                  defaultValue={raw}
-                                  onBlur={(e) =>
-                                    updateStudentField(
-                                      student.id,
-                                      col.id,
-                                      e.target.value
-                                    )
+                                <FechaCelda
+                                  valor={raw}
+                                  onGuardar={(v) =>
+                                    updateStudentField(student.id, col.id, v)
                                   }
-                                  className="
-                                    w-full rounded-lg border border-transparent
-                                    bg-transparent px-2 py-1 text-xs
-                                    text-gray-300 transition-all duration-150
-                                    hover:border-white/10 hover:bg-white/5
-                                    focus:border-blue-500/40 focus:bg-white/5
-                                    focus:ring-1 focus:ring-blue-500/20
-                                    focus:outline-none
-                                  "
                                 />
                               ) : (
                                 <input
@@ -4713,8 +5142,8 @@ export default function EnrolledUsersPage() {
                                   }
                                   className="
                                     w-full rounded-lg border border-transparent
-                                    bg-transparent px-2 py-1 text-xs
-                                    text-gray-300 transition-all duration-150
+                                    bg-transparent px-0 py-0.5 text-[12px]
+                                    text-white/90 transition-all duration-150
                                     hover:border-white/10 hover:bg-white/5
                                     focus:border-blue-500/40 focus:bg-white/5
                                     focus:ring-1 focus:ring-blue-500/20
@@ -4813,66 +5242,6 @@ export default function EnrolledUsersPage() {
       
       
       */}
-
-        <div className="mt-6">
-          <h2 className="text-lg font-semibold">Añadir campo personalizado</h2>
-          <CustomFieldForm selectedUserId={selectedStudents[0]} />
-        </div>
-
-        {/* Acciones */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            disabled={selectedStudents.length === 0}
-            onClick={() => {
-              setSelectedCourses([]);
-              setShowModal(true);
-            }}
-            className="
-              flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500
-              to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm
-              transition-all duration-150
-              hover:from-cyan-400 hover:to-blue-500 hover:shadow-cyan-500/20
-              disabled:pointer-events-none disabled:opacity-40
-            "
-          >
-            Matricular a curso
-            {selectedStudents.length > 0 && (
-              <span
-                className="
-                  rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold
-                "
-              >
-                {selectedStudents.length}
-              </span>
-            )}
-          </button>
-          <button
-            disabled={selectedStudents.length === 0}
-            onClick={downloadSelectedAsExcel}
-            className="
-              flex items-center gap-2 rounded-xl border border-white/15
-              bg-white/5 px-5 py-2.5 text-sm font-medium text-gray-200
-              transition-all duration-150
-              hover:border-white/25 hover:bg-white/10 hover:text-white
-              disabled:pointer-events-none disabled:opacity-40
-            "
-          >
-            Descargar Excel
-          </button>
-          <button
-            disabled={selectedStudents.length === 0}
-            onClick={() => setShowMassiveEditModal(true)}
-            className="
-              flex items-center gap-2 rounded-xl border border-amber-500/20
-              bg-amber-500/10 px-5 py-2.5 text-sm font-medium text-amber-300
-              transition-all duration-150
-              hover:border-amber-500/40 hover:bg-amber-500/20
-              disabled:pointer-events-none disabled:opacity-40
-            "
-          >
-            Editar masivamente
-          </button>
-        </div>
 
         {showUserProgramsModal && (
           <div
@@ -4987,6 +5356,44 @@ export default function EnrolledUsersPage() {
               >
                 Cerrar
               </button>
+            </div>
+          </div>
+        )}
+
+        {showAddColumnModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onClick={() => setShowAddColumnModal(false)}
+          >
+            <div
+              className="w-full max-w-2xl rounded-xl border border-white/10 bg-[#061c37] p-5 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">
+                  Agregar columna
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setShowAddColumnModal(false)}
+                  className="rounded-md p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                  aria-label="Cerrar"
+                >
+                  <X className="size-5" />
+                </button>
+              </div>
+              <p className="mb-4 text-xs text-white/60">
+                {selectedStudents[0]
+                  ? 'La columna se agregará para todos. El valor inicial se asignará al primer estudiante seleccionado.'
+                  : 'La columna se agregará para todos los estudiantes y quedará vacía.'}
+              </p>
+              <CustomFieldForm
+                selectedUserId={selectedStudents[0]}
+                onSaved={() => {
+                  setShowAddColumnModal(false);
+                  void fetchData();
+                }}
+              />
             </div>
           </div>
         )}
@@ -5878,7 +6285,7 @@ export default function EnrolledUsersPage() {
                           A�n no has seleccionado campos para editar.
                         </p>
                       ) : (
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-1.5">
                           {massiveEditSelectedColumns.map((column) => (
                             <button
                               key={column.id}
@@ -6251,7 +6658,8 @@ export default function EnrolledUsersPage() {
         {showCarteraModal && currentUser && (
           <div
             className="
-              showCarteraModal fixed inset-0 z-50 flex items-end justify-center
+              showCarteraModal cartera-embed-visible fixed inset-0 z-50 flex
+              items-end justify-center
               bg-black/80
               sm:items-center
             "
@@ -8626,8 +9034,8 @@ export default function EnrolledUsersPage() {
         {showReceiptUploadModal && (
           <div
             className="
-              fixed inset-0 z-50 flex items-center justify-center bg-black/80
-              p-4
+              cartera-embed-visible fixed inset-0 z-50 flex items-center
+              justify-center bg-black/80 p-4
             "
             onDragOver={(e) => {
               e.preventDefault();
@@ -9023,8 +9431,8 @@ export default function EnrolledUsersPage() {
         {showCarteraReceiptUploadModal && (
           <div
             className="
-              fixed inset-0 z-50 flex items-center justify-center bg-black/80
-              p-4
+              cartera-embed-visible fixed inset-0 z-50 flex items-center
+              justify-center bg-black/80 p-4
             "
             onDragOver={(e) => {
               e.preventDefault();
