@@ -5,7 +5,7 @@ import {
   Edit,
   File,
   FileText,
-  Image,
+  Image as ImageIcon,
   Loader2,
   RefreshCw,
   UploadCloud,
@@ -142,7 +142,7 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
       case 'document':
         return <FileText className="size-4 text-blue-400" />;
       case 'image':
-        return <Image className="size-4 text-green-400" />;
+        return <ImageIcon className="size-4 text-green-400" />;
       case 'video':
         return <Video className="size-4 text-purple-400" />;
       case 'compressed':
@@ -323,7 +323,7 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
               title={archivo.name}
             >
               {archivo.type === 'document' && <FileText className="size-4" />}
-              {archivo.type === 'image' && <Image className="size-4" />}
+              {archivo.type === 'image' && <ImageIcon className="size-4" />}
               {archivo.type === 'video' && <Video className="size-4" />}
               {archivo.type === 'compressed' && <Archive className="size-4" />}
               <span className="max-w-[120px] truncate">{archivo.name}</span>

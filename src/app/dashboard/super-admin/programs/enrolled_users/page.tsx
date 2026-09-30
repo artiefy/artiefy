@@ -1775,8 +1775,11 @@ export default function EnrolledUsersPage() {
   const currentUser = currentUserId
     ? students.find((s) => s.id === currentUserId)
     : undefined;
-  // Estado de cartera que respeta la regla del "último pago del mes no verificado"
-  const estadoCarteraUI = useMemo(() => {
+  // Estado de cartera que respeta la regla del "último pago del mes no verificado".
+  // Plain derived value (not useMemo): it's a cheap string computation read
+  // once for display, and `currentUser` isn't a referentially-stable value
+  // the compiler can safely treat as a memoization dependency.
+  const estadoCarteraUI = (() => {
     // Estado base según el dato que ya trae el usuario
     const base =
       currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera';
@@ -1824,7 +1827,7 @@ export default function EnrolledUsersPage() {
     }
 
     return base;
-  }, [editablePagos, currentUser?.carteraStatus]);
+  })();
 
   const [userCourses, setUserCourses] = useState<
     {
@@ -2435,6 +2438,17 @@ export default function EnrolledUsersPage() {
     });
   };
 
+  async function fetchUserPrograms(userId: string) {
+    const res = await fetch(
+      `/api/super-admin/enroll_user_program/programsUser?userId=${userId}`
+    );
+    if (!res.ok) throw new Error('Error cargando programas');
+
+    const data = (await res.json()) as UserProgramsResponse;
+    setUserPrograms(data.programs); // deja el state como antes
+    return data.programs; // 👈 DEVUELVE el array para usarlo al instante
+  }
+
   const openCarteraModal = async (userId: string) => {
     try {
       setCurrentUserId(userId);
@@ -2763,10 +2777,6 @@ export default function EnrolledUsersPage() {
     localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
   }, [visibleColumns]);
 
-  useEffect(() => {
-    void fetchData();
-  }, []);
-
   const fetchData = async () => {
     setIsLoading(true);
     try {
@@ -2914,16 +2924,10 @@ export default function EnrolledUsersPage() {
       setIsLoading(false);
     }
   };
-  async function fetchUserPrograms(userId: string) {
-    const res = await fetch(
-      `/api/super-admin/enroll_user_program/programsUser?userId=${userId}`
-    );
-    if (!res.ok) throw new Error('Error cargando programas');
 
-    const data = (await res.json()) as UserProgramsResponse;
-    setUserPrograms(data.programs); // deja el state como antes
-    return data.programs; // 👈 DEVUELVE el array para usarlo al instante
-  }
+  useEffect(() => {
+    void fetchData();
+  }, []);
 
   const handleCreateUser = async () => {
     if (
@@ -3076,7 +3080,12 @@ export default function EnrolledUsersPage() {
   }, [students, totalColumns, getCarteraUiStatus]);
 
   // REEMPLAZA sortedStudents: calculado como useMemo con todas sus dependencias
-  const sortedStudents = useMemo(() => {
+  // Plain derived value (not useMemo): the React Compiler could not preserve
+  // manual memoization here (it's disabled for this project anyway — see
+  // `reactCompiler: false` in next.config.ts), so this recomputes on every
+  // render instead of carrying a memoization guarantee the compiler can't
+  // verify statically.
+  const sortedStudents = (() => {
     return (
       [...students]
         // Filtro por programa seleccionado
@@ -3236,17 +3245,7 @@ export default function EnrolledUsersPage() {
           return 0;
         })
     );
-  }, [
-    students,
-    selectedPrograms,
-    columnFilters,
-    columnFiltersMulti,
-    filters,
-    advancedFilters,
-    getCarteraUiStatus,
-    currentUserId,
-    editablePagos,
-  ]);
+  })();
 
   // — Hooks para infinite scroll
   const [currentPage, setCurrentPage] = useState(1);
@@ -3255,24 +3254,25 @@ export default function EnrolledUsersPage() {
   // Estudiantes a mostrar según página actual
   const displayedStudents = sortedStudents.slice(0, currentPage * limit);
 
-  // REEMPLAZA handleScroll: useCallback evita recrear la función en cada render
-  const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-      if (
-        scrollTop + clientHeight >= scrollHeight - 20 &&
-        !loadingMore &&
-        displayedStudents.length < sortedStudents.length
-      ) {
-        setLoadingMore(true);
-        setTimeout(() => {
-          setCurrentPage((p) => p + 1);
-          setLoadingMore(false);
-        }, 300);
-      }
-    },
-    [loadingMore, displayedStudents.length, sortedStudents.length]
-  );
+  // Plain function (not useCallback): it's only used as a plain `onScroll`
+  // DOM prop below, not passed to a memoized child, so referential stability
+  // doesn't matter here. Its dependencies (`sortedStudents`,
+  // `displayedStudents`) are themselves plain per-render values now, so a
+  // manual memoization the compiler can't verify would gain nothing.
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    if (
+      scrollTop + clientHeight >= scrollHeight - 20 &&
+      !loadingMore &&
+      displayedStudents.length < sortedStudents.length
+    ) {
+      setLoadingMore(true);
+      setTimeout(() => {
+        setCurrentPage((p) => p + 1);
+        setLoadingMore(false);
+      }, 300);
+    }
+  };
 
   const handleEnroll = async () => {
     try {
@@ -3809,8 +3809,7 @@ export default function EnrolledUsersPage() {
         <div
           className="
             cartera-embed-visible fixed right-6 bottom-6 z-50 rounded-lg
-            bg-green-600 px-6
-            py-3 text-white shadow-lg animate-in fade-in
+            bg-green-600 px-6 py-3 text-white shadow-lg animate-in fade-in
           "
         >
           {successMessage}

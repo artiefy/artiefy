@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { and, eq, inArray, or } from 'drizzle-orm';
 
+import { getProjectCreationAccess } from '~/server/actions/estudiantes/projects/projectCreationAccess';
 import { db } from '~/server/db';
 import {
   categories,
@@ -248,6 +249,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'Usuario no autenticado.' },
         { status: 401 }
+      );
+    }
+
+    // Same subscription gate as POST /api/projects.
+    const access = await getProjectCreationAccess(userId);
+    if (!access.allowed) {
+      return NextResponse.json(
+        { error: access.message, reason: access.reason },
+        { status: 403 }
       );
     }
 

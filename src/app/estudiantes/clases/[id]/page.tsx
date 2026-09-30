@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { type ComponentProps, Suspense } from 'react';
 
 import { type Metadata } from 'next';
 import { notFound, redirect, unstable_rethrow } from 'next/navigation';
@@ -90,6 +90,8 @@ async function LessonContent({
   userId: string;
   role: Roles | undefined;
 }) {
+  let lessonDetailsProps: ComponentProps<typeof LessonDetails> | null = null;
+
   try {
     const lessonId = Number.parseInt(id, 10);
     if (isNaN(lessonId)) {
@@ -216,19 +218,23 @@ async function LessonContent({
       userProgress: activity.userProgress ?? 0,
     }));
 
-    return (
-      <LessonDetails
-        lesson={lesson}
-        activities={activitiesWithProgress}
-        lessons={sortedLessonsWithProgress}
-        userLessonsProgress={lessonsProgress}
-        userActivitiesProgress={activitiesProgress}
-        userId={userId}
-        course={course}
-      />
-    );
+    lessonDetailsProps = {
+      lesson,
+      activities: activitiesWithProgress,
+      lessons: sortedLessonsWithProgress,
+      userLessonsProgress: lessonsProgress,
+      userActivitiesProgress: activitiesProgress,
+      userId,
+      course,
+    };
   } catch (error: unknown) {
     unstable_rethrow(error);
     return notFound();
   }
+
+  if (!lessonDetailsProps) {
+    return notFound();
+  }
+
+  return <LessonDetails {...lessonDetailsProps} />;
 }

@@ -1329,3 +1329,115 @@ body[data-animate-server-sections='true'] #courses-list-section {
     display: none !important;
   }
 }
+
+/* Header search: a beam of light that travels the whole pill border. */
+@property --neon-search-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.neon-search-ring,
+.neon-search-glow {
+  background:
+    conic-gradient(
+      from var(--neon-search-angle),
+      transparent 0%,
+      transparent 45%,
+      rgb(34 196 211 / 0.45) 70%,
+      rgb(34 196 211) 88%,
+      rgb(255 255 255) 93%,
+      rgb(34 196 211) 97%,
+      transparent 100%
+    ),
+    rgb(34 196 211 / 0.45);
+  animation: neon-search-travel 3s linear infinite;
+}
+
+/* Halo behind the ring: the whole pill glows softly and the beam glows
+   brighter as it travels. */
+.neon-search-glow {
+  background:
+    conic-gradient(
+      from var(--neon-search-angle),
+      transparent 0%,
+      transparent 55%,
+      rgb(34 196 211 / 0.6) 85%,
+      rgb(34 196 211) 93%,
+      transparent 100%
+    ),
+    rgb(34 196 211 / 0.25);
+  filter: blur(10px);
+  opacity: 0.8;
+}
+
+/* The pill has its own clear/close controls; hide the native one. */
+.neon-search-input::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* Typewriter placeholder of the search pill (`AnimatedPlaceholder`): a caret
+   that stays solid while letters come and go and blinks once the phrase is
+   complete, plus three dots that ripple while it is typing or erasing. Kept
+   under prefers-reduced-motion for the same reason as the ring above. */
+.typing-caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.1em;
+  margin-left: 2px;
+  border-radius: 1px;
+  background: rgb(34 196 211);
+  box-shadow: 0 0 6px rgb(34 196 211 / 0.8);
+}
+
+.typing-caret--blink {
+  animation: typing-caret-blink 1s steps(1) infinite;
+}
+
+.typing-dots {
+  display: inline-flex;
+  margin-left: 1px;
+  color: rgb(34 196 211);
+}
+
+.typing-dots span {
+  display: inline-block;
+  animation: typing-dot 1.1s ease-in-out infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes neon-search-travel {
+  to {
+    --neon-search-angle: 360deg;
+  }
+}
+
+/* Intentionally not disabled under prefers-reduced-motion: it is a slow,
+   non-flashing ambient loop, and Windows turns that flag on for every user
+   who switches off "Animation effects", which hid the effect entirely. */

@@ -5,6 +5,8 @@ import Link from 'next/link';
 
 import { Code, DollarSign, Pen, Send, Trash2, Users } from 'lucide-react';
 
+import { ArtiefyMark } from '~/components/agents/ArtiefyMark';
+
 import type { ProjectSocialItem } from '../types';
 
 interface ProjectWorkspaceCardProps {
@@ -61,13 +63,15 @@ export function ProjectWorkspaceCard({
               `}
             />
           ) : (
+            // No cover yet: the Artiefy "A", same mark as Artie in the chat.
             <div
-              className={`
-                flex size-full items-center justify-center bg-[#1A2333] text-xs
-                text-muted-foreground
-              `}
+              className="
+                flex size-full items-center justify-center bg-gradient-to-br
+                from-primary/20 via-[#0b2433] to-[#061a28]
+              "
             >
-              Sin portada
+              <ArtiefyMark className="size-2/5 text-primary drop-shadow-[0_0_10px_rgb(34_196_211/0.45)]" />
+              <span className="sr-only">Sin portada</span>
             </div>
           )}
         </div>

@@ -139,18 +139,6 @@ export function TranscriptionDocument({
     void load();
   }, [load]);
 
-  // Si ya hay transcripción pero todavía no está organizada, se genera sola.
-  // El resultado queda cacheado en Redis, así que esto ocurre una única vez
-  // por video y las visitas siguientes lo leen directo.
-  useEffect(() => {
-    if (isLoading || isGenerating) return;
-    if (doc?.hasTranscription && !doc.hasFormatted) {
-      void generate();
-    }
-    // `generate` se recrea en cada render; incluirla reiniciaría el efecto.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, doc?.hasTranscription, doc?.hasFormatted]);
-
   const generate = async () => {
     setIsGenerating(true);
     try {
@@ -175,6 +163,18 @@ export function TranscriptionDocument({
       setIsGenerating(false);
     }
   };
+
+  // Si ya hay transcripción pero todavía no está organizada, se genera sola.
+  // El resultado queda cacheado en Redis, así que esto ocurre una única vez
+  // por video y las visitas siguientes lo leen directo.
+  useEffect(() => {
+    if (isLoading || isGenerating) return;
+    if (doc?.hasTranscription && !doc.hasFormatted) {
+      void generate();
+    }
+    // `generate` se recrea en cada render; incluirla reiniciaría el efecto.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, doc?.hasTranscription, doc?.hasFormatted]);
 
   if (isLoading) {
     return (

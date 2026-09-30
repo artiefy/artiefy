@@ -224,6 +224,13 @@ interface HelpFileInfo {
   text?: string;
 }
 
+// Module scope, outside the component: this is the actual submit-time read
+// of the clock, used only from the `handleFinish` click handler below (not
+// during render), where the submission-window gate must see the real time.
+function getSubmitTimestamp(): number {
+  return Date.now();
+}
+
 export function LessonActivityModal({
   isOpen,
   onCloseAction,
@@ -253,6 +260,11 @@ export function LessonActivityModal({
     {}
   );
   const [questions, setQuestions] = useState<Question[]>([]);
+  // Snapshot of "now" for the submission-window display below, captured once
+  // instead of calling Date.now() during render. `handleFinish` still reads
+  // a fresh Date.now() at submit time, since that gate needs to be accurate
+  // at the moment the user actually submits.
+  const [now] = useState(() => Date.now());
   const [isLoading, setIsLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
@@ -567,13 +579,12 @@ export function LessonActivityModal({
     submissionStartDate ?? submissionDeadlineDate
   );
 
-  const getSubmissionWindowStatus = () => {
-    const now = Date.now();
+  const getSubmissionWindowStatus = (nowTs: number) => {
     const notStarted = submissionStartDate
-      ? now < submissionStartDate.getTime()
+      ? nowTs < submissionStartDate.getTime()
       : false;
     const closed = submissionDeadlineDate
-      ? now > submissionDeadlineDate.getTime()
+      ? nowTs > submissionDeadlineDate.getTime()
       : false;
     return { notStarted, closed, isOpen: !notStarted && !closed };
   };
@@ -587,7 +598,7 @@ export function LessonActivityModal({
       minute: '2-digit',
     }).format(date);
 
-  const submissionWindowStatus = getSubmissionWindowStatus();
+  const submissionWindowStatus = getSubmissionWindowStatus(now);
 
   const calculateScore = () => {
     const answers = Object.values(userAnswers);
@@ -634,7 +645,7 @@ export function LessonActivityModal({
   };
 
   const handleFinish = async () => {
-    const windowStatus = getSubmissionWindowStatus();
+    const windowStatus = getSubmissionWindowStatus(getSubmitTimestamp());
     if (windowStatus.notStarted && submissionStartDate) {
       toast.error(
         `Esta actividad estará disponible el ${formatSubmissionDate(submissionStartDate)}`
@@ -1837,7 +1848,7 @@ export function LessonActivityModal({
   const renderSubmissionWindowNotice = () => {
     if (!hasSubmissionWindow) return null;
 
-    const { notStarted, closed } = getSubmissionWindowStatus();
+    const { notStarted, closed } = getSubmissionWindowStatus(now);
 
     let tone = 'border-cyan-500/40 bg-cyan-500/10 text-cyan-100';
     let title = 'Ventana de entrega';
@@ -2492,12 +2503,12 @@ export function LessonActivityModal({
           aria-labelledby={modalTitleId}
           aria-describedby={modalDescId}
           className={`
-            data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-            data-[state=closed]:zoom-out-95
-            data-[state=open]:animate-in data-[state=open]:fade-in-0
-            data-[state=open]:zoom-in-95
-            fixed z-[100004] flex flex-col gap-4 overflow-hidden rounded-lg
-            border bg-background shadow-lg duration-200
+            fixed z-[100004]
+            flex
+            flex-col gap-4
+            overflow-hidden
+            rounded-lg border bg-background shadow-lg duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0
+            data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95
             [&>button]:bg-background [&>button]:text-background
             [&>button]:hover:text-background
             ${

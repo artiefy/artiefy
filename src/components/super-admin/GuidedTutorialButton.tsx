@@ -174,8 +174,7 @@ export default function GuidedTutorialButton() {
       const response = await fetch('/api/super-admin/courses');
       if (!response.ok) throw new Error('Error cargando cursos');
       const data = (await response.json()) as
-        | { data: CourseData[] }
-        | CourseData[];
+        { data: CourseData[] } | CourseData[];
       setCourses(Array.isArray(data) ? data : data.data);
     } catch (error) {
       console.error('Error cargando cursos para tutorial:', error);
@@ -192,7 +191,7 @@ export default function GuidedTutorialButton() {
 
   const routeMatchesStep = useMemo(() => {
     return step?.routePattern ? step.routePattern.test(pathname) : true;
-  }, [pathname, step?.routePattern]);
+  }, [pathname, step]);
 
   useEffect(() => {
     if (!isOpen || !step) return;

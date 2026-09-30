@@ -10,6 +10,7 @@ import {
   Bookmark,
   Calendar,
   Heart,
+  Lock,
   MessageCircle,
   Share2,
   Sparkles,
@@ -305,7 +306,8 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
                   {item.title}
                 </h1>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Publicado por {item.author.name}
+                  {item.isPublic ? 'Publicado por' : 'Creado por'}{' '}
+                  {item.author.name}
                 </p>
               </div>
               <span
@@ -321,6 +323,18 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
             </div>
 
             <div className="flex flex-wrap gap-2">
+              {item.isPublic ? null : (
+                <span
+                  className="
+                    inline-flex items-center gap-1 rounded-full border
+                    border-border/60 bg-muted/40 px-2.5 py-1 text-xs
+                    font-semibold text-muted-foreground
+                  "
+                >
+                  <Lock className="size-3" />
+                  Privado
+                </span>
+              )}
               <span className="chip">{item.category.name}</span>
               {item.needsCollaborators ? (
                 <span
@@ -365,9 +379,15 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
                   bg-background/40 p-3
                 "
               >
-                <Users className="size-4 text-primary" />
+                {item.isPublic ? (
+                  <Users className="size-4 text-primary" />
+                ) : (
+                  <Lock className="size-4 text-primary" />
+                )}
                 <span className="text-muted-foreground">
-                  Comunidad abierta de proyectos públicos
+                  {item.isPublic
+                    ? 'Comunidad abierta de proyectos públicos'
+                    : 'Privado: no aparece en la comunidad hasta que lo hagas público'}
                 </span>
               </div>
             </div>

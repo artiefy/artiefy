@@ -120,6 +120,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
       subscriptionStatus: 'active',
       subscriptionEndDate: subscriptionEndDate.toISOString(),
       planType: planType,
+      // A paid plan ends the signup trial; without this the merge kept
+      // `isTrial: true` and the buyer stayed on trial limits.
+      isTrial: false,
     });
 
     console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);

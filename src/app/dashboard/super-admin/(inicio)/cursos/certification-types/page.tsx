@@ -25,11 +25,6 @@ export default function CertificationTypesPage() {
     isActive: true,
   });
 
-  // Fetch certification types
-  useEffect(() => {
-    fetchCertifications();
-  }, []);
-
   const fetchCertifications = async () => {
     try {
       setLoading(true);
@@ -47,6 +42,11 @@ export default function CertificationTypesPage() {
       setLoading(false);
     }
   };
+
+  // Fetch certification types
+  useEffect(() => {
+    fetchCertifications();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

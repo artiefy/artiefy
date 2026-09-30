@@ -23,6 +23,13 @@ interface ModalInvitarIntegranteProps {
   projectMembers: string[]; // IDs de usuarios ya en el proyecto
 }
 
+// Module scope, outside the component: perf-timing reads used only inside
+// the `handleInvite` click handler below (not during render), for the
+// console.log timing diagnostics that already existed there.
+function getTimingMark(): number {
+  return performance.now();
+}
+
 const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   isOpen,
   onClose,
@@ -196,17 +203,17 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
     console.log('Proyecto actual:', proyectoId);
     console.log('Payload a enviar:', payload);
 
-    const start = performance.now();
+    const start = getTimingMark();
     try {
       setTimeout(() => setInviteProgress(30), 100);
-      const fetchStart = performance.now();
+      const fetchStart = getTimingMark();
       const res = await fetch('/api/projects/invitaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       setInviteProgress(70);
-      const fetchEnd = performance.now();
+      const fetchEnd = getTimingMark();
       console.log(`Tiempo de fetch: ${(fetchEnd - fetchStart).toFixed(2)}ms`);
       if (res.ok) {
         const _data = await res.json();
@@ -260,37 +267,43 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
         setInviteError('');
       }, 1800);
     }
-    const end = performance.now();
+    const end = getTimingMark();
     console.log(`Tiempo total handleInvite: ${(end - start).toFixed(2)}ms`);
   };
 
   const handleClear = () => setSearch('');
 
   return (
-    <div className="
+    <div
+      className="
       fixed inset-0 z-[200] flex items-center justify-center bg-black/60
-    ">
+    "
+    >
       {/* Barra de progreso de invitación */}
       {isInviting && (
-        <div className="
+        <div
+          className="
           fixed inset-0 z-[210] flex items-center justify-center bg-black/60
-        ">
-          <div className="
+        "
+        >
+          <div
+            className="
             flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
             p-6 shadow-lg
-          ">
+          "
+          >
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
                 <div
                   className={`
                     h-6 rounded-full transition-all duration-300
                     ${
-                    inviteError
-                      ? 'bg-red-500'
-                      : inviteAlready
-                        ? 'bg-yellow-400'
-                        : 'bg-teal-500'
-                  }
+                      inviteError
+                        ? 'bg-red-500'
+                        : inviteAlready
+                          ? 'bg-yellow-400'
+                          : 'bg-teal-500'
+                    }
                   `}
                   style={{ width: `${inviteProgress}%` }}
                 />
@@ -299,12 +312,12 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 className={`
                   mt-2 text-center font-semibold
                   ${
-                  inviteError
-                    ? 'text-red-400'
-                    : inviteAlready
-                      ? 'text-yellow-500'
-                      : 'text-gray-500'
-                }
+                    inviteError
+                      ? 'text-red-400'
+                      : inviteAlready
+                        ? 'text-yellow-500'
+                        : 'text-gray-500'
+                  }
                 `}
               >
                 {inviteStatusText
@@ -324,31 +337,39 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
           </div>
         </div>
       )}
-      <div className="
+      <div
+        className="
         relative mx-auto max-h-[80vh] w-full max-w-2xl overflow-y-auto
         rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0
         shadow-2xl
-      ">
+      "
+      >
         {/* Header sticky y barra de búsqueda sticky, ocupando todo el ancho */}
-        <div className="
+        <div
+          className="
           sticky top-0 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900
           p-2 backdrop-blur-md
-        ">
+        "
+        >
           <div className="px-6 pt-6">
             {/* Header del Modal */}
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-4 pr-4">
-                <div className="
+                <div
+                  className="
                   flex size-16 flex-shrink-0 items-center justify-center
                   rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300
-                ">
+                "
+                >
                   <UserPlus className="size-8 text-slate-900" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="
+                  <h2
+                    className="
                     mb-2 text-2xl font-bold break-words text-white
                     md:text-3xl
-                  ">
+                  "
+                  >
                     Invitar Integrante al Proyecto
                   </h2>
                   <div className="flex flex-wrap items-center gap-2">
@@ -474,25 +495,31 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                     "
                   >
                     <CardContent className="p-4">
-                      <div className="
+                      <div
+                        className="
                         flex flex-col gap-3
                         sm:flex-row sm:items-center sm:justify-between
-                      ">
+                      "
+                      >
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="
+                          <div
+                            className="
                             flex size-12 flex-shrink-0 items-center
                             justify-center rounded-full border-2
                             border-teal-400/50 bg-gradient-to-br from-teal-400
                             to-cyan-300 text-sm font-semibold text-slate-900
-                          ">
+                          "
+                          >
                             {avatarText}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="
+                            <h3
+                              className="
                               text-sm font-semibold break-words text-white
                               transition-colors
                               group-hover:text-teal-300
-                            ">
+                            "
+                            >
                               {displayName}
                             </h3>
                             <p className="text-xs break-words text-gray-300">

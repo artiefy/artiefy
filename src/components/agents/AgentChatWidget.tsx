@@ -20,6 +20,7 @@ import gsap from 'gsap';
 import {
   AlignLeft,
   ArrowDown,
+  ArrowRight,
   Brain,
   ChevronDown,
   ChevronRight,
@@ -47,6 +48,7 @@ import { AgentRevealedContent } from '~/components/agents/AgentRevealedContent';
 import { ArtiefyMark } from '~/components/agents/ArtiefyMark';
 import { useDocumentPictureInPicture } from '~/hooks/useDocumentPictureInPicture';
 import {
+  type AgentChatAction,
   type AgentChatScope,
   GENERAL_SCOPE,
   scopeBadge,
@@ -59,6 +61,7 @@ import {
   toAgentProject,
   type UserProjectDetails,
 } from '~/lib/agents/agentProject';
+import { readProjectMode } from '~/lib/agents/projectMode';
 
 export type {
   AgentActivity,
@@ -370,6 +373,8 @@ interface ChatMessage {
   agent: AgentId;
   text: string;
   time: string;
+  /** Button under an agent message; only greetings from the bus carry one. */
+  action?: AgentChatAction;
 }
 
 type AgentQuotaTier = 'anon' | 'free' | 'premium';
@@ -1405,32 +1410,35 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
    */
   useEffect(
     () =>
-      subscribeToAgentChat(({ scope: requested, greeting, project: seed }) => {
-        const now = new Date();
-        const specialist: AgentId =
-          requested.kind === 'project' ? 'coach' : 'tutor';
+      subscribeToAgentChat(
+        ({ scope: requested, greeting, action, project: seed }) => {
+          const now = new Date();
+          const specialist: AgentId =
+            requested.kind === 'project' ? 'coach' : 'tutor';
 
-        setScope(requested);
-        // Callers that own no widget of their own can send the project along,
-        // so the tree opens with the conversation instead of staying hidden.
-        setRequestedProject(seed ?? null);
-        setAgentId(specialist);
-        leaveConversation(`conv-${now.getTime()}`);
-        setMessages([
-          {
-            id: `${now.getTime()}-agent`,
-            role: 'agent',
-            agent: specialist,
-            text: greeting,
-            time: formatTime(now),
-          },
-        ]);
-        setDraft('');
-        setQuotaNotice(null);
-        // Only the overlay hides the new conversation; a docked column does not.
-        if (!hasRoomForHistoryRef.current) setIsHistoryOpen(false);
-        setIsOpen(true);
-      }),
+          setScope(requested);
+          // Callers that own no widget of their own can send the project along,
+          // so the tree opens with the conversation instead of staying hidden.
+          setRequestedProject(seed ?? null);
+          setAgentId(specialist);
+          leaveConversation(`conv-${now.getTime()}`);
+          setMessages([
+            {
+              id: `${now.getTime()}-agent`,
+              role: 'agent',
+              agent: specialist,
+              text: greeting,
+              time: formatTime(now),
+              action,
+            },
+          ]);
+          setDraft('');
+          setQuotaNotice(null);
+          // Only the overlay hides the new conversation; a docked column does not.
+          if (!hasRoomForHistoryRef.current) setIsHistoryOpen(false);
+          setIsOpen(true);
+        }
+      ),
     [leaveConversation]
   );
 
@@ -1500,9 +1508,11 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
   // switches `scope` without unmounting the widget, and showing the tree then
   // would let a click send this project's activity id alongside the other
   // project's id.
+  //
+  // It follows the scope, not the agent: the orchestrator reports whoever
+  // answered, and an Artie reply used to hide the tree mid-conversation.
   const showTree =
     Boolean(activeProject) &&
-    agentId === 'coach' &&
     scope.kind === 'project' &&
     scope.id === activeProject?.id;
 
@@ -1572,6 +1582,12 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
           agent: agentId,
           projectId: scope.kind === 'project' ? scope.id : undefined,
           projectSource: scope.kind === 'project' ? scope.source : undefined,
+          // How much the Coach should do, as picked when the project was
+          // generated from an idea. Only user projects carry one.
+          projectMode:
+            scope.kind === 'project' && scope.source === 'user'
+              ? readProjectMode(scope.id)
+              : undefined,
           courseId: scope.kind === 'course' ? scope.id : undefined,
           // The activity tree only belongs to the project this chat resolved;
           // a project picked up from an enrollment elsewhere has none loaded.
@@ -2368,6 +2384,15 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                       className="space-y-1 border-t px-3 pb-3"
                       style={{ borderColor: `${agent.color}1a` }}
                     >
+                      {/* A new Guided project starts with no objectives:
+                          the learner writes them with the Coach. */}
+                      {activeProject.objectives.length === 0 && (
+                        <p className="pt-3 text-xs leading-relaxed text-muted-foreground">
+                          Aún no hay objetivos. Escríbele al Coach tu primera
+                          idea y aparecerán aquí cuando los agregues a tu
+                          proyecto.
+                        </p>
+                      )}
                       {activeProject.objectives.map((objective) => {
                         const activities = objective.activities ?? [];
                         const done = activities.filter(
@@ -2604,6 +2629,41 @@ export function AgentChatWidget({ project }: AgentChatWidgetProps) {
                           active={message.id === revealingId}
                           onRevealTick={handleRevealTick}
                         />
+                        {message.action ? (
+                          <Link
+                            href={message.action.href}
+                            className="
+                              mt-3 flex items-center gap-3 rounded-xl border
+                              px-3 py-2.5 transition-colors
+                              hover:bg-white/5
+                              focus-visible:ring-2 focus-visible:ring-ring
+                              focus-visible:outline-none
+                            "
+                            style={{
+                              borderColor: `${messageAgent.color}66`,
+                              backgroundColor: `${messageAgent.color}14`,
+                            }}
+                          >
+                            <CircleCheck
+                              className="size-5 shrink-0"
+                              style={{ color: messageAgent.color }}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-semibold text-foreground">
+                                {message.action.label}
+                              </span>
+                              {message.action.hint ? (
+                                <span className="block text-xs text-muted-foreground">
+                                  {message.action.hint}
+                                </span>
+                              ) : null}
+                            </span>
+                            <ArrowRight
+                              className="size-4 shrink-0"
+                              style={{ color: messageAgent.color }}
+                            />
+                          </Link>
+                        ) : null}
                         <span className="mt-1 block text-[10px] text-muted-foreground/60">
                           {message.time}
                         </span>

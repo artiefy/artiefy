@@ -43,6 +43,19 @@ export default function FloatingChat({
   const { userId } = useAuth();
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  const fetchConversationHistory = async (conversationId: string) => {
+    try {
+      const response = await fetch(
+        `/api/admin/chat/messages/${conversationId}`
+      );
+      if (!response.ok) throw new Error('Error fetching messages');
+      const data = (await response.json()) as { messages: Message[] };
+      setMessages(data.messages ?? []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
   useEffect(() => {
     if (chatId) {
       setCurrentConversationId(chatId);
@@ -96,19 +109,6 @@ export default function FloatingChat({
       socket.off('notification', handleNotification);
     };
   }, [currentConversationId, setUnreadConversations]);
-
-  const fetchConversationHistory = async (conversationId: string) => {
-    try {
-      const response = await fetch(
-        `/api/admin/chat/messages/${conversationId}`
-      );
-      if (!response.ok) throw new Error('Error fetching messages');
-      const data = (await response.json()) as { messages: Message[] };
-      setMessages(data.messages ?? []);
-    } catch (error) {
-      console.error('Error fetching messages:', error);
-    }
-  };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !userId) return;

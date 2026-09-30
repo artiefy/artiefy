@@ -13,7 +13,10 @@ import { toast } from 'sonner';
 
 import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailView';
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
+import { ProjectModeChooser } from '~/components/projects/Modals/ProjectModeChooser';
 import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
+import { ensureCanCreateProject } from '~/lib/projects/ensureCanCreateProject';
+import { generateProjectFromIdea } from '~/lib/projects/generateProjectFromIdea';
 
 import type { Project } from '~/types/project';
 
@@ -37,6 +40,9 @@ export function ProjectsSection({
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [modalStep, setModalStep] = useState<number | undefined>(undefined);
+  // New projects start in the mode chooser: "Nuevo proyecto" builds the whole
+  // project in the background, "Modo avanzado" opens the wizard.
+  const [isModeChooserOpen, setIsModeChooserOpen] = useState(false);
   const [addedSections, setAddedSections] = useState<
     Record<string, { name: string; content: string }>
   >({});
@@ -154,6 +160,13 @@ export function ProjectsSection({
       toast.error('Tu suscripción ha expirado. Renueva para crear proyectos.');
       return;
     }
+    // Also covers the signup trial's project allowance.
+    if (!(await ensureCanCreateProject())) return;
+    setIsModeChooserOpen(true);
+  };
+
+  const openCreateWizard = () => {
+    setIsModeChooserOpen(false);
     setModalProject(null);
     setModalStep(1);
     setShowModal(true);
@@ -192,17 +205,7 @@ export function ProjectsSection({
     setShowModal(true);
   };
 
-  /**
-   * El asistente ya guardó el proyecto y sigue abierto en el paso siguiente.
-   * Aquí se abre el chat del Coach sobre ese proyecto —igual que en el flujo
-   * de "+ Nuevo proyecto" (`ProjectsSocialView.tsx`)— y se recarga la lista.
-   */
-  const handleProjectCreated = (createdId?: number, createdTitle?: string) => {
-    if (createdId) {
-      openCoachChatForNewProject({ id: createdId, title: createdTitle });
-    }
-
-    // Recargar la lista de proyectos
+  const reloadProjects = () => {
     void fetch(`/api/estudiantes/projects?courseId=${courseId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -214,6 +217,18 @@ export function ProjectsSection({
       .catch((error) => {
         console.error('Error al recargar proyectos:', error);
       });
+  };
+
+  /**
+   * El asistente ya guardó el proyecto y sigue abierto en el paso siguiente.
+   * Aquí se abre el chat del Coach sobre ese proyecto —igual que en el flujo
+   * de "+ Nuevo proyecto" (`ProjectsSocialView.tsx`)— y se recarga la lista.
+   */
+  const handleProjectCreated = (createdId?: number, createdTitle?: string) => {
+    if (createdId) {
+      openCoachChatForNewProject({ id: createdId, title: createdTitle });
+    }
+    reloadProjects();
   };
 
   const handleModalClose = async () => {
@@ -809,6 +824,20 @@ export function ProjectsSection({
         setJustificacion={() => {}}
         setObjetivoGen={() => {}}
         setObjetivosEspProp={() => {}}
+      />
+
+      <ProjectModeChooser
+        isOpen={isModeChooserOpen}
+        onOpenChange={setIsModeChooserOpen}
+        onContinue={(seed) => {
+          setIsModeChooserOpen(false);
+          void generateProjectFromIdea({
+            seed,
+            courseId,
+            onCreated: reloadProjects,
+          });
+        }}
+        onAdvanced={openCreateWizard}
       />
     </>
   );

@@ -274,9 +274,16 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
   };
 
   const getFileSize = (fileName: string): string => {
-    // Mock size - en producción esto vendría del backend
+    // Mock size - en producción esto vendría del backend.
+    // Deterministic pick from the file name instead of Math.random(), so the
+    // same resource always shows the same size across renders.
     const mockSizes = ['1.2 MB', '2.4 MB', '3.5 MB', '856 KB', '4.1 MB'];
-    return mockSizes[Math.floor(Math.random() * mockSizes.length)] || '1.0 MB';
+    let hash = 0;
+    for (let i = 0; i < fileName.length; i++) {
+      hash = (hash << 5) - hash + fileName.charCodeAt(i);
+      hash |= 0;
+    }
+    return mockSizes[Math.abs(hash) % mockSizes.length] || '1.0 MB';
   };
 
   const handleDownload = (file: FileInfo) => {

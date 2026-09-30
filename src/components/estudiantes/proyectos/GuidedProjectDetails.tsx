@@ -403,7 +403,7 @@ export function GuidedProjectDetails({
     } finally {
       setIsEnrolling(false);
     }
-  }, [isClerkReady, isSignedIn, project?.id, project?.title, router]);
+  }, [isClerkReady, isSignedIn, project, router]);
 
   // Replays a click that arrived before Clerk was ready, and finishes the
   // enrollment right after the login modal succeeds — the student never has to
