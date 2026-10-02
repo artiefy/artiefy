@@ -206,6 +206,27 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
   const superAdminNav: SuperAdminNavItem[] = [
     {
+      kind: 'group',
+      id: 'estudiantes',
+      icon: <FaGraduationCap size={18} />,
+      title: 'Estudiantes',
+      items: [
+        {
+          title: 'Lista de Estudiantes',
+          link: '/dashboard/super-admin/programs/enrolled_users',
+        },
+        { title: 'Grupos', link: '/dashboard/super-admin/grupos' },
+        {
+          title: 'Logs credenciales',
+          link: '/dashboard/super-admin/credentials-logs',
+        },
+        {
+          title: 'Control de Accesos',
+          link: '/dashboard/super-admin/subscription',
+        },
+      ],
+    },
+    {
       kind: 'placeholder',
       id: 'inicio',
       icon: <FiHome size={18} />,
@@ -231,27 +252,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Tickets',
       link: '/dashboard/super-admin/tickets',
       badge: totalUnread > 0 ? totalUnread : undefined,
-    },
-    {
-      kind: 'group',
-      id: 'estudiantes',
-      icon: <FaGraduationCap size={18} />,
-      title: 'Estudiantes',
-      items: [
-        {
-          title: 'Lista de Estudiantes',
-          link: '/dashboard/super-admin/programs/enrolled_users',
-        },
-        { title: 'Grupos' },
-        {
-          title: 'Logs credenciales',
-          link: '/dashboard/super-admin/credentials-logs',
-        },
-        {
-          title: 'Control de Accesos',
-          link: '/dashboard/super-admin/subscription',
-        },
-      ],
     },
     {
       kind: 'group',

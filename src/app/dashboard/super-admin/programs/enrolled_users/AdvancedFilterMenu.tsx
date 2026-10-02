@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Search, X } from 'lucide-react';
 
+import { formatFechaLarga } from '~/lib/formatDate';
 import { normalizeSearch } from '~/lib/utils';
 
 interface FilterOption {
@@ -24,6 +25,7 @@ interface AdvancedFilterMenuProps {
 
 export function AdvancedFilterMenu({
   columnLabel,
+  columnType,
   allValues,
   currentFilters,
   onApplyFilters,
@@ -112,12 +114,16 @@ export function AdvancedFilterMenu({
     // Filtrar por búsqueda
     if (searchTerm) {
       options = options.filter((opt) =>
-        normalizeSearch(opt.value).includes(normalizeSearch(searchTerm))
+        normalizeSearch(
+          columnType === 'date'
+            ? `${opt.value} ${formatFechaLarga(opt.value)}`
+            : opt.value
+        ).includes(normalizeSearch(searchTerm))
       );
     }
 
     return options;
-  }, [allValues, searchTerm, sortOrder]);
+  }, [allValues, columnType, searchTerm, sortOrder]);
 
   const handleSelectAll = () => {
     if (selectedFilters.size === filterOptions.length) {
@@ -297,7 +303,9 @@ export function AdvancedFilterMenu({
                     className="truncate text-sm text-gray-200"
                     title={opt.value}
                   >
-                    {opt.value || '(vacío)'}
+                    {(columnType === 'date'
+                      ? formatFechaLarga(opt.value)
+                      : opt.value) || '(vacío)'}
                   </span>
                 </div>
                 <span className="ml-2 flex-shrink-0 text-xs text-gray-500">

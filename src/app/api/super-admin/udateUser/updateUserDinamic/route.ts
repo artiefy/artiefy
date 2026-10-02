@@ -34,13 +34,11 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('❌ [updateUserDinamic] Error capturado:', error);
-    console.error(
-      '❌ [updateUserDinamic] Stack trace:',
-      error instanceof Error ? error.stack : 'N/A'
-    );
-    return NextResponse.json(
-      { error: 'Error interno del servidor' },
-      { status: 500 }
-    );
+    // Devuelve el motivo real (ej. "Ese correo ya está en uso por otro
+    // usuario.") para que la UI lo muestre en el alert.
+    const mensaje =
+      error instanceof Error ? error.message : 'Error interno del servidor';
+    const enUso = mensaje.toLowerCase().includes('en uso');
+    return NextResponse.json({ error: mensaje }, { status: enUso ? 409 : 500 });
   }
 }
