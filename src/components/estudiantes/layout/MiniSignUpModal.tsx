@@ -113,8 +113,17 @@ const getUsernameLengthError = (value: string): ClerkAPIError | null => {
   };
 };
 
+// Names coming from an OAuth provider cannot be edited in the completion step,
+// so they must accept accents and other non-ASCII letters (José, Muñoz).
+const PROVIDER_NAME_PATTERN = /^[\p{L}\s'.-]+$/u;
+
+// Clerk reports missing fields in snake_case. Every collectable one has to be
+// mapped here; an unmapped `last_name` was never sent and blocked Google
+// sign-ups whose account has no last name.
 const normalizeMissingFields = (fields: string[]) =>
   fields.map((field) => {
+    if (field === 'first_name') return 'firstName';
+    if (field === 'last_name') return 'lastName';
     if (field === 'email_address') return 'emailAddress';
     if (field === 'phone_number') return 'phoneNumber';
     if (field === 'legal_accepted') return 'legalAccepted';
@@ -141,7 +150,9 @@ const formatFields = (fields?: string[]) => {
     emailAddress: 'correo',
     email_address: 'correo',
     firstName: 'nombre',
+    first_name: 'nombre',
     lastName: 'apellido',
+    last_name: 'apellido',
     password: 'contraseña',
     phoneNumber: 'teléfono',
     phone_number: 'teléfono',
@@ -619,7 +630,7 @@ export default function MiniSignUpModal({
           longMessage: 'Ingresa tu nombre.',
           meta: { paramName: 'firstName' },
         });
-      } else if (!/^[a-zA-Z\s]+$/.test(data.firstName)) {
+      } else if (!PROVIDER_NAME_PATTERN.test(data.firstName)) {
         validationErrors.push({
           code: 'form_param_format_invalid',
           message: 'El nombre solo puede contener letras.',
@@ -637,7 +648,7 @@ export default function MiniSignUpModal({
           longMessage: 'Ingresa tu apellido.',
           meta: { paramName: 'lastName' },
         });
-      } else if (!/^[a-zA-Z\s]+$/.test(data.lastName)) {
+      } else if (!PROVIDER_NAME_PATTERN.test(data.lastName)) {
         validationErrors.push({
           code: 'form_param_format_invalid',
           message: 'El apellido solo puede contener letras.',
@@ -746,13 +757,28 @@ export default function MiniSignUpModal({
       }
     }
 
+    const signUpRecord = signUp as unknown as Record<string, unknown>;
+    const providerFirstName = safeString(signUpRecord.firstName);
+    const providerLastName = safeString(signUpRecord.lastName);
+    // A Google account may keep the whole name in the first-name field and
+    // leave the last name empty, which is when Clerk reports `last_name` as
+    // missing. Split that name so the account still gets the learner's own
+    // names instead of asking for them again.
+    const [providerGivenName = '', ...providerOtherNames] =
+      providerFirstName.split(/\s+/);
+    const splitProviderName =
+      normalizedMissingFields.includes('lastName') &&
+      !providerLastName &&
+      providerOtherNames.length > 0;
+
     const derivedFirstName =
       firstName.trim() ||
-      safeString((signUp as unknown as Record<string, unknown>).firstName) ||
+      (splitProviderName ? providerGivenName : providerFirstName) ||
       'Estudiante';
     const derivedLastName =
       lastName.trim() ||
-      safeString((signUp as unknown as Record<string, unknown>).lastName) ||
+      providerLastName ||
+      (splitProviderName ? providerOtherNames.join(' ') : '') ||
       'Artiefy';
     const derivedEmail = email.trim() || getSignUpEmail(signUp);
 
@@ -808,7 +834,7 @@ export default function MiniSignUpModal({
     if (normalizedMissingFields.includes('legalAccepted')) {
       payload.legalAccepted = legalAccepted;
     }
-    if (normalizedMissingFields.includes('firstName')) {
+    if (normalizedMissingFields.includes('firstName') || splitProviderName) {
       payload.firstName = derivedFirstName;
     }
     if (normalizedMissingFields.includes('lastName')) {
