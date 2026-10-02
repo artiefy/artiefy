@@ -321,10 +321,12 @@ export async function generateProjectFromIdea(
     : 'Definiendo el problema, la justificación y el objetivo general…';
   advance();
 
-  // Picked from the generated text too: the idea alone is often a few words.
-  // It loads while the remaining fields are written.
+  // Picked from what the learner wrote plus the title. Not from the generated
+  // description: the Copilot guide makes it mention "inteligencia artificial",
+  // which filed a recycling app under that category. It loads while the
+  // remaining fields are written.
   const categoryPromise = pickCategoryId(
-    `${seed.idea} ${seed.details} ${title} ${description}`
+    `${seed.idea} ${seed.details} ${title}`
   );
 
   const context = `Título: ${title}\nDescripción: ${description}`;
