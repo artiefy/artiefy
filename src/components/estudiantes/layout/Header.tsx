@@ -48,6 +48,12 @@ const SEARCH_PLACEHOLDERS = [
   '¿Cómo puedo ayudarte?',
 ] as const;
 
+// Clerk's UserButton can't be opened from an external button, so the real
+// trigger is rendered invisible on top of a custom visual and stretched to
+// cover it; the click lands on Clerk and opens its menu.
+const CLERK_TRIGGER_OVERLAY_CLASS =
+  'absolute inset-0 opacity-0 [&_.cl-rootBox]:!size-full [&_.cl-rootBox]:!max-w-full [&_.cl-rootBox]:!min-w-0 [&_.cl-userButtonBox]:!size-full [&_.cl-userButtonBox]:!max-w-full [&_.cl-userButtonBox]:!min-w-0 [&_.cl-userButtonBox]:!justify-center [&_.cl-userButtonOuterIdentifier]:!hidden [&_.cl-userButtonTrigger]:!size-full [&_.cl-userButtonTrigger]:!max-w-full [&_.cl-userButtonTrigger]:!min-w-0 [&_.cl-userButtonTrigger]:!p-0 [&>div]:!size-full';
+
 export function Header({
   onEspaciosClickAction,
 }: {
@@ -157,97 +163,92 @@ export function Header({
         now !== null &&
         subscriptionEndTime > now));
 
-  const renderProfileLink = () => (
-    <Link
-      href="/estudiantes/perfil"
-      aria-label={`Ir al perfil de ${profileName}`}
+  const renderProfileMenuButton = () => (
+    <div
+      title="Abrir menú de cuenta"
       className="
-        flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1
-        text-muted-foreground transition-all duration-200
-        hover:bg-muted/50 hover:text-foreground
-        focus-visible:ring-2 focus-visible:ring-primary
-        focus-visible:outline-none
+        group/profile relative flex min-w-0 items-center rounded-lg
+        transition-all duration-200
+        focus-within:ring-2 focus-within:ring-primary
+        hover:bg-muted/50
       "
     >
-      {user?.imageUrl ? (
-        <Image
-          src={user.imageUrl}
-          alt=""
-          width={28}
-          height={28}
-          className="
-            size-7 shrink-0 rounded-full border border-border/30 object-cover
-            shadow-[0_0_10px_rgb(34_196_211/0.15)]
-          "
-        />
-      ) : (
-        <span
-          aria-hidden="true"
-          className="
-            flex size-7 shrink-0 items-center justify-center rounded-full border
-            border-border/30 bg-primary/15 text-xs font-semibold text-primary
-          "
-        >
-          {profileName.charAt(0).toUpperCase()}
-        </span>
-      )}
       <span
         className="
-          hidden max-w-[96px] truncate text-xs font-medium
-          xl:block
+          pointer-events-none flex min-w-0 items-center gap-2 px-1.5 py-1
+          text-muted-foreground transition-colors
+          group-hover/profile:text-foreground
         "
       >
-        {profileName}
+        {user?.imageUrl ? (
+          <Image
+            src={user.imageUrl}
+            alt=""
+            width={28}
+            height={28}
+            className="
+              size-7 shrink-0 rounded-full border border-border/30 object-cover
+              shadow-[0_0_10px_rgb(34_196_211/0.15)]
+            "
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            className="
+              flex size-7 shrink-0 items-center justify-center rounded-full
+              border border-border/30 bg-primary/15 text-xs font-semibold
+              text-primary
+            "
+          >
+            {profileName.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span
+          className="
+            hidden max-w-[96px] truncate text-xs font-medium
+            xl:block
+          "
+        >
+          {profileName}
+        </span>
+        {hasActivePremiumPlan ? (
+          <FaCrown
+            className="size-3 shrink-0 text-amber-400"
+            aria-label="Premium"
+          />
+        ) : null}
       </span>
-      {hasActivePremiumPlan ? (
-        <FaCrown
-          className="size-3 shrink-0 text-amber-400"
-          aria-label="Premium"
-        />
-      ) : null}
-    </Link>
+      <div className={CLERK_TRIGGER_OVERLAY_CLASS}>
+        <Suspense fallback={null}>
+          <UserButtonWrapper hidePlanBadge />
+        </Suspense>
+      </div>
+    </div>
   );
 
-  const renderAccountMenuButton = (floating = false) => (
+  const renderMobileAccountMenuButton = () => (
     <div
-      className={`
-        group/account relative flex shrink-0 items-center justify-center
-        overflow-hidden transition-colors
+      className="
+        group/account liquid-glass mobile-header-floating-control relative flex
+        size-10 shrink-0 items-center justify-center overflow-hidden
+        rounded-full border border-white/10 !bg-[#01152d]/55
+        !backdrop-blur-2xl !backdrop-saturate-150 transition-colors
         focus-within:ring-2 focus-within:ring-primary
         focus-within:ring-offset-2 focus-within:ring-offset-background
-        ${
-          floating
-            ? `
-              liquid-glass mobile-header-floating-control size-10 rounded-full
-              border border-white/10 !bg-[#01152d]/55 !backdrop-blur-2xl
-              !backdrop-saturate-150
-              hover:!border-primary hover:!bg-primary
-            `
-            : `
-              size-7 rounded-lg
-              hover:bg-muted/50
-            `
-        }
-      `}
+        hover:!border-primary hover:!bg-primary
+      "
       title="Abrir menú de cuenta"
     >
       <span
-        className={`
+        className="
           pointer-events-none absolute inset-0 z-[1] flex items-center
           justify-center text-muted-foreground transition-colors
-          ${
-            floating
-              ? 'group-hover/account:text-slate-950'
-              : 'group-hover/account:text-foreground'
-          }
-        `}
+          group-hover/account:text-slate-950
+        "
       >
-        <IoSettingsOutline
-          className={floating ? 'size-[22px]' : 'size-4'}
-          aria-hidden="true"
-        />
+        <IoSettingsOutline className="size-[22px]" aria-hidden="true" />
       </span>
-      <div className="absolute inset-0 opacity-0 [&_.cl-rootBox]:!size-full [&_.cl-rootBox]:!max-w-full [&_.cl-rootBox]:!min-w-0 [&_.cl-userButtonBox]:!size-full [&_.cl-userButtonBox]:!max-w-full [&_.cl-userButtonBox]:!min-w-0 [&_.cl-userButtonBox]:!justify-center [&_.cl-userButtonOuterIdentifier]:!hidden [&_.cl-userButtonTrigger]:!size-full [&_.cl-userButtonTrigger]:!max-w-full [&_.cl-userButtonTrigger]:!min-w-0 [&_.cl-userButtonTrigger]:!p-0 [&>div]:!size-full">
+      <div className={CLERK_TRIGGER_OVERLAY_CLASS}>
         <Suspense fallback={null}>
           <UserButtonWrapper hidePlanBadge />
         </Suspense>
@@ -660,8 +661,7 @@ export function Header({
                 <div className="relative">
                   <NotificationHeader compact />
                 </div>
-                {renderAccountMenuButton()}
-                {renderProfileLink()}
+                {renderProfileMenuButton()}
               </div>
             </Show>
           </>
@@ -1091,7 +1091,7 @@ export function Header({
                       >
                         <NotificationHeader />
                       </div>
-                      {renderAccountMenuButton(true)}
+                      {renderMobileAccountMenuButton()}
                     </div>
                   </Show>
                 </>
