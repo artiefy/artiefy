@@ -790,70 +790,105 @@ export async function getCourses(
       db.select({ count: sql`count(*)` }).from(courses),
     ]);
 
-    // Get materias and programas for each course with instructor names from many-to-many table
-    const coursesWithRelations = await Promise.all(
-      coursesData.map(async (course) => {
-        // 1. Obtener todos los instructores desde courseInstructors
-        const courseInstructorResults = await db
+    // Instructores, fallback legacy y programas de TODOS los cursos de la página
+    // en consultas por lote (antes se hacían 2-3 consultas por curso dentro de un
+    // Promise.all → con muchos cursos, p. ej. limit 150+, saturaba el pool de
+    // conexiones de Neon y la consulta fallaba, devolviendo la lista vacía).
+    const courseIds = coursesData.map((c) => c.id);
+
+    // 1. Instructores (many-to-many) de todos los cursos.
+    const instructorRows = courseIds.length
+      ? await db
           .select({
+            courseId: courseInstructors.courseId,
             instructorId: courseInstructors.instructorId,
             name: users.name,
           })
           .from(courseInstructors)
           .leftJoin(users, eq(courseInstructors.instructorId, users.id))
-          .where(eq(courseInstructors.courseId, course.id));
+          .where(inArray(courseInstructors.courseId, courseIds))
+      : [];
 
-        // 2. Si no hay en courseInstructors, fallback al campo legacy
-        let instructorName = 'Sin instructor asignado';
-        let instructorsArray: string[] = [];
+    const instructoresPorCurso = new Map<
+      number,
+      { instructorId: string; name: string | null }[]
+    >();
+    for (const row of instructorRows) {
+      const list = instructoresPorCurso.get(row.courseId) ?? [];
+      list.push({ instructorId: row.instructorId, name: row.name });
+      instructoresPorCurso.set(row.courseId, list);
+    }
 
-        if (courseInstructorResults.length > 0) {
-          instructorsArray = courseInstructorResults.map((r) => r.instructorId);
-          instructorName = courseInstructorResults
-            .map((r) => r.name ?? r.instructorId)
-            .join(', ');
-        } else if (course.instructor) {
-          // Fallback al campo legacy
-          const dbUser = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, course.instructor))
-            .limit(1);
+    // 2. Fallback legacy: nombres de los instructores del campo courses.instructor,
+    // solo para cursos sin filas en courseInstructors. Una sola consulta.
+    const legacyIds = Array.from(
+      new Set(
+        coursesData
+          .filter((c) => !instructoresPorCurso.has(c.id) && c.instructor)
+          .map((c) => c.instructor!)
+      )
+    );
+    const nombreLegacyPorId = new Map<string, string>();
+    if (legacyIds.length) {
+      const legacyUsers = await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(inArray(users.id, legacyIds));
+      for (const u of legacyUsers) {
+        // Si el usuario no tiene nombre, se conserva el id (igual que antes).
+        nombreLegacyPorId.set(u.id, u.name ?? u.id);
+      }
+    }
 
-          instructorName = dbUser?.[0]?.name ?? course.instructor;
-          instructorsArray = [course.instructor];
-        }
-
-        // 3. Obtener programas asociados
-        const materiaResults = await db
+    // 3. Materias + programas de todos los cursos.
+    const materiaRows = courseIds.length
+      ? await db
           .select({
-            materiaId: materias.id,
+            courseId: materias.courseid,
             programaId: materias.programaId,
             programaTitle: programas.title,
           })
           .from(materias)
           .leftJoin(programas, eq(materias.programaId, programas.id))
-          .where(eq(materias.courseid, course.id));
+          .where(inArray(materias.courseid, courseIds))
+      : [];
 
-        const uniquePrograms = materiaResults
-          .filter((m) => m.programaId !== null)
-          .reduce((acc: { id: number; title: string }[], curr) => {
-            if (!acc.some((p) => p.id === curr.programaId)) {
-              acc.push({ id: curr.programaId!, title: curr.programaTitle! });
-            }
-            return acc;
-          }, []);
+    const programasPorCurso = new Map<
+      number,
+      { id: number; title: string }[]
+    >();
+    for (const m of materiaRows) {
+      if (m.programaId === null) continue;
+      const list = programasPorCurso.get(m.courseId) ?? [];
+      if (!list.some((p) => p.id === m.programaId)) {
+        list.push({ id: m.programaId, title: m.programaTitle! });
+      }
+      programasPorCurso.set(m.courseId, list);
+    }
 
-        return {
-          ...course,
-          categoryName:
-            categoryNameCache[course.categoryid] ?? 'Unknown Category',
-          programas: uniquePrograms,
-          instructorName, // "Juan Pérez, María García, ..."
-          instructors: instructorsArray, // ["id1", "id2", ...]
-        };
-      })
-    );
+    const coursesWithRelations = coursesData.map((course) => {
+      const instr = instructoresPorCurso.get(course.id) ?? [];
+      let instructorName = 'Sin instructor asignado';
+      let instructorsArray: string[] = [];
+
+      if (instr.length > 0) {
+        instructorsArray = instr.map((r) => r.instructorId);
+        instructorName = instr.map((r) => r.name ?? r.instructorId).join(', ');
+      } else if (course.instructor) {
+        instructorName =
+          nombreLegacyPorId.get(course.instructor) ?? course.instructor;
+        instructorsArray = [course.instructor];
+      }
+
+      return {
+        ...course,
+        categoryName:
+          categoryNameCache[course.categoryid] ?? 'Unknown Category',
+        programas: programasPorCurso.get(course.id) ?? [],
+        instructorName, // "Juan Pérez, María García, ..."
+        instructors: instructorsArray, // ["id1", "id2", ...]
+      };
+    });
 
     return {
       data: coursesWithRelations,

@@ -1,4 +1,4 @@
-import { count, eq } from 'drizzle-orm';
+import { count, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -333,30 +333,44 @@ export const getAllCourses = async () => {
     .leftJoin(nivel, eq(courses.nivelid, nivel.id))
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id));
 
-  // Enriquecer cada curso con sus instructores de la tabla intermedia
-  return Promise.all(
-    rawCourses.map(async (course) => {
-      const instructorRows = await db
-        .select({
-          instructorId: courseInstructors.instructorId,
-          name: users.name,
-        })
-        .from(courseInstructors)
-        .leftJoin(users, eq(courseInstructors.instructorId, users.id))
-        .where(eq(courseInstructors.courseId, course.id));
+  if (rawCourses.length === 0) return [];
 
-      const instructorName =
-        instructorRows.length > 0
-          ? instructorRows.map((r) => r.name ?? r.instructorId).join(', ')
-          : (course.instructor ?? 'Sin instructor');
-
-      return {
-        ...course,
-        instructor: instructorName,
-        instructorName,
-      };
+  // Instructores de TODOS los cursos en una sola consulta. Antes se hacía una
+  // consulta por curso dentro de un Promise.all (N+1): con muchos cursos (p. ej.
+  // 150+) saturaba el pool de conexiones de Neon y terminaba en timeout/500.
+  const courseIds = rawCourses.map((c) => c.id);
+  const instructorRows = await db
+    .select({
+      courseId: courseInstructors.courseId,
+      instructorId: courseInstructors.instructorId,
+      name: users.name,
     })
-  );
+    .from(courseInstructors)
+    .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+    .where(inArray(courseInstructors.courseId, courseIds));
+
+  const instructoresPorCurso = new Map<number, string[]>();
+  for (const row of instructorRows) {
+    const label = row.name ?? row.instructorId;
+    const lista = instructoresPorCurso.get(row.courseId) ?? [];
+    lista.push(label);
+    instructoresPorCurso.set(row.courseId, lista);
+  }
+
+  // Enriquecer cada curso con sus instructores (mismo resultado que antes).
+  return rawCourses.map((course) => {
+    const nombres = instructoresPorCurso.get(course.id);
+    const instructorName =
+      nombres && nombres.length > 0
+        ? nombres.join(', ')
+        : (course.instructor ?? 'Sin instructor');
+
+    return {
+      ...course,
+      instructor: instructorName,
+      instructorName,
+    };
+  });
 };
 
 // Actualizar un curso

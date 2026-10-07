@@ -7,8 +7,13 @@ interface FinancialSummary {
   error: string | null;
 }
 
-interface TransactionItem {
-  valor: number;
+interface SummaryResponse {
+  ok: boolean;
+  message?: string;
+  data?: {
+    totalRecaudado?: number;
+    totalTransacciones?: number;
+  };
 }
 
 export function useFinancialsSummary(): FinancialSummary {
@@ -22,25 +27,22 @@ export function useFinancialsSummary(): FinancialSummary {
   useEffect(() => {
     const fetchSummary = async () => {
       try {
+        // Modo agregado: el servidor devuelve SUM/COUNT en una sola fila,
+        // sin traer cientos de transacciones para sumarlas en el cliente.
         const response = await fetch(
-          '/api/transaction-history?page=1&pageSize=1000&verified=true'
+          '/api/transaction-history?summary=true&verified=true&page=1&pageSize=1'
         );
 
         if (!response.ok) {
           throw new Error('Error al cargar resumen de finanzas');
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as SummaryResponse;
 
-        if (data.ok && data.data?.items) {
-          const totalRecaudado = data.data.items.reduce(
-            (sum: number, item: TransactionItem) => sum + (item.valor || 0),
-            0
-          );
-
+        if (data.ok && data.data) {
           setSummary({
-            totalRecaudado,
-            totalTransacciones: data.data.items.length,
+            totalRecaudado: data.data.totalRecaudado ?? 0,
+            totalTransacciones: data.data.totalTransacciones ?? 0,
             loading: false,
             error: null,
           });

@@ -101,6 +101,11 @@ export default function CourseListAdmin({
                         className="object-cover transition-transform duration-300 hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={75}
+                        // En dev el optimizador local de Next se satura con
+                        // muchas tarjetas a la vez (timeout → 500 → imagen rota);
+                        // se sirve la imagen de S3 directo. En producción se
+                        // mantiene la optimización (la hace Vercel).
+                        unoptimized={process.env.NODE_ENV === 'development'}
                       />
                     ) : (
                       <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#22C4D3]/20 to-[#061c37]">

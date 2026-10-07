@@ -1,5 +1,16 @@
 import { auth } from '@clerk/nextjs/server';
-import { and, asc, desc, eq, gte, ilike, lte, or, type SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  ilike,
+  lte,
+  or,
+  type SQL,
+  sql,
+} from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
@@ -16,6 +27,8 @@ const listTransactionsSchema = z.object({
   method: z.string().nullish(),
   concepto: z.string().nullish(),
   userId: z.string().nullish(),
+  // summary=true devuelve solo el agregado (SUM/COUNT) sin traer las filas.
+  summary: z.enum(['true', 'false']).nullish(),
   sort: z
     .enum(['createdAt_desc', 'createdAt_asc', 'valor_desc', 'valor_asc'])
     .nullish()
@@ -54,6 +67,7 @@ export async function GET(request: Request) {
       method: url.searchParams.get('method'),
       concepto: url.searchParams.get('concepto'),
       userId: url.searchParams.get('userId'),
+      summary: url.searchParams.get('summary'),
       sort: url.searchParams.get('sort'),
     };
 
@@ -90,6 +104,7 @@ export async function GET(request: Request) {
       method,
       concepto,
       userId: filterUserId,
+      summary,
       sort,
     } = parsed.data;
 
@@ -157,6 +172,30 @@ export async function GET(request: Request) {
 
     // Construir query base con join
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Modo resumen: una sola consulta agregada (SUM/COUNT), sin traer filas.
+    // Evita descargar cientos de registros solo para sumarlos en el cliente.
+    if (summary === 'true') {
+      const agg = await db
+        .select({
+          total: sql<number>`COALESCE(SUM(${pagos.valor}), 0)`,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(pagos)
+        .innerJoin(users, eq(pagos.userId, users.id))
+        .where(whereClause);
+
+      return Response.json(
+        {
+          ok: true,
+          data: {
+            totalRecaudado: Number(agg[0]?.total ?? 0),
+            totalTransacciones: Number(agg[0]?.count ?? 0),
+          },
+        },
+        { status: 200 }
+      );
+    }
 
     // Contar total de items
     const countResult = await db
