@@ -858,7 +858,7 @@ export async function getCourses(
       { id: number; title: string }[]
     >();
     for (const m of materiaRows) {
-      if (m.programaId === null) continue;
+      if (m.courseId === null || m.programaId === null) continue;
       const list = programasPorCurso.get(m.courseId) ?? [];
       if (!list.some((p) => p.id === m.programaId)) {
         list.push({ id: m.programaId, title: m.programaTitle! });
