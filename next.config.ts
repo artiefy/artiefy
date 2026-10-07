@@ -28,7 +28,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  reactCompiler: false,
+  reactCompiler: true,
+  // Agent instructions live only in CLAUDE.md; 16.4 would otherwise create AGENTS.md on `next dev`.
+  agentRules: false,
   cacheComponents: true,
   // Cada <Link> precarga el armazón compartido de la app en cuanto entra en
   // pantalla, así que al hacer clic la estructura ya está y solo se espera por
@@ -52,6 +54,16 @@ const nextConfig: NextConfig = {
     // `typescript` package has to stay on 6 because typescript-eslint needs
     // the JavaScript compiler API that TypeScript 7 does not expose.
     useTypeScriptCli: false,
+    // Rust React Compiler for Turbopack: replaces the Babel plugin, so
+    // `babel-plugin-react-compiler` is not needed. Experimental in 16.4 and it
+    // changes production output.
+    turbopackRustReactCompiler: true,
+    // Experimental, dev only: persistent-cache garbage collection.
+    turbopackGc: true,
+    // Experimental, dev only: load `next/dynamic` chunks lazily.
+    turbopackLazyDynamicImports: true,
+    // Experimental: upgrade reminders for coding agents in dev and build.
+    agentUpgrade: 'latest',
     // Server Actions are stable since Next.js 14; only these tuning options
     // still live under `experimental`.
     serverActions: {
