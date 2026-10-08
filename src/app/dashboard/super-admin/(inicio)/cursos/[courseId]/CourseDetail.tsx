@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -29,8 +30,6 @@ import {
 import { toast } from 'sonner';
 
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
-import { AudioRecorder } from '~/components/AudioRecorder';
-import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
 import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
@@ -46,13 +45,8 @@ import {
 import { Button } from '~/components/educators/ui/button';
 import { Label } from '~/components/educators/ui/label';
 import { CourseSearchModal } from '~/components/embeddings/CourseSearchModal';
-import { EmbeddingsGenerator } from '~/components/embeddings/EmbeddingsGenerator';
-import { EmbeddingsGeneratorComplete } from '~/components/embeddings/EmbeddingsGeneratorComplete';
-import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailView';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
-import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
-import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
   ModalScheduleMeeting,
   ScheduledMeeting,
@@ -71,8 +65,49 @@ import type { Project } from '~/types/project';
 
 import '~/styles/course-detail-system.css';
 
+// Componentes pesados que solo aparecen en pestañas secundarias o en un modal.
+// Se cargan en diferido (code-splitting) para que no entren en el bundle inicial
+// de la ruta ni se compilen hasta que realmente se muestren.
+const DashboardEstudiantes = dynamic(
+  () => import('~/components/educators/layout/DashboardEstudiantes'),
+  { ssr: false }
+);
+const ProjectDetailView = dynamic(
+  () => import('~/components/estudiantes/projects/ProjectDetailView'),
+  { ssr: false }
+);
+const ScheduledMeetingsList = dynamic(
+  () =>
+    import('~/components/super-admin/layout/ScheduledMeetingsList').then(
+      (m) => m.ScheduledMeetingsList
+    ),
+  { ssr: false }
+);
+const AudioRecorder = dynamic(
+  () => import('~/components/AudioRecorder').then((m) => m.AudioRecorder),
+  { ssr: false }
+);
+const EmbeddingsGenerator = dynamic(
+  () =>
+    import('~/components/embeddings/EmbeddingsGenerator').then(
+      (m) => m.EmbeddingsGenerator
+    ),
+  { ssr: false }
+);
+const EmbeddingsGeneratorComplete = dynamic(
+  () =>
+    import('~/components/embeddings/EmbeddingsGeneratorComplete').then(
+      (m) => m.EmbeddingsGeneratorComplete
+    ),
+  { ssr: false }
+);
+const ModalFormCourse = dynamic(
+  () => import('~/components/super-admin/modals/ModalFormCourse'),
+  { ssr: false }
+);
+
 // Definir la interfaz del curso
-interface Course {
+export interface Course {
   id: number;
   title: string;
   subtitle?: string | null;
@@ -117,6 +152,18 @@ interface Materia {
   title: string;
 }
 
+// Forma de cada lección que devuelve /api/super-admin/lessons; es un superset
+// de lo que usan los effects de actividades y de recursos.
+interface LessonFull {
+  id: number;
+  title: string;
+  orderIndex: number;
+  coverImageKey: string | null;
+  coverVideoKey: string | null;
+  resourceKey: string | null;
+  resourceNames: string | null;
+}
+
 interface VideoData {
   videos?: unknown[];
 }
@@ -129,6 +176,9 @@ interface SyncResponse {
 // Definir la interfaz de las propiedades del componente
 interface CourseDetailProps {
   courseId: number;
+  // Curso ya resuelto en el servidor: permite pintar el encabezado de inmediato
+  // (sin pantalla de "Cargando...") mientras el resto se trae en segundo plano.
+  initialCourse?: Course | null;
 }
 
 // Definir la interfaz de los parámetros
@@ -343,11 +393,12 @@ function isVideoIdxItem(v: unknown): v is VideoIdxItem {
   );
 }
 
-const CourseDetail: React.FC<CourseDetailProps> = () => {
+const CourseDetail: React.FC<CourseDetailProps> = ({ initialCourse }) => {
   const router = useRouter(); // Obtener el router
   const params = useParams(); // Obtener los parámetros
   const courseIdUrl = params?.courseId; // Obtener el id del curso desde params
-  const [course, setCourse] = useState<Course | null>(null); // Nuevo estado para el curso
+  // Si el servidor ya resolvió el curso, se arranca con él para pintar de una.
+  const [course, setCourse] = useState<Course | null>(initialCourse ?? null);
   const [parametros, setParametros] = useState<Parametros[]>([]); // Nuevo estado para los parámetros
   const [isModalOpen, setIsModalOpen] = useState(false); // Nuevo estado para el modal de edición
   const [editTitle, setEditTitle] = useState(''); // Nuevo estado para el título del curso a editar
@@ -357,7 +408,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [editModalidad, setEditModalidad] = useState(0); // Nuevo estado para la modalidad del curso
   const [editNivel, setEditNivel] = useState(0); // Replaced  with editNivel
   const [editCoverImageKey, setEditCoverImageKey] = useState(''); // Nuevo estado para la imagen del curso
-  const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
+  // Solo bloquea con "Cargando..." si NO hay curso inicial del servidor.
+  const [loading, setLoading] = useState(!initialCourse);
   const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
   const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores específicos
@@ -617,48 +669,71 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setReplyingToPostId(allPostIds);
     }
   }, [posts, fetchPostReplies]);
+
+  // Las lecciones del curso las necesitan dos effects (actividades y recursos).
+  // Para no pedir /lessons varias veces en el mismo montaje, se reúsan las
+  // peticiones concurrentes: mientras una está en vuelo, las demás esperan la
+  // misma. Al resolver se libera, así un refresh posterior vuelve a traer datos
+  // frescos (no se cachea entre refrescos).
+  const lessonsInFlightRef = useRef<{
+    key: number | null;
+    promise: Promise<LessonFull[]> | null;
+  }>({ key: null, promise: null });
+
+  const loadLessons = useCallback((): Promise<LessonFull[]> => {
+    if (courseIdNumber === null) return Promise.resolve([]);
+    const cache = lessonsInFlightRef.current;
+    if (cache.key === courseIdNumber && cache.promise) return cache.promise;
+    const p = fetch(`/api/super-admin/lessons?courseId=${courseIdNumber}`)
+      .then(async (res) => (res.ok ? ((await res.json()) as LessonFull[]) : []))
+      .catch(() => [] as LessonFull[])
+      .finally(() => {
+        if (lessonsInFlightRef.current.promise === p) {
+          lessonsInFlightRef.current = { key: null, promise: null };
+        }
+      });
+    lessonsInFlightRef.current = { key: courseIdNumber, promise: p };
+    return p;
+  }, [courseIdNumber]);
+
   useEffect(() => {
     if (!courseIdNumber) return;
     setLoadingActivities(true);
 
     (async () => {
       try {
-        // Traer lecciones
-        const lessonsRes = await fetch(
-          `/api/super-admin/lessons?courseId=${courseIdNumber}`
+        // Traer lecciones (reutiliza la petición compartida)
+        const lessonsData = await loadLessons();
+        if (lessonsData.length === 0) return;
+
+        // Traer actividades de cada lección en paralelo (antes era una
+        // petición tras otra por lección, lo que escalaba muy mal).
+        const porLeccion = await Promise.all(
+          lessonsData.map(async (lesson) => {
+            const actRes = await fetch(
+              `/api/educadores/actividades?courseId=${courseIdNumber}&lessonId=${lesson.id}`
+            );
+            if (!actRes.ok) return [] as CourseActivity[];
+            const acts = (await actRes.json()) as CourseActivity[];
+            // filtrar por lessonsId por si el backend no filtra bien
+            return acts
+              .filter((a) => a.lessonsId === lesson.id)
+              .map((a) => ({
+                ...a,
+                lessonTitle: lesson.title,
+                lessonOrderIndex: lesson.orderIndex,
+              }));
+          })
         );
-        if (!lessonsRes.ok) return;
-        const lessonsData = (await lessonsRes.json()) as {
-          id: number;
-          title: string;
-          orderIndex: number;
-        }[];
 
-        // Traer actividades de cada lección individualmente
-        const allActivities: CourseActivity[] = [];
-        for (const lesson of lessonsData) {
-          const actRes = await fetch(
-            `/api/educadores/actividades?courseId=${courseIdNumber}&lessonId=${lesson.id}`
-          );
-          if (!actRes.ok) continue;
-          const acts = (await actRes.json()) as CourseActivity[];
-          // filtrar por lessonsId por si el backend no filtra bien
-          const filtered = acts.filter((a) => a.lessonsId === lesson.id);
-          filtered.forEach((a) => {
-            a.lessonTitle = lesson.title;
-            a.lessonOrderIndex = lesson.orderIndex;
-          });
-          allActivities.push(...filtered);
-        }
-
-        setCourseActivities(allActivities);
+        setCourseActivities(porLeccion.flat());
       } catch (e) {
         console.error('Error cargando actividades del curso:', e);
       } finally {
         setLoadingActivities(false);
       }
     })();
-  }, [courseIdNumber, activitiesRefreshKey]);
+  }, [courseIdNumber, activitiesRefreshKey, loadLessons]);
 
   // Función para crear respuesta a un post
   const handleCreateReply = async (postId: number) => {
@@ -725,20 +800,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     (async () => {
       try {
-        const res = await fetch(
-          `/api/super-admin/lessons?courseId=${courseIdNumber}`
-        );
-        if (!res.ok) return;
-
-        const data = (await res.json()) as {
-          id: number;
-          title: string;
-          orderIndex: number;
-          coverImageKey: string | null;
-          coverVideoKey: string | null;
-          resourceKey: string | null;
-          resourceNames: string | null;
-        }[];
+        // Reutiliza la petición compartida de lecciones.
+        const data = await loadLessons();
 
         const mapped: LessonResource[] = data
           .filter(
@@ -769,7 +832,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setLoadingResources(false);
       }
     })();
-  }, [courseIdNumber]);
+  }, [courseIdNumber, loadLessons]);
   // Fetch student projects for all students enrolled in this course
   useEffect(() => {
     if (!courseIdNumber) return;
@@ -1024,15 +1087,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(
-          `/api/educadores/courses/${courseIdNumber}`
-        );
-        const responseParametros = await fetch(
-          `/api/educadores/parametros?courseId=${courseIdNumber}`
-        ); // Obtener los parámetros
-        const materiasResponse = await fetch(
-          `/api/educadores/courses/${courseIdNumber}/materiasOne`
-        );
+        // Los tres endpoints son independientes: se piden en paralelo para no
+        // encadenar sus tiempos (antes se esperaba uno tras otro).
+        const [response, responseParametros, materiasResponse] =
+          await Promise.all([
+            fetch(`/api/educadores/courses/${courseIdNumber}`),
+            fetch(`/api/educadores/parametros?courseId=${courseIdNumber}`),
+            fetch(`/api/educadores/courses/${courseIdNumber}/materiasOne`),
+          ]);
         if (materiasResponse.ok) {
           const materiasData = (await materiasResponse.json()) as Materia[];
           setMaterias(materiasData);
@@ -1161,10 +1223,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   }, [courseIdNumber]);
 
-  // Obtener el curso y los parámetros al cargar la página
+  // Obtener el curso y los parámetros al cargar la página.
+  // fetchEducators() se dispara en su propio useEffect más abajo; no se repite
+  // aquí para no pedir /changeEducators dos veces por montaje.
   useEffect(() => {
     void fetchCourse();
-    void fetchEducators(); // ✅ También cargar educadores al iniciar
   }, [fetchCourse]);
 
   // Fetch forums when course loads
@@ -1722,7 +1785,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Verificar si se está cargando
   // (el modal de instructores hace su propio fetchCourse en segundo plano;
   // no debe taparse a sí mismo con la pantalla de carga)
-  if (loading && !isAddInstructorModalOpen) {
+  // Solo pantalla completa de carga cuando todavía NO hay datos del curso.
+  // Si ya hay curso (del servidor o de una carga previa), los refrescos en
+  // segundo plano no vuelven a bloquear la vista.
+  if (loading && !course && !isAddInstructorModalOpen) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
         <div className="size-32 rounded-full border-y-2 border-primary">
