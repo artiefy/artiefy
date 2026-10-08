@@ -39,8 +39,6 @@
   "files.autoSave": "afterDelay",
   "files.associations": {
     "*.css": "tailwindcss",
-    "*.env": "env",
-    "*.env.production": "env",
     "*.jsx": "javascriptreact",
     "*.tsx": "typescriptreact",
     "*.ts": "typescript",
@@ -78,10 +76,10 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[env]": {
-    "editor.defaultFormatter": "IronGeek.vscode-env"
+    "editor.defaultFormatter": "local.dotenv-format"
   },
   "[env.production]": {
-    "editor.defaultFormatter": "IronGeek.vscode-env"
+    "editor.defaultFormatter": "local.dotenv-format"
   },
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -108,7 +106,6 @@
   "js/ts.tsserver.maxMemory": 8192,
   // ESLint Configuration
   "eslint.workingDirectories": [{ "mode": "auto" }],
-  "eslint.runtime": "C:\\Users\\Usuario\\AppData\\Roaming\\fnm\\aliases\\default\\node.exe",
   "eslint.run": "onType",
   "eslint.validate": [
     "javascript",
@@ -464,42 +461,18 @@
   "github.copilot.chat.cli.customAgents.enabled": true,
   "github.copilot.chat.githubMcpServer.enabled": true,
   "github.copilot.chat.githubMcpServer.readonly": false,
-  "chat.promptFilesLocations": {
-    ".github/prompts": true,
-    ".vscode/mcp.json": true,
-    "Docs": true,
-    ".github/instructions": true,
-    ".github/instructions/copilot-instructions.md": true
-  },
   "chat.tools.edits.autoApprove": {
     "**/*": true
-  },
-  "chat.tools.eligibleForAutoApproval": {},
-  "chat.instructionsFilesLocations": {
-    ".github/instructions": true,
-    "Docs": true
   },
   "chat.implicitContext.enabled": {
     "panel": "always"
   },
   // Nuevas configuraciones recomendadas de VS Code 1.108
   "chat.useAgentSkills": true,
-  "chat.agentSkillsLocations": {
-    ".github/skills": true,
-    ".claude/skills": true,
-    "~/.copilot/skills": true,
-    ".agents/skills": true
-  },
-  "chat.agentFilesLocations": {
-    ".github/agents": true,
-    ".agents": true,
-    "~/.vscode/agents": true
-  },
   "github.copilot.chat.searchSubagent.enabled": true,
   "github.copilot.chat.copilotMemory.enabled": true,
   "chat.tools.autoExpandFailures": true,
   "workbench.browser.openLocalhostLinks": true,
-  "inlineChat.defaultModel": "Auto (copilot)",
   "github.copilot.chat.implementAgent.model": "Auto (copilot)",
   "terminal.integrated.stickyScroll.ignoredCommands": [
     "clear",
