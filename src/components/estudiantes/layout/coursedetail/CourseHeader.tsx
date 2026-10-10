@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import {
   usePathname,
@@ -1323,6 +1323,16 @@ export function CourseHeader({
     typeof course === 'object' && 'coverVideoCourseKey' in course
       ? (course as { coverVideoCourseKey?: string }).coverVideoCourseKey
       : undefined;
+  // `<video poster>` bypasses next/image, so build an optimized URL for it
+  // instead of pointing at the original upload (often several MB).
+  const videoPosterSrc = getImageProps({
+    src: coverImageKey
+      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
+      : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT',
+    alt: '',
+    width: 960,
+    height: 540,
+  }).props.src;
 
   // --- Fix: define videoVolume and isMuted state ---
   const [videoVolume, setVideoVolume] = useState(1);
@@ -1486,11 +1496,7 @@ export function CourseHeader({
                           controls={false}
                           muted={isMuted}
                           preload="auto"
-                          poster={
-                            coverImageKey
-                              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()
-                              : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-                          }
+                          poster={videoPosterSrc}
                           onClick={handleVideoClick}
                           style={{
                             width: '100%',

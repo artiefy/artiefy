@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -320,6 +320,24 @@ export function ProgramHeader({
   const coverImageUrl = program.coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
     : 'https://placehold.co/1200x675/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+  // A raw CSS url() would download the original upload (often several MB);
+  // route the background through the image optimizer instead.
+  const {
+    props: { srcSet: coverSrcSet = '' },
+  } = getImageProps({
+    src: coverImageUrl,
+    alt: '',
+    width: 1200,
+    height: 675,
+    quality: 75,
+  });
+  const coverBackgroundImage = `image-set(${coverSrcSet
+    .split(', ')
+    .map((entry) => {
+      const [url, density] = entry.split(' ');
+      return `url("${url}") ${density}`;
+    })
+    .join(', ')})`;
   const programTypeLabel = program.typeProgram?.type?.trim();
   const _getCategoryName = (program: Program) => {
     return program.category?.name ?? 'Sin categoría';
@@ -825,7 +843,7 @@ export function ProgramHeader({
           md:p-8
         "
         style={{
-          backgroundImage: `url(${coverImageUrl})`,
+          backgroundImage: coverBackgroundImage,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
         }}

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
@@ -477,6 +477,12 @@ export function GuidedProjectDetails({
 
   const coverImageUrl = resolveMediaUrl(project.coverImageKey);
   const coverVideoUrl = resolveMediaUrl(project.coverVideoKey);
+  // `<video poster>` bypasses next/image, so build an optimized URL for it
+  // instead of pointing at the original upload (often several MB).
+  const coverPosterUrl = coverImageUrl
+    ? getImageProps({ src: coverImageUrl, alt: '', width: 960, height: 540 })
+        .props.src
+    : undefined;
   const instructorImageUrl = resolveMediaUrl(project.instructorProfileImageKey);
   // External avatar hosts may not be whitelisted for the image optimizer.
   const instructorImageIsExternal = /^https?:\/\//i.test(
@@ -601,7 +607,7 @@ export function GuidedProjectDetails({
         <video
           className="size-full object-cover"
           src={coverVideoUrl}
-          poster={coverImageUrl}
+          poster={coverPosterUrl}
           controls
           playsInline
         />

@@ -612,7 +612,7 @@ export default function SignInPage() {
       <Image
         src="/login-fondo.webp"
         alt="Fondo de inicio de sesión"
-        quality={100}
+        quality={75}
         fill
         sizes="100vw"
         priority
