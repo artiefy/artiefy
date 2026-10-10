@@ -4,11 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
 
@@ -22,7 +20,7 @@ Artiefy: production education platform (Next.js 16 App Router, React 19, TypeScr
 - Check gate: `npm run check` = ESLint with `eslint.cli.config.mjs` (`--max-warnings=0`) + `tsc --noEmit`. `check:ts6` / `typecheck:ts6` run the same with `tsc6` (TypeScript 6). Also `lint`, `lint:fix`, `typecheck`, `typecheck:watch`.
 - `format:check` / `format:write` only glob `ts, js, jsx, mdx` (no `tsx`, json, css); lint-staged runs Prettier on all staged files anyway.
 - DB: `db:generate`, `db:migrate`, `db:push`, `db:studio`. `npm run embeddings:regen` does a full OpenAI re-embedding. Ask for explicit approval before any `db:*` or `embeddings:regen`; never `db:push` or destructive SQL without it.
-- No test runner or test script exists (`openspec/config.yaml` also says so), so `check` is the only baseline verification.
+- No test runner or test script exists, so `check` is the only baseline verification.
 - Hooks (Husky): pre-commit runs lint-staged (ESLint `--fix` with the CLI config, then Prettier); pre-push runs `npm run check`. `npm run setup:hooks` reinstalls them.
 - Toolchain quirk: `typescript` is aliased to `@typescript/typescript6` (typescript-eslint needs its JS API) while `node_modules/.bin/tsc` is TypeScript 7 (`@typescript/native`); `next.config.ts` sets `experimental.useTypeScriptCli: false` for this. `.npmrc` has `legacy-peer-deps=true`. Node `^24.15.0`, `packageManager` npm 12.
 
@@ -41,9 +39,9 @@ Artiefy: production education platform (Next.js 16 App Router, React 19, TypeScr
 ## Rules and pitfalls
 
 - UI copy is Spanish-first and not wired to next-intl. Keep copy consistent with nearby UI, never translate existing Spanish UI, and do not add locale routing or an i18n layer unless the feature requires it. Dynamic routes use plain params (`[id]`, `[courseId]`).
-- Extra SDD STRICT triggers: payments (PayU), uploads (S3), integrations (n8n, OpenAI, WhatsApp, Teams, ESP32, Socket.IO). Be especially careful with PayU, roles/permissions, and personal data; prefer reversible changes, and verify env vars and failure behavior before closing work on payments, S3, Redis, OpenAI, WhatsApp, or the database.
+- Extra high-risk areas: payments (PayU), uploads (S3), integrations (n8n, OpenAI, WhatsApp, Teams, ESP32, Socket.IO). Be especially careful with PayU, roles/permissions, and personal data; prefer reversible changes, and verify env vars and failure behavior before closing work on payments, S3, Redis, OpenAI, WhatsApp, or the database.
 - Preserve existing role checks for `super-admin`, `admin`, `educador`, and `estudiante`. Follow the existing helpers and route patterns before adding new integration code.
 - Imports use `~/` (NOT `@/`) unless same directory. Prettier (`prettier.config.mjs`): 2 spaces, LF, semicolons, single quotes, 80 columns, Tailwind class sorting. Use `React.ReactNode`; no unnecessary `useEffect`; no `useMemo`/`useCallback` without a measured reason.
 - Lint config: `eslint.config.mjs` is the editor config (no type info, on purpose); `eslint.cli.config.mjs` adds type-checked rules through `tsconfig.eslint.json`, is slow, and is what `check`, `lint`, and lint-staged use. Do not point VS Code at it.
 - Env is validated in `src/env.ts` (t3-env; `SKIP_ENV_VALIDATION` bypasses it) and `next.config.ts` imports it, so a build needs the required vars. Direct `process.env` reads exist only in bootstrap-style spots (`src/proxy.ts`, `src/lib/emails/*`); do not add more. Names: `POSTGRES_*`, `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SIGNING_SECRET`, `UPSTASH_REDIS_REST_*`, `AWS_*`, PayU (`MERCHANT_ID`, `ACCOUNT_ID`, `API_LOGIN`, `API_KEY`, `PAYU_MODE`, `PAYU_TEST_*`, `PAYU_PROD_*`, `PAYU_API_URL`, `RESPONSE_URL`, `CONFIRMATION_URL*`), `PASS` (mail password), `CRON_SECRET`, `N8N_*`, `OPENAI_*`, `ESP32_*`, `TRANSCRIBE_*`, `NEON_API_KEY`, `GITHUB_TOKEN`, and the `NEXT_PUBLIC_*` Clerk, S3, base URL, PayU, and n8n keys. `Docs/ENVIRONMENT_VARIABLES_SYNC.md` covers syncing them.
-- Long-form references, read on demand: `Docs/` (n8n, PayU, ESP32, WhatsApp scheduling, embeddings), `openspec/` (SDD artifacts, `strict_tdd: false`), and `NEXTJS_16_3_AGENT_RUNBOOK.md` (Next.js upgrades).
+- Long-form references, read on demand: `Docs/` (n8n, PayU, ESP32, WhatsApp scheduling, embeddings), and `NEXTJS_16_3_AGENT_RUNBOOK.md` (Next.js upgrades).
