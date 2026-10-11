@@ -69,6 +69,32 @@ export const rootMetadata: Metadata = {
   },
 };
 
+// Catalog pages (courses, programs) are indexed only when they carry a real
+// description: test entries such as "curso prueba embedding" / "hola" are
+// active in production, and thin pages lower the quality signal of the whole
+// site.
+export const MIN_INDEXABLE_DESCRIPTION_LENGTH = 50;
+
+export function hasIndexableDescription(description?: string | null) {
+  return (description?.trim().length ?? 0) >= MIN_INDEXABLE_DESCRIPTION_LENGTH;
+}
+
+export const indexRobots: Metadata['robots'] = { index: true, follow: true };
+export const noIndexRobots: Metadata['robots'] = {
+  index: false,
+  follow: false,
+};
+
+// Meta descriptions are cut by Google around 155-160 characters; trim at a
+// word boundary so long catalog descriptions do not end mid-word.
+export function toMetaDescription(text?: string | null, maxLength = 155) {
+  const clean = (text ?? '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLength) return clean;
+  const cut = clean.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:]+$/, '')}…`;
+}
+
 // Metadata for an indexable public route. Child `openGraph` replaces the
 // parent's object instead of merging, so it is rebuilt here with the shared
 // image and locale.

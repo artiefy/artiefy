@@ -40,8 +40,6 @@ export default function robots(): MetadataRoute.Robots {
           '/myaccount/',
           '/programas/',
           '/cursos/',
-          '/estudiantes/cursos/',
-          '/estudiantes/programas/',
           '/estudiantes?category',
           '/not-found',
           '/error',

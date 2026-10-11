@@ -148,10 +148,14 @@ export default function CourseDetails({
   course: initialCourse,
   classMeetings = [],
   courseTypeCounts = { premium: 0, pro: 0, free: 0, individual: 0 },
+  isSignedInOnServer = true,
 }: {
   course: Course;
   classMeetings?: ClassMeeting[];
   courseTypeCounts?: CourseTypeCounts;
+  /** Whether the request had a session; anonymous visitors (and crawlers)
+   * have no enrollment to check, so the detail renders on the server. */
+  isSignedInOnServer?: boolean;
 }) {
   // Mantener la lógica de estado y autenticación
   const [course, setCourse] = useState<Course>(initialCourse);
@@ -166,7 +170,7 @@ export default function CourseDetails({
       average: 0,
     }
   );
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(isSignedInOnServer);
   const [_isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);

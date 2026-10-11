@@ -7,6 +7,12 @@ import { auth } from '@clerk/nextjs/server';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
+import {
+  hasIndexableDescription,
+  indexRobots,
+  noIndexRobots,
+  toMetaDescription,
+} from '~/lib/metadata/config';
 import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMeetings/getClassMeetingsByCourseId';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getCourseTypeCounts } from '~/server/actions/estudiantes/courses/getCourseTypeCounts';
@@ -31,7 +37,7 @@ export async function generateMetadata(
   { params }: { params: { id: string } },
   _parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const robotsNoIndex: Metadata['robots'] = { index: false, follow: false };
+  const robotsNoIndex = noIndexRobots;
 
   try {
     // Await params to ensure it's resolved
@@ -88,19 +94,24 @@ export async function generateMetadata(
       }
     }
 
+    const description =
+      toMetaDescription(course.description) || 'No hay descripción disponible.';
+    const isIndexable =
+      course.isActive !== false && hasIndexableDescription(course.description);
+
     // Solo la imagen de portada del curso, sin imágenes generales ni previas
     return {
       metadataBase,
-      title: course.title,
-      description: course.description ?? 'No hay descripción disponible.',
-      robots: robotsNoIndex,
+      title: course.title.trim(),
+      description,
+      robots: isIndexable ? indexRobots : noIndexRobots,
       openGraph: {
         type: 'website',
-        locale: 'es_ES',
+        locale: 'es_CO',
         url: new URL(`/estudiantes/cursos/${courseId}`, baseUrl).toString(),
         siteName: 'Artiefy',
         title: `${course.title} | Artiefy`,
-        description: course.description ?? 'No hay descripción disponible.',
+        description,
         images: [
           {
             url: coverImageUrl,
@@ -116,7 +127,7 @@ export async function generateMetadata(
       twitter: {
         card: 'summary_large_image',
         title: `${course.title} | Artiefy`,
-        description: course.description ?? 'No hay descripción disponible.',
+        description,
         images: [coverImageUrl],
         creator: '@artiefy',
         site: '@artiefy',
@@ -232,6 +243,7 @@ async function CourseContent({ id }: { id: string }) {
       course: courseForDetails,
       classMeetings,
       courseTypeCounts,
+      isSignedInOnServer: Boolean(userId),
     };
   } catch (error) {
     throw error;
@@ -241,8 +253,30 @@ async function CourseContent({ id }: { id: string }) {
     notFound();
   }
 
+  const { course } = courseDetailsProps;
+  const courseSchema =
+    course.isActive !== false && hasIndexableDescription(course.description)
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Course',
+          name: course.title.trim(),
+          description: course.description?.trim(),
+          url: `https://artiefy.com/estudiantes/cursos/${course.id}`,
+          inLanguage: 'es-CO',
+          provider: { '@id': 'https://artiefy.com/#organization' },
+        }
+      : null;
+
   return (
     <section>
+      {courseSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(courseSchema).replace(/</g, '\\u003c'),
+          }}
+        />
+      )}
       <CourseDetails {...courseDetailsProps} />
     </section>
   );
