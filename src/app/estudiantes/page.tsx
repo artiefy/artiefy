@@ -12,16 +12,24 @@ import { CourseListWrapper } from '~/components/estudiantes/layout/studentdashbo
 import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { Reveal } from '~/components/estudiantes/ui/Reveal';
+import { pageMetadata } from '~/lib/metadata/config';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
 import { getAllLearningItems } from '~/server/actions/estudiantes/getAllLearningItems';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
 import type { CourseSortValue } from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
+import type { Metadata } from 'next';
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
+
+export const metadata: Metadata = pageMetadata({
+  title: 'Cursos y programas online',
+  description:
+    'Explora los cursos, programas y proyectos guiados de Artiefy. Aprende ciencia, tecnología y habilidades digitales a tu ritmo y obtén tu certificado.',
+});
 
 interface SearchParams {
   category?: string;
@@ -151,6 +159,9 @@ export default async function Page({ searchParams }: PageProps) {
       style={{ isolation: 'isolate', zIndex: 1 }}
     >
       <ScrollRestoration />
+      {/* The catalog opens with a carousel, so the page topic is announced
+          to crawlers and screen readers without changing the design. */}
+      <h1 className="sr-only">Cursos y programas online de Artiefy</h1>
 
       <Suspense fallback={<StudentDetailsSkeleton />}>
         <StudentDetailsSection />

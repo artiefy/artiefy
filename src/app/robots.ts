@@ -46,6 +46,8 @@ export default function robots(): MetadataRoute.Robots {
           '/not-found',
           '/error',
           '/global-error',
+          '/test-loading',
+          '/v2',
         ],
       },
     ],

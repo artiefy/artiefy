@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
 import Link, { useLinkStatus } from 'next/link';
@@ -107,10 +107,40 @@ function StartNowButtonContent() {
   );
 }
 
+// Reads the OAuth query params in its own Suspense boundary: calling
+// useSearchParams() at page level makes the whole statically prerendered page
+// render on the client only, so crawlers got an empty shell without the hero.
+function OAuthParamsHandler({
+  onError,
+  onShowSignUp,
+}: {
+  onError: (error: string) => void;
+  onShowSignUp: () => void;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const shouldShowSignup = searchParams.get('show_signup');
+
+    if (error) {
+      onError(decodeURIComponent(error));
+      router.replace('/', { scroll: false });
+    }
+
+    if (shouldShowSignup === 'true') {
+      onShowSignUp();
+      router.replace('/', { scroll: false });
+    }
+  }, [searchParams, router, onError, onShowSignUp]);
+
+  return null;
+}
+
 export default function HomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [showAnuncio, setShowAnuncio] = useState(false);
   const [, setShowChatbot] = useState<boolean>(false);
   void showAnuncio;
@@ -169,26 +199,6 @@ export default function HomePage() {
     }
   }, [user]);
 
-  // Manejar parámetros de error de OAuth desde URL
-  useEffect(() => {
-    const error = searchParams.get('error');
-    const shouldShowSignup = searchParams.get('show_signup');
-
-    if (error) {
-      setOauthError(decodeURIComponent(error));
-      setShowLoginModal(true);
-      // Limpiar la URL
-      router.replace('/', { scroll: false });
-    }
-
-    if (shouldShowSignup === 'true') {
-      setShowLoginModal(false);
-      setShowSignUpModal(true);
-      // Limpiar la URL
-      router.replace('/', { scroll: false });
-    }
-  }, [searchParams, router]);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -223,6 +233,18 @@ export default function HomePage() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+      <Suspense fallback={null}>
+        <OAuthParamsHandler
+          onError={(error) => {
+            setOauthError(error);
+            setShowLoginModal(true);
+          }}
+          onShowSignUp={() => {
+            setShowLoginModal(false);
+            setShowSignUpModal(true);
+          }}
+        />
+      </Suspense>
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
       <SmoothGradient />

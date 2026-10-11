@@ -56,7 +56,7 @@ export async function generateMetadata(
 
     return {
       metadataBase,
-      title: `${project.title} | Artiefy`,
+      title: project.title,
       description: project.description ?? 'No hay descripción disponible.',
       robots: robotsNoIndex,
       openGraph: {

@@ -91,7 +91,7 @@ export async function generateMetadata(
     // Solo la imagen de portada del curso, sin imágenes generales ni previas
     return {
       metadataBase,
-      title: `${course.title} | Artiefy`,
+      title: course.title,
       description: course.description ?? 'No hay descripción disponible.',
       robots: robotsNoIndex,
       openGraph: {
