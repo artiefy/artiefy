@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 import { mkdir, writeFile } from 'fs/promises';
@@ -8,6 +8,7 @@ import { getProjectCreationAccess } from '~/server/actions/estudiantes/projects/
 import { createProject } from '~/server/actions/project/createProject';
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import getPublicProjects from '~/server/actions/project/getPublicProjects';
+import { generateProjectCover } from '~/server/projects/generateProjectCover';
 
 // Actualizar la interfaz para que coincida completamente con el schema
 interface ProjectData {
@@ -311,6 +312,20 @@ export async function POST(req: Request) {
     }
     // Llamada segura tipada
     const result = await createProject(projectData);
+
+    // A project created without a cover gets one drawn from its idea. It runs
+    // after the response, so creating the project never waits on the image.
+    const createdId = result?.id;
+    if (!isDraft && !coverImageKey && typeof createdId === 'number') {
+      after(() =>
+        generateProjectCover({
+          projectId: createdId,
+          userId,
+          name: projectData.name,
+          description: projectData.description,
+        })
+      );
+    }
 
     return NextResponse.json({
       message: 'Proyecto creado correctamente',
