@@ -38,7 +38,7 @@ interface ModeOption {
   disabled?: boolean;
 }
 
-const MODE_OPTIONS: ModeOption[] = [
+export const MODE_OPTIONS: ModeOption[] = [
   {
     id: 'guided',
     label: 'Guiado',

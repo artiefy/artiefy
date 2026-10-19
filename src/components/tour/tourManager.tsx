@@ -15,9 +15,9 @@ const steps = {
         'Te daremos un tour completo para que puedas usar Artiefy sin limites',
     },
     {
-      element: '.join-button',
+      element: '.landing-idea-composer',
       intro:
-        'Este es el inicio de Artiefy el botón de comienza ya sera tu puerta al conocimiento',
+        'Este es el inicio de Artiefy: cuéntale tu idea a Artie y te guiará paso a paso hasta convertirla en un proyecto.',
     },
     {
       element: '.div-header-inicio',

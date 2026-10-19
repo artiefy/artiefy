@@ -53,6 +53,9 @@ body.no-chrome {
   --color-primary-foreground: oklch(0.985 0 0);
   --color-secondary: oklch(19.47% 0.056 252.53);
   --color-secondary-foreground: oklch(0.205 0 0);
+  /* Neon accent and deep panel surface of the projects home composer */
+  --color-neon: hsl(198 100% 62%);
+  --color-surface-deep: hsl(216 60% 10%);
 
   /* UI Colors */
   --color-card: oklch(22.61% 0.06 255);
@@ -1330,7 +1333,8 @@ body[data-animate-server-sections='true'] #courses-list-section {
   }
 }
 
-/* Header search: a beam of light that travels the whole pill border. */
+/* Header search and the Artie idea composer on /proyectos: a beam of light
+   that travels the whole border. */
 @property --neon-search-angle {
   syntax: '<angle>';
   inherits: false;
@@ -1441,3 +1445,72 @@ body[data-animate-server-sections='true'] #courses-list-section {
 /* Intentionally not disabled under prefers-reduced-motion: it is a slow,
    non-flashing ambient loop, and Windows turns that flag on for every user
    who switches off "Animation effects", which hid the effect entirely. */
+
+/* Landing hero: light sweeping across the word "idea". The gradient starts
+   and ends on the same colour and moves exactly one tile (250% wide, so
+   166.667% of position), which makes the loop seamless. Kept under reduced
+   motion for the same reason as the neon beam above. */
+.text-shimmer {
+  background-size: 250% auto;
+  animation: text-shimmer 6s linear infinite;
+}
+
+/* Example ideas under the Artie composer: neon text that briefly dims and
+   lights up again, like a sign. At most two dips within a second, well under
+   the three-flashes limit (WCAG 2.3.1). Kept under reduced motion like the
+   other slow ambient loops here. */
+.neon-flicker {
+  color: hsl(186 100% 70%);
+  text-shadow:
+    0 0 6px hsl(186 100% 60% / 0.9),
+    0 0 16px hsl(186 100% 50% / 0.55),
+    0 0 32px hsl(190 100% 50% / 0.3);
+  transition: color 0.2s;
+  animation: neon-flicker 7s linear infinite;
+}
+
+button:hover .neon-flicker {
+  color: hsl(186 100% 86%);
+}
+
+@keyframes neon-flicker {
+  0%,
+  17%,
+  21%,
+  24%,
+  61%,
+  64%,
+  100% {
+    opacity: 1;
+    text-shadow:
+      0 0 6px hsl(186 100% 60% / 0.9),
+      0 0 16px hsl(186 100% 50% / 0.55),
+      0 0 32px hsl(190 100% 50% / 0.3);
+  }
+  19%,
+  22.5%,
+  62.5% {
+    opacity: 0.55;
+    text-shadow: none;
+  }
+}
+
+.idea-suggestion-in {
+  animation: idea-suggestion-in 0.6s ease-out both;
+}
+
+@keyframes idea-suggestion-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes text-shimmer {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 166.667% 50%;
+  }
+}

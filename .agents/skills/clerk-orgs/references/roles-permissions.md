@@ -36,7 +36,7 @@ If you reassign the Creator Role, ensure the replacement Role has these three at
 
 ## Custom Roles
 
-Up to 10 custom Roles per instance. Create in Dashboard → Roles & Permissions → **Add role**. The key follows `org:<role>` format. Examples:
+Up to 10 custom Roles per instance. Create via [Dashboard → Roles & Permissions](https://dashboard.clerk.com/last-active?path=organizations-settings/roles) → **Add role**, or via `clerk api -X POST /v1/organization_roles` with body `{"name":"Billing Manager","key":"org:billing","description":"..."}`. The key follows `org:<role>` format. Examples:
 
 - `org:billing` — carries `org:sys_billing:manage`
 - `org:reports_viewer` — carries your custom `org:reports:view`
@@ -45,7 +45,7 @@ Up to 10 custom Roles per instance. Create in Dashboard → Roles & Permissions 
 
 Naming convention: `org:<resource>:<action>`. Examples: `org:reports:view`, `org:api_keys:create`, `org:posts:edit`.
 
-Create in Dashboard → Roles & Permissions → **Permissions** tab → **Add permission**. Permissions are attached to Roles inside a Role Set.
+Create via [Dashboard → Roles & Permissions](https://dashboard.clerk.com/last-active?path=organizations-settings/roles) → **Permissions** tab → **Add permission**, or via two steps: (1) `clerk api -X POST /v1/organization_permissions` with body `{"name":"Edit Posts","key":"org:posts:edit","description":"..."}` to create the permission, then (2) `clerk api -X POST /v1/organization_roles/{role_id}/permissions/{permission_id}` to attach it to a role. Permissions are attached to Roles inside a Role Set.
 
 ## Role Sets
 
@@ -92,8 +92,10 @@ Three surfaces, same semantics:
 import { auth } from '@clerk/nextjs/server';
 const { has } = await auth();
 has({ role: 'org:admin' });
-has({ permission: 'org:sys_memberships:manage' });
+has({ permission: 'org:invoices:create' }); // custom Permissions only
 ```
+
+On the server, `has({ permission })` works only with custom Permissions: System Permissions (`org:sys_*`) aren't in the session token, so checking one there always returns `false`. To require a System Permission, check a role that carries it.
 
 ```tsx
 // Client (any React-based SDK)
@@ -113,7 +115,7 @@ import { Show } from '@clerk/nextjs';
 
 ## Key Rules
 
-- **Never invent permission slugs.** If you don't see it in the System Permissions catalog above or you haven't created it as a custom Permission in Dashboard, it doesn't exist.
+- **Never invent permission slugs.** If you don't see it in the System Permissions catalog above or you haven't created it as a custom Permission (Dashboard or BAPI), it doesn't exist.
 - **`org:` prefix is mandatory** for all org-scoped permissions.
 - **Always check `isLoaded` before trusting `has` on the client.** On first render `has` can be `undefined` — use optional chaining (`has?.()`) or guard on `isLoaded`.
 - **Case-sensitive.** `org:Admin` is not `org:admin`.

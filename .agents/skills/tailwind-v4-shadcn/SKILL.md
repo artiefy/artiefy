@@ -465,7 +465,7 @@ For detailed patterns and component composition examples, load `references/advan
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
-    "@vitejs/plugin-react": "^5.1.1",
+    "@vitejs/plugin-react": "^5.2.0",
     "vite": "^7.2.4",
     "typescript": "~5.9.3"
   }
@@ -571,6 +571,16 @@ Load reference files based on user's specific needs:
 - **shadcn/ui Theming**: https://ui.shadcn.com/docs/theming
 
 ---
+
+## Secure Installation
+
+When installing Tailwind and shadcn/ui packages, follow supply chain security best practices:
+
+- **Block post-install scripts** — `npm config set ignore-scripts true` (or Bun: disabled by default)
+- **Cooldown period** — Wait 7 days for new package versions to be vetted by the community
+- **Audit before installing** — Run `socket package score npm <pkg>` or use `socket npm install <pkg>` to check packages
+
+Load the `dependency-upgrade` skill for full security configuration including Socket CLI integration, cooldown setup, lockfile validation, and CI enforcement.
 
 ## Production Example
 

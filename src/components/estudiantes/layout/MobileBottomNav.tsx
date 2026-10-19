@@ -7,7 +7,11 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { BookOpen, Layers, Plus, Search, User } from 'lucide-react';
 
-import { requestCreateEntry } from '~/lib/creation/createEntryBus';
+import {
+  type CreateEntryAction,
+  getCreateEntryRoute,
+  requestCreateEntry,
+} from '~/lib/creation/createEntryBus';
 
 import { MobileCreateSheet } from './MobileCreateSheet';
 
@@ -117,24 +121,23 @@ export function MobileBottomNav({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const navigateToProyectos = () => {
-    if (pathname !== '/proyectos') router.push('/proyectos');
+  const handleSelectEntry = (action: CreateEntryAction) => {
+    requestCreateEntry(action);
+    const target = getCreateEntryRoute(action, pathname);
+    if (target) router.push(target);
   };
 
-  const handleSelectProject = () => {
-    requestCreateEntry('project');
-    navigateToProyectos();
-  };
+  const handleSelectProject = () => handleSelectEntry('project');
 
-  const handleSelectPost = () => {
-    requestCreateEntry('post');
-    navigateToProyectos();
-  };
+  const handleSelectPost = () => handleSelectEntry('post');
 
-  const isActive = (href: string, exact = false) =>
-    exact
-      ? pathname === href
-      : pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
+
+  // Same scope as the header's "Educación", minus the profile, which has its
+  // own tab here.
+  const isEducationActive =
+    isActive('/estudiantes') && !isActive('/estudiantes/perfil');
 
   const itemClass = (active: boolean) => `
     relative z-10 transition-colors
@@ -181,20 +184,20 @@ export function MobileBottomNav({
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
-        <Link href="/estudiantes" aria-label="Cursos" className={buttonClass}>
-          <BookOpen
-            className={`size-[22px] ${itemClass(isActive('/estudiantes', true))}`}
-          />
-          <span className={labelClass(isActive('/estudiantes', true))}>
-            Cursos
-          </span>
+        <Link
+          href="/estudiantes"
+          aria-label="Educación"
+          className={buttonClass}
+        >
+          <BookOpen className={`size-[22px] ${itemClass(isEducationActive)}`} />
+          <span className={labelClass(isEducationActive)}>Educación</span>
         </Link>
 
-        <Link href="/proyectos" aria-label="Proyectos" className={buttonClass}>
+        <Link href="/explorar" aria-label="Explorar" className={buttonClass}>
           <Layers
-            className={`size-[22px] ${itemClass(isActive('/proyectos'))}`}
+            className={`size-[22px] ${itemClass(isActive('/explorar'))}`}
           />
-          <span className={labelClass(isActive('/proyectos'))}>Proyectos</span>
+          <span className={labelClass(isActive('/explorar'))}>Explorar</span>
         </Link>
 
         {/* Center create button — opens the "Proyecto"/"Post" sheet */}

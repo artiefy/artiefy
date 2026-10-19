@@ -244,7 +244,7 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
         "
       >
         <Link
-          href="/proyectos"
+          href="/explorar"
           className="
             mt-6 inline-flex items-center gap-2 rounded-lg border
             border-border/50 bg-card/60 px-3 py-2 text-sm text-muted-foreground

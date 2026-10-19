@@ -2,4 +2,4 @@
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
 export const instant = false;
 
-export { default } from '~/app/proyectos/page';
+export { default } from '~/app/explorar/page';

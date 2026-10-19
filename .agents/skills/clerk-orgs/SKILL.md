@@ -1,26 +1,63 @@
 ---
 name: clerk-orgs
-description:
-  Clerk Organizations for B2B SaaS - create multi-tenant apps with org
-  switching, role-based access, verified domains, and enterprise SSO. Use for team
-  workspaces, RBAC, org-based routing, member management.
+description: Clerk Organizations for B2B and multi-tenant apps - org switching,
+  roles and permissions, verified domains, and enterprise SSO. Use for team workspaces,
+  RBAC, org-scoped routing, member management. Also load this when a project treats
+  teams, workspaces, tenants, or companies as its customers - shared accounts, inviting
+  teammates, per-seat pricing, per-company data isolation - even when the words
+  "organization" or "B2B" are never used.
 allowed-tools: WebFetch
 license: MIT
 compatibility: Requires NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY. Organizations must be enabled in Clerk Dashboard → Organizations. Membership mode (required vs optional) must match the B2B vs B2C + B2B coexistence story of your app.
 metadata:
   author: clerk
-  version: 3.0.0
+  version: 3.1.1
 ---
 
 # Organizations (B2B SaaS)
 
-> **STOP — Dashboard-only prerequisite.** Organizations must be enabled in the Clerk Dashboard before any org-related API, hook, or component works. Open [Dashboard → Organizations settings](https://dashboard.clerk.com/last-active?path=organizations-settings) and enable Organizations. Pick the Membership mode deliberately: `Membership required` (default since 2025-08-22) routes signed-in users through the `choose-organization` task and disables personal accounts, while `Membership optional` keeps personal accounts available for B2C + B2B coexistence. Pick `optional` if you need personal subscriptions alongside org subscriptions.
+> **STOP — prerequisite.** Organizations must be enabled before any org-related API, hook, or component works. Two paths: (1) [Dashboard → Organizations settings](https://dashboard.clerk.com/last-active?path=organizations-settings), or (2) `clerk enable orgs` (see "Agent-first: Programmatic org management" below). Pick the Membership mode deliberately: `Membership required` (default since 2025-08-22) routes signed-in users through the `choose-organization` task and disables personal accounts, while `Membership optional` keeps personal accounts available for B2C + B2B coexistence. Pick `optional` if you need personal subscriptions alongside org subscriptions.
 >
 > **Version**: This skill targets current SDKs (`@clerk/nextjs` v7+, `@clerk/react` v6+ — Core 3). Core 2 differences are noted inline with `> **Core 2 ONLY (skip if current SDK):**` callouts — see `clerk` skill for the full version table.
 
+## Should this app use Organizations?
+
+Decide before enabling anything. Read the project, count the signals, then **ask the developer** - do not enable Organizations silently.
+
+**Signals this app is multi-tenant** (recommend Organizations):
+
+- A model that groups users: `Team`, `Workspace`, `Tenant`, `Company`, `Account`
+- The same foreign key on most tables: `workspace_id`, `team_id`, `account_id`
+- Routes scoped to a tenant: `/[workspace]`, `/[slug]/settings`, `/t/:tenantId`
+- "Invite your team", "members", "seats", or "admin" in UI copy or the README
+- A `*_members` join table, or hand-rolled `role` / `permission` columns
+- Per-seat or per-company pricing
+
+**Weaker signals** - enough to raise the question, not to answer it:
+
+- Sharing or collaboration between individual users: a `Share`, `Collaborator`, or `SharedWith` table keyed on two user IDs
+- A `role` or `permission` column with no tenant to scope it to
+- "Collaborators", "shared with you", "invite a friend" in copy
+
+**Signals this app is single-user** (do not recommend):
+
+- Every table hangs off `user_id` with no container above it, and nothing is shared
+- No invitation, membership, or sharing concept anywhere
+- Pricing is per person, or there is none
+
+**How to act:**
+
+| What you found                        | What to do                                                                                                                                                                                                                       |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2 or more strong signals              | Recommend Organizations and name the signals you saw. New app: `clerk init --template b2b-saas`. Existing app: `clerk enable orgs`.                                                                                              |
+| 1 strong signal, or any weaker signal | Raise it as an option, state the tradeoff, let the developer choose. Sharing between individual users is not multi-tenancy - a `Share` table pointing at two user IDs has no tenant - but it is often where a product grows one. |
+| Nothing above                         | Don't bring it up.                                                                                                                                                                                                               |
+
+**Never enable Organizations without asking.** Enabling it also turns on `Membership required`, which routes every signed-in user through organization selection and disables personal accounts. That is wrong for any app that also serves individuals. If the app needs both, it wants `Membership optional`.
+
 ## Quick Start
 
-1. **Enable Organizations** — [Dashboard → Organizations settings](https://dashboard.clerk.com/last-active?path=organizations-settings). Pick `Membership required` (B2B-only) or `Membership optional` (B2C + B2B). Dashboard-only; no CLI path.
+1. **Enable Organizations** — via [Dashboard → Organizations settings](https://dashboard.clerk.com/last-active?path=organizations-settings) or `clerk enable orgs` (see Agent-first section). Pick `Membership required` (B2B-only) or `Membership optional` (B2C + B2B).
 2. **Create an org** — via `<OrganizationSwitcher />`, `<CreateOrganization />`, or programmatically with `clerkClient().organizations.createOrganization()`.
 3. **Protect routes** — read `orgId` / `orgSlug` from `auth()` and gate with `has({ role })` or `has({ permission })`.
 4. **Manage members** — send invitations via Backend API or the built-in `<OrganizationProfile />` tab.
@@ -28,12 +65,12 @@ metadata:
 
 ## What Do You Need?
 
-| Task                                                                                            | Reference                       |
-| ----------------------------------------------------------------------------------------------- | ------------------------------- |
-| System permissions catalog, custom roles, role sets                                             | references/roles-permissions.md |
-| Invitation lifecycle (create, list, revoke, built-in UI)                                        | references/invitations.md       |
-| Enterprise SSO setup, provider field access, domain verification                                | references/enterprise-sso.md    |
-| Next.js adaptations for orgs (role/permission middleware, slug invariants, orgId-scoped writes) | references/nextjs-patterns.md   |
+| Task                                                                                                 | Reference                       |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------- |
+| System permissions catalog, custom roles, role sets                                                  | references/roles-permissions.md |
+| Invitation lifecycle (create, list, revoke, built-in UI)                                             | references/invitations.md       |
+| Enterprise SSO setup, provider field access, domain verification                                     | references/enterprise-sso.md    |
+| Next.js adaptations for orgs (per-page role/permission checks, slug invariants, orgId-scoped writes) | references/nextjs-patterns.md   |
 
 ## References
 
@@ -52,6 +89,84 @@ metadata:
 | Manage roles + permissions             | `https://dashboard.clerk.com/last-active?path=organizations-settings/roles` |
 | Create/edit an organization            | `https://dashboard.clerk.com/last-active?path=organizations`                |
 | Webhooks for org events                | `https://dashboard.clerk.com/last-active?path=webhooks`                     |
+
+## Agent-first: Programmatic org management
+
+Org settings (enable toggle, membership cap, admin delete, domains) are patchable via PLAPI Instance Config. Org CRUD + memberships + invitations live in BAPI. Useful for agents seeding orgs, replicating settings across instances, or version-controlling org structure.
+
+Pre-req: a linked project (`clerk auth login` + `clerk link`, see `clerk-cli`) — or an unclaimed app from `clerk init`: `clerk enable orgs` and org CRUD via `clerk api` work with no login at all.
+
+### Enable Organizations + settings via CLI
+
+```bash
+clerk enable orgs
+```
+
+For additional settings (membership cap, verified domains, admin delete), patch the instance config:
+
+```bash
+clerk api --platform PATCH /v1/platform/applications/<app_id>/instances/<ins_id>/config \
+  -d '{"organization_settings":{"max_allowed_memberships":50,"domains_enabled":true,"admin_delete_enabled":true}}'
+```
+
+### Create / list / delete orgs (BAPI)
+
+```bash
+# Create:
+clerk api -X POST /v1/organizations \
+  -d '{"name":"Acme","slug":"acme","created_by":"user_xxx","max_allowed_memberships":10}'
+
+# List:
+clerk api '/v1/organizations?limit=20'
+
+# Get one:
+clerk api /v1/organizations/<org_id>
+
+# Update:
+clerk api -X PATCH /v1/organizations/<org_id> -d '{"name":"Acme Inc."}'
+
+# Delete:
+clerk api -X DELETE /v1/organizations/<org_id>
+```
+
+### Memberships
+
+```bash
+# Add a user to an org:
+clerk api -X POST /v1/organizations/<org_id>/memberships \
+  -d '{"user_id":"user_xxx","role":"org:admin"}'
+
+# List members:
+clerk api '/v1/organizations/<org_id>/memberships?limit=50'
+
+# Update role:
+clerk api -X PATCH /v1/organizations/<org_id>/memberships/<user_id> \
+  -d '{"role":"org:member"}'
+
+# Remove:
+clerk api -X DELETE /v1/organizations/<org_id>/memberships/<user_id>
+```
+
+### Invitations
+
+```bash
+# Send:
+clerk api -X POST /v1/organizations/<org_id>/invitations \
+  -d '{"email_address":"alice@example.com","role":"org:member","redirect_url":"https://app.com/accept"}'
+
+# List pending:
+clerk api '/v1/organizations/<org_id>/invitations?status=pending'
+
+# Revoke:
+clerk api -X POST /v1/organizations/<org_id>/invitations/<inv_id>/revoke \
+  -d '{"requesting_user_id":"user_xxx"}'
+```
+
+### Notes
+
+- This handles **org config + CRUD**. Subscription / billing for orgs (org plans, seat-limit pricing) flows through `clerk-billing` skill.
+- Roles + permissions catalog is editable in `references/roles-permissions.md`. Custom role creation goes through `clerk config patch` (instance-level role definitions) — see Dashboard's role editor for the UX equivalent.
+- For SSO / verified domain provisioning, see `references/enterprise-sso.md`.
 
 ## Documentation
 
@@ -95,9 +210,10 @@ app/orgs/[slug]/settings/page.tsx
 Always verify the URL slug matches the active org slug — otherwise users can hit `/orgs/other-org/...` with a stale `orgSlug` in their session:
 
 ```typescript
-export default async function OrgPage({ params }: { params: { slug: string } }) {
+export default async function OrgPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const { orgSlug } = await auth()
-  if (orgSlug !== params.slug) {
+  if (orgSlug !== slug) {
     redirect('/dashboard')  // or whatever your "no-access" flow is
   }
   return <div>Welcome to {orgSlug}</div>
@@ -114,13 +230,15 @@ if (!has({ role: 'org:admin' })) {
 }
 ```
 
-Permission checks use the same `has()` surface:
+Permission checks use the same `has()` surface, for custom Permissions you create in the Dashboard:
 
 ```typescript
-if (!has({ permission: 'org:sys_memberships:manage' })) {
+if (!has({ permission: 'org:invoices:create' })) {
   redirect('/unauthorized');
 }
 ```
+
+On the server, `has({ permission })` works only with custom Permissions: System Permissions (`org:sys_*`) aren't in the session token, so checking one there always returns `false`. Clerk documents permission checks in `<Show when={{ permission }}>` for custom Permissions only. To require a System Permission, check a role that carries it (`has({ role: 'org:admin' })`).
 
 **Permission naming convention.** System Permissions prefix with `org:sys_`; custom Permissions use `org:<resource>:<action>`. The full System Permissions catalog lives in `references/roles-permissions.md` — the short list is:
 
@@ -140,8 +258,8 @@ import { Show } from '@clerk/nextjs'
   <AdminPanel />
 </Show>
 
-<Show when={{ permission: 'org:sys_memberships:manage' }}>
-  <MembersTab />
+<Show when={{ permission: 'org:invoices:create' }}>
+  <NewInvoiceButton />
 </Show>
 ```
 
@@ -280,15 +398,15 @@ Applies identically to `privateMetadata` and to user metadata via `clerkClient.u
 
 Most "org-related" failures are configuration, not code. Do not edit components before checking these:
 
-| Error / symptom                                                                                | Root cause                                                                                | Fix                                                                                            |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `orgId` / `orgSlug` is `undefined` for a signed-in user                                        | Organizations not enabled for this instance, OR user has no active org (personal account) | Enable in Dashboard → Organizations; check Membership mode; surface `<OrganizationSwitcher />` |
-| `has({ permission: 'org:manage_members' })` always `false`                                     | Using an invented permission slug                                                         | Use `org:sys_memberships:manage` (see roles-permissions.md catalog)                            |
-| `has({ role })` returns `false` but user looks like an admin                                   | Session token stale after role change                                                     | Re-sign-in, or refresh the session: `await clerk.session?.reload()`                            |
-| `has({ permission })` `false` even with the role assigned                                      | Feature not attached to active Plan (Billing gates permissions)                           | Dashboard → Billing → Plans → attach Feature                                                   |
-| `<OrganizationSwitcher />` doesn't show "Personal Account"                                     | `Membership required` mode is on (the default since Aug 22, 2025)                         | Dashboard → Organizations settings → `Membership optional`                                     |
-| `TaskChooseOrganization` throws "cannot render when a user doesn't have current session tasks" | Rendered outside a `choose-organization` task context                                     | Wrap in a `choose-organization` session-task route only; don't render unconditionally          |
-| `enterpriseAccounts[0].provider` is `undefined`                                                | Accessing `provider` at the wrong nesting level                                           | Use `user.enterpriseAccounts[0].enterpriseConnection?.provider`                                |
+| Error / symptom                                                                                | Root cause                                                                                               | Fix                                                                                                                      |
+| ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `orgId` / `orgSlug` is `undefined` for a signed-in user                                        | Organizations not enabled for this instance, OR user has no active org (personal account)                | Enable in Dashboard → Organizations; check Membership mode; surface `<OrganizationSwitcher />`                           |
+| `has({ permission: ... })` always `false`                                                      | An invented slug (`org:manage_members`), or a System Permission (`org:sys_*`), which `has()` can't check | Check the role (`has({ role: 'org:admin' })`) or a custom Permission created in the Dashboard (see roles-permissions.md) |
+| `has({ role })` returns `false` but user looks like an admin                                   | Session token stale after role change                                                                    | Re-sign-in, or refresh the session: `await clerk.session?.reload()`                                                      |
+| `has({ permission })` `false` even with the role assigned                                      | Feature not attached to active Plan (Billing gates permissions)                                          | Dashboard → Billing → Plans → attach Feature                                                                             |
+| `<OrganizationSwitcher />` doesn't show "Personal Account"                                     | `Membership required` mode is on (the default since Aug 22, 2025)                                        | Dashboard → Organizations settings → `Membership optional`                                                               |
+| `TaskChooseOrganization` throws "cannot render when a user doesn't have current session tasks" | Rendered outside a `choose-organization` task context                                                    | Wrap in a `choose-organization` session-task route only; don't render unconditionally                                    |
+| `enterpriseAccounts[0].provider` is `undefined`                                                | Accessing `provider` at the wrong nesting level                                                          | Use `user.enterpriseAccounts[0].enterpriseConnection?.provider`                                                          |
 
 ## Authorization Pattern (Complete Example)
 
@@ -298,17 +416,18 @@ Server component protecting a slug-scoped admin page:
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
-export default async function AdminPage({ params }: { params: { slug: string } }) {
+export default async function AdminPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   const { orgSlug, has } = await auth()
 
-  if (orgSlug !== params.slug) redirect('/dashboard')
+  if (orgSlug !== slug) redirect('/dashboard')
   if (!has({ role: 'org:admin' })) redirect(`/orgs/${orgSlug}`)
 
   return <div>Admin settings for {orgSlug}</div>
 }
 ```
 
-For middleware-level protection (Next.js) see `references/nextjs-patterns.md`.
+For per-page role and permission checks with `auth.protect()` (Next.js) see `references/nextjs-patterns.md`.
 
 ## Invitations (short form)
 
@@ -317,21 +436,19 @@ Send from a server action or route handler:
 ```typescript
 import { clerkClient, auth } from '@clerk/nextjs/server';
 
-export async function inviteMember(
-  organizationId: string,
-  emailAddress: string,
-  role: string
-) {
-  const { userId, has } = await auth();
+export async function inviteMember(emailAddress: string, role: string) {
+  const { userId, orgId, has } = await auth();
 
-  if (!userId) throw new Error('Not signed in');
-  if (!has({ permission: 'org:sys_memberships:manage' })) {
+  if (!userId || !orgId) throw new Error('No active organization');
+  // Inviting needs the System Permission org:sys_memberships:manage, which
+  // has() can't check, so check a role that carries it.
+  if (!has({ role: 'org:admin' })) {
     throw new Error('Not authorized to invite members');
   }
 
   const clerk = await clerkClient();
   return clerk.organizations.createOrganizationInvitation({
-    organizationId,
+    organizationId: orgId, // the active org that has() checked
     inviterUserId: userId, // required per Backend API
     emailAddress,
     role, // e.g. 'org:admin' or 'org:member'
@@ -347,7 +464,7 @@ The full lifecycle (list, revoke, bulk create, built-in `<OrganizationProfile />
 1. **Enable** — Organizations + Membership mode in Dashboard
 2. **Create org** — via UI component or Backend API
 3. **Invite members** — Backend API or built-in UI, with `inviterUserId`
-4. **Gate access** — `has({ role })` / `has({ permission })` with canonical `org:sys_*` names
+4. **Gate access** — `has({ role })`, or `has({ permission })` with a custom Permission. `has()` can't check System Permissions (`org:sys_*`)
 5. **Scope routes** — `orgSlug === params.slug` on every protected page
 6. **Switch orgs** — `<OrganizationSwitcher />` handles the whole flow
 

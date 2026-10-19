@@ -515,6 +515,9 @@ export async function countCommunityPostsByAuthor(
   return row?.total ?? 0;
 }
 
+const byNewest = (a: ProjectSocialItem, b: ProjectSocialItem) =>
+  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
 export async function getProjectSocialCollections(
   viewerId?: string | null
 ): Promise<ProjectSocialCollections> {
@@ -544,6 +547,32 @@ export async function getProjectSocialCollections(
     };
   }
 
+  const { ownItems, collaborationItems } = await getViewerProjects(viewerId);
+
+  const myItemsMap = new Map<number, ProjectSocialItem>();
+  [...ownItems, ...collaborationItems].forEach((item) => {
+    myItemsMap.set(item.id, item);
+  });
+
+  const myItems = Array.from(myItemsMap.values()).sort(byNewest);
+
+  return {
+    exploreItems,
+    myItems,
+    collaborationItems,
+    collaboratorItems,
+  };
+}
+
+/**
+ * The viewer's own projects and the ones they collaborate on, newest first.
+ * `/proyectos` lists just these; the community feed adds them to the
+ * public projects.
+ */
+export async function getViewerProjects(viewerId: string): Promise<{
+  ownItems: ProjectSocialItem[];
+  collaborationItems: ProjectSocialItem[];
+}> {
   const ownRows = await db
     .select({
       id: projects.id,
@@ -630,24 +659,10 @@ export async function getProjectSocialCollections(
     });
 
   const collaborationItems = Array.from(collaborationItemsMap.values()).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    byNewest
   );
 
-  const myItemsMap = new Map<number, ProjectSocialItem>();
-  [...ownItems, ...collaborationItems].forEach((item) => {
-    myItemsMap.set(item.id, item);
-  });
-
-  const myItems = Array.from(myItemsMap.values()).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-
-  return {
-    exploreItems,
-    myItems,
-    collaborationItems,
-    collaboratorItems,
-  };
+  return { ownItems: ownItems.sort(byNewest), collaborationItems };
 }
 
 export async function getPublicProjectsByOwner(

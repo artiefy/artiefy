@@ -192,6 +192,8 @@ export default defineConfig([
       // live outside tsconfig.eslint.json, so type-aware linting cannot parse
       // them. They are not application code and must never gate the build.
       '.claude/**',
+      // Continue IDE's local skill copies: same kind of vendored tooling.
+      '.continue/**',
       '.github/**',
       'Docs/**',
       '.next/**',
