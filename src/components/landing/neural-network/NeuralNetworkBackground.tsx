@@ -6,11 +6,11 @@ import { PerformanceMonitor, Sparkles } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
 
-import { NeuralNetwork } from './NeuralNetwork';
+import { NETWORK_CAMERA, NeuralNetwork } from './NeuralNetwork';
 
 /** Point the camera looks at: the middle of the network's depth. */
 const LOOK_AT_Z = -6;
-const CAMERA_START_Z = 12;
+const CAMERA_START_Z = NETWORK_CAMERA.z;
 /** How far the camera travels into the network over the whole page scroll. */
 const SCROLL_DOLLY = 7;
 
@@ -20,6 +20,10 @@ interface Environment {
   /** Phones get a lighter network. */
   compact: boolean;
 }
+
+/** Width over height of the window the network is first laid out for. */
+const viewportAspect = () =>
+  window.innerWidth / Math.max(window.innerHeight, 1);
 
 function readEnvironment(): Environment {
   let webgl = false;
@@ -53,8 +57,8 @@ function NetworkScene({
     () =>
       new NeuralNetwork(
         compact
-          ? { nodeCount: 130, pulseCount: 18, portrait: true }
-          : { nodeCount: 230, pulseCount: 34 }
+          ? { nodeCount: 150, pulseCount: 20, aspect: viewportAspect() }
+          : { nodeCount: 300, pulseCount: 40, aspect: viewportAspect() }
       )
   );
   // Pointer in [-1, 1] and page scroll in [0, 1], written by window listeners
@@ -145,7 +149,7 @@ export default function NeuralNetworkBackground() {
         dpr={dpr}
         camera={{
           position: [0, 0, CAMERA_START_Z],
-          fov: 55,
+          fov: NETWORK_CAMERA.fov,
           near: 0.1,
           far: 60,
         }}

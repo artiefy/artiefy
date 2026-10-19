@@ -82,15 +82,20 @@ const LINK_FRAGMENT = /* glsl */ `
   }
 `;
 
-/** Box the nodes are scattered in, in world units (camera starts at z = 12). */
-const LANDSCAPE_VOLUME = { x: 17, y: 9.5, zMin: -24, zMax: 6 } as const;
-/** Taller and narrower, so a phone held upright still sees the whole net. */
-const PORTRAIT_VOLUME = { x: 7.5, y: 15, zMin: -24, zMax: 6 } as const;
-/** Nearest neighbours each node tries to link to, and how far it reaches. */
+/** Camera the network is laid out for; `NeuralNetworkBackground` uses it. */
+export const NETWORK_CAMERA = { z: 12, fov: 55 } as const;
+/** Depth span of the nodes, in world units along z. */
+const DEPTH = { near: 4, far: -38 } as const;
+/** Depth layers of the layout grid; more layers read as more depth. */
+const DEPTH_LAYERS = 7;
+/** Spread a little past the screen edges so parallax never shows a border. */
+const OVERSCAN = 1.25;
+/** Nearest neighbours each node tries to link to. */
 const LINKS_PER_NODE = 3;
-const MAX_LINK_DISTANCE = 5.2;
+/** Longest link, in grid cells at that node's depth. */
+const MAX_LINK_CELLS = 2.2;
 const FADE_NEAR = 10;
-const FADE_FAR = 48;
+const FADE_FAR = 58;
 
 const COLORS = {
   node: '#7ee7f2',
@@ -103,8 +108,8 @@ export interface NeuralNetworkOptions {
   pulseCount: number;
   /** Same seed, same network: the layout never jumps between visits. */
   seed?: number;
-  /** Shape the volume for an upright phone screen. */
-  portrait?: boolean;
+  /** Viewport width / height, so every depth layer covers the whole screen. */
+  aspect: number;
 }
 
 /** Small deterministic PRNG (mulberry32), so the layout is reproducible. */
@@ -179,55 +184,45 @@ export class NeuralNetwork {
   });
 
   constructor({
-    nodeCount,
+    nodeCount: targetCount,
     pulseCount,
     seed = 7,
-    portrait = false,
+    aspect,
   }: NeuralNetworkOptions) {
-    const VOLUME = portrait ? PORTRAIT_VOLUME : LANDSCAPE_VOLUME;
     const random = createRandom(seed);
 
-    this.base = new Float32Array(nodeCount * 3);
-    this.drift = new Float32Array(nodeCount * 3);
-    this.baseSizes = new Float32Array(nodeCount);
-    this.glow = new Float32Array(nodeCount);
+    // The camera sees a pyramid, not a box: a box leaves the edges empty up
+    // close and piles nodes into the middle far away. So the layout is a grid
+    // in screen space, one node per cell at a random spot inside it, mapped
+    // onto the view pyramid. Every depth layer then covers the whole screen
+    // evenly, and near and far layers slide past each other with parallax.
+    const perLayer = targetCount / DEPTH_LAYERS;
+    const columns = Math.max(2, Math.round(Math.sqrt(perLayer * aspect)));
+    const rows = Math.max(2, Math.round(perLayer / columns));
+    const count = columns * rows * DEPTH_LAYERS;
+    const tanHalfFov = Math.tan(((NETWORK_CAMERA.fov / 2) * Math.PI) / 180);
+    const halfHeightAt = (z: number) =>
+      tanHalfFov * (NETWORK_CAMERA.z - z) * OVERSCAN;
 
-    // Stratified placement: split the volume into a grid with at least one
-    // cell per node and drop each node at a random spot inside its own cell.
-    // Pure random placement clumped nodes into dense knots; this spreads them
-    // evenly while still looking organic.
-    const size = {
-      x: VOLUME.x * 2,
-      y: VOLUME.y * 2,
-      z: VOLUME.zMax - VOLUME.zMin,
-    };
-    const cellEdge = Math.cbrt((size.x * size.y * size.z) / nodeCount);
-    const grid = {
-      x: Math.max(1, Math.round(size.x / cellEdge)),
-      y: Math.max(1, Math.round(size.y / cellEdge)),
-      z: Math.max(1, Math.round(size.z / cellEdge)),
-    };
-    while (grid.x * grid.y * grid.z < nodeCount) grid.x += 1;
+    this.base = new Float32Array(count * 3);
+    this.drift = new Float32Array(count * 3);
+    this.baseSizes = new Float32Array(count);
+    this.glow = new Float32Array(count);
+    const linkReach = new Float32Array(count);
 
-    const cells = Array.from(
-      { length: grid.x * grid.y * grid.z },
-      (_, index) => index
-    );
-    for (let i = cells.length - 1; i > 0; i--) {
-      const j = Math.floor(random() * (i + 1));
-      [cells[i], cells[j]] = [cells[j]!, cells[i]!];
-    }
-
-    for (let i = 0; i < nodeCount; i++) {
-      const cell = cells[i]!;
-      const cx = cell % grid.x;
-      const cy = Math.floor(cell / grid.x) % grid.y;
-      const cz = Math.floor(cell / (grid.x * grid.y));
+    for (let i = 0; i < count; i++) {
+      const column = i % columns;
+      const row = Math.floor(i / columns) % rows;
+      const layer = Math.floor(i / (columns * rows));
       // Stay away from the cell walls so neighbours never touch.
       const jitter = () => 0.15 + random() * 0.7;
-      const x = -VOLUME.x + ((cx + jitter()) / grid.x) * size.x;
-      const y = -VOLUME.y + ((cy + jitter()) / grid.y) * size.y;
-      const z = VOLUME.zMin + ((cz + jitter()) / grid.z) * size.z;
+      const z =
+        DEPTH.near +
+        ((layer + jitter()) / DEPTH_LAYERS) * (DEPTH.far - DEPTH.near);
+      const halfHeight = halfHeightAt(z);
+      const halfWidth = halfHeight * aspect;
+      const x = -halfWidth + ((column + jitter()) / columns) * halfWidth * 2;
+      const y = -halfHeight + ((row + jitter()) / rows) * halfHeight * 2;
 
       this.base.set([x, y, z], i * 3);
       this.drift.set(
@@ -235,7 +230,11 @@ export class NeuralNetwork {
         i * 3
       );
       this.baseSizes[i] = 0.7 + random() * 0.9;
+      // Cells grow with depth, so far nodes may reach further to link.
+      linkReach[i] = ((halfHeight * 2) / rows) * MAX_LINK_CELLS;
     }
+    // The grid rounds the requested count to whole rows and columns.
+    const nodeCount = count;
 
     const linkPairs: number[] = [];
     const seen = new Set<number>();
@@ -247,7 +246,7 @@ export class NeuralNetwork {
         const dy = this.base[i * 3 + 1]! - this.base[j * 3 + 1]!;
         const dz = this.base[i * 3 + 2]! - this.base[j * 3 + 2]!;
         const distance = Math.hypot(dx, dy, dz);
-        if (distance <= MAX_LINK_DISTANCE) nearest.push({ index: j, distance });
+        if (distance <= linkReach[i]!) nearest.push({ index: j, distance });
       }
       nearest.sort((a, b) => a.distance - b.distance);
       for (const { index } of nearest.slice(0, LINKS_PER_NODE)) {
@@ -392,8 +391,9 @@ export class NeuralNetwork {
       }
     }
 
-    this.root.rotation.y = Math.sin(elapsed * 0.04) * 0.3;
-    this.root.rotation.x = Math.sin(elapsed * 0.03) * 0.08;
+    // A gentle sway only: a wide turn tipped the whole net to one side.
+    this.root.rotation.y = Math.sin(elapsed * 0.04) * 0.06;
+    this.root.rotation.x = Math.sin(elapsed * 0.03) * 0.04;
 
     this.nodeGeometry.attributes.position!.needsUpdate = true;
     this.nodeGeometry.attributes.aSize!.needsUpdate = true;
