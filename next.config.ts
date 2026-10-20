@@ -58,12 +58,6 @@ const nextConfig: NextConfig = {
     // `babel-plugin-react-compiler` is not needed. Experimental in 16.4 and it
     // changes production output.
     turbopackRustReactCompiler: true,
-    // Experimental, dev only: persistent-cache garbage collection.
-    turbopackGc: true,
-    // Experimental, dev only: load `next/dynamic` chunks lazily.
-    turbopackLazyDynamicImports: true,
-    // Experimental: upgrade reminders for coding agents in dev and build.
-    agentUpgrade: 'latest',
     // Server Actions are stable since Next.js 14; only these tuning options
     // still live under `experimental`.
     serverActions: {

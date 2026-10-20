@@ -481,6 +481,52 @@ export default function GrupoDetallePage({
   const [carteraDe, setCarteraDe] = useState<string | null>(null);
   // El iframe queda invisible hasta que la cartera avisa que ya abrió.
   const [carteraLista, setCarteraLista] = useState(false);
+  // La ventana de cartera se precarga en segundo plano (la página de
+  // Estudiantes es pesada): al pulsar "En cartera" solo se le manda un mensaje.
+  const [precargarCartera, setPrecargarCartera] = useState(false);
+  const carteraIframe = useRef<HTMLIFrameElement>(null);
+  const carteraEmbedLista = useRef(false);
+  const carteraPendiente = useRef<string | null>(null);
+  const [carteraEmbedListaOk, setCarteraEmbedListaOk] = useState(false);
+  const ultimaCartera = useRef<string | null>(null);
+  const pedirPrecalentar = (userIds: string[]) =>
+    carteraIframe.current?.contentWindow?.postMessage(
+      { type: 'precalentar-cartera', userIds },
+      window.location.origin
+    );
+  const abrirCartera = (userId: string) => {
+    ultimaCartera.current = userId;
+    setPrecargarCartera(true);
+    setCarteraLista(false);
+    setCarteraDe(userId);
+    if (carteraEmbedLista.current) {
+      carteraIframe.current?.contentWindow?.postMessage(
+        { type: 'abrir-cartera', userId },
+        window.location.origin
+      );
+    } else {
+      carteraPendiente.current = userId;
+    }
+  };
+  // Ids de los estudiantes de la hoja activa (hasta 40): se precalientan los
+  // datos de su cartera para que "En cartera" abra al instante.
+  const miembrosKey =
+    data?.hojas
+      .find((h) => h.id === activeId)
+      ?.miembros.slice(0, 40)
+      .map((m) => m.id)
+      .join(',') ?? '';
+  useEffect(() => {
+    if (!carteraEmbedListaOk || !miembrosKey) return;
+    carteraIframe.current?.contentWindow?.postMessage(
+      { type: 'precalentar-cartera', userIds: miembrosKey.split(',') },
+      window.location.origin
+    );
+  }, [carteraEmbedListaOk, miembrosKey]);
+  useEffect(() => {
+    const t = setTimeout(() => setPrecargarCartera(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
   const [buscarAbierto, setBuscarAbierto] = useState(false);
   // Columna de fecha nueva (aún sin guardar) en esta hoja.
   const [fechaNuevaEn, setFechaNuevaEn] = useState<number | null>(null);
@@ -617,15 +663,29 @@ export default function GrupoDetallePage({
 
   // Crea una hoja idéntica (mismo curso y fechas, sin estudiantes) y la abre.
   useEffect(() => {
-    if (!carteraDe) return;
     const alMensaje = (e: MessageEvent) => {
       if (e.origin !== window.location.origin) return;
       const data = e.data as { type?: string; error?: string } | null;
+      if (data?.type === 'cartera-embed-lista') {
+        carteraEmbedLista.current = true;
+        setCarteraEmbedListaOk(true);
+        const pendiente = carteraPendiente.current;
+        if (pendiente) {
+          carteraPendiente.current = null;
+          carteraIframe.current?.contentWindow?.postMessage(
+            { type: 'abrir-cartera', userId: pendiente },
+            window.location.origin
+          );
+        }
+        return;
+      }
       if (data?.type === 'cartera-abierta') {
         setCarteraLista(true);
         return;
       }
       if (data?.type !== 'cartera-cerrada') return;
+      // Los datos pudieron cambiar en la ventana: se vuelven a precalentar.
+      if (ultimaCartera.current) pedirPrecalentar([ultimaCartera.current]);
       setCarteraDe(null);
       setCarteraLista(false);
       if (data.error) setAvisoFila(data.error);
@@ -634,7 +694,7 @@ export default function GrupoDetallePage({
     };
     window.addEventListener('message', alMensaje);
     return () => window.removeEventListener('message', alMensaje);
-  }, [carteraDe, cargar, activeId]);
+  }, [cargar, activeId]);
 
   // Guarda el correo de un estudiante (solo el correo: Clerk + BD, mismo id).
   const guardarCorreo = async (userId: string, emailActual: string) => {
@@ -1778,10 +1838,7 @@ export default function GrupoDetallePage({
                       {/* Abre la misma ventana de cartera de Estudiantes. */}
                       <button
                         type="button"
-                        onClick={() => {
-                          setCarteraLista(false);
-                          setCarteraDe(m.id);
-                        }}
+                        onClick={() => abrirCartera(m.id)}
                         title="Gestionar cartera"
                         className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium hover:brightness-125 ${
                           m.carteraStatus === 'activo'
@@ -2136,10 +2193,16 @@ export default function GrupoDetallePage({
         />
       )}
 
-      {carteraDe &&
+      {(Boolean(carteraDe) || precargarCartera) &&
         createPortal(
-          <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm">
-            {!carteraLista && (
+          <div
+            className={
+              carteraDe
+                ? 'fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm'
+                : 'pointer-events-none invisible fixed inset-0 z-[100]'
+            }
+          >
+            {carteraDe && !carteraLista && (
               // Mismo tamaño que la ventana de cartera mientras carga.
               <div className="absolute inset-0 flex items-end justify-center sm:items-center">
                 <div className="flex h-[95vh] w-full flex-col items-center justify-center gap-3 rounded-t-3xl bg-white text-gray-500 shadow-2xl sm:h-[70vh] sm:max-w-[min(100vw-1rem,72rem)] sm:rounded-lg">
@@ -2156,10 +2219,11 @@ export default function GrupoDetallePage({
               </div>
             )}
             <iframe
+              ref={carteraIframe}
               title="Cartera del estudiante"
-              src={`/dashboard/super-admin/programs/enrolled_users?cartera=${encodeURIComponent(carteraDe)}&embed=1`}
+              src="/dashboard/super-admin/programs/enrolled_users?embed=1"
               className={`absolute inset-0 size-full border-0 transition-all duration-200 ${
-                carteraLista
+                carteraDe && carteraLista
                   ? 'scale-100 opacity-100'
                   : 'pointer-events-none scale-95 opacity-0'
               }`}

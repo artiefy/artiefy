@@ -2729,6 +2729,136 @@ export default function EnrolledUsersPage() {
     document.documentElement.classList.add('cartera-embed');
     return () => document.documentElement.classList.remove('cartera-embed');
   }, []);
+  // Modo precarga: avisa que la lista ya cargó y abre la cartera del estudiante
+  // que pida la página que lo embebe (mensaje 'abrir-cartera').
+  const carteraPedida = useRef<string | null>(null);
+  const [carteraPedidaTick, setCarteraPedidaTick] = useState(0);
+  useEffect(() => {
+    if (!embebido) return;
+    const alMensaje = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      const data = e.data as { type?: string; userId?: string } | null;
+      if (data?.type !== 'abrir-cartera' || !data.userId) return;
+      carteraPedida.current = data.userId;
+      setCarteraPedidaTick((n) => n + 1);
+    };
+    window.addEventListener('message', alMensaje);
+    return () => window.removeEventListener('message', alMensaje);
+  }, [embebido]);
+  // Modo embed: las 4 consultas con las que abre la cartera de un estudiante
+  // se hacen de antemano (mensaje 'precalentar-cartera') y `fetch` las
+  // entrega al abrir, así la ventana aparece sin esperar la red. Cada entrada
+  // se usa una sola vez y caduca a los 2 minutos para no mostrar datos viejos.
+  const fetchOriginal = useRef<typeof window.fetch | null>(null);
+  const precalentadas = useRef(
+    new Map<string, { p: Promise<Response>; at: number }>()
+  );
+  useEffect(() => {
+    if (!embebido) return;
+    const original = window.fetch.bind(window);
+    fetchOriginal.current = original;
+    window.fetch = (input, init) => {
+      const url =
+        typeof input === 'string'
+          ? input
+          : input instanceof URL
+            ? input.toString()
+            : input.url;
+      const metodo = (init?.method ?? 'GET').toUpperCase();
+      const entrada = metodo === 'GET' ? precalentadas.current.get(url) : null;
+      if (entrada) {
+        precalentadas.current.delete(url);
+        if (Date.now() - entrada.at < 120_000) {
+          return entrada.p.then((r) => r.clone());
+        }
+      }
+      return original(input, init);
+    };
+    return () => {
+      window.fetch = original;
+      fetchOriginal.current = null;
+    };
+  }, [embebido]);
+  const precalentarPendiente = useRef<string[]>([]);
+  const [precalentarTick, setPrecalentarTick] = useState(0);
+  useEffect(() => {
+    if (!embebido) return;
+    const alMensaje = (e: MessageEvent) => {
+      if (e.origin !== window.location.origin) return;
+      const data = e.data as { type?: string; userIds?: string[] } | null;
+      if (data?.type !== 'precalentar-cartera' || !data.userIds) return;
+      precalentarPendiente.current = data.userIds;
+      setPrecalentarTick((n) => n + 1);
+    };
+    window.addEventListener('message', alMensaje);
+    return () => window.removeEventListener('message', alMensaje);
+  }, [embebido]);
+  useEffect(() => {
+    const original = fetchOriginal.current;
+    if (!embebido || !original || students.length === 0) return;
+    const ids = precalentarPendiente.current;
+    precalentarPendiente.current = [];
+    if (ids.length === 0) return;
+    const guardar = (url: string) => {
+      const p = original(url);
+      precalentadas.current.set(url, { p, at: Date.now() });
+      return p;
+    };
+    const base = '/api/super-admin/enroll_user_program';
+    void (async () => {
+      for (const id of ids) {
+        try {
+          const rProgramas = guardar(`${base}/programsUser?userId=${id}`);
+          guardar(`${base}/coursesUser?userId=${id}`);
+          const res = await rProgramas;
+          if (!res.ok) continue;
+          const data = (await res.clone().json()) as UserProgramsResponse;
+          // Mismo criterio que openCarteraModal para elegir el programa.
+          const preferido = students.find((s) => s.id === id)?.programTitle;
+          const elegido =
+            data.programs?.find((p) => p.title === preferido) ??
+            data.programs?.[0];
+          const programaId = elegido?.id ?? null;
+          if (programaId != null) {
+            guardar(
+              `/api/super-admin/teams/price_program?userId=${id}&programaId=${programaId}`
+            );
+          }
+          guardar(
+            `${base}/programsUser/pagos?userId=${id}&programId=${programaId ?? 'null'}`
+          );
+        } catch {
+          // Si falla, al abrir se consulta normal.
+        }
+      }
+    })();
+    // students solo se lee para elegir el programa preferido.
+  }, [embebido, students, precalentarTick]);
+  const embedAvisadoListo = useRef(false);
+  useEffect(() => {
+    if (!embebido || students.length === 0) return;
+    if (!embedAvisadoListo.current) {
+      embedAvisadoListo.current = true;
+      window.parent.postMessage(
+        { type: 'cartera-embed-lista' },
+        window.location.origin
+      );
+    }
+    const id = carteraPedida.current;
+    if (!id) return;
+    carteraPedida.current = null;
+    if (!students.some((st) => st.id === id)) {
+      window.parent.postMessage(
+        { type: 'cartera-cerrada', error: 'Estudiante no encontrado' },
+        window.location.origin
+      );
+      return;
+    }
+    void openCarteraModal(id);
+    // openCarteraModal no es estable; solo interesa cuando llega la lista o
+    // un pedido nuevo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embebido, students, carteraPedidaTick]);
   const carteraFueAbierta = useRef(false);
   useEffect(() => {
     if (!embebido) return;
@@ -4851,7 +4981,7 @@ export default function EnrolledUsersPage() {
                 )}
 
                 {!isLoading &&
-                  displayedStudents.map((student) => (
+                  (embebido ? [] : displayedStudents).map((student) => (
                     <tr
                       key={student.id}
                       className={`
