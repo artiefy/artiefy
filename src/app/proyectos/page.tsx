@@ -3,11 +3,8 @@ import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import {
-  getCommunityPostsFeed,
-  getProjectSocialCollections,
-} from '~/components/estudiantes/proyectos/projectSocialData';
-import { ProjectsSocialView } from '~/components/estudiantes/proyectos/ProjectsSocialView';
+import { ProjectsHomeView } from '~/components/estudiantes/proyectos/home/ProjectsHomeView';
+import { getViewerProjects } from '~/components/estudiantes/proyectos/projectSocialData';
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -42,22 +39,15 @@ export default async function ProyectosPage({
   }
 
   const { userId } = await auth();
-  const [
-    { exploreItems, myItems, collaborationItems, collaboratorItems },
-    communityPosts,
-  ] = await Promise.all([
-    getProjectSocialCollections(userId),
-    getCommunityPostsFeed(userId),
-  ]);
+  const { ownItems, collaborationItems } = userId
+    ? await getViewerProjects(userId)
+    : { ownItems: [], collaborationItems: [] };
 
   return (
     <>
-      <ProjectsSocialView
-        exploreItems={exploreItems}
-        myItems={myItems}
+      <ProjectsHomeView
+        ownItems={ownItems}
         collaborationItems={collaborationItems}
-        collaboratorItems={collaboratorItems}
-        communityPosts={communityPosts}
       />
       <Footer />
     </>

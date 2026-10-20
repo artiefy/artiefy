@@ -28,6 +28,7 @@ import {
 } from './subcomponents/ProjectsLeftRail';
 import { ProjectsRightRail } from './subcomponents/ProjectsRightRail';
 import { ProjectWorkspaceCard } from './subcomponents/ProjectWorkspaceCard';
+import { getPublishHref, getWorkHref } from './projectHrefs';
 
 import type {
   CommunityFeedPost,
@@ -76,22 +77,6 @@ const toCoverImageUrl = (coverImageKey?: string) => {
   if (!process.env.NEXT_PUBLIC_AWS_S3_URL) return undefined;
   const source = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`;
   return `/api/image-proxy?url=${encodeURIComponent(source)}`;
-};
-
-const getPublishHref = (item: ProjectSocialItem) => {
-  if (item.courseId) {
-    return `/estudiantes/cursos/${item.courseId}?projectId=${item.id}&view=projects`;
-  }
-  return `/estudiantes/proyectos/${item.id}`;
-};
-
-/** "Trabajar" opens the course workspace for a course-linked project, or
- *  the courseless owner-only workspace otherwise. */
-const getWorkHref = (item: ProjectSocialItem) => {
-  if (item.courseId) {
-    return `/estudiantes/cursos/${item.courseId}?projectId=${item.id}&view=projects`;
-  }
-  return `/estudiantes/proyectos/${item.id}/trabajar`;
 };
 
 export function ProjectsSocialView({
@@ -737,92 +722,8 @@ export function ProjectsSocialView({
         </div>
       </main>
 
-      <nav
-        className={`
-          fixed right-0 bottom-0 left-0 z-50
-          lg:hidden
-        `}
-      >
-        <div
-          className={`
-            absolute inset-0 border-t border-border/50 bg-background/80
-            backdrop-blur-xl
-          `}
-        />
-        <div className="relative flex items-center justify-around p-2">
-          <button
-            type="button"
-            onClick={() => setActiveView('explorar')}
-            className={`
-              relative flex flex-col items-center gap-1 rounded-xl px-4 py-2
-              ${
-                activeView === 'explorar'
-                  ? 'text-[#080c16]'
-                  : 'text-muted-foreground'
-              }
-            `}
-          >
-            <span
-              className={`
-                rounded-xl p-2
-                ${
-                  activeView === 'explorar'
-                    ? 'bg-primary/20 shadow-[0_0_15px_hsl(185_72%_48%/0.3)]'
-                    : ''
-                }
-              `}
-            >
-              🔥
-            </span>
-            <span className="text-xs font-medium">Explorar</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveView('mis')}
-            className={`
-              flex flex-col items-center gap-1 rounded-xl px-4 py-2
-              ${activeView === 'mis' ? 'text-primary' : 'text-muted-foreground'}
-            `}
-          >
-            <span className="rounded-xl p-2">📁</span>
-            <span className="text-xs font-medium">Proyectos</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveView('mis')}
-            className="relative -mt-6 flex flex-col items-center gap-1"
-          >
-            <span
-              className={`
-                rounded-2xl bg-gradient-to-r from-primary to-cyan-500 p-3
-                shadow-[0_0_25px_hsl(185_72%_48%/0.5)]
-              `}
-            >
-              ➕
-            </span>
-            <span className="text-xs font-medium text-[#080c16]">Crear</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveView('colabs')}
-            className={`
-              flex flex-col items-center gap-1 rounded-xl px-4 py-2
-              ${
-                activeView === 'colabs'
-                  ? 'text-primary'
-                  : 'text-muted-foreground'
-              }
-            `}
-          >
-            <span className="rounded-xl p-2">👥</span>
-            <span className="text-xs font-medium">Colabs</span>
-          </button>
-        </div>
-      </nav>
-
+      {/* Mobile navigation is the global bottom bar (MobileBottomNav);
+          "Mis proyectos" and collaborations live on /proyectos. */}
       <ModalResumen
         isOpen={isEditModalOpen}
         onClose={() => {

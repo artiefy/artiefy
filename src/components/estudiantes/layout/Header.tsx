@@ -8,9 +8,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Show, useAuth, useUser } from '@clerk/nextjs';
 import { type OAuthStrategy } from '@clerk/shared/types';
 import {
+  BookOpen,
   ChevronDown,
   CreditCard,
+  Folder,
   Home,
+  Layers,
   LogIn,
   MapPin,
   Search,
@@ -24,7 +27,10 @@ import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { requestCreateEntry } from '~/lib/creation/createEntryBus';
+import {
+  getCreateEntryRoute,
+  requestCreateEntry,
+} from '~/lib/creation/createEntryBus';
 import { ensureCurrentUserStudentRole, getUserRole } from '~/utils/roles';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
@@ -34,6 +40,7 @@ import { ArtieSearchDropdown } from './search/ArtieSearchDropdown';
 import { NeonSearchShell } from './search/NeonSearchShell';
 import { useArtieSearch } from './search/useArtieSearch';
 import { useRotatingPlaceholder } from './search/useRotatingPlaceholder';
+import { ComingSoonDialog } from './ComingSoonDialog';
 import { MobileBottomNav } from './MobileBottomNav';
 import { NotificationHeader } from './NotificationHeader';
 
@@ -104,14 +111,17 @@ export function Header({
   )}`;
   const isSignedIn = Boolean(user);
 
-  // `href: null` items are shown but have no destination yet.
+  // Shared by the desktop bar and the mobile brand menu, so both always show
+  // the same names and routes. The icons are only drawn on mobile.
   const leftNavItems = [
-    { href: '/', label: 'Inicio' },
-    { href: null, label: 'Explorar' },
-    { href: '/proyectos', label: 'Proyectos' },
-    { href: '/estudiantes', label: 'Educación' },
+    { href: '/', label: 'Inicio', icon: Home },
+    { href: '/proyectos', label: 'Proyectos', icon: Folder },
+    { href: '/explorar', label: 'Explorar', icon: Layers },
+    { href: '/estudiantes', label: 'Educación', icon: BookOpen },
   ];
-  const rightNavItems = [{ href: '/planes', label: 'Planes' }];
+  const rightNavItems = [
+    { href: '/planes', label: 'Planes', icon: CreditCard },
+  ];
   const brandMenuRef = useRef<HTMLDivElement>(null);
 
   const planType = user?.publicMetadata?.planType as string | undefined;
@@ -304,7 +314,8 @@ export function Header({
     }
 
     requestCreateEntry('project', { idea });
-    if (pathname !== '/proyectos') router.push('/proyectos');
+    const target = getCreateEntryRoute('project', pathname);
+    if (target) router.push(target);
   };
 
   const handleSelectResult = (result: CatalogSearchResult) => {
@@ -319,40 +330,31 @@ export function Header({
     font-medium transition-colors duration-200
     hover:text-foreground
     focus-visible:text-foreground focus-visible:outline-none
-    ${isActive ? 'text-primary' : 'text-muted-foreground'}
+    ${isActive ? 'text-foreground' : 'text-muted-foreground'}
   `;
 
-  const navUnderline = (
+  // The current route keeps the underline the others only show on hover.
+  const navUnderline = (isActive: boolean) => (
     <span
       aria-hidden="true"
-      className="
-        absolute inset-x-2 -bottom-0.5 h-px scale-x-0 bg-primary
-        transition-transform duration-200
+      className={`
+        absolute inset-x-2 -bottom-0.5 h-px bg-primary transition-transform
+        duration-200
         group-hover/nav:scale-x-100 group-focus-visible/nav:scale-x-100
-      "
+        ${isActive ? 'scale-x-100' : 'scale-x-0'}
+      `}
     />
   );
 
-  const renderNavItem = (item: { href: string | null; label: string }) => {
-    const { href } = item;
-    if (!href) {
-      return (
-        <li key={item.label}>
-          <button
-            type="button"
-            aria-disabled="true"
-            title="Próximamente"
-            className={navLinkClass(false)}
-          >
-            {item.label}
-            {navUnderline}
-          </button>
-        </li>
-      );
-    }
+  // Whole segments only, so '/proyectos' never lights up on a sibling route.
+  const isNavActive = (href: string) =>
+    href === '/'
+      ? pathname === '/'
+      : pathname === href || pathname.startsWith(`${href}/`);
 
-    const isActive =
-      pathname === href || (href !== '/' && pathname.startsWith(href));
+  const renderNavItem = (item: { href: string; label: string }) => {
+    const { href } = item;
+    const isActive = isNavActive(href);
 
     return (
       <li key={item.label}>
@@ -364,7 +366,7 @@ export function Header({
               className={navLinkClass(isActive)}
             >
               {item.label}
-              {navUnderline}
+              {navUnderline(isActive)}
             </Link>
 
             <div
@@ -580,7 +582,7 @@ export function Header({
             className={navLinkClass(isActive)}
           >
             {item.label}
-            {navUnderline}
+            {navUnderline(isActive)}
           </Link>
         )}
       </li>
@@ -614,10 +616,11 @@ export function Header({
                     ml-2 hidden h-10 cursor-pointer items-center justify-center
                     gap-2 rounded-full border border-primary bg-primary px-5
                     text-sm font-semibold whitespace-nowrap text-background
-                    transition-all duration-200
-                    hover:bg-background hover:text-primary
+                    transition-[transform,box-shadow] duration-200 ease-out
+                    hover:scale-105
                     hover:shadow-[0_0_24px_2px_rgba(0,189,216,0.55)]
                     active:scale-95
+                    motion-reduce:transition-none
                     md:inline-flex
                   "
                   type="button"
@@ -754,71 +757,12 @@ export function Header({
       "
         style={{ top: 'var(--subscription-banner-height, 0px)' }}
       >
-        {showEspaciosModal ? (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="espacios-modal-title"
-          >
-            <button
-              type="button"
-              className="fixed inset-0 cursor-default bg-black/30"
-              aria-label="Cerrar modal"
-              onClick={() => setShowEspaciosModal(false)}
-            />
-            <div
-              className="
-              relative mx-auto flex w-full max-w-md flex-col items-center
-              rounded-2xl bg-white p-8 shadow-2xl
-            "
-            >
-              <span
-                className="
-                mb-4 flex size-16 items-center justify-center rounded-full
-                bg-gradient-to-tr from-primary to-blue-400 shadow-lg
-              "
-              >
-                <svg
-                  className="size-10 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
-                  />
-                </svg>
-              </span>
-              <h2
-                id="espacios-modal-title"
-                className="mb-2 text-center text-2xl font-bold text-secondary"
-              >
-                ¡Disponible muy pronto!
-              </h2>
-              <p className="mb-4 text-center text-gray-600">
-                La sección de{' '}
-                <span className="font-semibold text-secondary">Espacios</span>{' '}
-                estará habilitada próximamente.
-                <br />
-                ¡Gracias por tu interés!
-              </p>
-              <button
-                className="
-                mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white
-                shadow transition
-                hover:bg-blue-700
-              "
-                onClick={() => setShowEspaciosModal(false)}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        ) : null}
+        {/* Espacios is listed but not built yet: it only opens this notice. */}
+        <ComingSoonDialog
+          open={showEspaciosModal}
+          onOpenChange={setShowEspaciosModal}
+          feature="Espacios"
+        />
         <div
           aria-hidden="true"
           className="
@@ -916,6 +860,17 @@ export function Header({
               "
                 >
                   {rightNavItems.map(renderNavItem)}
+                  <li>
+                    <button
+                      type="button"
+                      aria-haspopup="dialog"
+                      onClick={handleEspaciosClick}
+                      className={navLinkClass(false)}
+                    >
+                      Espacios
+                      {navUnderline(false)}
+                    </button>
+                  </li>
                 </ul>
 
                 {renderAuthButton()}
@@ -948,7 +903,8 @@ export function Header({
               md:hidden
             "
             >
-              {/* Brand button: opens a small dropdown (Inicio / Espacios / Planes) */}
+              {/* Brand button: opens the mobile menu with the same routes as
+                  the desktop bar, plus Planes and Espacios. */}
               <div ref={brandMenuRef} className="pointer-events-auto relative">
                 <button
                   type="button"
@@ -1005,22 +961,32 @@ export function Header({
                     p-1.5 shadow-2xl backdrop-blur-lg backdrop-saturate-150
                   "
                   >
-                    <Link
-                      href="/"
-                      role="menuitem"
-                      onClick={() => setBrandMenuOpen(false)}
-                      className="
-                      flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
-                      font-medium text-foreground transition-colors
-                      hover:bg-primary/10 hover:text-primary
-                    "
-                    >
-                      <Home className="size-4" />
-                      Inicio
-                    </Link>
+                    {[...leftNavItems, ...rightNavItems].map((item) => {
+                      const Icon = item.icon;
+                      const isActive = isNavActive(item.href);
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          role="menuitem"
+                          aria-current={isActive ? 'page' : undefined}
+                          onClick={() => setBrandMenuOpen(false)}
+                          className={`
+                            flex items-center gap-3 rounded-xl px-3 py-2.5
+                            text-sm font-medium transition-colors
+                            hover:bg-primary/10 hover:text-primary
+                            ${isActive ? 'bg-primary/10 text-primary' : 'text-foreground'}
+                          `}
+                        >
+                          <Icon className="size-4" />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
                     <button
                       type="button"
                       role="menuitem"
+                      aria-haspopup="dialog"
                       onClick={(e) => {
                         setBrandMenuOpen(false);
                         handleEspaciosClick(e);
@@ -1035,19 +1001,6 @@ export function Header({
                       <MapPin className="size-4" />
                       Espacios
                     </button>
-                    <Link
-                      href="/planes"
-                      role="menuitem"
-                      onClick={() => setBrandMenuOpen(false)}
-                      className="
-                      flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
-                      font-medium text-foreground transition-colors
-                      hover:bg-primary/10 hover:text-primary
-                    "
-                    >
-                      <CreditCard className="size-4" />
-                      Planes
-                    </Link>
                   </div>
                 ) : null}
               </div>

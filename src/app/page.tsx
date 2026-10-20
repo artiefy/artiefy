@@ -1,27 +1,29 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import dynamic from 'next/dynamic';
-import Link, { useLinkStatus } from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { FaArrowRight } from 'react-icons/fa';
 
-import SmoothGradient from '~/components/estudiantes/layout/Gradient';
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { HowItWorksSection } from '~/components/landing/HowItWorksSection';
+import { LandingHero } from '~/components/landing/LandingHero';
 import {
-  getDashboardRouteByRole,
-  getPrivilegedDashboardRoute,
-  getUserRole,
-} from '~/utils/roles';
+  savePendingLandingSeed,
+  takePendingLandingSeed,
+} from '~/components/landing/pendingLandingSeed';
+import { generateProjectFromIdea } from '~/lib/projects/generateProjectFromIdea';
+import { getPrivilegedDashboardRoute, getUserRole } from '~/utils/roles';
+
+import type { ProjectAiSeed } from '~/components/projects/Modals/ProjectModeChooser';
 
 // Non-critical components: loaded lazily (code-splitting) so they don't block
 // the initial hero render. Decorative/floating pieces are client-only (ssr:false).
-const HeroCanvas = dynamic(
-  () => import('~/components/estudiantes/layout/HeroCanvas'),
+// The 3D background also needs `window` to probe WebGL support.
+const NeuralNetworkBackground = dynamic(
+  () => import('~/components/landing/neural-network/NeuralNetworkBackground'),
   { ssr: false }
 );
 const TicketSupportChatbot = dynamic(
@@ -45,72 +47,40 @@ const TourComponent = dynamic(() =>
   )
 );
 
-// How long the pending indicator may run before the label comes back. The
-// destination is a dashboard route that still opts out of instant validation,
-// so a slow navigation is normal; a navigation that never settles is not.
-const PENDING_INDICATOR_TIMEOUT_MS = 6000;
-
-function StartNowButtonContent() {
-  const { pending } = useLinkStatus();
-  const [showSpinner, setShowSpinner] = useState(false);
+// Reads the OAuth query params in its own Suspense boundary: calling
+// useSearchParams() at page level makes the whole statically prerendered page
+// render on the client only, so crawlers got an empty shell without the hero.
+function OAuthParamsHandler({
+  onError,
+  onShowSignUp,
+}: {
+  onError: (error: string) => void;
+  onShowSignUp: () => void;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (!pending) {
-      setShowSpinner(false);
-      return;
+    const error = searchParams.get('error');
+    const shouldShowSignup = searchParams.get('show_signup');
+
+    if (error) {
+      onError(decodeURIComponent(error));
+      router.replace('/', { scroll: false });
     }
 
-    setShowSpinner(true);
+    if (shouldShowSignup === 'true') {
+      onShowSignUp();
+      router.replace('/', { scroll: false });
+    }
+  }, [searchParams, router, onError, onShowSignUp]);
 
-    // With Cache Components this route is kept mounted through <Activity>
-    // rather than unmounted on navigation, so a `pending` that never settles
-    // survives the user leaving and coming back, and used to strand the button
-    // on a spinner. Bounding the indicator guarantees the label returns.
-    const timeout = setTimeout(
-      () => setShowSpinner(false),
-      PENDING_INDICATOR_TIMEOUT_MS
-    );
-
-    return () => clearTimeout(timeout);
-  }, [pending]);
-
-  // The label stays mounted and only fades. Swapping it out for the spinner
-  // shifts layout and makes any stuck pending state render an unreadable
-  // button, which is exactly what the Link docs advise against.
-  return (
-    <div className="relative flex w-full items-center justify-center">
-      <span
-        className={`
-          flex items-center transition-opacity duration-200
-          ${showSpinner ? 'opacity-0' : 'opacity-100'}
-        `}
-      >
-        <span className="inline-block skew-x-[15deg]">COMIENZA YA</span>
-        <FaArrowRight
-          className="
-            ml-2 inline-block skew-x-[15deg] animate-bounce-right
-            transition-transform duration-500
-          "
-        />
-      </span>
-      <span
-        aria-hidden
-        className={`
-          pointer-events-none absolute inset-0 flex items-center justify-center
-          transition-opacity duration-200
-          ${showSpinner ? 'opacity-100' : 'opacity-0'}
-        `}
-      >
-        <Icons.spinner style={{ width: '35px', height: '35px' }} />
-      </span>
-    </div>
-  );
+  return null;
 }
 
 export default function HomePage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [showAnuncio, setShowAnuncio] = useState(false);
   const [, setShowChatbot] = useState<boolean>(false);
   void showAnuncio;
@@ -128,12 +98,10 @@ export default function HomePage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
-  const [postAuthAction, setPostAuthAction] = useState<'dashboard' | null>(
-    null
-  );
+  // The landing composer's text lives here so a cancelled sign-in can put the
+  // visitor's idea back in the box.
+  const [idea, setIdea] = useState('');
   const userRole = getUserRole(user?.publicMetadata?.role);
-
-  const dashboardRoute = getDashboardRouteByRole(userRole);
 
   useEffect(() => {
     const fetchAnuncioActivo = async (userId: string) => {
@@ -169,26 +137,6 @@ export default function HomePage() {
     }
   }, [user]);
 
-  // Manejar parámetros de error de OAuth desde URL
-  useEffect(() => {
-    const error = searchParams.get('error');
-    const shouldShowSignup = searchParams.get('show_signup');
-
-    if (error) {
-      setOauthError(decodeURIComponent(error));
-      setShowLoginModal(true);
-      // Limpiar la URL
-      router.replace('/', { scroll: false });
-    }
-
-    if (shouldShowSignup === 'true') {
-      setShowLoginModal(false);
-      setShowSignUpModal(true);
-      // Limpiar la URL
-      router.replace('/', { scroll: false });
-    }
-  }, [searchParams, router]);
-
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -204,11 +152,30 @@ export default function HomePage() {
     router.replace(privilegedDashboardRoute);
   }, [_isSignedIn, isLoaded, router, userRole]);
 
-  const handlePostAuthAction = useCallback(() => {
-    if (postAuthAction !== 'dashboard') return;
-    setPostAuthAction(null);
-    router.push(getDashboardRouteByRole(userRole));
-  }, [postAuthAction, router, userRole]);
+  // An idea sent before signing in is built as soon as the session exists,
+  // whether the visitor signed in here or came back from the OAuth redirect.
+  useEffect(() => {
+    if (!isLoaded || !_isSignedIn) return;
+    const seed = takePendingLandingSeed();
+    if (seed) void generateProjectFromIdea({ seed });
+  }, [isLoaded, _isSignedIn]);
+
+  const handleIdeaSubmit = (seed: ProjectAiSeed) => {
+    if (isLoaded && !_isSignedIn) {
+      savePendingLandingSeed(seed);
+      setShowLoginModal(true);
+      return;
+    }
+    void generateProjectFromIdea({ seed });
+  };
+
+  // The sign-in modals also call `onClose` after a successful sign-in; only a
+  // visitor who is still signed out gets the idea back instead of a project.
+  const restorePendingIdea = () => {
+    if (_isSignedIn) return;
+    const seed = takePendingLandingSeed();
+    if (seed) setIdea(seed.idea);
+  };
 
   // Listener para cerrar completamente el chatbot desde dentro (evento global)
   useEffect(() => {
@@ -223,46 +190,32 @@ export default function HomePage() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden">
+      <Suspense fallback={null}>
+        <OAuthParamsHandler
+          onError={(error) => {
+            setOauthError(error);
+            setShowLoginModal(true);
+          }}
+          onShowSignUp={() => {
+            setShowLoginModal(false);
+            setShowSignUpModal(true);
+          }}
+        />
+      </Suspense>
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
-      <SmoothGradient />
-      <HeroCanvas />
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <main className="mt-[-10vh] flex grow items-center justify-center">
-          <section className="container mx-auto px-4 pt-18 pb-12 text-center sm:pt-12">
-            <h1 className="mb-5 text-5xl leading-snug font-bold text-white">
-              Únete a nosotros y transforma tus ideas en
-              <br /> realidades con el {''}
-              <span className="text-primary">poder del conocimiento</span>
-            </h1>
-            <p className="mb-5 text-xl leading-snug">
-              Bienvenido a Artiefy, tu plataforma digital educativa dedicada a
-              impulsar <br />
-              tus conocimientos con ciencia y tecnología.
-            </p>
-            <div>
-              <Button
-                asChild
-                className={
-                  'join-button relative skew-x-[-20deg] rounded-none border ' +
-                  'border-primary bg-primary py-8 text-2xl font-semibold ' +
-                  'text-background italic ' +
-                  'hover:border-primary hover:bg-transparent hover:text-primary ' +
-                  'active:scale-95'
-                }
-                style={{
-                  boxShadow: '6px 6px 0 black',
-                  transition: '0.5s',
-                  width: '250px',
-                }}
-              >
-                <Link href={dashboardRoute}>
-                  <StartNowButtonContent />
-                </Link>
-              </Button>
-            </div>
-          </section>
-        </main>
+      <NeuralNetworkBackground />
+      <main className="relative z-10 flex grow flex-col">
+        <LandingHero
+          idea={idea}
+          onIdeaChange={setIdea}
+          onSubmit={handleIdeaSubmit}
+        />
+        <HowItWorksSection />
+      </main>
+      {/* Above the fixed 3D background, like the rest of the page. */}
+      <div className="relative z-10">
+        <Footer />
       </div>
       <div
         className="
@@ -292,12 +245,11 @@ export default function HomePage() {
         onClose={() => {
           setShowLoginModal(false);
           setOauthError(null);
-          setPostAuthAction(null);
+          restorePendingIdea();
         }}
         onLoginSuccess={() => {
           setShowLoginModal(false);
           setOauthError(null);
-          handlePostAuthAction();
         }}
         redirectUrl="/"
         onSwitchToSignUp={() => {
@@ -310,11 +262,10 @@ export default function HomePage() {
         isOpen={showSignUpModal}
         onClose={() => {
           setShowSignUpModal(false);
-          setPostAuthAction(null);
+          restorePendingIdea();
         }}
         onSignUpSuccess={() => {
           setShowSignUpModal(false);
-          handlePostAuthAction();
         }}
         redirectUrl="/"
         onSwitchToLogin={() => {

@@ -36,6 +36,35 @@ interface Category {
   description?: string | null;
 }
 
+/**
+ * The server draws the project's cover in the background after creating it
+ * (about 10-40 s). The list is refreshed again once it lands.
+ */
+const COVER_POLL_INTERVAL_MS = 6000;
+const COVER_POLL_ATTEMPTS = 15;
+
+async function refreshWhenCoverIsReady(
+  projectId: number,
+  onReady: (projectId: number) => void
+) {
+  for (let attempt = 0; attempt < COVER_POLL_ATTEMPTS; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, COVER_POLL_INTERVAL_MS));
+    try {
+      const response = await fetch(`/api/projects/${projectId}`);
+      if (!response.ok) return;
+      const project = (await response.json()) as {
+        coverImageKey?: string | null;
+      };
+      if (project.coverImageKey) {
+        onReady(projectId);
+        return;
+      }
+    } catch {
+      return;
+    }
+  }
+}
+
 /** The wizard's own default for a project a single learner owns. */
 const PROJECT_TYPE = 'Individual';
 const MAX_OBJECTIVES = 5;
@@ -466,6 +495,7 @@ export async function generateProjectFromIdea(
   showProjectGenerationToast(toastId, { status: 'done', title });
   rememberProjectMode(projectId, mode);
   onCreated?.(projectId);
+  if (onCreated) void refreshWhenCoverIsReady(projectId, onCreated);
 
   openCoachChatForGeneratedProject({
     id: projectId,

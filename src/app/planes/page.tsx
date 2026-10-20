@@ -1,6 +1,6 @@
 'use client';
 
-import { createElement, useEffect, useRef, useState } from 'react';
+import { createElement, Suspense, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
@@ -18,13 +18,15 @@ import { getProductById } from '~/utils/paygateway/products';
 
 import '~/styles/buttonPlanes.css';
 
-const PlansPage: React.FC = () => {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+// Reads the URL params in its own Suspense boundary: calling useSearchParams()
+// at page level makes the whole statically prerendered page render on the
+// client only, so crawlers got an empty shell without the plans.
+function PlanUrlParamsHandler({
+  onPlanFromUrl,
+}: {
+  onPlanFromUrl: (plan: Plan) => void;
+}) {
   const searchParams = useSearchParams();
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const hasProcessedUrlRef = useRef(false);
 
   const planIdParam = searchParams?.get('plan_id') ?? null;
@@ -57,10 +59,7 @@ const PlansPage: React.FC = () => {
     if (!plan) return;
     if (plan.name === 'Enterprise') return;
 
-    const openModal = () => {
-      setSelectedPlan(plan);
-      setShowModal(true);
-    };
+    const openModal = () => onPlanFromUrl(plan);
     if (typeof queueMicrotask === 'function') {
       queueMicrotask(openModal);
     } else {
@@ -73,7 +72,17 @@ const PlansPage: React.FC = () => {
       url.searchParams.delete('plan_id');
       window.history.replaceState({}, '', url.pathname + url.search);
     }
-  }, [planIdParam]);
+  }, [planIdParam, onPlanFromUrl]);
+
+  return null;
+}
+
+const PlansPage: React.FC = () => {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Permitir abrir el modal siempre
   const handlePlanSelect = (plan: Plan) => {
@@ -108,6 +117,14 @@ const PlansPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Suspense fallback={null}>
+        <PlanUrlParamsHandler
+          onPlanFromUrl={(plan) => {
+            setSelectedPlan(plan);
+            setShowModal(true);
+          }}
+        />
+      </Suspense>
       <div
         className="
           mb-12 px-4 py-12
@@ -118,14 +135,14 @@ const PlansPage: React.FC = () => {
       >
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto mb-12 max-w-2xl text-center">
-            <h2
+            <h1
               className="
                 text-4xl font-extrabold text-white
                 md:text-5xl
               "
             >
               Elige tu plan <span className="text-primary">perfecto</span>
-            </h2>
+            </h1>
             <p className="mt-4 text-lg text-muted-foreground">
               Selecciona el plan que mejor se adapte a tus necesidades de
               aprendizaje

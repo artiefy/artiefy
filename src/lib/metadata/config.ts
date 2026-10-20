@@ -1,76 +1,49 @@
 import type { Metadata } from 'next';
 
-// sharedOpenGraph solo debe usarse en páginas generales, no en cursos dinámicos
-const sharedOpenGraph = {
-  images: [
-    {
-      url: 'https://artiefy.com/opengraph-image',
-      width: 1200,
-      height: 630,
-      alt: 'Unete a nosotros y transforma tus ideas en realidades con el poder del conocimiento',
-    },
-  ],
-  locale: 'es_ES',
-  type: 'website',
-};
+const SITE_URL = 'https://artiefy.com';
+const SITE_NAME = 'Artiefy';
 
-// `x-invoke-path` was a Next.js internal header that no longer exists: it
-// appears nowhere in `next/dist` on Next 16, and nothing in this repo sets it.
-// The lookup has therefore always fallen through to '/', which is why
-// `getMetadataForRoute` below has only ever returned its `case '/'` branch.
-//
-// Reading it was not free. `headers()` is runtime data and this runs inside the
-// ROOT layout's `generateMetadata`, so it blocked metadata prerendering for
-// every route in the app (`blocking-prerender-metadata-runtime`). Returning the
-// constant keeps the output identical and unblocks the prerender.
-//
-// Follow-up: the `/estudiantes` and `/planes` branches are unreachable. Per-route
-// metadata belongs in each route's own `generateMetadata` — a root layout cannot
-// know the pathname by design.
-export async function getCurrentPath() {
-  return '/';
-}
+const ogImages = [
+  {
+    url: `${SITE_URL}/opengraph-image`,
+    width: 1200,
+    height: 630,
+    alt: 'Artiefy, plataforma educativa online de ciencia y tecnología',
+  },
+];
 
-// Common metadata that can be reused
-const defaultMetadata: Metadata = {
+// Root metadata inherited by every route.
+//
+// `canonical: './'` and `og:url: './'` are resolved by Next.js against each
+// route's own pathname (see `resolveRelativeUrl` in
+// next/dist/lib/metadata/resolvers/resolve-url.js), so every page gets a
+// self-referencing canonical without query strings. A hardcoded canonical here
+// pointed every page to the homepage and kept /planes and /estudiantes out of
+// the index.
+export const rootMetadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    template: '%s | Artiefy - Tu Plataforma Educativa',
-    default: 'Artiefy - Cursos Online | Aprende a Tu Ritmo',
+    template: `%s | ${SITE_NAME}`,
+    default: 'Artiefy | Cursos online de ciencia y tecnología',
   },
   description:
-    'Explora Artiefy, tu plataforma de aprendizaje online con cursos de alta calidad impartidos por profesionales. Desarrolla nuevas habilidades, avanza en tu carrera y expande tus horizontes con contenido educativo actualizado y accesible desde cualquier lugar. Únete a nuestra comunidad de estudiantes y transforma tu futuro profesional.',
-  keywords: [
-    'artiefy',
-    'cursos online',
-    'educación online',
-    'plataforma educativa',
-    'aprendizaje digital',
-    'estudiar online',
-    'formación online',
-    'artiefy educación',
-    'artiefy cursos',
-    'artiefy online',
-  ],
-  metadataBase: new URL('https://artiefy.com'),
-  applicationName: 'Artiefy',
+    'Aprende ciencia y tecnología a tu ritmo con cursos, programas y proyectos guiados online. Obtén certificados y mentoría en Artiefy, tu plataforma educativa.',
+  applicationName: SITE_NAME,
   appleWebApp: {
     capable: true,
-    title: 'Artiefy',
+    title: SITE_NAME,
     statusBarStyle: 'black-translucent',
   },
+  alternates: { canonical: './' },
   openGraph: {
     type: 'website',
-    locale: 'es_ES',
-    url: 'https://artiefy.com',
-    siteName: 'Artiefy - Plataforma de Educación Online',
-    images: [
-      {
-        url: 'https://artiefy.com/opengraph-image',
-        width: 1200,
-        height: 630,
-        alt: 'Artiefy - App Web Educativa de Cursos Online',
-      },
-    ],
+    locale: 'es_CO',
+    url: './',
+    siteName: SITE_NAME,
+    title: 'Artiefy | Cursos online de ciencia y tecnología',
+    description:
+      'Aprende ciencia y tecnología a tu ritmo con cursos, programas y proyectos guiados online.',
+    images: ogImages,
   },
   twitter: {
     card: 'summary_large_image',
@@ -79,6 +52,9 @@ const defaultMetadata: Metadata = {
   },
   verification: {
     google: 'QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4',
+    other: {
+      'facebook-domain-verification': 'zxh6j216xifuou0gxlb1hp0zomyjx0',
+    },
   },
   robots: {
     index: true,
@@ -93,106 +69,53 @@ const defaultMetadata: Metadata = {
   },
 };
 
-// Helper para canonical
-function getCanonical(pathname: string) {
-  if (pathname === '/') return 'https://artiefy.com';
-  return `https://artiefy.com${pathname}`;
+// Catalog pages (courses, programs) are indexed only when they carry a real
+// description: test entries such as "curso prueba embedding" / "hola" are
+// active in production, and thin pages lower the quality signal of the whole
+// site.
+export const MIN_INDEXABLE_DESCRIPTION_LENGTH = 50;
+
+export function hasIndexableDescription(description?: string | null) {
+  return (description?.trim().length ?? 0) >= MIN_INDEXABLE_DESCRIPTION_LENGTH;
 }
 
-// Route-specific metadata mejorado
-export async function getMetadataForRoute(): Promise<Metadata> {
-  const pathname = await getCurrentPath();
+export const indexRobots: Metadata['robots'] = { index: true, follow: true };
+export const noIndexRobots: Metadata['robots'] = {
+  index: false,
+  follow: false,
+};
 
-  const baseMetadata = {
-    ...defaultMetadata,
+// Meta descriptions are cut by Google around 155-160 characters; trim at a
+// word boundary so long catalog descriptions do not end mid-word.
+export function toMetaDescription(text?: string | null, maxLength = 155) {
+  const clean = (text ?? '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= maxLength) return clean;
+  const cut = clean.slice(0, maxLength);
+  const lastSpace = cut.lastIndexOf(' ');
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).replace(/[\s.,;:]+$/, '')}…`;
+}
+
+// Metadata for an indexable public route. Child `openGraph` replaces the
+// parent's object instead of merging, so it is rebuilt here with the shared
+// image and locale.
+export function pageMetadata({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}): Metadata {
+  return {
+    title,
+    description,
     openGraph: {
-      ...defaultMetadata.openGraph,
-      ...sharedOpenGraph,
+      type: 'website',
+      locale: 'es_CO',
+      url: './',
+      siteName: SITE_NAME,
+      title: `${title} | ${SITE_NAME}`,
+      description,
+      images: ogImages,
     },
   };
-
-  switch (pathname) {
-    case '/':
-      return {
-        ...baseMetadata,
-        title: 'Artiefy - Cursos Online | Impulsa tu Futuro Profesional',
-        description:
-          'Descubre Artiefy, la plataforma educativa líder que ofrece cursos online de calidad impartidos por expertos del sector. Aprende a tu ritmo, accede a contenidos actualizados y desarrolla habilidades relevantes para el mercado laboral actual. Transforma tu potencial profesional con nuestra metodología innovadora.',
-        keywords: [
-          'artiefy',
-          'artiefy plataforma',
-          'cursos artiefy',
-          'educación online artiefy',
-          'plataforma educativa',
-          'cursos online',
-          'educación digital',
-          'aprendizaje online',
-        ],
-        alternates: { canonical: getCanonical('/') },
-        openGraph: {
-          ...baseMetadata.openGraph,
-          title: 'Artiefy - Cursos Online',
-          url: getCanonical('/'),
-        },
-      };
-
-    case '/estudiantes':
-      return {
-        ...baseMetadata,
-        title: 'Cursos Online | Formación Integral en Artiefy',
-        description:
-          'Explora nuestra completa biblioteca de cursos y programas diseñados para potenciar tu desarrollo profesional. Con más de 100 cursos especializados, encuentras formación actualizada en tecnología, negocios, marketing digital, idiomas y muchas áreas más. Aprende con metodologías prácticas y certificados reconocidos en el mercado.',
-        keywords: [
-          'artiefy cursos',
-          'programas artiefy',
-          'cursos online artiefy',
-          'estudiantes artiefy',
-          'formación profesional',
-          'cursos digitales',
-          'programas educativos',
-        ],
-        alternates: { canonical: getCanonical('/estudiantes') },
-        openGraph: {
-          ...baseMetadata.openGraph,
-          title: 'Artiefy - Cursos',
-          url: getCanonical('/estudiantes'),
-        },
-      };
-
-    case '/planes':
-      return {
-        ...baseMetadata,
-        title:
-          'Planes de Suscripción Educativos | Invierte en tu Futuro con Artiefy',
-        description:
-          'Encuentra el plan perfecto para tu formación en Artiefy. Desde suscripciones básicas hasta planes premium con acceso ilimitado a cursos, proyectos prácticos, mentoría personalizada y certificados digitales. Invierte en tu educación continua con precios accesibles y contenido de calidad que impulsa tu carrera profesional.',
-        keywords: [
-          'planes artiefy',
-          'suscripción artiefy',
-          'precios artiefy',
-          'membresía artiefy',
-          'planes educativos',
-          'suscripción cursos online',
-          'planes de estudio',
-        ],
-        alternates: { canonical: getCanonical('/planes') },
-        openGraph: {
-          ...baseMetadata.openGraph,
-          title: 'Artiefy - Planes de Suscripción',
-          url: getCanonical('/planes'),
-        },
-      };
-
-    default:
-      return {
-        ...baseMetadata,
-        alternates: { canonical: getCanonical(pathname) },
-        openGraph: {
-          ...baseMetadata.openGraph,
-          url: getCanonical(pathname),
-        },
-      };
-  }
 }
-
-export { defaultMetadata };

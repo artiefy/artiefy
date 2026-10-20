@@ -5,6 +5,12 @@ import { notFound } from 'next/navigation';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { ProgramDetailsSkeleton } from '~/components/estudiantes/layout/programdetail/ProgramDetailsSkeleton';
+import {
+  hasIndexableDescription,
+  indexRobots,
+  noIndexRobots,
+  toMetaDescription,
+} from '~/lib/metadata/config';
 
 import { getCachedProgramById } from '../../_cache/programs';
 
@@ -20,7 +26,7 @@ export async function generateMetadata(
   { params }: { params: Promise<{ id: string }> },
   _parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const robotsNoIndex: Metadata['robots'] = { index: false, follow: false };
+  const robotsNoIndex = noIndexRobots;
 
   try {
     // Seguir la convención de Next.js: `params` es una Promise
@@ -56,18 +62,25 @@ export async function generateMetadata(
       // fallback al placeholder
     }
 
+    const description =
+      toMetaDescription(program.description) ||
+      'No hay descripción disponible.';
+    const isIndexable =
+      program.visibility !== false &&
+      hasIndexableDescription(program.description);
+
     return {
       metadataBase,
-      title: `${program.title} | Artiefy`,
-      description: program.description ?? 'No hay descripción disponible.',
-      robots: robotsNoIndex,
+      title: program.title,
+      description,
+      robots: isIndexable ? indexRobots : robotsNoIndex,
       openGraph: {
         type: 'website',
-        locale: 'es_ES',
+        locale: 'es_CO',
         url: new URL(`/estudiantes/programas/${id}`, baseUrl).toString(),
         siteName: 'Artiefy',
         title: `${program.title} | Artiefy`,
-        description: program.description ?? 'No hay descripción disponible.',
+        description,
         images: [
           {
             url: coverImageUrl,
@@ -81,7 +94,7 @@ export async function generateMetadata(
       twitter: {
         card: 'summary_large_image',
         title: `${program.title} | Artiefy`,
-        description: program.description ?? 'No hay descripción disponible.',
+        description,
         images: [coverImageUrl],
         creator: '@artiefy',
         site: '@artiefy',

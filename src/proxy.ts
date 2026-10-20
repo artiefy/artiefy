@@ -56,7 +56,8 @@ function isSuperAdminStudentPath(pathname: string): boolean {
     pathname === '/estudiantes' ||
     pathname.startsWith('/estudiantes/') ||
     pathname === '/proyectos' ||
-    pathname.startsWith('/proyectos/')
+    pathname.startsWith('/proyectos/') ||
+    pathname === '/explorar'
   );
 }
 
@@ -96,6 +97,7 @@ function isPublicAppPath(pathname: string): boolean {
     pathname.startsWith('/estudiantes/programas/') ||
     pathname === '/proyectos' ||
     pathname.startsWith('/proyectos/') ||
+    pathname === '/explorar' ||
     pathname === '/comunidad' ||
     pathname === '/planes' ||
     pathname.startsWith('/agradecimiento-curso/') ||

@@ -127,7 +127,7 @@ const { error } = await signIn.resetPasswordEmailCode.submitPassword({
 });
 ```
 
-## Client Trust
+## Device Trust
 
 When a user signs in with a valid password from a new device without MFA enabled, the sign-in status becomes `needs_client_trust`. This requires an additional verification step:
 
@@ -326,4 +326,4 @@ export default function Page() {
 
 - [Custom sign-in flow](https://clerk.com/docs/custom-flows/overview)
 - [MFA custom flow](https://clerk.com/docs/guides/development/custom-flows/authentication/multi-factor-authentication)
-- [useSignIn() reference](https://clerk.com/docs/references/react/use-sign-in)
+- [useSignIn() reference](https://clerk.com/docs/reference/hooks/use-sign-in)

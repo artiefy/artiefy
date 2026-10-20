@@ -612,7 +612,7 @@ export default function SignInPage() {
       <Image
         src="/login-fondo.webp"
         alt="Fondo de inicio de sesión"
-        quality={100}
+        quality={75}
         fill
         sizes="100vw"
         priority
@@ -666,7 +666,7 @@ export default function SignInPage() {
             "
           >
             <div className="mb-6 text-center">
-              <h2 className="text-3xl font-bold">INICIAR SESIÓN</h2>
+              <h1 className="text-3xl font-bold">INICIAR SESIÓN</h1>
             </div>
 
             {errors && (

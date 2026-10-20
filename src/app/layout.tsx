@@ -2,7 +2,6 @@
 import React from 'react';
 
 import { Merriweather, Montserrat } from 'next/font/google';
-import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
@@ -15,14 +14,8 @@ import { NotificationSubscription } from '~/components/estudiantes/layout/subscr
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { ServiceWorkerRegister } from '~/components/pwa/ServiceWorkerRegister';
 import TourManager from '~/components/tour/tourManager';
-import { getMetadataForRoute } from '~/lib/metadata/config';
-import {
-  getBreadcrumbSchema,
-  getOrganizationSchema,
-  getSiteNavigationSchema,
-  getWebPagesSchema,
-  getWebsiteSchema,
-} from '~/lib/metadata/structured-data';
+import { rootMetadata } from '~/lib/metadata/config';
+import { getSiteSchema } from '~/lib/metadata/structured-data';
 
 import Providers from './providers';
 
@@ -52,9 +45,7 @@ const merriweather = Merriweather({
   preload: false,
   adjustFontFallback: true,
 });
-export async function generateMetadata(): Promise<Metadata> {
-  return await getMetadataForRoute();
-}
+export const metadata: Metadata = rootMetadata;
 
 export const viewport: Viewport = {
   themeColor: '#01142B',
@@ -66,15 +57,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const canonical = 'https://artiefy.com';
-
-  // Prepare schema data
-  const websiteSchema = getWebsiteSchema();
-  const webPagesSchema = getWebPagesSchema();
-  const siteNavigationSchema = getSiteNavigationSchema();
-  const breadcrumbSchema = getBreadcrumbSchema();
-  const organizationSchema = getOrganizationSchema();
-
   return (
     <html
       lang="es"
@@ -83,18 +65,7 @@ export default function RootLayout({
         ${merriweather.variable}
       `}
     >
-      {/* Canonical URL en los metadatos de la página */}
-      <link rel="canonical" href={canonical} />
-      {/* Verificación de Google */}
-      <meta
-        name="google-site-verification"
-        content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
-      />
-      {/* Verificación de dominio de Facebook */}
-      <meta
-        name="facebook-domain-verification"
-        content="zxh6j216xifuou0gxlb1hp0zomyjx0"
-      />
+      {/* Canonical and site verification tags live in `rootMetadata`. */}
       {/* Meta Pixel Code */}
       {/* Eliminar o comentar este bloque, ya no es necesario aquí */}
       {/*
@@ -114,26 +85,17 @@ export default function RootLayout({
         </Script>
         */}
       {/* End Meta Pixel Code */}
-      {/* Schema.org con componentes Script de Next.js */}
-      <Script id="schema-website" type="application/ld+json">
-        {JSON.stringify(websiteSchema).replace(/</g, '\\u003c')}
-      </Script>
-      <Script id="schema-webpages" type="application/ld+json">
-        {JSON.stringify(webPagesSchema).replace(/</g, '\\u003c')}
-      </Script>
-      <Script id="schema-navigation" type="application/ld+json">
-        {JSON.stringify(siteNavigationSchema).replace(/</g, '\\u003c')}
-      </Script>
-      <Script id="schema-breadcrumb" type="application/ld+json">
-        {JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c')}
-      </Script>
-      <Script id="schema-organization" type="application/ld+json">
-        {JSON.stringify(organizationSchema).replace(/</g, '\\u003c')}
-      </Script>
       <body
         className="bg-background font-sans text-primary"
         suppressHydrationWarning
       >
+        {/* Static, escaped JSON-LD (Next.js JSON-LD guide pattern). */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(getSiteSchema()).replace(/</g, '\\u003c'),
+          }}
+        />
         <ClerkProvider
           localization={esMX}
           signInUrl="/sign-in"

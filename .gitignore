@@ -96,3 +96,6 @@ security_best_practices_report.md
 
 # Credenciales del ESP32 (wifi). La plantilla si se versiona.
 hardware/esp32-puerta/esp32-puerta.ino
+
+# Continue IDE local tooling
+.continue/

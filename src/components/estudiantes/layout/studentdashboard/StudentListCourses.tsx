@@ -317,11 +317,7 @@ export default function StudentListCourses({
 
     const course = item as Course;
     const userPlanType = user?.publicMetadata?.planType as
-      | 'none'
-      | 'Pro'
-      | 'Premium'
-      | 'Enterprise'
-      | undefined;
+      'none' | 'Pro' | 'Premium' | 'Enterprise' | undefined;
     const hasActiveSubscription =
       userPlanType === 'Pro' || userPlanType === 'Premium';
 
@@ -466,7 +462,7 @@ export default function StudentListCourses({
 
           const cardContent = (
             <div
-              className={`artiefy-course-card zoom-in relative isolate flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-foreground transition-all duration-300 ${item.isActive ? 'cursor-pointer hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]' : 'cursor-not-allowed'}`}
+              className={`artiefy-course-card relative isolate flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-foreground transition-all duration-300 zoom-in ${item.isActive ? 'cursor-pointer hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]' : 'cursor-not-allowed'}`}
             >
               <div className="relative h-40 overflow-hidden bg-card">
                 <Image
@@ -474,7 +470,6 @@ export default function StudentListCourses({
                   alt={item.title || 'Imagen'}
                   className="size-full transform-gpu object-cover transition-transform duration-500 group-hover:scale-110"
                   fill
-                  unoptimized={imageUrl.startsWith('/api/image-proxy')}
                   placeholder="blur"
                   blurDataURL={blurDataURL}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
