@@ -1,5 +1,11 @@
 'use client';
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -60,6 +66,17 @@ const SEARCH_PLACEHOLDERS = [
 // cover it; the click lands on Clerk and opens its menu.
 const CLERK_TRIGGER_OVERLAY_CLASS =
   'absolute inset-0 opacity-0 [&_.cl-rootBox]:!size-full [&_.cl-rootBox]:!max-w-full [&_.cl-rootBox]:!min-w-0 [&_.cl-userButtonBox]:!size-full [&_.cl-userButtonBox]:!max-w-full [&_.cl-userButtonBox]:!min-w-0 [&_.cl-userButtonBox]:!justify-center [&_.cl-userButtonOuterIdentifier]:!hidden [&_.cl-userButtonTrigger]:!size-full [&_.cl-userButtonTrigger]:!max-w-full [&_.cl-userButtonTrigger]:!min-w-0 [&_.cl-userButtonTrigger]:!p-0 [&>div]:!size-full';
+
+/** Scroll distance after which the header gets its background. */
+const HEADER_SOLID_AFTER_PX = 8;
+
+const subscribeToScroll = (onChange: () => void) => {
+  window.addEventListener('scroll', onChange, { passive: true });
+  return () => window.removeEventListener('scroll', onChange);
+};
+const getIsScrolled = () => window.scrollY > HEADER_SOLID_AFTER_PX;
+// The server renders the page at the top, so the header starts transparent.
+const getIsScrolledOnServer = () => false;
 
 export function Header({
   onEspaciosClickAction,
@@ -284,7 +301,13 @@ export function Header({
     return () => mediaQuery.removeListener(updateViewport);
   }, []);
 
-  // Header visibility on scroll removed — header will remain static in flow
+  // Transparent at the top of the page; the background and border fade in
+  // once the page scrolls, so the hero shows through until then.
+  const isScrolled = useSyncExternalStore(
+    subscribeToScroll,
+    getIsScrolled,
+    getIsScrolledOnServer
+  );
 
   // Enter / "Crear un proyecto" hands the idea to Artie through the global
   // search event, the same contract the /estudiantes search uses.
@@ -750,11 +773,17 @@ export function Header({
   return (
     <>
       <nav
-        className="
-        fixed inset-x-0 z-[100] mb-0 w-full bg-transparent
-        md:border-b md:border-border/30 md:bg-background/60
-        md:backdrop-blur-md
-      "
+        className={`
+          fixed inset-x-0 z-[100] mb-0 w-full border-b border-transparent
+          bg-transparent transition-[background-color,border-color] duration-300
+          ${
+            isScrolled
+              ? `
+                md:border-border/30 md:bg-background/60 md:backdrop-blur-md
+              `
+              : ''
+          }
+        `}
         style={{ top: 'var(--subscription-banner-height, 0px)' }}
       >
         {/* Espacios is listed but not built yet: it only opens this notice. */}
@@ -765,11 +794,13 @@ export function Header({
         />
         <div
           aria-hidden="true"
-          className="
+          className={`
           absolute inset-x-0 top-0 hidden h-px bg-gradient-to-r
-          from-transparent via-primary/60 to-transparent
+          from-transparent via-primary/60 to-transparent transition-opacity
+          duration-300
           md:block
-        "
+          ${isScrolled ? 'opacity-100' : 'opacity-0'}
+        `}
         />
         <div
           className="
