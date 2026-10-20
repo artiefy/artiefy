@@ -144,6 +144,9 @@ interface GithubRepoMeta {
   forks_count: number;
   language: string | null;
   owner: { login: string; avatar_url: string };
+  // Optional because the JSON is cast, not validated: a missing flag must be
+  // treated as not public.
+  private?: boolean;
 }
 
 interface GithubContentEntry {
@@ -230,6 +233,16 @@ export async function GET(request: Request) {
     }
 
     const repoMeta = (await metaRes.json()) as GithubRepoMeta;
+
+    // The repository comes from a URL a project owner can set, while
+    // GITHUB_TOKEN may be able to read private repos: only public repos are
+    // browsable, so never fetch the contents of anything else.
+    if (repoMeta.private !== false) {
+      return NextResponse.json(
+        { error: 'Repositorio no encontrado (¿es privado?)' },
+        { status: 404 }
+      );
+    }
 
     const contentsRes = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(repoMeta.default_branch)}`,
