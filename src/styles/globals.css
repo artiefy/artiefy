@@ -1375,6 +1375,53 @@ body[data-animate-server-sections='true'] #courses-list-section {
   opacity: 0.8;
 }
 
+/* Artie idea composer (landing and /proyectos): a raised slab. The frame
+   casts a soft drop shadow plus a darker lower edge for thickness, the
+   surface is lit from above (lighter top, inner highlight, shaded bottom),
+   and the send button is a small raised key that presses down. */
+.composer-3d {
+  box-shadow:
+    0 5px 0 -1px hsl(216 70% 5%),
+    0 22px 40px -16px rgb(0 0 0 / 0.75),
+    0 10px 18px -10px rgb(34 196 211 / 0.18);
+}
+
+.composer-3d-surface {
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-surface-deep), white 7%) 0%,
+    var(--color-surface-deep) 55%,
+    color-mix(in oklab, var(--color-surface-deep), black 25%) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.09),
+    inset 0 -6px 14px -6px rgb(0 0 0 / 0.55);
+}
+
+.composer-3d-button {
+  background: linear-gradient(
+    180deg,
+    hsl(185 80% 62%) 0%,
+    hsl(185 72% 46%) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.45),
+    0 3px 0 hsl(186 75% 26%),
+    0 6px 12px -4px rgb(34 196 211 / 0.45);
+}
+
+.composer-3d-button:not(:disabled):hover {
+  filter: brightness(1.06);
+}
+
+.composer-3d-button:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.35),
+    0 1px 0 hsl(186 75% 26%),
+    0 3px 8px -4px rgb(34 196 211 / 0.4);
+}
+
 /* The pill has its own clear/close controls; hide the native one. */
 .neon-search-input::-webkit-search-cancel-button {
   appearance: none;
@@ -1453,46 +1500,6 @@ body[data-animate-server-sections='true'] #courses-list-section {
 .text-shimmer {
   background-size: 250% auto;
   animation: text-shimmer 6s linear infinite;
-}
-
-/* Example ideas under the Artie composer: neon text that briefly dims and
-   lights up again, like a sign. At most two dips within a second, well under
-   the three-flashes limit (WCAG 2.3.1). Kept under reduced motion like the
-   other slow ambient loops here. */
-.neon-flicker {
-  color: hsl(186 100% 70%);
-  text-shadow:
-    0 0 6px hsl(186 100% 60% / 0.9),
-    0 0 16px hsl(186 100% 50% / 0.55),
-    0 0 32px hsl(190 100% 50% / 0.3);
-  transition: color 0.2s;
-  animation: neon-flicker 7s linear infinite;
-}
-
-button:hover .neon-flicker {
-  color: hsl(186 100% 86%);
-}
-
-@keyframes neon-flicker {
-  0%,
-  17%,
-  21%,
-  24%,
-  61%,
-  64%,
-  100% {
-    opacity: 1;
-    text-shadow:
-      0 0 6px hsl(186 100% 60% / 0.9),
-      0 0 16px hsl(186 100% 50% / 0.55),
-      0 0 32px hsl(190 100% 50% / 0.3);
-  }
-  19%,
-  22.5%,
-  62.5% {
-    opacity: 0.55;
-    text-shadow: none;
-  }
 }
 
 .idea-suggestion-in {

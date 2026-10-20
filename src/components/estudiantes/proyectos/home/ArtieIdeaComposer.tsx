@@ -146,27 +146,21 @@ export function ArtieIdeaComposer({
   };
 
   return (
-    // Same travelling beam as the header search (`NeonSearchShell`), but the
-    // surface is a 2px inset in the flow instead of absolute, so the frame
-    // grows with the attachment chips.
+    // Same travelling beam as the header search (`NeonSearchShell`), without
+    // its background halo: only the border lights up. The surface is a 2px
+    // inset in the flow instead of absolute, so the frame grows with the
+    // attachment chips; `.composer-3d` gives it depth.
     <form
       onSubmit={(event) => void handleSubmit(event)}
-      className="group relative isolate rounded-2xl p-[2px] text-left"
+      className="composer-3d group relative isolate rounded-2xl p-[2px] text-left"
     >
-      <div
-        aria-hidden="true"
-        className="
-          neon-search-glow pointer-events-none absolute -inset-0.5 -z-10
-          rounded-2xl
-        "
-      />
       <div
         aria-hidden="true"
         className="neon-search-ring pointer-events-none absolute inset-0 rounded-2xl"
       />
       <div
         className="
-          relative rounded-[14px] border border-border/40 bg-surface-deep
+          composer-3d-surface relative rounded-[14px] border border-border/40
           transition-colors duration-300
           group-focus-within:border-primary/80
         "
@@ -331,10 +325,8 @@ export function ArtieIdeaComposer({
               aria-label={isLarge ? undefined : 'Enviar a Artie'}
               disabled={!canSend}
               className={`
-                inline-flex shrink-0 items-center justify-center rounded-full
-                bg-primary text-slate-950
-                shadow-[0_0_14px_hsl(185_72%_48%/0.35)] transition-colors
-                hover:bg-primary/90
+                composer-3d-button inline-flex shrink-0 items-center
+                justify-center rounded-full text-slate-950 transition
                 disabled:cursor-not-allowed disabled:opacity-50
                 ${isLarge ? 'ml-1 size-10 gap-2 text-sm font-semibold sm:h-9 sm:w-auto sm:px-4' : 'size-8 sm:size-6'}
               `}

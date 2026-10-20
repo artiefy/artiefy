@@ -24,7 +24,7 @@ export const rootMetadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     template: `%s | ${SITE_NAME}`,
-    default: 'Artiefy | Cursos online de ciencia y tecnología',
+    default: 'Artiefy | Te ayudamos a construir tus ideas',
   },
   description:
     'Aprende ciencia y tecnología a tu ritmo con cursos, programas y proyectos guiados online. Obtén certificados y mentoría en Artiefy, tu plataforma educativa.',

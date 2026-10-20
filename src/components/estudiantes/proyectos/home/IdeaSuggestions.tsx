@@ -55,8 +55,8 @@ interface IdeaSuggestionsProps {
 }
 
 /**
- * Three example ideas under the Artie composer, in flickering neon text.
- * Picking one drops it into the composer.
+ * Three example ideas under the Artie composer, in the brand blue. Picking
+ * one drops it into the composer.
  */
 export function IdeaSuggestions({
   label,
@@ -96,19 +96,15 @@ export function IdeaSuggestions({
                 onClick={() => onPick(example)}
                 style={{ animationDelay: `${(index + 1) * 0.12}s` }}
                 className="
-                  idea-suggestion-in min-h-10 rounded-md px-1
+                  idea-suggestion-in min-h-10 rounded-md px-1 text-primary
+                  transition-colors
+                  hover:text-cyan-200
                   focus-visible:ring-2 focus-visible:ring-primary/60
                   focus-visible:outline-none
                   sm:min-h-0
                 "
               >
-                {/* Each one flickers on its own beat. */}
-                <span
-                  className="neon-flicker"
-                  style={{ animationDelay: `${index * -2.3}s` }}
-                >
-                  &quot;{example}&quot;
-                </span>
+                &quot;{example}&quot;
               </button>
             </Fragment>
           ))}
