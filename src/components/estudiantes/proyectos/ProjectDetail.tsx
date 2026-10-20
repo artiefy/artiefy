@@ -17,10 +17,15 @@ import {
   Users,
 } from 'lucide-react';
 
+import { ProjectRepositoryPanel } from './ProjectRepositoryPanel';
+
 import type { ProjectSocialItem } from './types';
 
 interface ProjectDetailProps {
   item: ProjectSocialItem;
+  repositoryUrl: string | null;
+  /** Only the owner links or changes the repository. */
+  canEditRepository: boolean;
 }
 
 interface ProjectCommentItem {
@@ -52,7 +57,11 @@ const formatDate = (value: string) => {
   }).format(date);
 };
 
-export function ProjectDetail({ item }: ProjectDetailProps) {
+export function ProjectDetail({
+  item,
+  repositoryUrl,
+  canEditRepository,
+}: ProjectDetailProps) {
   const [interactions, setInteractions] = useState<InteractionState>({
     likes: item.likes,
     comments: item.comments,
@@ -551,6 +560,12 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
             ) : null}
           </div>
         </article>
+
+        <ProjectRepositoryPanel
+          projectId={item.id}
+          repositoryUrl={repositoryUrl}
+          canEdit={canEditRepository}
+        />
       </div>
     </section>
   );

@@ -506,6 +506,9 @@ export const projects = pgTable('projects', {
   dias_estimados: integer('dias_estimados'), // NUEVO: Días estimados por cálculo automático
   dias_necesarios: integer('dias_necesarios'), // NUEVO: Días necesarios por edición manual
   multimedia: text('multimedia'), // NUEVO: JSON array de multimedia (imágenes y videos adicionales)
+  // GitHub repository linked by the owner; shown in the project's
+  // Repositorio tab through /api/github/repo.
+  repositoryUrl: text('repository_url'),
 });
 
 // Tabla de publicaciones de la comunidad (feed /proyectos)

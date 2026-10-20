@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { env } from '~/env';
 import { parseRepositoryUrl } from '~/lib/github/parseRepositoryUrl';
 import { db } from '~/server/db';
-import { guidedProjects } from '~/server/db/schema';
+import { guidedProjects, projects } from '~/server/db/schema';
 import { getGuidedProjectContentAccess } from '~/server/services/guided-projects/guidedForumAccess';
 import { type ApiSession, getApiSession } from '~/server/utils/apiAuth';
 
@@ -66,6 +66,43 @@ async function resolveGuidedRepository(
   return { ok: true, repositoryUrl: project.repositoryUrl };
 }
 
+/**
+ * A user project's repository is visible to its owner and staff, and to any
+ * signed-in user once the owner made the project public.
+ */
+async function resolveUserProjectRepository(
+  projectId: number,
+  session: ApiSession & { userId: string }
+): Promise<RepositoryLookup> {
+  const [project] = await db
+    .select({
+      userId: projects.userId,
+      isPublic: projects.isPublic,
+      repositoryUrl: projects.repositoryUrl,
+    })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+  if (!project) {
+    return { ok: false, status: 404, error: 'Proyecto no encontrado' };
+  }
+
+  const canView =
+    session.isStaff || project.userId === session.userId || project.isPublic;
+  if (!canView) {
+    return { ok: false, status: 403, error: 'No autorizado' };
+  }
+
+  if (!project.repositoryUrl) {
+    return {
+      ok: false,
+      status: 404,
+      error: 'Este proyecto todavía no tiene un repositorio vinculado.',
+    };
+  }
+  return { ok: true, repositoryUrl: project.repositoryUrl };
+}
+
 async function resolveRepository(
   searchParams: URLSearchParams,
   session: ApiSession & { userId: string }
@@ -78,6 +115,9 @@ async function resolveRepository(
 
   if (source === 'guided') {
     return resolveGuidedRepository(projectId, session);
+  }
+  if (source === 'project') {
+    return resolveUserProjectRepository(projectId, session);
   }
   return { ok: false, status: 400, error: 'Tipo de proyecto inválido' };
 }
