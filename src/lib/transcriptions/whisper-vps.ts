@@ -119,6 +119,17 @@ export function isTranscriptionServiceConfigured(): boolean {
   return Boolean(env.TRANSCRIBE_API_URL && env.TRANSCRIBE_API_KEY);
 }
 
+/** Convierte el cuerpo de un error HTTP (a veces una página HTML) en texto corto. */
+function resumirCuerpoError(body: string): string {
+  const titulo = /<title>([^<]*)<\/title>/i.exec(body)?.[1]?.trim();
+  if (titulo) return titulo;
+  return body
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 300);
+}
+
 async function vpsRequest<T>(
   path: string,
   init?: RequestInit & { timeoutMs?: number }
@@ -139,10 +150,15 @@ async function vpsRequest<T>(
 
   if (!response.ok) {
     const body = await response.text().catch(() => '');
+    const detalle = resumirCuerpoError(body);
     throw new Error(
-      `El servicio de transcripción respondió ${response.status}${
-        body ? `: ${body.slice(0, 300)}` : ''
-      }`
+      response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504
+        ? `El servicio de transcripción no responde (${detalle || response.status}). Revisa que esté encendido en el servidor.`
+        : `El servicio de transcripción respondió ${response.status}${
+            detalle ? `: ${detalle}` : ''
+          }`
     );
   }
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import useSWR from 'swr';
 
 import AltaMasivaGrupo from '~/app/dashboard/super-admin/grupos/AltaMasivaGrupo';
 import { ModalCrearGrupo } from '~/app/dashboard/super-admin/grupos/ModalCrearGrupo';
@@ -60,12 +61,16 @@ interface CursoHoja {
   educador: string | null;
   horario: string | null;
   espacio: string | null;
+  instructorId: string | null;
+  scheduleOptionId: number | null;
+  spaceOptionId: number | null;
 }
 interface Hoja {
   id: number;
   nombre: string;
   parentId: number | null;
   programa: string | null;
+  programasIds: number[];
   empresa: string | null;
   teamsJoinUrl: string | null;
   cursoHoja: CursoHoja | null;
@@ -78,6 +83,7 @@ interface GrupoDetalle {
   hojas: Hoja[];
   cursosDisponibles: { id: number; title: string; programas: string[] }[];
   programas: string[];
+  programasOpciones: { id: number; title: string }[];
 }
 
 type Estado = 'presente' | 'ausente' | 'tarde';
@@ -109,19 +115,6 @@ const fmtFechaVert = (f: string | null) => {
   return formatFechaLarga(f);
 };
 
-function CampoInfo({ label, valor }: { label: string; valor: string | null }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-        {label}
-      </span>
-      <span className="min-w-0 flex-1 px-1 py-0.5 text-sm text-white/80">
-        {valor?.trim() ?? ''}
-      </span>
-    </div>
-  );
-}
-
 function CampoCabecera({
   label,
   valor,
@@ -144,8 +137,306 @@ function CampoCabecera({
         onBlur={(e) => {
           if (e.target.value !== (valor ?? '')) onSave(e.target.value);
         }}
-        className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white placeholder:text-white/25 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
+        className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 placeholder:text-white/25 focus:border-[#22C4D3] focus:outline-none"
       />
+    </div>
+  );
+}
+
+// Posición fija para un dropdown en portal anclado a `rect`: abre hacia donde
+// haya más espacio, se limita al alto disponible y no se sale por los bordes.
+function posDropdown(rect: DOMRect, ancho: number, altoMax: number) {
+  const margen = 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const espacioAbajo = vh - rect.bottom - margen;
+  const espacioArriba = rect.top - margen;
+  const abajo = espacioAbajo >= altoMax || espacioAbajo >= espacioArriba;
+  const w = Math.min(Math.max(ancho, rect.width), vw - margen * 2);
+  return {
+    left: Math.max(margen, Math.min(rect.left, vw - w - margen)),
+    width: w,
+    maxHeight: Math.min(altoMax, abajo ? espacioAbajo : espacioArriba),
+    ...(abajo ? { top: rect.bottom + 2 } : { bottom: vh - rect.top + 2 }),
+  };
+}
+
+// Combobox: al dar click abre la lista completa; al escribir filtra; si el
+// texto no coincide con ninguna opción se guarda como texto libre. El dropdown
+// va en portal para que no lo clipee la tabla.
+function ComboCampo({
+  label,
+  valor,
+  opciones,
+  disabled,
+  onElegir,
+  onTexto,
+}: {
+  label: string;
+  valor: string | null;
+  opciones: { id: string | number; name: string }[];
+  disabled?: boolean;
+  onElegir: (o: { id: string | number; name: string }) => void;
+  onTexto: (texto: string) => void;
+}) {
+  const [texto, setTexto] = useState(valor ?? '');
+  const [abierto, setAbierto] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => setTexto(valor ?? ''), [valor]);
+
+  const abrir = () => {
+    if (disabled) return;
+    if (inputRef.current) setRect(inputRef.current.getBoundingClientRect());
+    setAbierto(true);
+  };
+
+  const confirmarTexto = () => {
+    const v = texto.trim();
+    if (v === (valor ?? '').trim()) return;
+    const match = opciones.find(
+      (o) => o.name.trim().toLowerCase() === v.toLowerCase()
+    );
+    if (match) onElegir(match);
+    else onTexto(v);
+  };
+
+  // Cierra (y guarda el texto) al hacer click fuera, y reposiciona en scroll.
+  useEffect(() => {
+    if (!abierto) return;
+    const recalc = () => {
+      if (inputRef.current) setRect(inputRef.current.getBoundingClientRect());
+    };
+    const fuera = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (inputRef.current?.contains(t) || dropRef.current?.contains(t)) return;
+      confirmarTexto();
+      setAbierto(false);
+    };
+    window.addEventListener('scroll', recalc, true);
+    window.addEventListener('resize', recalc);
+    document.addEventListener('mousedown', fuera);
+    return () => {
+      window.removeEventListener('scroll', recalc, true);
+      window.removeEventListener('resize', recalc);
+      document.removeEventListener('mousedown', fuera);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [abierto, texto, valor, opciones]);
+
+  const q = texto.trim().toLowerCase();
+  const filtradas = q
+    ? opciones.filter((o) => o.name.toLowerCase().includes(q))
+    : opciones;
+
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+        {label}
+      </span>
+      <input
+        ref={inputRef}
+        value={texto}
+        disabled={disabled}
+        onChange={(e) => {
+          setTexto(e.target.value);
+          abrir();
+        }}
+        onFocus={abrir}
+        onClick={abrir}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            confirmarTexto();
+            setAbierto(false);
+          } else if (e.key === 'Tab') {
+            confirmarTexto();
+            setAbierto(false);
+          } else if (e.key === 'Escape') {
+            setTexto(valor ?? '');
+            setAbierto(false);
+          }
+        }}
+        placeholder="— Seleccionar —"
+        title="Click para ver la lista; escribe para filtrar o poner un valor libre"
+        className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 placeholder:text-white/25 focus:border-[#22C4D3] focus:outline-none disabled:opacity-40"
+      />
+      {abierto &&
+        rect &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={dropRef}
+            className="fixed z-[9999] overflow-y-auto rounded-lg border border-[#22C4D3]/40 bg-[#061c37] shadow-2xl"
+            style={posDropdown(rect, 256, 208)}
+          >
+            {filtradas.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-white/40">
+                Sin coincidencias — se guardará el texto
+              </div>
+            ) : (
+              filtradas.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    setTexto(o.name);
+                    setAbierto(false);
+                    if (o.name.trim() !== (valor ?? '').trim()) onElegir(o);
+                  }}
+                  className="block w-full px-3 py-1.5 text-left text-sm text-white hover:bg-white/5"
+                >
+                  {o.name}
+                </button>
+              ))
+            )}
+          </div>,
+          document.body
+        )}
+    </div>
+  );
+}
+
+// Multi-selección de programas: buscador con chips; cada chip se quita solo.
+function ProgramasMultiCampo({
+  opciones,
+  seleccion,
+  onChange,
+}: {
+  opciones: { id: number; title: string }[];
+  seleccion: number[];
+  onChange: (ids: number[]) => void;
+}) {
+  const [texto, setTexto] = useState('');
+  const [abierto, setAbierto] = useState(false);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const cajaRef = useRef<HTMLDivElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+
+  const abrir = () => {
+    if (cajaRef.current) setRect(cajaRef.current.getBoundingClientRect());
+    setAbierto(true);
+  };
+
+  useEffect(() => {
+    if (!abierto) return;
+    const recalc = () => {
+      if (cajaRef.current) setRect(cajaRef.current.getBoundingClientRect());
+    };
+    const fuera = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (cajaRef.current?.contains(t) || dropRef.current?.contains(t)) return;
+      setAbierto(false);
+      setTexto('');
+    };
+    window.addEventListener('scroll', recalc, true);
+    window.addEventListener('resize', recalc);
+    document.addEventListener('mousedown', fuera);
+    return () => {
+      window.removeEventListener('scroll', recalc, true);
+      window.removeEventListener('resize', recalc);
+      document.removeEventListener('mousedown', fuera);
+    };
+  }, [abierto]);
+
+  const elegidos = seleccion
+    .map((id) => opciones.find((o) => o.id === id))
+    .filter((o): o is { id: number; title: string } => !!o);
+  const q = texto.trim().toLowerCase();
+  const disponibles = opciones.filter(
+    (o) => !seleccion.includes(o.id) && o.title.toLowerCase().includes(q)
+  );
+  const agregar = (id: number) => {
+    if (seleccion.includes(id)) return;
+    onChange([...seleccion, id]);
+    setTexto('');
+  };
+
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+        Programas
+      </span>
+      <div
+        ref={cajaRef}
+        className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1 gap-y-0.5 px-1 py-0.5"
+        onClick={abrir}
+      >
+        {elegidos.map((o) => (
+          <span
+            key={o.id}
+            className="inline-flex max-w-full items-center gap-0.5 rounded-full bg-[#22C4D3]/15 px-1.5 text-[11px] leading-5 text-[#22C4D3]"
+          >
+            <span className="truncate">{o.title}</span>
+            <button
+              type="button"
+              aria-label={`Quitar ${o.title}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(seleccion.filter((id) => id !== o.id));
+              }}
+              className="hover:text-white"
+            >
+              <X className="size-2.5" />
+            </button>
+          </span>
+        ))}
+        <input
+          value={texto}
+          onChange={(e) => {
+            setTexto(e.target.value);
+            abrir();
+          }}
+          onFocus={abrir}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              if (disponibles[0]) agregar(disponibles[0].id);
+            } else if (e.key === 'Escape') {
+              setAbierto(false);
+              setTexto('');
+            } else if (
+              e.key === 'Backspace' &&
+              !texto &&
+              seleccion.length > 0
+            ) {
+              onChange(seleccion.slice(0, -1));
+            }
+          }}
+          placeholder={elegidos.length ? 'Agregar…' : '— Buscar programas —'}
+          className="min-w-[70px] flex-1 bg-transparent text-sm leading-5 text-white/80 placeholder:text-white/25 focus:outline-none"
+        />
+      </div>
+      {abierto &&
+        rect &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={dropRef}
+            className="fixed z-[9999] overflow-y-auto rounded-lg border border-[#22C4D3]/40 bg-[#061c37] shadow-2xl"
+            style={posDropdown(rect, Math.max(rect.width, 256), 208)}
+          >
+            {disponibles.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-white/40">
+                Sin coincidencias
+              </div>
+            ) : (
+              disponibles.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => agregar(o.id)}
+                  className="block w-full px-3 py-1.5 text-left text-sm text-white hover:bg-white/5"
+                >
+                  {o.title}
+                </button>
+              ))
+            )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -157,13 +448,34 @@ export default function GrupoDetallePage({
 }) {
   const { id } = use(params);
   const router = useRouter();
-  // La hoja activa se maneja por estado (no por ruta) para que cambiar/crear
-  // hojas sea inmediato: solo se hace un fetch, sin navegación de Next.
-  const [activeId, setActiveId] = useState<number>(Number(id));
-  const [data, setData] = useState<GrupoDetalle | null>(null);
-  const [cargando, setCargando] = useState(true);
+  // La hoja activa se guarda en la URL (?hoja=) para conservarla al recargar.
+  // Cambiar de pestaña sigue siendo inmediato (sin navegación de Next).
+  const [activeId, setActiveId] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const h = Number(new URLSearchParams(window.location.search).get('hoja'));
+      if (Number.isFinite(h) && h > 0) return h;
+    }
+    return Number(id);
+  });
+  // Datos del grupo con SWR: una sola petición por la familia (raíz + hojas),
+  // con revalidación al volver a la pestaña y tras cada cambio (mutate).
+  const {
+    data,
+    isLoading: cargando,
+    mutate: mutateGrupo,
+  } = useSWR<GrupoDetalle>(
+    `/api/super-admin/grupos/${Number(id)}`,
+    (url: string) =>
+      fetch(url, { cache: 'no-store' }).then((r) => {
+        if (!r.ok) throw new Error('No se pudo cargar el grupo');
+        return r.json() as Promise<GrupoDetalle>;
+      })
+  );
   const [error, setError] = useState<string | null>(null);
+  // El modal de nueva hoja se conserva pero ya no se abre desde el "+": la hoja
+  // se crea directo con `crearHojaDirecta`.
   const [nuevaHojaAbierta, setNuevaHojaAbierta] = useState(false);
+  const [creandoHoja, setCreandoHoja] = useState(false);
   // Cartera abierta (id del estudiante): se muestra la MISMA ventana de
   // cartera de Estudiantes, embebida en un iframe sobre la planilla.
   const [carteraDe, setCarteraDe] = useState<string | null>(null);
@@ -194,10 +506,33 @@ export default function GrupoDetallePage({
   const [guardandoFila, setGuardandoFila] = useState(false);
   const [avisoFila, setAvisoFila] = useState<string | null>(null);
   const [sugerencias, setSugerencias] = useState<Miembro[]>([]);
+  // Autocompletado de la fila nueva: campo que dispara la búsqueda y posición
+  // del dropdown (en portal para que no lo clipee la tabla).
+  const [campoBusqueda, setCampoBusqueda] = useState<
+    'email' | 'identificacion'
+  >('email');
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const identInputRef = useRef<HTMLInputElement>(null);
+  // Edición de correo por fila (borrador + estado de guardado).
+  const [correoDraft, setCorreoDraft] = useState<Record<string, string>>({});
+  const [guardandoCorreo, setGuardandoCorreo] = useState<string | null>(null);
+  // Opciones para editar los datos del curso desde el encabezado (igual que en
+  // la edición del curso): educadores, horarios y espacios.
+  const [educadores, setEducadores] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [horarios, setHorarios] = useState<{ id: number; name: string }[]>([]);
+  const [espacios, setEspacios] = useState<{ id: number; name: string }[]>([]);
 
-  // Autocompletar por correo: busca usuarios existentes mientras escribes.
+  // Autocompletar mientras escribes en Correo o # Identidad: el mismo endpoint
+  // busca por nombre, correo e identificación.
   useEffect(() => {
-    const q = draft?.email?.trim() ?? '';
+    const q =
+      (campoBusqueda === 'identificacion'
+        ? draft?.identificacion
+        : draft?.email
+      )?.trim() ?? '';
     if (!draft || draft.existingId || q.length < 3) {
       setSugerencias([]);
       return;
@@ -213,38 +548,72 @@ export default function GrupoDetallePage({
         .catch(() => undefined);
     }, 300);
     return () => clearTimeout(t);
-  }, [draft, activeId]);
+  }, [draft, activeId, campoBusqueda]);
 
-  // Trae TODA la familia (raíz + hojas). Cambiar de pestaña NO refetch: se lee
-  // de lo ya cargado, por eso es instantáneo.
-  const cargar = useCallback(async (fetchId: number) => {
-    try {
-      const res = await fetch(`/api/super-admin/grupos/${fetchId}`, {
-        cache: 'no-store',
-      });
-      if (!res.ok) throw new Error('No se pudo cargar el grupo');
-      setData((await res.json()) as GrupoDetalle);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
-    } finally {
-      setCargando(false);
-    }
-  }, []);
-
+  // Mantiene el dropdown pegado al input activo al hacer scroll o redimensionar.
   useEffect(() => {
-    void cargar(Number(id));
-  }, [cargar, id]);
+    if (sugerencias.length === 0) return;
+    const recalcular = () => {
+      const el =
+        campoBusqueda === 'identificacion'
+          ? identInputRef.current
+          : emailInputRef.current;
+      if (el) setAnchorRect(el.getBoundingClientRect());
+    };
+    recalcular();
+    window.addEventListener('scroll', recalcular, true);
+    window.addEventListener('resize', recalcular);
+    return () => {
+      window.removeEventListener('scroll', recalcular, true);
+      window.removeEventListener('resize', recalcular);
+    };
+  }, [sugerencias.length, campoBusqueda]);
 
-  // Actualiza una hoja de la familia en memoria (optimista).
+  // Revalida la familia (SWR). Mantiene la firma antigua cargar(x) para no
+  // tocar los puntos que la llaman; el id da igual porque el endpoint devuelve
+  // toda la familia. Cambiar de pestaña NO refetch: se lee de lo ya cargado.
+  // Si hay un guardado de programas en curso (sincroniza matrículas y puede
+  // tardar), espera a que termine: si no, la recarga lee la hoja sin programas.
+  const guardadoProgramas = useRef<Promise<unknown>>(Promise.resolve());
+  const cargar = useCallback(
+    (_fetchId?: number) => {
+      void guardadoProgramas.current.then(() => mutateGrupo());
+    },
+    [mutateGrupo]
+  );
+
+  // Actualiza una hoja de la familia en memoria (optimista, sin refetch).
   const patchHoja = (hojaId: number, updater: (h: Hoja) => Hoja) =>
-    setData((prev) =>
-      prev
-        ? {
-            ...prev,
-            hojas: prev.hojas.map((h) => (h.id === hojaId ? updater(h) : h)),
-          }
-        : prev
+    void mutateGrupo(
+      (prev) =>
+        prev
+          ? {
+              ...prev,
+              hojas: prev.hojas.map((h) => (h.id === hojaId ? updater(h) : h)),
+            }
+          : prev,
+      { revalidate: false }
     );
+
+  // Refleja la hoja activa en la URL (?hoja=) sin navegación, para conservarla
+  // al recargar la página.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (String(activeId) === String(id)) url.searchParams.delete('hoja');
+    else url.searchParams.set('hoja', String(activeId));
+    // Conserva el estado de Next: con `null` el router re-renderiza la ruta y
+    // aparece el loading.
+    window.history.replaceState(window.history.state, '', url.toString());
+  }, [activeId, id]);
+
+  // Si la hoja activa ya no existe (p. ej. se eliminó), vuelve a la raíz.
+  useEffect(() => {
+    if (!data) return;
+    if (!data.hojas.some((h) => h.id === activeId)) {
+      setActiveId(Number(id));
+    }
+  }, [data, activeId, id]);
 
   // Crea una hoja idéntica (mismo curso y fechas, sin estudiantes) y la abre.
   useEffect(() => {
@@ -266,6 +635,170 @@ export default function GrupoDetallePage({
     window.addEventListener('message', alMensaje);
     return () => window.removeEventListener('message', alMensaje);
   }, [carteraDe, cargar, activeId]);
+
+  // Guarda el correo de un estudiante (solo el correo: Clerk + BD, mismo id).
+  const guardarCorreo = async (userId: string, emailActual: string) => {
+    const nuevo = (correoDraft[userId] ?? emailActual).trim();
+    const limpiarDraft = () =>
+      setCorreoDraft((d) => {
+        const { [userId]: _omit, ...resto } = d;
+        return resto;
+      });
+
+    if (!nuevo || nuevo === (emailActual ?? '')) {
+      limpiarDraft();
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nuevo)) {
+      setAvisoFila('Correo inválido');
+      return;
+    }
+
+    setGuardandoCorreo(userId);
+    try {
+      const res = await fetch('/api/super-admin/udateUser/updateEmail', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, email: nuevo }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setAvisoFila(j.error ?? 'No se pudo actualizar el correo');
+        setCorreoDraft((d) => ({ ...d, [userId]: emailActual ?? '' }));
+        return;
+      }
+      // Optimista: actualiza el correo del miembro en todas las hojas.
+      void mutateGrupo(
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                hojas: prev.hojas.map((h) => ({
+                  ...h,
+                  miembros: h.miembros.map((mm) =>
+                    mm.id === userId ? { ...mm, email: nuevo } : mm
+                  ),
+                })),
+              }
+            : prev,
+        { revalidate: false }
+      );
+      limpiarDraft();
+      setAvisoFila(`✓ Correo actualizado a ${nuevo}`);
+    } catch {
+      setAvisoFila('Error al actualizar el correo');
+      setCorreoDraft((d) => ({ ...d, [userId]: emailActual ?? '' }));
+    } finally {
+      setGuardandoCorreo(null);
+    }
+  };
+
+  // Guarda un campo del usuario (name / phone / identificacionNumero) sin tocar
+  // ningún otro dato. Para el nombre también actualiza Clerk.
+  const guardarCampoUsuario = async (
+    userId: string,
+    field: 'name' | 'phone' | 'identificacionNumero',
+    value: string
+  ) => {
+    try {
+      const res = await fetch('/api/super-admin/udateUser/updateCampo', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, field, value }),
+      });
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setAvisoFila(j.error ?? 'No se pudo guardar el cambio');
+        return;
+      }
+      // Optimista: refleja el cambio del miembro en todas las hojas.
+      void mutateGrupo(
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                hojas: prev.hojas.map((h) => ({
+                  ...h,
+                  miembros: h.miembros.map((mm) =>
+                    mm.id === userId ? { ...mm, [field]: value || null } : mm
+                  ),
+                })),
+              }
+            : prev,
+        { revalidate: false }
+      );
+      setAvisoFila('✓ Dato actualizado');
+    } catch {
+      setAvisoFila('Error al guardar el cambio');
+    }
+  };
+
+  // Carga las opciones para editar el curso desde el encabezado (una vez).
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [edRes, hoRes, esRes] = await Promise.all([
+          fetch('/api/super-admin/changeEducators'),
+          fetch('/api/super-admin/schedule-options'),
+          fetch('/api/super-admin/space-options'),
+        ]);
+        if (edRes.ok) {
+          const ed = (await edRes.json()) as { id: string; name: string }[];
+          setEducadores(Array.isArray(ed) ? ed : []);
+        }
+        if (hoRes.ok) {
+          const h = (await hoRes.json()) as {
+            data?: { id: number; name: string }[];
+          };
+          setHorarios(h.data ?? []);
+        }
+        if (esRes.ok) {
+          const e = (await esRes.json()) as {
+            data?: { id: number; name: string }[];
+          };
+          setEspacios(e.data ?? []);
+        }
+      } catch {
+        // opciones opcionales; si fallan, los selects quedan vacíos.
+      }
+    })();
+  }, []);
+
+  // Guarda un dato del CURSO de la hoja (título, educador, horario, espacio).
+  // Se refleja en el curso (courses) en todas partes.
+  const guardarCampoCurso = async (
+    courseId: number,
+    patch: {
+      title?: string;
+      instructor?: string;
+      educadorTexto?: string;
+      scheduleOptionId?: number | null;
+      horarioTexto?: string | null;
+      spaceOptionId?: number | null;
+      espacioTexto?: string | null;
+    }
+  ) => {
+    try {
+      const res = await fetch(
+        `/api/super-admin/grupos/${activeId}/curso-datos`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId, ...patch }),
+        }
+      );
+      const j = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setAvisoFila(j.error ?? 'No se pudo guardar el curso');
+        return;
+      }
+      setAvisoFila('✓ Curso actualizado');
+      // Revalida para traer los nombres derivados (educador/horario/espacio).
+      void mutateGrupo();
+    } catch {
+      setAvisoFila('Error al guardar el curso');
+    }
+  };
 
   const verEnlaces = async () => {
     setCargandoEnlaces(true);
@@ -298,9 +831,86 @@ export default function GrupoDetallePage({
       setAvisoFila(
         `✓ Curso asignado · ${j?.matriculados ?? 0} estudiante(s) matriculado(s)`
       );
-      await cargar(activeId);
+      cargar(activeId);
     } else {
       setAvisoFila('No se pudo agregar el curso');
+    }
+  };
+
+  // Crea la hoja de una vez (sin pedir datos) con las fechas de clase de la
+  // primera hoja de la familia. Optimista: la pestaña aparece y se activa al
+  // instante; cuando el servidor responde se reemplaza por la hoja real.
+  const crearHojaDirecta = async () => {
+    const raiz = data?.hojas[0];
+    if (!data || !raiz || creandoHoja) return;
+    setCreandoHoja(true);
+    const previaId = activeId;
+    const tempId = -Date.now();
+    const nombreBase = raiz.nombre.replace(/\s*\(\d+\)\s*$/, '').trim();
+    const temporal: Hoja = {
+      id: tempId,
+      nombre: `${nombreBase} (${data.hojas.length + 1})`,
+      parentId: raiz.id,
+      programa: null,
+      programasIds: [],
+      empresa: null,
+      teamsJoinUrl: null,
+      cursoHoja: null,
+      miembros: [],
+      sesiones: raiz.sesiones.map((x, i) => ({
+        ...x,
+        id: tempId - i - 1,
+        courseId: null,
+      })),
+      asistencia: {},
+    };
+    void mutateGrupo(
+      (prev) => (prev ? { ...prev, hojas: [...prev.hojas, temporal] } : prev),
+      { revalidate: false }
+    );
+    setActiveId(tempId);
+    try {
+      const res = await fetch('/api/super-admin/grupos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parentId: raiz.id, copiarFechasDe: raiz.id }),
+      });
+      const j = (await res.json().catch(() => null)) as {
+        id?: number;
+        error?: string;
+      } | null;
+      if (!res.ok || !j?.id) {
+        throw new Error(j?.error ?? 'No se pudo crear la hoja');
+      }
+      const nuevaId = j.id;
+      // La temporal toma el id real antes de activarla: así no hay un instante
+      // sin hoja activa (que mostraría la primera) mientras se recarga.
+      void mutateGrupo(
+        (prev) =>
+          prev
+            ? {
+                ...prev,
+                hojas: prev.hojas.map((h) =>
+                  h.id === tempId ? { ...h, id: nuevaId } : h
+                ),
+              }
+            : prev,
+        { revalidate: false }
+      );
+      setActiveId(nuevaId);
+      void mutateGrupo();
+    } catch (e) {
+      void mutateGrupo(
+        (prev) =>
+          prev
+            ? { ...prev, hojas: prev.hojas.filter((h) => h.id !== tempId) }
+            : prev,
+        { revalidate: false }
+      );
+      setActiveId(previaId);
+      setAvisoFila(e instanceof Error ? e.message : 'No se pudo crear la hoja');
+    } finally {
+      setCreandoHoja(false);
     }
   };
 
@@ -313,13 +923,19 @@ export default function GrupoDetallePage({
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('No se pudo eliminar');
+      const j = (await res.json().catch(() => null)) as {
+        nuevaRaizId?: number | null;
+      } | null;
       setConfirmarEliminar(false);
       if (parentId) {
         // Era una hoja hija: vuelve a la raíz.
-        await cargar(parentId);
+        cargar(parentId);
         setActiveId(parentId);
+      } else if (j?.nuevaRaizId) {
+        // Era la raíz pero había más hojas: la más antigua pasó a ser la raíz.
+        router.push(`/dashboard/super-admin/grupos/${j.nuevaRaizId}`);
       } else {
-        // Era la raíz: se borró toda la familia, vuelve a la lista.
+        // Era la única hoja: vuelve a la lista.
         router.push('/dashboard/super-admin/grupos');
       }
     } catch (e) {
@@ -365,7 +981,7 @@ export default function GrupoDetallePage({
       }),
     });
     if (!res.ok) setAvisoFila('No se pudo agregar la fecha');
-    await cargar(activeId);
+    cargar(activeId);
   };
 
   const cambiarFechaSesion = async (sesionId: number, fecha: string) => {
@@ -382,7 +998,7 @@ export default function GrupoDetallePage({
     });
     if (!res.ok) {
       setAvisoFila('No se pudo cambiar la fecha');
-      await cargar(activeId);
+      cargar(activeId);
     }
   };
 
@@ -421,19 +1037,44 @@ export default function GrupoDetallePage({
     });
   };
 
-  // Cambiar el programa de la hoja matricula a sus estudiantes en ese programa.
-  const asignarPrograma = async (programa: string) => {
-    if (!programa) return;
+  // Reemplaza la lista de programas de la hoja (muchos-a-muchos). El primero es
+  // el principal (grupos.programa) y el que matricula a los estudiantes.
+  const asignarProgramas = async (programaIds: number[]) => {
+    const ids = [...new Set(programaIds)];
+    const titulos = ids
+      .map((i) => data?.programasOpciones.find((p) => p.id === i)?.title)
+      .filter((t): t is string => !!t);
+    const principal = titulos[0] ?? null;
+    const previo = data?.hojas.find((h) => h.id === activeId)?.programa;
     patchHoja(activeId, (h) => ({
       ...h,
-      programa,
-      miembros: h.miembros.map((m) => ({ ...m, programa })),
+      programa: principal,
+      programasIds: ids,
+      miembros:
+        principal && principal !== previo
+          ? h.miembros.map((m) => ({ ...m, programa: principal }))
+          : h.miembros,
     }));
-    await fetch(`/api/super-admin/grupos/${activeId}/programa`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ programa }),
-    });
+    const hojaId = activeId;
+    // Guardados en cola: dos cambios seguidos no se pisan entre sí.
+    guardadoProgramas.current = guardadoProgramas.current
+      .then(() =>
+        fetch(`/api/super-admin/grupos/${hojaId}/programas`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ programaIds: ids }),
+        })
+      )
+      .then((res) => {
+        if (res.ok) return;
+        setAvisoFila('No se pudieron guardar los programas');
+        void mutateGrupo();
+      })
+      .catch(() => {
+        setAvisoFila('No se pudieron guardar los programas');
+        void mutateGrupo();
+      });
+    await guardadoProgramas.current;
   };
 
   const guardarNota = async (
@@ -507,7 +1148,7 @@ export default function GrupoDetallePage({
         setAvisoFila(j.error ?? 'No se pudo guardar');
         return;
       }
-      await cargar(activeId);
+      cargar(activeId);
       if (j.existente) {
         setAvisoFila(`✓ ${draft.email} agregado a la hoja (usuario existente)`);
       } else {
@@ -535,6 +1176,12 @@ export default function GrupoDetallePage({
     const g = data.hojas.find((h) => h.id === activeId) ?? data.hojas[0];
     if (!g) return;
     const curso = g.cursoHoja;
+    const programasTxt =
+      g.programasIds
+        .map((i) => data.programasOpciones.find((p) => p.id === i)?.title)
+        .filter((t): t is string => !!t)
+        .join(', ') ||
+      (g.programa ?? '');
     const ses = g.sesiones;
     const filas = g.miembros
       .map((m, i) => {
@@ -579,7 +1226,7 @@ export default function GrupoDetallePage({
       <div class="info">
         <div><b>ESPACIO:</b> ${curso?.espacio ?? ''}</div>
         <div><b>EMPRESA:</b> ${g.empresa ?? ''}</div>
-        <div><b>PROGRAMA:</b> ${g.programa ?? ''}</div>
+        <div><b>PROGRAMAS:</b> ${programasTxt}</div>
         <div><b>EDUCADOR:</b> ${curso?.educador ?? ''}</div>
         <div><b>HORARIO:</b> ${curso?.horario ?? ''}</div>
         <div><b>CURSO:</b> ${curso?.curso ?? ''}</div>
@@ -610,7 +1257,7 @@ export default function GrupoDetallePage({
     );
   }
 
-  const { hojas, rootNombre, programas } = data;
+  const { hojas, rootNombre, programasOpciones } = data;
   const hoja = hojas.find((h) => h.id === activeId) ?? hojas[0] ?? null;
   if (!hoja) {
     return (
@@ -637,6 +1284,10 @@ export default function GrupoDetallePage({
     programasMiembros.length === 1
       ? programasMiembros[0]
       : (grupo.programa ?? '');
+  // Títulos de todos los programas de la hoja (para filtrar cursos).
+  const programasHojaTitulos = hoja.programasIds
+    .map((i) => programasOpciones.find((p) => p.id === i)?.title)
+    .filter((t): t is string => !!t);
   const tituloPlanilla =
     cursoHoja?.curso ?? (programaSel || grupo.programa || grupo.nombre);
 
@@ -663,6 +1314,7 @@ export default function GrupoDetallePage({
 
       <div className="flex min-h-[61px] items-center gap-2 overflow-x-auto border-b border-white/10 py-2">
         <input
+          key={`${grupo.id}:${grupo.nombre}`}
           aria-label="Nombre de la hoja"
           defaultValue={grupo.nombre}
           onBlur={(e) => {
@@ -775,75 +1427,122 @@ export default function GrupoDetallePage({
                   rowSpan={2}
                   className="border-b border-white/10 p-0 text-left align-bottom font-normal"
                 >
-                  <div className="grid grid-cols-2 grid-rows-3 gap-x-4 pr-4 pb-2">
-                    <div className="border-b border-white/10 py-3">
-                      <CampoInfo
+                  <div className="grid grid-cols-2 gap-x-4 pr-4 pb-1">
+                    <div className="border-b border-white/10 py-1">
+                      <ComboCampo
                         label="Espacio"
                         valor={cursoHoja?.espacio ?? null}
+                        opciones={espacios}
+                        disabled={!cursoHoja}
+                        onElegir={(o) =>
+                          cursoHoja &&
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            spaceOptionId: Number(o.id),
+                          })
+                        }
+                        onTexto={(v) =>
+                          cursoHoja &&
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            espacioTexto: v,
+                          })
+                        }
                       />
                     </div>
-                    <div className="border-b border-white/10 py-3">
+                    <div className="border-b border-white/10 py-1">
                       <CampoCabecera
                         label="Empresa"
                         valor={grupo.empresa}
                         onSave={(v) => void guardarEmpresa(v)}
                       />
                     </div>
-                    <div className="border-b border-white/10 py-3">
-                      <div className="flex items-baseline gap-2">
-                        <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                          Programa
-                        </span>
-                        <select
-                          value={programaSel}
-                          onChange={(e) => void asignarPrograma(e.target.value)}
-                          className="min-w-0 flex-1 border-b border-white/15 bg-transparent px-1 py-0.5 text-sm text-white focus:border-[#22C4D3] focus:outline-none [&>option]:bg-[#061c37]"
-                          title="Al cambiarlo, se matriculan los estudiantes de la hoja en ese programa"
-                        >
-                          <option value="">— Seleccionar programa —</option>
-                          {programas.map((p) => (
-                            <option key={p} value={p}>
-                              {p}
-                            </option>
-                          ))}
-                          {programaSel && !programas.includes(programaSel) && (
-                            <option value={programaSel}>{programaSel}</option>
-                          )}
-                        </select>
-                      </div>
+                    <div className="border-b border-white/10 py-1">
+                      <ProgramasMultiCampo
+                        opciones={programasOpciones}
+                        seleccion={hoja.programasIds}
+                        onChange={(ids) => void asignarProgramas(ids)}
+                      />
                     </div>
-                    <div className="border-b border-white/10 py-3">
-                      <CampoInfo
+                    <div className="border-b border-white/10 py-1">
+                      <ComboCampo
                         label="Educador"
                         valor={cursoHoja?.educador ?? null}
+                        opciones={educadores}
+                        disabled={!cursoHoja}
+                        onElegir={(o) =>
+                          cursoHoja &&
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            instructor: String(o.id),
+                          })
+                        }
+                        onTexto={(v) =>
+                          cursoHoja &&
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            educadorTexto: v,
+                          })
+                        }
                       />
                     </div>
-                    <div className="border-b border-white/10 py-3">
-                      <CampoInfo
+                    <div className="border-b border-white/10 py-1">
+                      <ComboCampo
                         label="Horario"
                         valor={cursoHoja?.horario ?? null}
+                        opciones={horarios}
+                        disabled={!cursoHoja}
+                        onElegir={(o) =>
+                          cursoHoja &&
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            scheduleOptionId: Number(o.id),
+                          })
+                        }
+                        onTexto={(v) =>
+                          cursoHoja &&
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            horarioTexto: v,
+                          })
+                        }
                       />
                     </div>
-                    <div className="border-b border-white/10 py-3">
+                    <div className="border-b border-white/10 py-1">
                       <div className="flex items-baseline gap-2">
                         <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                           Curso
                         </span>
-                        <button
-                          type="button"
-                          onClick={() => setCursoModal(true)}
-                          className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm hover:underline"
-                        >
-                          {cursoHoja ? (
-                            <span className="text-white/80">
-                              {cursoHoja.curso}
-                            </span>
-                          ) : (
-                            <span className="font-medium text-[#22C4D3]">
-                              Agregar curso
-                            </span>
-                          )}
-                        </button>
+                        {cursoHoja ? (
+                          <>
+                            <input
+                              key={`${cursoHoja.courseId}:${cursoHoja.curso}`}
+                              defaultValue={cursoHoja.curso}
+                              onBlur={(e) => {
+                                const nv = e.target.value.trim();
+                                if (nv && nv !== cursoHoja.curso)
+                                  void guardarCampoCurso(cursoHoja.courseId, {
+                                    title: nv,
+                                  });
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') e.currentTarget.blur();
+                              }}
+                              title="Edita el título del curso (se guarda en el curso)"
+                              className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 focus:border-[#22C4D3] focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setCursoModal(true)}
+                              title="Cambiar de curso"
+                              className="shrink-0 text-white/25 hover:text-[#22C4D3]"
+                            >
+                              <Pencil className="size-3" />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setCursoModal(true)}
+                            className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm font-medium text-[#22C4D3] hover:underline"
+                          >
+                            Agregar curso
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -943,20 +1642,95 @@ export default function GrupoDetallePage({
                         <Trash2 className="size-3.5" />
                       </button>
                     </td>
-                    <td className="border border-white/10 px-3 py-1.5 whitespace-nowrap text-white/70">
-                      {m.identificacionNumero}
+                    <td className="border border-white/10 px-1 py-0.5 text-white/70">
+                      <input
+                        defaultValue={m.identificacionNumero ?? ''}
+                        onBlur={(e) => {
+                          if (e.target.value !== (m.identificacionNumero ?? ''))
+                            void guardarCampoUsuario(
+                              m.id,
+                              'identificacionNumero',
+                              e.target.value
+                            );
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        className="w-full min-w-[110px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/70 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
+                      />
                     </td>
-                    <td className="sticky left-0 z-10 border border-white/10 bg-[#0a1a30] px-3 py-1.5 text-white">
-                      {nombres || (m.name ?? m.email)}
+                    <td className="sticky left-0 z-10 border border-white/10 bg-[#0a1a30] px-1 py-0.5 text-white">
+                      <input
+                        defaultValue={nombres}
+                        placeholder={m.name ?? m.email ?? ''}
+                        onBlur={(e) => {
+                          const nv = e.target.value.trim();
+                          if (nv !== nombres)
+                            void guardarCampoUsuario(
+                              m.id,
+                              'name',
+                              `${nv} ${apellidos}`.trim()
+                            );
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        className="w-full min-w-[120px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
+                      />
                     </td>
-                    <td className="border border-white/10 px-3 py-1.5 text-white/70">
-                      {apellidos}
+                    <td className="border border-white/10 px-1 py-0.5 text-white/70">
+                      <input
+                        defaultValue={apellidos}
+                        onBlur={(e) => {
+                          const nv = e.target.value.trim();
+                          if (nv !== apellidos)
+                            void guardarCampoUsuario(
+                              m.id,
+                              'name',
+                              `${nombres} ${nv}`.trim()
+                            );
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        className="w-full min-w-[120px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/70 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
+                      />
                     </td>
-                    <td className="border border-white/10 px-3 py-1.5 whitespace-nowrap text-white/60">
-                      {m.email}
+                    <td className="border border-white/10 px-1 py-0.5 text-white/60">
+                      <input
+                        type="email"
+                        value={correoDraft[m.id] ?? m.email ?? ''}
+                        onChange={(e) =>
+                          setCorreoDraft((d) => ({
+                            ...d,
+                            [m.id]: e.target.value,
+                          }))
+                        }
+                        onBlur={() => void guardarCorreo(m.id, m.email ?? '')}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        disabled={guardandoCorreo === m.id}
+                        title="Editar correo (se guarda al salir del campo)"
+                        className="w-full min-w-[180px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/70 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none disabled:opacity-50"
+                      />
                     </td>
-                    <td className="border border-white/10 px-3 py-1.5 whitespace-nowrap text-white/60">
-                      {m.phone}
+                    <td className="border border-white/10 px-1 py-0.5 text-white/60">
+                      <input
+                        defaultValue={m.phone ?? ''}
+                        onBlur={(e) => {
+                          if (e.target.value !== (m.phone ?? ''))
+                            void guardarCampoUsuario(
+                              m.id,
+                              'phone',
+                              e.target.value
+                            );
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur();
+                        }}
+                        className="w-full min-w-[110px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/60 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
+                      />
                     </td>
                     {sesiones.map((s) => {
                       const estado = (asistencia[s.id]?.[m.id] ?? '') as
@@ -1071,10 +1845,21 @@ export default function GrupoDetallePage({
                   </td>
                   <td className="border border-white/10 p-1">
                     <input
+                      ref={identInputRef}
                       value={draft.identificacion}
-                      onChange={(e) =>
-                        setDraft({ ...draft, identificacion: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setCampoBusqueda('identificacion');
+                        setAnchorRect(e.currentTarget.getBoundingClientRect());
+                        setDraft({
+                          ...draft,
+                          identificacion: e.target.value,
+                          existingId: '',
+                        });
+                      }}
+                      onFocus={(e) => {
+                        setCampoBusqueda('identificacion');
+                        setAnchorRect(e.currentTarget.getBoundingClientRect());
+                      }}
                       placeholder="# Identidad"
                       className="w-full min-w-[110px] rounded bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                     />
@@ -1100,17 +1885,24 @@ export default function GrupoDetallePage({
                       className="w-full min-w-[120px] rounded bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                     />
                   </td>
-                  <td className="relative border border-white/10 p-1">
+                  <td className="border border-white/10 p-1">
                     <input
+                      ref={emailInputRef}
                       type="email"
                       value={draft.email}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setCampoBusqueda('email');
+                        setAnchorRect(e.currentTarget.getBoundingClientRect());
                         setDraft({
                           ...draft,
                           email: e.target.value,
                           existingId: '',
-                        })
-                      }
+                        });
+                      }}
+                      onFocus={(e) => {
+                        setCampoBusqueda('email');
+                        setAnchorRect(e.currentTarget.getBoundingClientRect());
+                      }}
                       placeholder="correo@ejemplo.com *"
                       className="w-full min-w-[160px] rounded bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                     />
@@ -1118,42 +1910,6 @@ export default function GrupoDetallePage({
                       <span className="mt-0.5 block text-[10px] text-emerald-300">
                         ✓ usuario existente
                       </span>
-                    )}
-                    {!draft.existingId && sugerencias.length > 0 && (
-                      <div className="absolute top-full left-1 z-50 mt-1 max-h-56 w-72 overflow-y-auto rounded-lg border border-[#22C4D3]/40 bg-[#061c37] shadow-2xl">
-                        {sugerencias.map((s) => {
-                          const { nombres, apellidos } = splitNombre(s.name);
-                          return (
-                            <button
-                              key={s.id}
-                              type="button"
-                              onClick={() => {
-                                setDraft({
-                                  identificacion: s.identificacionNumero ?? '',
-                                  nombres,
-                                  apellidos,
-                                  email: s.email,
-                                  phone: s.phone ?? '',
-                                  modalidad: s.modalidad ?? '',
-                                  existingId: s.id,
-                                });
-                                setSugerencias([]);
-                              }}
-                              className="block w-full px-3 py-2 text-left hover:bg-white/5"
-                            >
-                              <span className="block truncate text-xs text-white">
-                                {s.email}
-                              </span>
-                              <span className="block truncate text-[11px] text-white/50">
-                                {s.name ?? '—'}
-                                {s.identificacionNumero
-                                  ? ` · ${s.identificacionNumero}`
-                                  : ''}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
                     )}
                   </td>
                   <td className="border border-white/10 p-1">
@@ -1216,13 +1972,67 @@ export default function GrupoDetallePage({
         </div>
       </div>
 
+      {/* Dropdown de sugerencias en portal: posición fija para que no lo
+          clipee la tabla ni se esconda; se voltea hacia arriba si no cabe. */}
+      {typeof document !== 'undefined' &&
+        draft &&
+        !draft.existingId &&
+        sugerencias.length > 0 &&
+        anchorRect &&
+        createPortal(
+          (() => {
+            return (
+              <div
+                className="fixed z-[9999] overflow-y-auto rounded-lg border border-[#22C4D3]/40 bg-[#061c37] shadow-2xl"
+                style={posDropdown(anchorRect, 288, 224)}
+              >
+                {sugerencias.map((s) => {
+                  const { nombres, apellidos } = splitNombre(s.name);
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setDraft({
+                          identificacion: s.identificacionNumero ?? '',
+                          nombres,
+                          apellidos,
+                          email: s.email,
+                          phone: s.phone ?? '',
+                          modalidad: s.modalidad ?? '',
+                          existingId: s.id,
+                        });
+                        setSugerencias([]);
+                      }}
+                      className="block w-full px-3 py-2 text-left hover:bg-white/5"
+                    >
+                      <span className="block truncate text-xs text-white">
+                        {s.email}
+                      </span>
+                      <span className="block truncate text-[11px] text-white/50">
+                        {s.name ?? '—'}
+                        {s.identificacionNumero
+                          ? ` · ${s.identificacionNumero}`
+                          : ''}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })(),
+          document.body
+        )}
+
       {/* Pestañas de hojas (sub-grupos) dentro del grupo */}
       <div className="sticky bottom-0 z-30 mt-auto border-t border-white/10 bg-[#04101f]/95 backdrop-blur">
         {/* pr-32 deja libre el botón flotante del asistente (fixed bottom-right) */}
         <div className="flex items-center gap-2 py-2 pr-32 pl-3">
           <button
             type="button"
-            onClick={() => setNuevaHojaAbierta(true)}
+            onClick={() => void crearHojaDirecta()}
+            disabled={creandoHoja}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 text-white/60 hover:bg-white/5 disabled:opacity-50"
             title="Nueva hoja"
           >
@@ -1252,24 +2062,42 @@ export default function GrupoDetallePage({
                 );
               }
               return (
-                <button
+                <div
                   key={h.id}
-                  type="button"
-                  onClick={() => {
-                    if (activa) setRenombrando(true);
-                    else setActiveId(h.id);
-                  }}
-                  title={activa ? 'Clic para renombrar' : h.nombre}
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
+                  className={`inline-flex shrink-0 items-center rounded-lg text-sm whitespace-nowrap transition-colors ${
                     activa
                       ? 'bg-[#22C4D3]/15 font-semibold text-[#22C4D3]'
                       : 'text-white/60 hover:bg-white/5 hover:text-white'
                   }`}
                 >
-                  <FileText className="size-4" />
-                  {h.nombre}
-                  {activa && <Pencil className="size-3 opacity-50" />}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (activa) setRenombrando(true);
+                      else setActiveId(h.id);
+                    }}
+                    title={activa ? 'Clic para renombrar' : h.nombre}
+                    className="inline-flex items-center gap-1.5 py-1.5 pr-1 pl-3"
+                  >
+                    <FileText className="size-4" />
+                    {h.nombre}
+                    {activa && <Pencil className="size-3 opacity-50" />}
+                  </button>
+                  {h.id > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveId(h.id);
+                        setConfirmarEliminar(true);
+                      }}
+                      title="Eliminar hoja"
+                      aria-label={`Eliminar ${h.nombre}`}
+                      className="mr-1.5 rounded p-0.5 text-current opacity-40 hover:bg-red-500/20 hover:text-red-400 hover:opacity-100"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -1347,21 +2175,17 @@ export default function GrupoDetallePage({
           onCerrar={() => setNuevaHojaAbierta(false)}
           onCreado={(nuevaId) => {
             setNuevaHojaAbierta(false);
-            void cargar(nuevaId).then(() => setActiveId(nuevaId));
+            void mutateGrupo().then(() => setActiveId(nuevaId));
           }}
         />
       )}
 
       {cursoModal && (
         <ModalAgregarCurso
-          programa={programaSel}
-          cursos={
-            programaSel
-              ? data.cursosDisponibles.filter((c) =>
-                  c.programas.includes(programaSel)
-                )
-              : []
-          }
+          programa={programasHojaTitulos.join(', ')}
+          cursos={data.cursosDisponibles.filter((c) =>
+            c.programas.some((p) => programasHojaTitulos.includes(p))
+          )}
           onCerrar={() => setCursoModal(false)}
           onAgregar={(cid) => void agregarCurso(cid)}
         />
@@ -1536,6 +2360,9 @@ function ModalClasesVirtuales({
   const [titulo, setTitulo] = useState(curso);
   const [hora, setHora] = useState('');
   const [duracion, setDuracion] = useState(60);
+  const [coHostEmail, setCoHostEmail] = useState(
+    'educadorsoftwarem@ponao.com.co'
+  );
   const [elegidas, setElegidas] = useState<Set<string>>(new Set());
   const [conEnlace, setConEnlace] = useState<Set<string>>(new Set());
   const [progreso, setProgreso] = useState<string | null>(null);
@@ -1569,6 +2396,10 @@ function ModalClasesVirtuales({
     if (!titulo.trim()) return setErr('Escribe un título.');
     if (!hora) return setErr('Elige la hora de inicio.');
     if (duracion < 15) return setErr('La duración mínima es 15 minutos.');
+    const coHost = coHostEmail.trim();
+    if (coHost && !/^\S+@\S+\.\S+$/.test(coHost)) {
+      return setErr('El email del coanfitrión no es válido.');
+    }
     const lista = fechas.filter((f) => elegidas.has(f));
     if (lista.length === 0) return setErr('Elige al menos una fecha.');
 
@@ -1588,6 +2419,7 @@ function ModalClasesVirtuales({
             repeatCount: 1,
             daysOfWeek: [diaSemanaCo(f)],
             customTitles: [formatFechaLarga(f)],
+            coHostEmail: coHost || undefined,
           }),
         });
         if (!res.ok) throw new Error();
@@ -1616,7 +2448,7 @@ function ModalClasesVirtuales({
       onClick={progreso ? undefined : onCerrar}
     >
       <div
-        className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#22C4D3]/30 bg-[#061c37] shadow-2xl"
+        className="flex max-h-[97vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[#22C4D3]/30 bg-[#061c37] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
@@ -1637,7 +2469,7 @@ function ModalClasesVirtuales({
           </button>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto p-5">
+        <div className="flex-1 space-y-3 overflow-y-auto p-4">
           <div>
             <label className="mb-1 block text-xs text-white/50">Título</label>
             <input
@@ -1701,7 +2533,7 @@ function ModalClasesVirtuales({
                 La hoja no tiene fechas. Agrégalas con + Fecha.
               </p>
             ) : (
-              <div className="max-h-60 overflow-y-auto rounded-xl border border-white/10">
+              <div className="rounded-xl border border-white/10">
                 {fechas.map((f) => (
                   <label
                     key={f}
@@ -1728,6 +2560,23 @@ function ModalClasesVirtuales({
                 ))}
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="mb-1 block text-xs text-white/50">
+              Email del coanfitrión
+            </label>
+            <input
+              type="email"
+              value={coHostEmail}
+              onChange={(e) => setCoHostEmail(e.target.value)}
+              placeholder="email@ejemplo.com"
+              className={campo}
+            />
+            <p className="mt-1 text-xs text-white/40">
+              Este correo recibirá permisos de coorganizador en todas las
+              clases.
+            </p>
           </div>
 
           {err && <p className="text-sm text-red-400">{err}</p>}
@@ -1873,6 +2722,11 @@ function ModalAgregarCurso({
   onCerrar: () => void;
   onAgregar: (courseId: number) => void;
 }) {
+  const [busqueda, setBusqueda] = useState('');
+  const q = busqueda.trim().toLowerCase();
+  const visibles = q
+    ? cursos.filter((c) => c.title.toLowerCase().includes(q))
+    : cursos;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
@@ -1893,15 +2747,33 @@ function ModalAgregarCurso({
             <X className="size-5" />
           </button>
         </div>
+        {cursos.length > 0 && (
+          <div className="border-b border-white/10 px-4 py-2">
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#021832] px-3">
+              <Search className="size-4 shrink-0 text-white/40" />
+              <input
+                autoFocus
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar curso…"
+                className="h-9 min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+              />
+            </div>
+          </div>
+        )}
         <div className="max-h-[60vh] overflow-y-auto p-3">
           {cursos.length === 0 ? (
             <p className="py-6 text-center text-sm text-white/40">
               {programa
-                ? `No hay cursos del programa ${programa}.`
-                : 'Selecciona primero el programa de la hoja.'}
+                ? `No hay cursos de: ${programa}.`
+                : 'Asigna primero uno o más programas a la hoja.'}
+            </p>
+          ) : visibles.length === 0 ? (
+            <p className="py-6 text-center text-sm text-white/40">
+              Sin coincidencias.
             </p>
           ) : (
-            cursos.map((c) => (
+            visibles.map((c) => (
               <button
                 key={c.id}
                 type="button"

@@ -27,6 +27,7 @@ import {
   grupos,
   users,
 } from '~/server/db/schema';
+import { sincronizarEstudiantesAgregados } from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
 
 const MAIL_FROM = 'direcciongeneral@artiefy.com';
@@ -167,6 +168,7 @@ export async function POST(
         .insert(grupoEstudiantes)
         .values({ grupoId, userId: existingUserId })
         .onConflictDoNothing();
+      await sincronizarEstudiantesAgregados(grupoId, [existingUserId]);
 
       if (courseId != null) {
         const existe = await db
@@ -271,6 +273,7 @@ export async function POST(
       .insert(grupoEstudiantes)
       .values({ grupoId, userId })
       .onConflictDoNothing();
+    await sincronizarEstudiantesAgregados(grupoId, [userId]);
 
     // Envía las credenciales (no bloquea el alta si el correo falla).
     const usernameFinal = created.user.username ?? nombres;

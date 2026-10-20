@@ -1,7 +1,7 @@
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, ne } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, grupoCursos } from '~/server/db/schema';
+import { enrollments, grupoCursos, grupoEstudiantes } from '~/server/db/schema';
 
 import 'server-only';
 
@@ -49,4 +49,56 @@ export const cursoDeHoja = async (grupoId: number): Promise<number | null> => {
     .where(eq(grupoCursos.grupoId, grupoId))
     .limit(1);
   return fila?.courseId ?? null;
+};
+
+/**
+ * La hoja deja de tener `courseId`: desmatricula a sus estudiantes de ese curso
+ * salvo a quienes otra hoja siga justificando (miembros de otra hoja con el
+ * mismo curso) o tengan la matrícula marcada como permanente.
+ * Devuelve cuántos se desmatricularon.
+ */
+export const desmatricularDeCursoDeHoja = async (
+  grupoId: number,
+  courseId: number
+): Promise<number> => {
+  const miembros = (
+    await db
+      .select({ userId: grupoEstudiantes.userId })
+      .from(grupoEstudiantes)
+      .where(eq(grupoEstudiantes.grupoId, grupoId))
+  ).map((m) => m.userId);
+  if (miembros.length === 0) return 0;
+
+  const respaldados = new Set(
+    (
+      await db
+        .select({ userId: grupoEstudiantes.userId })
+        .from(grupoEstudiantes)
+        .innerJoin(
+          grupoCursos,
+          eq(grupoCursos.grupoId, grupoEstudiantes.grupoId)
+        )
+        .where(
+          and(
+            ne(grupoEstudiantes.grupoId, grupoId),
+            eq(grupoCursos.courseId, courseId),
+            inArray(grupoEstudiantes.userId, miembros)
+          )
+        )
+    ).map((r) => r.userId)
+  );
+  const aQuitar = miembros.filter((u) => !respaldados.has(u));
+  if (aQuitar.length === 0) return 0;
+
+  const borradas = await db
+    .delete(enrollments)
+    .where(
+      and(
+        eq(enrollments.courseId, courseId),
+        inArray(enrollments.userId, aQuitar),
+        eq(enrollments.isPermanent, false)
+      )
+    )
+    .returning({ id: enrollments.id });
+  return borradas.length;
 };

@@ -15,6 +15,10 @@ import { and, asc, eq, ilike, notInArray, or } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { grupoEstudiantes, users } from '~/server/db/schema';
 import { cursoDeHoja, matricularEnCurso } from '~/server/lib/grupos-matricula';
+import {
+  sincronizarEstudiantesAgregados,
+  sincronizarEstudiantesRetirados,
+} from '~/server/lib/grupos-programas-sync';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -107,6 +111,7 @@ export async function POST(
       .insert(grupoEstudiantes)
       .values(ids.map((userId) => ({ grupoId, userId })))
       .onConflictDoNothing();
+    await sincronizarEstudiantesAgregados(grupoId, ids);
 
     // Si la hoja ya tiene curso, los nuevos miembros quedan matriculados.
     const courseId = await cursoDeHoja(grupoId);
@@ -187,6 +192,7 @@ export async function DELETE(
           eq(grupoEstudiantes.userId, quitarUserId)
         )
       );
+    await sincronizarEstudiantesRetirados(grupoId, [quitarUserId]);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[GRUPOS] quitar miembro:', error);

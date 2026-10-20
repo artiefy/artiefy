@@ -12,6 +12,7 @@ import {
   users,
 } from '~/server/db/schema';
 import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 function formatDateToClerk(date: Date): string {
   const year = date.getFullYear();
@@ -383,6 +384,8 @@ export async function POST(request: Request) {
             )
           );
       }
+
+      await marcarMatriculasManuales(filteredUserIds, parsedProgramId);
 
       const newProgramUsers = filteredUserIds.filter(
         (id) => !existingProgramUserIds.has(id)

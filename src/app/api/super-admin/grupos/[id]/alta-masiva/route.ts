@@ -24,6 +24,7 @@ import {
   grupos,
   users,
 } from '~/server/db/schema';
+import { sincronizarEstudiantesAgregados } from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
 
 const MAIL_FROM = 'direcciongeneral@artiefy.com';
@@ -165,6 +166,7 @@ export async function POST(
           .insert(grupoEstudiantes)
           .values({ grupoId, userId: existente.id })
           .onConflictDoNothing();
+        await sincronizarEstudiantesAgregados(grupoId, [existente.id]);
         await matricularCurso(existente.id);
         agregados++;
         continue;
@@ -211,6 +213,7 @@ export async function POST(
         .insert(grupoEstudiantes)
         .values({ grupoId, userId })
         .onConflictDoNothing();
+      await sincronizarEstudiantesAgregados(grupoId, [userId]);
 
       let correoOk = true;
       try {

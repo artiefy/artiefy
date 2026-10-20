@@ -42,6 +42,7 @@ import { CampoFechaLarga } from '~/components/shared/CampoFechaLarga';
 import { formatFechaLarga } from '~/lib/formatDate';
 
 import { AdvancedFilterMenu } from './AdvancedFilterMenu';
+import ComentariosEstudianteModal from './ComentariosEstudianteModal';
 
 // helpers
 const numNullOpt = z.preprocess(
@@ -856,6 +857,7 @@ export default function EnrolledUsersPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -3830,7 +3832,7 @@ export default function EnrolledUsersPage() {
           </h1>
 
           {/* Botones de acción */}
-          <div className="grid w-full grid-cols-3 items-center gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+          <div className="flex flex-wrap items-center gap-1.5">
             {(
               [
                 {
@@ -3888,7 +3890,7 @@ export default function EnrolledUsersPage() {
                 onClick={onClick}
                 disabled={disabled}
                 className={`
-                  inline-flex h-7 w-full items-center justify-center gap-1
+                  inline-flex h-7 items-center justify-center gap-1
                   rounded-full border px-2 text-[10px] font-medium
                   transition-colors disabled:cursor-not-allowed
                   disabled:opacity-40 [&_svg]:size-3
@@ -3904,7 +3906,7 @@ export default function EnrolledUsersPage() {
             <button
               onClick={() => setShowColumnSelector((v) => !v)}
               className="
-                inline-flex h-7 w-full items-center justify-center gap-1 rounded-full border
+                inline-flex h-7 items-center justify-center gap-1 rounded-full border
                 border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
                 font-medium text-white transition-all duration-150
                 hover:bg-white/10
@@ -3928,7 +3930,7 @@ export default function EnrolledUsersPage() {
             <button
               onClick={downloadSelectedAsExcel}
               className="
-                inline-flex h-7 w-full items-center justify-center gap-1 rounded-full border
+                inline-flex h-7 items-center justify-center gap-1 rounded-full border
                 border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
                 font-medium text-white transition-all duration-150
                 hover:bg-white/10
@@ -3940,11 +3942,21 @@ export default function EnrolledUsersPage() {
             </button>
             <button
               type="button"
-              disabled
+              onClick={() => setShowCommentsModal(true)}
+              disabled={selectedStudents.length !== 1}
+              title={
+                selectedStudents.length !== 1
+                  ? 'Selecciona una persona para ver sus comentarios'
+                  : 'Ver comentarios de la persona seleccionada'
+              }
               className="
-                inline-flex h-7 w-full items-center justify-center gap-1 rounded-full border
-                border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
-                font-medium text-white/35 [&_svg]:size-3
+                inline-flex h-7 items-center justify-center gap-1 rounded-full
+                border border-[#1d283a]/60 bg-[#061c37]/70 px-2.5 text-[10px]
+                font-medium text-white transition-colors
+                hover:border-[#22C4D3]/50 hover:text-[#22C4D3]
+                disabled:cursor-not-allowed disabled:text-white/35
+                disabled:hover:border-[#1d283a]/60 disabled:hover:text-white/35
+                [&_svg]:size-3
               "
             >
               <MessageSquare className="size-4" />
@@ -5395,6 +5407,16 @@ export default function EnrolledUsersPage() {
               />
             </div>
           </div>
+        )}
+
+        {showCommentsModal && selectedStudents.length === 1 && (
+          <ComentariosEstudianteModal
+            userId={selectedStudents[0]}
+            nombre={
+              students.find((s) => s.id === selectedStudents[0])?.name ?? ''
+            }
+            onClose={() => setShowCommentsModal(false)}
+          />
         )}
 
         {showCreateForm && (

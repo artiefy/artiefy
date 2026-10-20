@@ -5,6 +5,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollmentPrograms, programas, users } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 const BATCH_SIZE = 100;
 
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
 
     const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
     const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
+    await marcarMatriculasManuales([...existingUserIds], parsedProgramId);
 
     if (newUsers.length > 0) {
       const oneMonthFromNow = new Date();

@@ -77,7 +77,10 @@ export async function POST(request: Request) {
 
     if (videos.length === 0) {
       return NextResponse.json(
-        { error: 'No se encontraron videos para transcribir' },
+        {
+          error:
+            'No se encontraron videos para transcribir (los enlaces externos como YouTube no se pueden transcribir)',
+        },
         { status: 404 }
       );
     }

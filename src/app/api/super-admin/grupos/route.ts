@@ -16,10 +16,16 @@ import { db } from '~/server/db';
 import {
   grupoCursos,
   grupoEstudiantes,
+  grupoProgramas,
   grupos,
   grupoSesiones,
+  programas,
 } from '~/server/db/schema';
 import { matricularEnCurso } from '~/server/lib/grupos-matricula';
+import {
+  sincronizarEstudiantesAgregados,
+  sincronizarProgramasAgregados,
+} from '~/server/lib/grupos-programas-sync';
 
 // Genera fechas semanales (mismo día de la semana que 'inicio') hasta 'fin'.
 function fechasSemanales(inicio: string, fin: string): string[] {
@@ -110,6 +116,8 @@ interface CuerpoCrear {
   userIds?: string[];
   fechaInicio?: string | null;
   fechaFin?: string | null;
+  // Hoja a cuyas fechas de clase se copian a la hoja nueva (sin asistencia).
+  copiarFechasDe?: number | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -192,6 +200,25 @@ export async function POST(request: NextRequest) {
         .onConflictDoNothing();
     }
 
+    // El programa con el que se crea la hoja pasa a grupo_programas y
+    // matricula a sus miembros.
+    if (grupo && body?.programa) {
+      const [prog] = await db
+        .select({ id: programas.id })
+        .from(programas)
+        .where(eq(programas.title, body.programa))
+        .limit(1);
+      if (prog) {
+        await db
+          .insert(grupoProgramas)
+          .values({ grupoId: grupo.id, programaId: prog.id })
+          .onConflictDoNothing();
+        await sincronizarProgramasAgregados(grupo.id, [prog.id]);
+      }
+    } else if (grupo && userIds.length > 0) {
+      await sincronizarEstudiantesAgregados(grupo.id, userIds);
+    }
+
     // El curso elegido queda como curso de la hoja (planilla) y sus
     // estudiantes quedan matriculados en él.
     if (grupo && cursoId != null) {
@@ -214,6 +241,27 @@ export async function POST(request: NextRequest) {
             titulo: null,
           }))
         );
+      }
+    }
+
+    // Copia las fechas de clase de otra hoja (sin asistencia).
+    if (grupo && body?.copiarFechasDe != null) {
+      const origenId = Number(body.copiarFechasDe);
+      if (Number.isFinite(origenId)) {
+        const sesiones = await db
+          .select({ fecha: grupoSesiones.fecha, titulo: grupoSesiones.titulo })
+          .from(grupoSesiones)
+          .where(eq(grupoSesiones.grupoId, origenId));
+        if (sesiones.length > 0) {
+          await db.insert(grupoSesiones).values(
+            sesiones.map((x) => ({
+              grupoId: grupo.id,
+              courseId: null,
+              fecha: x.fecha,
+              titulo: x.titulo,
+            }))
+          );
+        }
       }
     }
 

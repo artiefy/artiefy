@@ -12,6 +12,7 @@ import {
   programas,
   users,
 } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 import { createUser, updateUserInClerk } from '~/server/queries/queries';
 
 const transporter = nodemailer.createTransport({
@@ -1825,6 +1826,10 @@ export async function POST(request: NextRequest) {
                   )
                 )
                 .limit(1);
+
+              if (existingEnrollment.length > 0) {
+                await marcarMatriculasManuales([userIdToUse], programaId);
+              }
 
               if (existingEnrollment.length === 0) {
                 // Matricular al programa

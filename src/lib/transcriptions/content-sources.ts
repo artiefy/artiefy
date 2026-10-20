@@ -27,6 +27,28 @@ export interface VideoSource {
   videoKey: string;
 }
 
+const EXTENSIONES_MEDIA = /\.(mp4|m4v|mov|webm|mkv|avi|mp3|m4a|wav|ogg)$/i;
+
+/**
+ * Una key de S3 siempre se puede descargar. Una URL completa solo sirve si
+ * apunta directo a un archivo de video/audio: páginas como YouTube devuelven
+ * HTML y ffmpeg no puede abrirlas, así que se ignoran.
+ */
+export function esFuenteTranscribible(key: string | null | undefined) {
+  if (!key) return false;
+  if (!/^https?:\/\//i.test(key)) return true;
+  try {
+    return EXTENSIONES_MEDIA.test(new URL(key).pathname);
+  } catch {
+    return false;
+  }
+}
+
+/** Primera fuente transcribible de la lista (o null). */
+const primeraTranscribible = (
+  ...keys: (string | null | undefined)[]
+): string | null => keys.find((k) => esFuenteTranscribible(k)) ?? null;
+
 /**
  * Todos los videos de un curso: sus clases y sus grabaciones de Teams.
  *
@@ -61,7 +83,7 @@ export async function getCourseVideos(
   const sources: VideoSource[] = [];
 
   for (const lesson of courseLessons) {
-    if (lesson.videoKey) {
+    if (esFuenteTranscribible(lesson.videoKey) && lesson.videoKey) {
       sources.push({
         type: 'lesson',
         contentId: lesson.id,
@@ -72,7 +94,11 @@ export async function getCourseVideos(
   }
 
   for (const meeting of meetings) {
-    const key = meeting.videoKey ?? meeting.videoKey2 ?? meeting.videoUrlExt;
+    const key = primeraTranscribible(
+      meeting.videoKey,
+      meeting.videoKey2,
+      meeting.videoUrlExt
+    );
     if (key) {
       sources.push({
         type: 'meeting',
@@ -177,7 +203,7 @@ export async function getSingleVideo(
         .from(lessons)
         .where(eq(lessons.id, contentId))
         .then((rows) => rows[0]);
-      if (!row?.videoKey) return null;
+      if (!row?.videoKey || !esFuenteTranscribible(row.videoKey)) return null;
       return {
         type,
         contentId: row.id,
@@ -198,7 +224,11 @@ export async function getSingleVideo(
         .from(classMeetings)
         .where(eq(classMeetings.id, contentId))
         .then((rows) => rows[0]);
-      const key = row?.videoKey ?? row?.videoKey2 ?? row?.videoUrlExt;
+      const key = primeraTranscribible(
+        row?.videoKey,
+        row?.videoKey2,
+        row?.videoUrlExt
+      );
       if (!row || !key) return null;
       return { type, contentId: row.id, title: row.title, videoKey: key };
     }

@@ -10,6 +10,7 @@ import {
   programas,
   users,
 } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 // Interfaz para representar un Programa
 export interface Program {
@@ -207,10 +208,13 @@ export const enrollUserInProgram = async (
   userId: string,
   programaId: number
 ) => {
-  return db.insert(enrollmentPrograms).values({
-    userId,
-    programaId,
-  });
+  await db
+    .insert(enrollmentPrograms)
+    .values({ userId, programaId })
+    .onConflictDoNothing({
+      target: [enrollmentPrograms.userId, enrollmentPrograms.programaId],
+    });
+  await marcarMatriculasManuales([userId], programaId);
 };
 
 // ✅ Obtener programas en los que un usuario está inscrito

@@ -12,7 +12,13 @@ import { auth } from '@clerk/nextjs/server';
 import { eq, or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { grupoCursos, grupos, grupoSesiones } from '~/server/db/schema';
+import {
+  grupoCursos,
+  grupoProgramas,
+  grupos,
+  grupoSesiones,
+} from '~/server/db/schema';
+import { establecerProgramasDeHoja } from '~/server/lib/grupos-programas-sync';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -81,6 +87,18 @@ export async function POST(
       return NextResponse.json(
         { error: 'No se pudo crear la hoja' },
         { status: 500 }
+      );
+    }
+
+    // Copia TODOS los programas de la hoja (misma lógica que al editarlos).
+    const programasBase = await db
+      .select({ programaId: grupoProgramas.programaId })
+      .from(grupoProgramas)
+      .where(eq(grupoProgramas.grupoId, grupoId));
+    if (programasBase.length > 0) {
+      await establecerProgramasDeHoja(
+        nueva.id,
+        programasBase.map((p) => p.programaId)
       );
     }
 

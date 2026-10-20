@@ -4,7 +4,8 @@
  * GET    — detalle del grupo: datos, miembros, hojas (cursos asignados con su
  *          enlace de Teams), sesiones por curso y asistencia.
  * PATCH  — renombra el grupo.
- * DELETE — elimina el grupo (en cascada sus miembros/hojas/sesiones/asistencia).
+ * DELETE — elimina SOLO esta hoja (con sus miembros/sesiones/asistencia). Si era
+ *          la raíz y hay más hojas, la hoja más antigua pasa a ser la raíz.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -19,6 +20,7 @@ import {
   grupoAsistencia,
   grupoCursos,
   grupoEstudiantes,
+  grupoProgramas,
   grupos,
   grupoSesiones,
   materias,
@@ -28,6 +30,7 @@ import {
   userCartera,
   users,
 } from '~/server/db/schema';
+import { sincronizarHojasEliminadas } from '~/server/lib/grupos-programas-sync';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -136,6 +139,9 @@ export async function GET(
           title: courses.title,
           instructor: courses.instructor,
           educadorNombre: educadorUser.name,
+          // IDs actuales (para preseleccionar los selects del encabezado).
+          scheduleOptionId: courses.scheduleOptionId,
+          spaceOptionId: courses.spaceOptionId,
           // El curso guarda horario/espacio como opción (schedule_options /
           // space_options); el texto viejo queda de respaldo.
           horario: sql<
@@ -168,10 +174,32 @@ export async function GET(
         .innerJoin(programas, eq(programas.id, materias.programaId))
         .orderBy(asc(courses.title)),
       db
-        .select({ title: programas.title })
+        .select({ id: programas.id, title: programas.title })
         .from(programas)
         .orderBy(asc(programas.title)),
     ]);
+
+    // Programas por hoja (grupo_programas). Si la tabla aún no existe, cae al
+    // programa de texto legado de cada hoja.
+    const programasPorHoja = new Map<number, number[]>();
+    try {
+      const rows = await db
+        .select({
+          grupoId: grupoProgramas.grupoId,
+          programaId: grupoProgramas.programaId,
+        })
+        .from(grupoProgramas)
+        .where(inArray(grupoProgramas.grupoId, ids));
+      for (const r of rows) {
+        programasPorHoja.set(r.grupoId, [
+          ...(programasPorHoja.get(r.grupoId) ?? []),
+          r.programaId,
+        ]);
+      }
+    } catch (e) {
+      console.error('[GRUPOS] grupo_programas no disponible:', e);
+    }
+    const idPorTitulo = new Map(programasRows.map((p) => [p.title, p.id]));
 
     // Agrupa por hoja (dedup por alumno, por si hay varias filas de cartera).
     type Miembro = Omit<(typeof miembrosRows)[number], 'grupoId'>;
@@ -243,6 +271,9 @@ export async function GET(
         educador: string | null;
         horario: string | null;
         espacio: string | null;
+        instructorId: string | null;
+        scheduleOptionId: number | null;
+        spaceOptionId: number | null;
       }
     >();
     for (const c of cursoRows) {
@@ -253,6 +284,9 @@ export async function GET(
         educador: c.educadorNombre ?? c.instructor ?? null,
         horario: c.horario ?? null,
         espacio: c.espacios ?? null,
+        instructorId: c.instructor ?? null,
+        scheduleOptionId: c.scheduleOptionId ?? null,
+        spaceOptionId: c.spaceOptionId ?? null,
       });
     }
 
@@ -261,6 +295,11 @@ export async function GET(
       nombre: f.nombre,
       parentId: f.parentId,
       programa: f.programa,
+      programasIds:
+        programasPorHoja.get(f.id) ??
+        (f.programa && idPorTitulo.has(f.programa)
+          ? [idPorTitulo.get(f.programa)!]
+          : []),
       empresa: f.empresa,
       teamsJoinUrl: f.teamsJoinUrl,
       cursoHoja: cursoPorHoja.get(f.id) ?? null,
@@ -290,6 +329,7 @@ export async function GET(
       hojas,
       cursosDisponibles: [...cursosPorId.values()],
       programas: programasRows.map((p) => p.title),
+      programasOpciones: programasRows,
     });
   } catch (error) {
     console.error('[GRUPOS] detail:', error);
@@ -366,12 +406,51 @@ export async function DELETE(
     return NextResponse.json({ error: 'Id inválido' }, { status: 400 });
   }
   try {
-    // Incluye las hojas hijas (sub-grupos) para borrarlas también.
-    const hijas = await db
-      .select({ id: grupos.id })
+    const [hoja] = await db
+      .select({ id: grupos.id, parentId: grupos.parentId })
       .from(grupos)
-      .where(eq(grupos.parentId, grupoId));
-    const ids = [grupoId, ...hijas.map((h) => h.id)];
+      .where(eq(grupos.id, grupoId))
+      .limit(1);
+    if (!hoja) {
+      return NextResponse.json(
+        { error: 'Hoja no encontrada' },
+        { status: 404 }
+      );
+    }
+    const ids = [grupoId];
+
+    // Si es la raíz y tiene hojas, la más antigua pasa a ser la nueva raíz
+    // (las demás cuelgan de ella) para no borrar la familia completa.
+    let nuevaRaizId: number | null = null;
+    if (hoja.parentId == null) {
+      const hijas = await db
+        .select({ id: grupos.id })
+        .from(grupos)
+        .where(eq(grupos.parentId, grupoId))
+        .orderBy(asc(grupos.createdAt));
+      const [nueva, ...resto] = hijas;
+      if (nueva) {
+        nuevaRaizId = nueva.id;
+        await db
+          .update(grupos)
+          .set({ parentId: null, updatedAt: new Date() })
+          .where(eq(grupos.id, nueva.id));
+        if (resto.length > 0) {
+          await db
+            .update(grupos)
+            .set({ parentId: nueva.id })
+            .where(
+              inArray(
+                grupos.id,
+                resto.map((h) => h.id)
+              )
+            );
+        }
+      }
+    }
+
+    // Antes del cascade: quita los orígenes y limpia matrículas sin respaldo.
+    await sincronizarHojasEliminadas(ids);
 
     // Borra los hijos explícitamente por si la BD no tiene ON DELETE CASCADE
     // (las tablas se crearon con SQL manual). La asistencia cuelga de las
@@ -391,17 +470,8 @@ export async function DELETE(
       .delete(grupoEstudiantes)
       .where(inArray(grupoEstudiantes.grupoId, ids));
     await db.delete(grupoCursos).where(inArray(grupoCursos.grupoId, ids));
-    // Primero las hijas, luego la raíz (por el FK parent_id).
-    if (hijas.length > 0) {
-      await db.delete(grupos).where(
-        inArray(
-          grupos.id,
-          hijas.map((h) => h.id)
-        )
-      );
-    }
     await db.delete(grupos).where(eq(grupos.id, grupoId));
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, nuevaRaizId });
   } catch (error) {
     console.error('[GRUPOS] delete:', error);
     return NextResponse.json({ error: 'No se pudo eliminar' }, { status: 500 });

@@ -15,6 +15,7 @@ import {
   userCustomFields,
   users,
 } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 import type { BaseCourse, Program } from '~/types';
 
@@ -1100,12 +1101,18 @@ export async function updateFullUser(
       console.log(
         `📝 Matriculando usuario en programa: userId=${userId}, programaId=${programId}`
       );
-      await db.insert(enrollmentPrograms).values({
-        userId,
-        programaId: programId,
-        enrolledAt: new Date(),
-        completed: false,
-      });
+      await db
+        .insert(enrollmentPrograms)
+        .values({
+          userId,
+          programaId: programId,
+          enrolledAt: new Date(),
+          completed: false,
+        })
+        .onConflictDoNothing({
+          target: [enrollmentPrograms.userId, enrollmentPrograms.programaId],
+        });
+      await marcarMatriculasManuales([userId], programId);
     }
 
     if (courseId != null) {

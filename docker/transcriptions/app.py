@@ -116,6 +116,11 @@ def load_model() -> Any:
 def download_video(url: str, dest: str) -> None:
     with requests.get(url, stream=True, timeout=DOWNLOAD_TIMEOUT) as response:
         response.raise_for_status()
+        content_type = response.headers.get("Content-Type", "").lower()
+        if content_type.startswith("text/"):
+            raise ValueError(
+                "La URL no es un archivo de video (devolvio una pagina web)"
+            )
         with open(dest, "wb") as handle:
             for chunk in response.iter_content(chunk_size=1024 * 1024):
                 if chunk:

@@ -20,6 +20,7 @@ import {
   userInscriptionDetails,
   users,
 } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
 
 const BUCKET = process.env.AWS_S3_BUCKET ?? process.env.AWS_BUCKET_NAME ?? ''; // 👈 acepta ambas
@@ -766,6 +767,9 @@ export async function POST(req: Request) {
           )
           .limit(1);
 
+        if (alreadyEnrolled.length > 0) {
+          await marcarMatriculasManuales([userId], programRow.id);
+        }
         if (alreadyEnrolled.length === 0) {
           await db.insert(enrollmentPrograms).values({
             programaId: programRow.id,

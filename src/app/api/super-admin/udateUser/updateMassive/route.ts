@@ -12,6 +12,7 @@ import {
   userCartera,
   users,
 } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
@@ -378,12 +379,18 @@ export async function PATCH(req: Request) {
 
       if (parsedProgramId !== null) {
         console.log(`  ➕ Matriculando en PROGRAMA ${parsedProgramId}...`);
-        await db.insert(enrollmentPrograms).values({
-          userId,
-          programaId: parsedProgramId,
-          enrolledAt: new Date(),
-          completed: false,
-        });
+        await db
+          .insert(enrollmentPrograms)
+          .values({
+            userId,
+            programaId: parsedProgramId,
+            enrolledAt: new Date(),
+            completed: false,
+          })
+          .onConflictDoNothing({
+            target: [enrollmentPrograms.userId, enrollmentPrograms.programaId],
+          });
+        await marcarMatriculasManuales([userId], parsedProgramId);
         console.log(`  ✅ Usuario matriculado en programa ${parsedProgramId}`);
       } else {
         console.log(`  ⏭️  Sin programa para matricular`);

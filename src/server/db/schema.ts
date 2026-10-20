@@ -1121,6 +1121,9 @@ export const enrollmentPrograms = pgTable('enrollment_programs', {
     .notNull(),
   enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
   completed: boolean('completed').default(false),
+  // true = creada solo por la sincronización de hojas (se puede borrar sola
+  // cuando se quedan sin orígenes). false = manual/legada: nunca se borra.
+  creadaPorGrupo: boolean('creada_por_grupo').default(false).notNull(),
 });
 
 // Relaciones de enrollmentPrograms
@@ -3066,6 +3069,72 @@ export const grupoEstudiantes = pgTable(
   (t) => [
     unique('uniq_grupo_estudiante').on(t.grupoId, t.userId),
     index('grupo_estudiantes_grupo_idx').on(t.grupoId),
+  ]
+);
+
+// Comentarios por estudiante (NO ligados a grupos). Cada comentario puede tener
+// respuestas anidadas mediante parentId (self-reference; null = comentario raíz).
+export const studentComments = pgTable(
+  'student_comments',
+  {
+    id: serial('id').primaryKey(),
+    studentId: text('student_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    authorId: text('author_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    // Comentario padre (otra fila de esta misma tabla) para los hilos.
+    parentId: integer('parent_id'),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    index('student_comments_student_idx').on(t.studentId),
+    index('student_comments_parent_idx').on(t.parentId),
+  ]
+);
+
+// Programas de una hoja (muchos-a-muchos). `grupos.programa` (texto) queda como
+// programa principal por compatibilidad con el código existente.
+export const grupoProgramas = pgTable(
+  'grupo_programas',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    programaId: integer('programa_id')
+      .references(() => programas.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('uniq_grupo_programa').on(t.grupoId, t.programaId),
+    index('grupo_programas_grupo_idx').on(t.grupoId),
+    index('grupo_programas_programa_idx').on(t.programaId),
+  ]
+);
+
+// Hojas que justifican una matrícula estudiante-programa.
+export const enrollmentProgramSources = pgTable(
+  'enrollment_program_sources',
+  {
+    id: serial('id').primaryKey(),
+    enrollmentProgramId: integer('enrollment_program_id')
+      .references(() => enrollmentPrograms.id, { onDelete: 'cascade' })
+      .notNull(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [
+    unique('uniq_enrollment_program_source').on(
+      t.enrollmentProgramId,
+      t.grupoId
+    ),
+    index('enrollment_program_sources_grupo_idx').on(t.grupoId),
   ]
 );
 

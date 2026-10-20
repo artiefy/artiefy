@@ -5,8 +5,11 @@
  * (espacio, educador, horario, título) se toman del curso.
  *
  * POST   { courseId } — agrega un curso como hoja del grupo y matricula en
- *                       ese curso a todos los estudiantes de la hoja.
- * DELETE ?courseId=   — quita la hoja (y sus sesiones/asistencia de ese curso).
+ *                       ese curso a todos los estudiantes de la hoja. El curso
+ *                       anterior (si lo había) se quita como en DELETE.
+ * DELETE ?courseId=   — quita la hoja (y sus sesiones/asistencia de ese curso)
+ *                       y desmatricula a sus estudiantes de ese curso, salvo
+ *                       a quienes otra hoja con el mismo curso siga respaldando.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -21,7 +24,10 @@ import {
   grupoEstudiantes,
   grupoSesiones,
 } from '~/server/db/schema';
-import { matricularEnCurso } from '~/server/lib/grupos-matricula';
+import {
+  desmatricularDeCursoDeHoja,
+  matricularEnCurso,
+} from '~/server/lib/grupos-matricula';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -46,14 +52,26 @@ export async function POST(
   }
   try {
     // Un curso por grupo (la hoja es el grupo): reemplaza el existente.
+    const anteriores = (
+      await db
+        .select({ courseId: grupoCursos.courseId })
+        .from(grupoCursos)
+        .where(eq(grupoCursos.grupoId, grupoId))
+    )
+      .map((c) => c.courseId)
+      .filter((c) => c !== courseId);
     await db.delete(grupoCursos).where(eq(grupoCursos.grupoId, grupoId));
     await db
       .insert(grupoCursos)
       .values({ grupoId, courseId })
       .onConflictDoNothing();
 
+    // Curso reemplazado: desmatricula salvo a quienes otra hoja respalde.
+    for (const anterior of anteriores) {
+      await desmatricularDeCursoDeHoja(grupoId, anterior);
+    }
+
     // Matricula en el curso a los estudiantes de la hoja que aún no lo estén.
-    // No se desmatricula del curso anterior (conservan su progreso).
     const miembros = await db
       .select({ userId: grupoEstudiantes.userId })
       .from(grupoEstudiantes)
@@ -113,7 +131,8 @@ export async function DELETE(
           eq(grupoCursos.courseId, courseId)
         )
       );
-    return NextResponse.json({ ok: true });
+    const desmatriculados = await desmatricularDeCursoDeHoja(grupoId, courseId);
+    return NextResponse.json({ ok: true, desmatriculados });
   } catch (error) {
     console.error('[GRUPOS] eliminar hoja:', error);
     return NextResponse.json(

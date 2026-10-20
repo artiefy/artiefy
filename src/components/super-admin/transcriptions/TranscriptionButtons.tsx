@@ -21,6 +21,32 @@ interface GroupStatusResponse {
   completed: number;
   processing: number;
   failed: number;
+  /** Detalle por video (la ruta de estado ya lo devuelve). */
+  videos?: { title?: string; status: Status; error?: string }[];
+}
+
+/**
+ * Resume el error de un video para mostrarlo en un tooltip: el job puede traer
+ * un volcado largo (p. ej. de ffmpeg), así que se queda con la línea del error.
+ */
+function resumirError(error: string | undefined): string {
+  const lineas = (error ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const clave =
+    lineas.find((l) => /error|invalid|failed|no such|timeout/i.test(l)) ??
+    lineas.at(-1) ??
+    'Error desconocido';
+  return clave.length > 200 ? `${clave.slice(0, 200)}…` : clave;
+}
+
+/** Texto del tooltip de "N con error": un renglón por video fallido. */
+function detalleErrores(videos: GroupStatusResponse['videos']): string {
+  return (videos ?? [])
+    .filter((v) => v.status === 'failed')
+    .map((v) => `• ${v.title ?? 'Video'}: ${resumirError(v.error)}`)
+    .join('\n');
 }
 
 interface StartResponse {
@@ -70,7 +96,6 @@ export function TranscribeVideoButton({
   const [status, setStatus] = useState<Status>('none');
   const [hasTranscription, setHasTranscription] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-
   const refresh = useCallback(async () => {
     try {
       const res = await fetch(
@@ -196,6 +221,8 @@ function TranscribeGroupButton({
 }) {
   const [summary, setSummary] = useState<GroupStatusResponse | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  // Fallos del último intento de encolar (no quedan guardados como job).
+  const [fallosEncolado, setFallosEncolado] = useState<string[]>([]);
 
   const refresh = useCallback(async () => {
     try {
@@ -233,6 +260,7 @@ function TranscribeGroupButton({
       }
 
       const data = (await res.json()) as StartResponse;
+      setFallosEncolado((data.errors ?? []).map((e) => resumirError(e.error)));
 
       if (data.started) {
         toast.success(`${data.started} video(s) en cola`, {
@@ -240,7 +268,7 @@ function TranscribeGroupButton({
         });
       } else if (data.errors?.length) {
         throw new Error(
-          `${data.errors.length} fallo(s): ${data.errors[0].error}`
+          `${data.errors.length} fallo(s): ${resumirError(data.errors[0].error)}`
         );
       } else {
         toast.info('No había videos pendientes por transcribir');
@@ -257,6 +285,13 @@ function TranscribeGroupButton({
   };
 
   const processing = summary?.processing ?? 0;
+  const nErrores = (summary?.failed ?? 0) + fallosEncolado.length;
+  const detalle = [
+    detalleErrores(summary?.videos),
+    ...fallosEncolado.map((e) => `• No se pudo encolar: ${e}`),
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   return (
     <div className="flex flex-col gap-1">
@@ -280,7 +315,15 @@ function TranscribeGroupButton({
         <p className="text-[10px] font-normal text-white/50">
           {summary.completed}/{summary.total} transcritos
           {processing > 0 && ` · ${processing} en proceso`}
-          {summary.failed > 0 && ` · ${summary.failed} con error`}
+          {nErrores > 0 && (
+            <span
+              title={detalle || undefined}
+              className="cursor-help text-red-300/80 underline decoration-dotted underline-offset-2"
+            >
+              {' '}
+              · {nErrores} con error
+            </span>
+          )}
         </p>
       )}
     </div>

@@ -206,27 +206,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
   const superAdminNav: SuperAdminNavItem[] = [
     {
-      kind: 'group',
-      id: 'estudiantes',
-      icon: <FaGraduationCap size={18} />,
-      title: 'Estudiantes',
-      items: [
-        {
-          title: 'Lista de Estudiantes',
-          link: '/dashboard/super-admin/programs/enrolled_users',
-        },
-        { title: 'Grupos', link: '/dashboard/super-admin/grupos' },
-        {
-          title: 'Logs credenciales',
-          link: '/dashboard/super-admin/credentials-logs',
-        },
-        {
-          title: 'Control de Accesos',
-          link: '/dashboard/super-admin/subscription',
-        },
-      ],
-    },
-    {
       kind: 'placeholder',
       id: 'inicio',
       icon: <FiHome size={18} />,
@@ -255,17 +234,22 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     },
     {
       kind: 'group',
-      id: 'proyectos',
-      icon: <FiFileText size={18} />,
-      title: 'Proyectos',
+      id: 'estudiantes',
+      icon: <FaGraduationCap size={18} />,
+      title: 'Builders',
       items: [
         {
-          title: 'Proyectos de Estudiantes',
-          link: '/dashboard/super-admin/projects',
+          title: 'Lista de Builders',
+          link: '/dashboard/super-admin/programs/enrolled_users',
+        },
+        { title: 'Grupos', link: '/dashboard/super-admin/grupos' },
+        {
+          title: 'Logs credenciales',
+          link: '/dashboard/super-admin/credentials-logs',
         },
         {
-          title: 'Proyectos Guiados',
-          link: '/dashboard/super-admin/proyectos-guiados',
+          title: 'Control de Accesos',
+          link: '/dashboard/super-admin/subscription',
         },
       ],
     },
@@ -285,6 +269,22 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
           link: '/dashboard/super-admin/cursos/configuraciones',
         },
         { title: 'Parámetros', link: '/dashboard/super-admin/parametros' },
+      ],
+    },
+    {
+      kind: 'group',
+      id: 'proyectos',
+      icon: <FiFileText size={18} />,
+      title: 'Proyectos',
+      items: [
+        {
+          title: 'Proyectos de Estudiantes',
+          link: '/dashboard/super-admin/projects',
+        },
+        {
+          title: 'Proyectos Guiados',
+          link: '/dashboard/super-admin/proyectos-guiados',
+        },
       ],
     },
     {

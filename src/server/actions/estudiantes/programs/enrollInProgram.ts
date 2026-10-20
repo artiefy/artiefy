@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { enrollmentPrograms, programas, users } from '~/server/db/schema';
+import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 export async function enrollInProgram(
   programId: number
@@ -74,8 +75,7 @@ export async function enrollInProgram(
     const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
     const planType = user.publicMetadata?.planType;
     const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as
-      | string
-      | null;
+      string | null;
 
     const isSubscriptionValid =
       subscriptionStatus === 'active' &&
@@ -101,6 +101,7 @@ export async function enrollInProgram(
     });
 
     if (existingEnrollment) {
+      await marcarMatriculasManuales([userId], programId);
       return {
         success: false,
         message: 'Ya estás inscrito en este programa',
