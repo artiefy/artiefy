@@ -5,9 +5,27 @@ import { auth } from '@clerk/nextjs/server';
 import deleteProject from '~/server/actions/project/deleteProject';
 import { getProjectById } from '~/server/actions/project/getProjectById';
 import { updateProject } from '~/server/actions/project/updateProject';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 const respondWithError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
+
+// Mutations are limited to the project owner or staff: the middleware does not
+// protect /api routes, so each handler has to authorize on its own.
+async function authorizeProjectEdit(
+  projectId: number
+): Promise<NextResponse | null> {
+  const project = await getProjectById(projectId);
+  if (!project) return respondWithError('Proyecto no encontrado', 404);
+  const access = await authorizeOwnerOrStaff(project.userId);
+  if (!access.ok) {
+    return respondWithError(
+      access.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      access.status
+    );
+  }
+  return null;
+}
 
 export async function GET(
   req: Request,
@@ -53,9 +71,8 @@ export async function PATCH(
     const projectId = Number(idParam);
     if (isNaN(projectId)) return respondWithError('ID inválido', 400);
 
-    // Verifica si el proyecto existe antes de actualizar
-    const project = await getProjectById(projectId);
-    if (!project) return respondWithError('Proyecto no encontrado', 404);
+    const denied = await authorizeProjectEdit(projectId);
+    if (denied) return denied;
 
     const body = (await req.json().catch(() => ({}))) as {
       isPublic?: unknown;
@@ -95,6 +112,9 @@ export async function PUT(
     if (!idParam) return respondWithError('ID de proyecto requerido', 400);
     const projectId = Number(idParam);
     if (isNaN(projectId)) return respondWithError('ID inválido', 400);
+
+    const denied = await authorizeProjectEdit(projectId);
+    if (denied) return denied;
 
     const body = (await req.json()) as Record<string, unknown>;
     const { id, userId, createdAt, updatedAt, ...updateFields } = body;
