@@ -1,12 +1,99 @@
 import { NextResponse } from 'next/server';
 
+import { eq } from 'drizzle-orm';
+
 import { env } from '~/env';
-import { authorizeStaff } from '~/server/utils/apiAuth';
+import { parseRepositoryUrl } from '~/lib/github/parseRepositoryUrl';
+import { db } from '~/server/db';
+import { guidedProjects } from '~/server/db/schema';
+import { getGuidedProjectContentAccess } from '~/server/services/guided-projects/guidedForumAccess';
+import { type ApiSession, getApiSession } from '~/server/utils/apiAuth';
 
 // Proxy de solo lectura hacia la API pública de GitHub para el explorador de
-// repositorio del panel de super admin. Centraliza el parseo de la URL, el
-// header de autenticación opcional (GITHUB_TOKEN) y el formato de respuesta,
-// para que el cliente no llame a GitHub directamente.
+// repositorio (panel de administración y páginas de estudiantes). Centraliza
+// el parseo de la URL, el header de autenticación opcional (GITHUB_TOKEN) y
+// el formato de respuesta, para que el cliente no llame a GitHub directamente.
+//
+// El repositorio se resuelve desde el proyecto (`source` + `id`), nunca desde
+// una URL del cliente: así el proxy no sirve para consultar repos arbitrarios
+// con nuestro token.
+
+const MAX_PATH_LENGTH = 500;
+
+type RepositoryLookup =
+  | { ok: true; repositoryUrl: string }
+  | { ok: false; status: 400 | 401 | 403 | 404; error: string };
+
+/**
+ * Staff can open any guided project's repository; anyone else needs content
+ * access (enrolled student or the project's instructor), checked before the
+ * response says whether a repository is linked at all.
+ */
+async function resolveGuidedRepository(
+  projectId: number,
+  session: ApiSession & { userId: string }
+): Promise<RepositoryLookup> {
+  const [project] = await db
+    .select({ repositoryUrl: guidedProjects.repositoryUrl })
+    .from(guidedProjects)
+    .where(eq(guidedProjects.id, projectId))
+    .limit(1);
+  if (!project) {
+    return { ok: false, status: 404, error: 'Proyecto no encontrado' };
+  }
+
+  if (!session.isStaff) {
+    const access = await getGuidedProjectContentAccess({
+      projectId,
+      userId: session.userId,
+    });
+    if (!access.success) {
+      return {
+        ok: false,
+        status: 403,
+        error: 'Inscríbete en el proyecto para ver su repositorio.',
+      };
+    }
+  }
+
+  if (!project.repositoryUrl) {
+    return {
+      ok: false,
+      status: 404,
+      error: 'Este proyecto todavía no tiene un repositorio vinculado.',
+    };
+  }
+  return { ok: true, repositoryUrl: project.repositoryUrl };
+}
+
+async function resolveRepository(
+  searchParams: URLSearchParams,
+  session: ApiSession & { userId: string }
+): Promise<RepositoryLookup> {
+  const source = searchParams.get('source');
+  const projectId = Number(searchParams.get('id'));
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    return { ok: false, status: 400, error: 'Proyecto inválido' };
+  }
+
+  if (source === 'guided') {
+    return resolveGuidedRepository(projectId, session);
+  }
+  return { ok: false, status: 400, error: 'Tipo de proyecto inválido' };
+}
+
+/**
+ * Encodes each segment of a repository path. Rejects `.`/`..` segments, so a
+ * path can never climb out of `/contents/` to another GitHub API endpoint.
+ */
+function toContentsPath(rawPath: string): string | null {
+  if (rawPath.length > MAX_PATH_LENGTH) return null;
+  const segments = rawPath.split('/').filter(Boolean);
+  if (segments.some((segment) => segment === '.' || segment === '..')) {
+    return null;
+  }
+  return segments.map((segment) => encodeURIComponent(segment)).join('/');
+}
 
 interface GithubRepoMeta {
   full_name: string;
@@ -33,21 +120,6 @@ interface GithubFileContent extends GithubContentEntry {
   encoding?: string;
 }
 
-function parseOwnerRepo(
-  repoUrl: string
-): { owner: string; repo: string } | null {
-  try {
-    const url = new URL(repoUrl.trim());
-    if (!/(^|\.)github\.com$/.test(url.hostname)) return null;
-    const [owner, rawRepo] = url.pathname.replace(/^\/+/, '').split('/');
-    if (!owner || !rawRepo) return null;
-    const repo = rawRepo.replace(/\.git$/, '');
-    return { owner, repo };
-  } catch {
-    return null;
-  }
-}
-
 function githubHeaders(): HeadersInit {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
@@ -60,26 +132,27 @@ function githubHeaders(): HeadersInit {
 }
 
 export async function GET(request: Request) {
-  const authResult = await authorizeStaff();
-  if (!authResult.ok) {
-    return NextResponse.json(
-      { error: 'No autorizado' },
-      { status: authResult.status }
-    );
+  const session = await getApiSession();
+  const { userId } = session;
+  if (!userId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
-  const repoUrlParam = searchParams.get('url');
-  const path = searchParams.get('path') ?? '';
-
-  if (!repoUrlParam) {
+  const lookup = await resolveRepository(searchParams, { ...session, userId });
+  if (!lookup.ok) {
     return NextResponse.json(
-      { error: 'Falta el parámetro url' },
-      { status: 400 }
+      { error: lookup.error },
+      { status: lookup.status }
     );
   }
 
-  const parsed = parseOwnerRepo(repoUrlParam);
+  const path = toContentsPath(searchParams.get('path') ?? '');
+  if (path === null) {
+    return NextResponse.json({ error: 'Ruta inválida' }, { status: 400 });
+  }
+
+  const parsed = parseRepositoryUrl(lookup.repositoryUrl);
   if (!parsed) {
     return NextResponse.json(
       { error: 'El link no parece ser un repositorio válido de GitHub' },
@@ -119,7 +192,7 @@ export async function GET(request: Request) {
     const repoMeta = (await metaRes.json()) as GithubRepoMeta;
 
     const contentsRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${encodeURI(path)}?ref=${repoMeta.default_branch}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(repoMeta.default_branch)}`,
       { headers: githubHeaders(), next: { revalidate: 60 } }
     );
 
