@@ -1,11 +1,14 @@
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
+import { eq } from 'drizzle-orm';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { ProjectDetail } from '~/components/estudiantes/proyectos/ProjectDetail';
 import { getProjectSocialById } from '~/components/estudiantes/proyectos/projectSocialData';
 import { getProjectById } from '~/server/actions/project/getProjectById';
+import { db } from '~/server/db';
+import { projects } from '~/server/db/schema';
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -55,10 +58,35 @@ export default async function ProyectoDetallePage({
 
   if (!item) notFound();
 
+  const repository = await getProjectRepository(projectId);
+
   return (
     <>
-      <ProjectDetail item={item} />
+      <ProjectDetail
+        item={item}
+        repositoryUrl={repository.repositoryUrl}
+        canEditRepository={repository.isOwner}
+      />
       <Footer />
     </>
   );
+}
+
+/** The linked GitHub repository and whether the viewer owns the project. */
+async function getProjectRepository(projectId: number) {
+  const [{ userId }, [project]] = await Promise.all([
+    auth(),
+    db
+      .select({
+        userId: projects.userId,
+        repositoryUrl: projects.repositoryUrl,
+      })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1),
+  ]);
+  return {
+    repositoryUrl: project?.repositoryUrl ?? null,
+    isOwner: Boolean(userId && project?.userId === userId),
+  };
 }

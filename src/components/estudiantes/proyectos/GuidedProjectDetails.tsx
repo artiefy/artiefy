@@ -63,6 +63,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
+import { RepositoryExplorer } from '~/components/projects/repository/RepositoryExplorer';
 import { openAgentChatFor } from '~/lib/agents/agentChatBus';
 import { cn } from '~/lib/utils';
 import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollInGuidedProject';
@@ -73,7 +74,13 @@ import { createProductFromGuidedProject } from '~/utils/paygateway/products';
 import type { GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
 
-type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro' | 'comentarios';
+type NavKey =
+  | 'proyecto'
+  | 'actividades'
+  | 'recursos'
+  | 'repositorio'
+  | 'foro'
+  | 'comentarios';
 
 interface RatingSummary {
   count: number;
@@ -217,6 +224,12 @@ export function GuidedProjectDetails({
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [activePill, setActivePill] = useState<NavKey>('actividades');
+  // The repository loads from GitHub, so it waits until the tab is first
+  // opened and then stays mounted to keep its place.
+  const [repoTabOpened, setRepoTabOpened] = useState(false);
+  if (activePill === 'repositorio' && !repoTabOpened) {
+    setRepoTabOpened(true);
+  }
   // Live rating from real student comments; the stored `project.rating` column
   // is a seeded value, so it must not drive the stars on its own.
   const [ratingSummary, setRatingSummary] = useState<RatingSummary>({
@@ -301,6 +314,16 @@ export function GuidedProjectDetails({
       label: 'Recursos',
       icon: <FileBox className="size-4 shrink-0" />,
     },
+    // Only projects with a linked repository get the tab.
+    ...(project.repositoryUrl
+      ? [
+          {
+            key: 'repositorio' as const,
+            label: 'Repositorio',
+            icon: <FaGithub className="size-4 shrink-0" />,
+          },
+        ]
+      : []),
     {
       key: 'foro',
       label: 'Foro',
@@ -1595,6 +1618,27 @@ export function GuidedProjectDetails({
                   >
                     {renderResources()}
                   </div>
+                  {project.repositoryUrl ? (
+                    <div
+                      id={`guided-project-${project.id}-repositorio-panel`}
+                      role="tabpanel"
+                      aria-labelledby={`guided-project-${project.id}-repositorio-tab`}
+                      hidden={activePill !== 'repositorio'}
+                      tabIndex={0}
+                    >
+                      {!canAccessContent ? (
+                        renderComingSoon(
+                          'Inscríbete en el proyecto para ver su repositorio.'
+                        )
+                      ) : repoTabOpened ? (
+                        <RepositoryExplorer
+                          source="guided"
+                          projectId={project.id}
+                          repositoryUrl={project.repositoryUrl}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div
                     id={`guided-project-${project.id}-foro-panel`}
                     role="tabpanel"

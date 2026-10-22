@@ -186,7 +186,7 @@ export function LandingHero({
           >
             <ArtieIdeaComposer
               size="lg"
-              placeholder="Cuéntale tu idea a Artie…"
+              placeholder="Dile a Artie qué idea te ayudará a desarrollar"
               idea={idea}
               onIdeaChange={onIdeaChange}
               onSubmit={onSubmit}

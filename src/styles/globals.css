@@ -1375,6 +1375,32 @@ body[data-animate-server-sections='true'] #courses-list-section {
   opacity: 0.8;
 }
 
+/* Send buttons of the Artie idea composer: a band of lighter cyan that
+   sweeps across the button on hover. */
+.send-button-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    var(--color-primary) 0%,
+    hsl(185 92% 66%) 45%,
+    var(--color-primary) 100%
+  );
+  background-size: 220% auto;
+  background-position: 0% 50%;
+  transition: background-position 0.5s;
+}
+
+button:enabled:hover > .send-button-sheen {
+  background-position: 100% 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .send-button-sheen {
+    transition: none;
+  }
+}
+
 /* The pill has its own clear/close controls; hide the native one. */
 .neon-search-input::-webkit-search-cancel-button {
   appearance: none;
@@ -1453,46 +1479,6 @@ body[data-animate-server-sections='true'] #courses-list-section {
 .text-shimmer {
   background-size: 250% auto;
   animation: text-shimmer 6s linear infinite;
-}
-
-/* Example ideas under the Artie composer: neon text that briefly dims and
-   lights up again, like a sign. At most two dips within a second, well under
-   the three-flashes limit (WCAG 2.3.1). Kept under reduced motion like the
-   other slow ambient loops here. */
-.neon-flicker {
-  color: hsl(186 100% 70%);
-  text-shadow:
-    0 0 6px hsl(186 100% 60% / 0.9),
-    0 0 16px hsl(186 100% 50% / 0.55),
-    0 0 32px hsl(190 100% 50% / 0.3);
-  transition: color 0.2s;
-  animation: neon-flicker 7s linear infinite;
-}
-
-button:hover .neon-flicker {
-  color: hsl(186 100% 86%);
-}
-
-@keyframes neon-flicker {
-  0%,
-  17%,
-  21%,
-  24%,
-  61%,
-  64%,
-  100% {
-    opacity: 1;
-    text-shadow:
-      0 0 6px hsl(186 100% 60% / 0.9),
-      0 0 16px hsl(186 100% 50% / 0.55),
-      0 0 32px hsl(190 100% 50% / 0.3);
-  }
-  19%,
-  22.5%,
-  62.5% {
-    opacity: 0.55;
-    text-shadow: none;
-  }
 }
 
 .idea-suggestion-in {
