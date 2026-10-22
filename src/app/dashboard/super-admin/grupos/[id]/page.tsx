@@ -147,8 +147,9 @@ function CampoCabecera({
 // haya más espacio, se limita al alto disponible y no se sale por los bordes.
 function posDropdown(rect: DOMRect, ancho: number, altoMax: number) {
   const margen = 8;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // clientWidth/Height excluyen las barras de scroll.
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
   const espacioAbajo = vh - rect.bottom - margen;
   const espacioArriba = rect.top - margen;
   const abajo = espacioAbajo >= altoMax || espacioAbajo >= espacioArriba;
@@ -181,6 +182,9 @@ function ComboCampo({
 }) {
   const [texto, setTexto] = useState(valor ?? '');
   const [abierto, setAbierto] = useState(false);
+  // Solo filtra cuando el usuario escribió; al abrir con click se ve la lista
+  // completa aunque ya haya un valor elegido.
+  const [filtrando, setFiltrando] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
@@ -190,6 +194,7 @@ function ComboCampo({
   const abrir = () => {
     if (disabled) return;
     if (inputRef.current) setRect(inputRef.current.getBoundingClientRect());
+    if (!abierto) setFiltrando(false);
     setAbierto(true);
   };
 
@@ -227,9 +232,10 @@ function ComboCampo({
   }, [abierto, texto, valor, opciones]);
 
   const q = texto.trim().toLowerCase();
-  const filtradas = q
-    ? opciones.filter((o) => o.name.toLowerCase().includes(q))
-    : opciones;
+  const filtradas =
+    filtrando && q
+      ? opciones.filter((o) => o.name.toLowerCase().includes(q))
+      : opciones;
 
   return (
     <div className="flex items-baseline gap-2">
@@ -243,6 +249,7 @@ function ComboCampo({
         onChange={(e) => {
           setTexto(e.target.value);
           abrir();
+          setFiltrando(true);
         }}
         onFocus={abrir}
         onClick={abrir}
@@ -1009,10 +1016,15 @@ export default function GrupoDetallePage({
     const limpio = nombre.trim();
     if (!limpio) return;
     patchHoja(activeId, (h) => ({ ...h, nombre: limpio }));
+    // La raíz también es la tarjeta del grupo: su pestaña se renombra aparte
+    // (nombreHoja) para no cambiar el nombre del grupo.
+    const esRaiz = data?.hojas.find((h) => h.id === activeId)?.parentId == null;
     await fetch(`/api/super-admin/grupos/${activeId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombre: limpio }),
+      body: JSON.stringify(
+        esRaiz ? { nombreHoja: limpio } : { nombre: limpio }
+      ),
     });
   };
 

@@ -3022,6 +3022,9 @@ export const forumRelations = relations(forums, ({ one, many }) => ({
 export const grupos = pgTable('grupos', {
   id: serial('id').primaryKey(),
   nombre: text('nombre').notNull(),
+  // Nombre de la pestaña de la raíz, independiente del nombre del grupo
+  // (tarjeta). Null = la pestaña muestra `nombre`.
+  nombreHoja: text('nombre_hoja'),
   // Grupo padre: si está set, este registro es una "hoja" (sub-grupo) dentro
   // de otro grupo. Null = grupo de nivel superior (contenedor).
   parentId: integer('parent_id'),

@@ -10,7 +10,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, asc, eq, ilike, notInArray, or } from 'drizzle-orm';
+import { and, asc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { grupoEstudiantes, users } from '~/server/db/schema';
@@ -46,12 +46,18 @@ export async function GET(
       .where(eq(grupoEstudiantes.grupoId, grupoId));
     const excluir = yaEnGrupo.map((m) => m.userId);
 
+    // Las cédulas se guardan con o sin separadores (1.111.482.571,
+    // 1.111482571...): se comparan solo letras y dígitos en ambos lados.
+    const qIdent = q.replace(/[^0-9a-z]/gi, '');
     const condiciones = [
       eq(users.role, 'estudiante'),
       or(
         ilike(users.name, `%${q}%`),
         ilike(users.email, `%${q}%`),
-        ilike(users.identificacionNumero, `%${q}%`)
+        ilike(users.identificacionNumero, `%${q}%`),
+        qIdent.length >= 2
+          ? sql`regexp_replace(${users.identificacionNumero}, '[^0-9A-Za-z]', '', 'g') ilike ${`%${qIdent}%`}`
+          : undefined
       ),
     ];
     if (excluir.length > 0) condiciones.push(notInArray(users.id, excluir));

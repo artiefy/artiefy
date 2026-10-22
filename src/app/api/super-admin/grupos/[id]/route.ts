@@ -70,6 +70,7 @@ export async function GET(
       .select({
         id: grupos.id,
         nombre: grupos.nombre,
+        nombreHoja: grupos.nombreHoja,
         parentId: grupos.parentId,
         programa: grupos.programa,
         empresa: grupos.empresa,
@@ -292,7 +293,9 @@ export async function GET(
 
     const hojas = ordenadas.map((f) => ({
       id: f.id,
-      nombre: f.nombre,
+      // La pestaña de la raíz puede tener su propio nombre (la tarjeta usa
+      // rootNombre).
+      nombre: f.nombreHoja ?? f.nombre,
       parentId: f.parentId,
       programa: f.programa,
       programasIds:
@@ -350,6 +353,7 @@ export async function PATCH(
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     nombre?: string;
+    nombreHoja?: string | null;
     espacio?: string | null;
     empresa?: string | null;
     educador?: string | null;
@@ -376,6 +380,8 @@ export async function PATCH(
     }
     cambios.nombre = nombre;
   }
+  if (body.nombreHoja !== undefined)
+    cambios.nombreHoja = limpiar(body.nombreHoja);
   if (body.espacio !== undefined) cambios.espacio = limpiar(body.espacio);
   if (body.empresa !== undefined) cambios.empresa = limpiar(body.empresa);
   if (body.educador !== undefined) cambios.educador = limpiar(body.educador);
