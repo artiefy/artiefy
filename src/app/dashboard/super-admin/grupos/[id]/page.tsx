@@ -1,6 +1,13 @@
 'use client';
 
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  use,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,6 +35,7 @@ import useSWR from 'swr';
 
 import AltaMasivaGrupo from '~/app/dashboard/super-admin/grupos/AltaMasivaGrupo';
 import { ModalCrearGrupo } from '~/app/dashboard/super-admin/grupos/ModalCrearGrupo';
+import { GrupoAttendanceEmbedContext } from '~/components/educators/layout/GrupoAttendanceEmbedContext';
 import { CalendarioPopover } from '~/components/shared/CalendarioPopover';
 import { formatFechaLarga } from '~/lib/formatDate';
 
@@ -81,6 +89,7 @@ interface Hoja {
 interface GrupoDetalle {
   rootNombre: string;
   hojas: Hoja[];
+  canAdminister?: boolean;
   cursosDisponibles: { id: number; title: string; programas: string[] }[];
   programas: string[];
   programasOpciones: { id: number; title: string }[];
@@ -453,12 +462,13 @@ export default function GrupoDetallePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const attendanceEmbed = useContext(GrupoAttendanceEmbedContext);
   const { id } = use(params);
   const router = useRouter();
   // La hoja activa se guarda en la URL (?hoja=) para conservarla al recargar.
   // Cambiar de pestaña sigue siendo inmediato (sin navegación de Next).
   const [activeId, setActiveId] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
+    if (!attendanceEmbed.enabled && typeof window !== 'undefined') {
       const h = Number(new URLSearchParams(window.location.search).get('hoja'));
       if (Number.isFinite(h) && h > 0) return h;
     }
@@ -471,7 +481,9 @@ export default function GrupoDetallePage({
     isLoading: cargando,
     mutate: mutateGrupo,
   } = useSWR<GrupoDetalle>(
-    `/api/super-admin/grupos/${Number(id)}`,
+    `/api/super-admin/grupos/${Number(id)}${
+      attendanceEmbed.enabled ? `?courseId=${attendanceEmbed.courseId}` : ''
+    }`,
     (url: string) =>
       fetch(url, { cache: 'no-store' }).then((r) => {
         if (!r.ok) throw new Error('No se pudo cargar el grupo');
@@ -531,9 +543,10 @@ export default function GrupoDetallePage({
     );
   }, [carteraEmbedListaOk, miembrosKey]);
   useEffect(() => {
+    if (attendanceEmbed.enabled) return;
     const t = setTimeout(() => setPrecargarCartera(true), 1500);
     return () => clearTimeout(t);
-  }, []);
+  }, [attendanceEmbed.enabled]);
   const [buscarAbierto, setBuscarAbierto] = useState(false);
   // Columna de fecha nueva (aún sin guardar) en esta hoja.
   const [fechaNuevaEn, setFechaNuevaEn] = useState<number | null>(null);
@@ -651,6 +664,7 @@ export default function GrupoDetallePage({
   // Refleja la hoja activa en la URL (?hoja=) sin navegación, para conservarla
   // al recargar la página.
   useEffect(() => {
+    if (attendanceEmbed.enabled) return;
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     if (String(activeId) === String(id)) url.searchParams.delete('hoja');
@@ -658,7 +672,7 @@ export default function GrupoDetallePage({
     // Conserva el estado de Next: con `null` el router re-renderiza la ruta y
     // aparece el loading.
     window.history.replaceState(window.history.state, '', url.toString());
-  }, [activeId, id]);
+  }, [activeId, attendanceEmbed.enabled, id]);
 
   // Si la hoja activa ya no existe (p. ej. se eliminó), vuelve a la raíz.
   useEffect(() => {
@@ -670,6 +684,7 @@ export default function GrupoDetallePage({
 
   // Crea una hoja idéntica (mismo curso y fechas, sin estudiantes) y la abre.
   useEffect(() => {
+    if (attendanceEmbed.enabled) return;
     const alMensaje = (e: MessageEvent) => {
       if (e.origin !== window.location.origin) return;
       const data = e.data as { type?: string; error?: string } | null;
@@ -701,7 +716,7 @@ export default function GrupoDetallePage({
     };
     window.addEventListener('message', alMensaje);
     return () => window.removeEventListener('message', alMensaje);
-  }, [cargar, activeId]);
+  }, [attendanceEmbed.enabled, cargar, activeId]);
 
   // Guarda el correo de un estudiante (solo el correo: Clerk + BD, mismo id).
   const guardarCorreo = async (userId: string, emailActual: string) => {
@@ -802,6 +817,7 @@ export default function GrupoDetallePage({
 
   // Carga las opciones para editar el curso desde el encabezado (una vez).
   useEffect(() => {
+    if (attendanceEmbed.enabled) return;
     void (async () => {
       try {
         const [edRes, hoRes, esRes] = await Promise.all([
@@ -829,7 +845,7 @@ export default function GrupoDetallePage({
         // opciones opcionales; si fallan, los selects quedan vacíos.
       }
     })();
-  }, []);
+  }, [attendanceEmbed.enabled]);
 
   // Guarda un dato del CURSO de la hoja (título, educador, horario, espacio).
   // Se refleja en el curso (courses) en todas partes.
@@ -1049,7 +1065,9 @@ export default function GrupoDetallePage({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         fecha,
-        courseId: cursoHoja?.courseId ?? undefined,
+        courseId: attendanceEmbed.enabled
+          ? (attendanceEmbed.courseId ?? undefined)
+          : (cursoHoja?.courseId ?? undefined),
       }),
     });
     if (!res.ok) setAvisoFila('No se pudo agregar la fecha');
@@ -1362,109 +1380,118 @@ export default function GrupoDetallePage({
     .filter((t): t is string => !!t);
   const tituloPlanilla =
     cursoHoja?.curso ?? (programaSel || grupo.programa || grupo.nombre);
+  const puedeAdministrar = data.canAdminister === true;
 
   return (
     <div
       // -mt/min-h van divididos entre el zoom (0.7) para cubrir de verdad los
       // 44px del header del layout y el alto completo de la pantalla.
       // flex-col + mt-auto en la barra de hojas: siempre queda abajo.
-      className="relative -mt-[62.857px] flex min-h-[calc(100vh/0.7)] flex-col bg-[#031a35] px-3 pt-20 text-white md:pt-7"
+      className={
+        attendanceEmbed.enabled
+          ? 'relative min-w-0 bg-[#031a35] px-3 text-white'
+          : 'relative -mt-[62.857px] flex min-h-[calc(100vh/0.7)] flex-col bg-[#031a35] px-3 pt-20 text-white md:pt-7'
+      }
       style={{ zoom: 0.7 }}
     >
-      {/* En desktop el título queda a la altura del header fijo del layout
+      {!attendanceEmbed.enabled && (
+        <>
+          {/* En desktop el título queda a la altura del header fijo del layout
           (z-40, transparente); z-50 lo deja clicable por encima. */}
-      <Link
-        href="/dashboard/super-admin/grupos"
-        className="relative z-50 inline-flex h-12 items-center gap-3 self-start text-white hover:text-white/75"
-      >
-        <ArrowLeft className="size-5" />
-        <span className="text-2xl font-bold">{rootNombre}</span>
-        <span className="text-sm font-normal text-white/50">
-          {hojas.length} {hojas.length === 1 ? 'hoja' : 'hojas'}
-        </span>
-      </Link>
+          <Link
+            href="/dashboard/super-admin/grupos"
+            className="relative z-50 inline-flex h-12 items-center gap-3 self-start text-white hover:text-white/75"
+          >
+            <ArrowLeft className="size-5" />
+            <span className="text-2xl font-bold">{rootNombre}</span>
+            <span className="text-sm font-normal text-white/50">
+              {hojas.length} {hojas.length === 1 ? 'hoja' : 'hojas'}
+            </span>
+          </Link>
 
-      <div className="flex min-h-[61px] items-center gap-2 overflow-x-auto border-b border-white/10 py-2">
-        <input
-          key={`${grupo.id}:${grupo.nombre}`}
-          aria-label="Nombre de la hoja"
-          defaultValue={grupo.nombre}
-          onBlur={(e) => {
-            if (e.target.value.trim() !== grupo.nombre) {
-              void renombrarHoja(e.target.value);
-            }
-          }}
-          className="h-9 w-[min(384px,40vw)] min-w-[180px] shrink-0 rounded-full border border-white/10 bg-[#021832] px-5 text-base text-white focus:border-white/30 focus:outline-none"
-        />
-        <button
-          type="button"
-          onClick={() => setBuscarAbierto(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5"
-        >
-          <Plus className="size-4" /> Estudiante
-        </button>
-        <button
-          type="button"
-          onClick={() => setFechaNuevaEn(activeId)}
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5"
-        >
-          <Plus className="size-4" /> Fecha
-        </button>
-        <AltaMasivaGrupo
-          grupoId={activeId}
-          programa={programaSel}
-          onDone={() => void cargar(activeId)}
-        />
-        <button
-          type="button"
-          onClick={() => setConfirmarEliminar(true)}
-          className="inline-flex h-9 shrink-0 items-center gap-2 px-3 text-sm font-medium text-red-500 hover:bg-red-500/10"
-        >
-          <Trash2 className="size-4" /> Eliminar hoja
-        </button>
+          <div className="flex min-h-[61px] items-center gap-2 overflow-x-auto border-b border-white/10 py-2">
+            <input
+              key={`${grupo.id}:${grupo.nombre}`}
+              aria-label="Nombre de la hoja"
+              defaultValue={grupo.nombre}
+              onBlur={(e) => {
+                if (e.target.value.trim() !== grupo.nombre) {
+                  void renombrarHoja(e.target.value);
+                }
+              }}
+              className="h-9 w-[min(384px,40vw)] min-w-[180px] shrink-0 rounded-full border border-white/10 bg-[#021832] px-5 text-base text-white focus:border-white/30 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setBuscarAbierto(true)}
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5"
+            >
+              <Plus className="size-4" /> Estudiante
+            </button>
+            <button
+              type="button"
+              onClick={() => setFechaNuevaEn(activeId)}
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5"
+            >
+              <Plus className="size-4" /> Fecha
+            </button>
+            <AltaMasivaGrupo
+              grupoId={activeId}
+              programa={programaSel}
+              onDone={() => void cargar(activeId)}
+            />
+            <button
+              type="button"
+              onClick={() => setConfirmarEliminar(true)}
+              className="inline-flex h-9 shrink-0 items-center gap-2 px-3 text-sm font-medium text-red-500 hover:bg-red-500/10"
+            >
+              <Trash2 className="size-4" /> Eliminar hoja
+            </button>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setClaseModal(true)}
-            disabled={!cursoHoja}
-            title={
-              cursoHoja
-                ? 'Programar clases de Teams para el curso de la hoja'
-                : 'Asigna primero un curso a la hoja'
-            }
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-blue-500/60 bg-blue-500/15 px-3 text-sm font-medium text-blue-400 hover:bg-blue-500/25 disabled:opacity-50"
-          >
-            <Video className="size-4" />
-            Agregar Clases Virtuales
-          </button>
-          <button
-            type="button"
-            onClick={() => void verEnlaces()}
-            disabled={!cursoHoja || cargandoEnlaces}
-            title={
-              cursoHoja
-                ? 'Ver los enlaces de las clases del curso'
-                : 'Asigna primero un curso a la hoja'
-            }
-            className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5 disabled:text-white/30"
-          >
-            {cargandoEnlaces ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Link2 className="size-4" />
-            )}
-            Ver Enlaces Clases
-          </button>
-          <button
-            type="button"
-            onClick={imprimir}
-            className="inline-flex h-9 items-center gap-2 rounded-full bg-[#19bfd0] px-3 text-sm font-semibold text-[#04101f] hover:bg-[#3ad4e2]"
-          >
-            <Printer className="size-4" /> Imprimir
-          </button>
-        </div>
-      </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setClaseModal(true)}
+                disabled={!cursoHoja}
+                title={
+                  cursoHoja
+                    ? 'Programar clases de Teams para el curso de la hoja'
+                    : 'Asigna primero un curso a la hoja'
+                }
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-blue-500/60 bg-blue-500/15 px-3 text-sm font-medium text-blue-400 hover:bg-blue-500/25 disabled:opacity-50"
+              >
+                <Video className="size-4" />
+                Agregar Clases Virtuales
+              </button>
+              <button
+                type="button"
+                onClick={() => void verEnlaces()}
+                disabled={!cursoHoja || cargandoEnlaces}
+                title={
+                  cursoHoja
+                    ? 'Ver los enlaces de las clases del curso'
+                    : 'Asigna primero un curso a la hoja'
+                }
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5 disabled:text-white/30"
+              >
+                {cargandoEnlaces ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Link2 className="size-4" />
+                )}
+                Ver Enlaces Clases
+              </button>
+              <button
+                type="button"
+                onClick={imprimir}
+                className="inline-flex h-9 items-center gap-2 rounded-full bg-[#19bfd0] px-3 text-sm font-semibold text-[#04101f] hover:bg-[#3ad4e2]"
+              >
+                <Printer className="size-4" /> Imprimir
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Planilla */}
       <div key={grupo.id} className="w-full">
@@ -1473,6 +1500,34 @@ export default function GrupoDetallePage({
             Planilla de asistencia — {tituloPlanilla}
           </h2>
         </div>
+
+        {attendanceEmbed.enabled && (
+          <div className="flex flex-wrap items-center gap-2 py-3">
+            {puedeAdministrar && (
+              <button
+                type="button"
+                onClick={() => setBuscarAbierto(true)}
+                className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5"
+              >
+                <Plus className="size-4" /> Estudiante
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setFechaNuevaEn(activeId)}
+              className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 px-3 text-sm font-medium text-white/90 hover:bg-white/5"
+            >
+              <Plus className="size-4" /> Agregar semana
+            </button>
+            <button
+              type="button"
+              onClick={imprimir}
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-[#19bfd0] px-3 text-sm font-semibold text-[#04101f] hover:bg-[#3ad4e2]"
+            >
+              <Printer className="size-4" /> Imprimir
+            </button>
+          </div>
+        )}
 
         {/* Aviso del alta en fila */}
         {avisoFila && (
@@ -1505,7 +1560,7 @@ export default function GrupoDetallePage({
                         label="Espacio"
                         valor={cursoHoja?.espacio ?? null}
                         opciones={espacios}
-                        disabled={!cursoHoja}
+                        disabled={!cursoHoja || !puedeAdministrar}
                         onElegir={(o) =>
                           cursoHoja &&
                           void guardarCampoCurso(cursoHoja.courseId, {
@@ -1521,25 +1576,43 @@ export default function GrupoDetallePage({
                       />
                     </div>
                     <div className="border-b border-white/10 py-1">
-                      <CampoCabecera
-                        label="Empresa"
-                        valor={grupo.empresa}
-                        onSave={(v) => void guardarEmpresa(v)}
-                      />
+                      {puedeAdministrar ? (
+                        <CampoCabecera
+                          label="Empresa"
+                          valor={grupo.empresa}
+                          onSave={(v) => void guardarEmpresa(v)}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-white/80">
+                          <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                            Empresa
+                          </span>
+                          {grupo.empresa || '—'}
+                        </div>
+                      )}
                     </div>
                     <div className="border-b border-white/10 py-1">
-                      <ProgramasMultiCampo
-                        opciones={programasOpciones}
-                        seleccion={hoja.programasIds}
-                        onChange={(ids) => void asignarProgramas(ids)}
-                      />
+                      {puedeAdministrar ? (
+                        <ProgramasMultiCampo
+                          opciones={programasOpciones}
+                          seleccion={hoja.programasIds}
+                          onChange={(ids) => void asignarProgramas(ids)}
+                        />
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-white/80">
+                          <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                            Programas
+                          </span>
+                          {programasHojaTitulos.join(', ') || '—'}
+                        </div>
+                      )}
                     </div>
                     <div className="border-b border-white/10 py-1">
                       <ComboCampo
                         label="Educador"
                         valor={cursoHoja?.educador ?? null}
                         opciones={educadores}
-                        disabled={!cursoHoja}
+                        disabled={!cursoHoja || !puedeAdministrar}
                         onElegir={(o) =>
                           cursoHoja &&
                           void guardarCampoCurso(cursoHoja.courseId, {
@@ -1559,7 +1632,7 @@ export default function GrupoDetallePage({
                         label="Horario"
                         valor={cursoHoja?.horario ?? null}
                         opciones={horarios}
-                        disabled={!cursoHoja}
+                        disabled={!cursoHoja || !puedeAdministrar}
                         onElegir={(o) =>
                           cursoHoja &&
                           void guardarCampoCurso(cursoHoja.courseId, {
@@ -1579,7 +1652,7 @@ export default function GrupoDetallePage({
                         <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                           Curso
                         </span>
-                        {cursoHoja ? (
+                        {cursoHoja && puedeAdministrar ? (
                           <>
                             <input
                               key={`${cursoHoja.courseId}:${cursoHoja.curso}`}
@@ -1606,10 +1679,15 @@ export default function GrupoDetallePage({
                               <Pencil className="size-3" />
                             </button>
                           </>
+                        ) : cursoHoja ? (
+                          <span className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm text-white/80">
+                            {cursoHoja.curso}
+                          </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => setCursoModal(true)}
+                            disabled={!puedeAdministrar}
                             className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm font-medium text-[#22C4D3] hover:underline"
                           >
                             Agregar curso
@@ -1641,6 +1719,7 @@ export default function GrupoDetallePage({
                       if (f && f !== s.fecha) void cambiarFechaSesion(s.id, f);
                     }}
                     onQuitar={() => void quitarSesion(s.id)}
+                    puedeEliminar={puedeAdministrar}
                   />
                 ))}
                 {fechaNueva && (
@@ -1705,18 +1784,21 @@ export default function GrupoDetallePage({
                   <tr key={m.id} className="group/row hover:bg-white/[0.02]">
                     <td className="relative border border-white/10 px-2 py-1.5 text-center text-white/50">
                       <span className="group-hover/row:opacity-0">{i + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() => void quitarMiembro(m.id)}
-                        className="absolute inset-0 m-auto flex items-center justify-center text-white/0 group-hover/row:text-red-400"
-                        aria-label="Quitar del grupo"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
+                      {puedeAdministrar && (
+                        <button
+                          type="button"
+                          onClick={() => void quitarMiembro(m.id)}
+                          className="absolute inset-0 m-auto flex items-center justify-center text-white/0 group-hover/row:text-red-400"
+                          aria-label="Quitar del grupo"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
                     </td>
                     <td className="border border-white/10 px-1 py-0.5 text-white/70">
                       <input
                         defaultValue={m.identificacionNumero ?? ''}
+                        readOnly={!puedeAdministrar}
                         onBlur={(e) => {
                           if (e.target.value !== (m.identificacionNumero ?? ''))
                             void guardarCampoUsuario(
@@ -1734,6 +1816,7 @@ export default function GrupoDetallePage({
                     <td className="sticky left-0 z-10 border border-white/10 bg-[#0a1a30] px-1 py-0.5 text-white">
                       <input
                         defaultValue={nombres}
+                        readOnly={!puedeAdministrar}
                         placeholder={m.name ?? m.email ?? ''}
                         onBlur={(e) => {
                           const nv = e.target.value.trim();
@@ -1753,6 +1836,7 @@ export default function GrupoDetallePage({
                     <td className="border border-white/10 px-1 py-0.5 text-white/70">
                       <input
                         defaultValue={apellidos}
+                        readOnly={!puedeAdministrar}
                         onBlur={(e) => {
                           const nv = e.target.value.trim();
                           if (nv !== apellidos)
@@ -1772,6 +1856,7 @@ export default function GrupoDetallePage({
                       <input
                         type="email"
                         value={correoDraft[m.id] ?? m.email ?? ''}
+                        readOnly={!puedeAdministrar}
                         onChange={(e) =>
                           setCorreoDraft((d) => ({
                             ...d,
@@ -1790,6 +1875,7 @@ export default function GrupoDetallePage({
                     <td className="border border-white/10 px-1 py-0.5 text-white/60">
                       <input
                         defaultValue={m.phone ?? ''}
+                        readOnly={!puedeAdministrar}
                         onBlur={(e) => {
                           if (e.target.value !== (m.phone ?? ''))
                             void guardarCampoUsuario(
@@ -1838,6 +1924,7 @@ export default function GrupoDetallePage({
                     <td className="border border-white/10 px-2 py-1.5">
                       <input
                         defaultValue={m.modalidad ?? ''}
+                        readOnly={!puedeAdministrar}
                         onBlur={(e) => {
                           if (e.target.value !== (m.modalidad ?? '')) {
                             void guardarNota(m.id, 'modalidad', e.target.value);
@@ -1848,22 +1935,30 @@ export default function GrupoDetallePage({
                     </td>
                     <td className="border border-white/10 px-3 py-1.5 whitespace-nowrap">
                       {/* Abre la misma ventana de cartera de Estudiantes. */}
-                      <button
-                        type="button"
-                        onClick={() => abrirCartera(m.id)}
-                        title="Gestionar cartera"
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium hover:brightness-125 ${
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
                           m.carteraStatus === 'activo'
                             ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
                             : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                         }`}
                       >
                         {m.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}
-                      </button>
+                      </span>
+                      {puedeAdministrar && (
+                        <button
+                          type="button"
+                          onClick={() => abrirCartera(m.id)}
+                          title="Gestionar cartera"
+                          className="ml-2 text-[11px] text-white/50 hover:text-white"
+                        >
+                          Gestionar
+                        </button>
+                      )}
                     </td>
                     <td className="border border-white/10 px-2 py-1.5">
                       <input
                         defaultValue={m.observaciones ?? ''}
+                        readOnly={!puedeAdministrar}
                         onBlur={(e) => {
                           if (e.target.value !== (m.observaciones ?? '')) {
                             void guardarNota(
@@ -1881,7 +1976,7 @@ export default function GrupoDetallePage({
               })}
 
               {/* Fila editable estilo Excel (al final, como una hoja) */}
-              {draft && (
+              {puedeAdministrar && draft && (
                 <tr className="bg-[#22C4D3]/[0.06]">
                   <td className="border border-white/10 px-2 py-1.5 text-center text-[#22C4D3]">
                     <div className="flex items-center justify-center gap-1">
@@ -2340,11 +2435,13 @@ function EncabezadoFecha({
   titulo,
   onElegir,
   onQuitar,
+  puedeEliminar = true,
 }: {
   fecha: string | null;
   titulo?: string | null;
   onElegir: (fecha: string) => void;
   onQuitar: () => void;
+  puedeEliminar?: boolean;
 }) {
   const [ancla, setAncla] = useState<HTMLElement | null>(null);
 
@@ -2357,19 +2454,21 @@ function EncabezadoFecha({
         fecha ? (titulo ?? 'Clic para cambiar la fecha') : 'Elige la fecha'
       }
     >
-      <button
-        type="button"
-        onClick={onQuitar}
-        className={`absolute top-1 left-1/2 z-10 -translate-x-1/2 ${
-          fecha
-            ? 'text-white/0 group-hover/fecha:text-red-400 focus:text-red-400'
-            : 'text-white/50 hover:text-red-400'
-        }`}
-        title={fecha ? 'Quitar fecha' : 'Cancelar'}
-        aria-label={fecha ? 'Quitar fecha' : 'Cancelar'}
-      >
-        <X className="size-3" />
-      </button>
+      {(puedeEliminar || !fecha) && (
+        <button
+          type="button"
+          onClick={onQuitar}
+          className={`absolute top-1 left-1/2 z-10 -translate-x-1/2 ${
+            fecha
+              ? 'text-white/0 group-hover/fecha:text-red-400 focus:text-red-400'
+              : 'text-white/50 hover:text-red-400'
+          }`}
+          title={fecha ? 'Quitar fecha' : 'Cancelar'}
+          aria-label={fecha ? 'Quitar fecha' : 'Cancelar'}
+        >
+          <X className="size-3" />
+        </button>
+      )}
       <button
         type="button"
         onClick={(e) => setAncla(ancla ? null : e.currentTarget)}

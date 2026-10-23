@@ -11,7 +11,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { asc, eq, inArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, or, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 
 import { db } from '~/server/db';
@@ -30,7 +30,14 @@ import {
   userCartera,
   users,
 } from '~/server/db/schema';
+import {
+  cursosDeGrupo,
+  educadorPuedeAccederAGrupo,
+  esAdministradorDeGrupos,
+} from '~/server/lib/grupo-asistencia-access';
 import { sincronizarHojasEliminadas } from '~/server/lib/grupos-programas-sync';
+import { isCourseOwnedByEducator } from '~/server/queries/educatorCourseAccess';
+import { getApiSession } from '~/server/utils/apiAuth';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -39,15 +46,42 @@ const autorizar = async () => {
 };
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
+  const session = await getApiSession();
+  if (!session.userId) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  if (!esAdministradorDeGrupos(session.role) && session.role !== 'educador') {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
   const grupoId = Number((await params).id);
   if (!Number.isFinite(grupoId)) {
     return NextResponse.json({ error: 'Id inválido' }, { status: 400 });
+  }
+  const courseIdParam = request.nextUrl.searchParams.get('courseId');
+  const courseId = courseIdParam == null ? null : Number(courseIdParam);
+  const esEmbebido = courseId != null;
+  if (esEmbebido && (!Number.isInteger(courseId) || courseId <= 0)) {
+    return NextResponse.json({ error: 'courseId inválido' }, { status: 400 });
+  }
+  if (session.role === 'educador') {
+    if (
+      courseId == null ||
+      !(await isCourseOwnedByEducator(courseId, session.userId)) ||
+      !(await educadorPuedeAccederAGrupo(grupoId, session.userId, courseId))
+    ) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+  } else if (courseId != null) {
+    const cursoIds = await cursosDeGrupo(grupoId);
+    if (!cursoIds.includes(courseId)) {
+      return NextResponse.json(
+        { error: 'Curso no asociado al grupo' },
+        { status: 403 }
+      );
+    }
   }
 
   try {
@@ -84,10 +118,13 @@ export async function GET(
     const rootNombre =
       familiaRows.find((f) => f.id === familyRoot)?.nombre ?? '';
     // Raíz primero, luego las hijas por fecha de creación.
-    const ordenadas = [
+    const familiaOrdenada = [
       ...familiaRows.filter((f) => f.id === familyRoot),
       ...familiaRows.filter((f) => f.id !== familyRoot),
     ];
+    const ordenadas = esEmbebido
+      ? familiaOrdenada.filter((f) => f.id === grupoId)
+      : familiaOrdenada;
     const ids = ordenadas.map((f) => f.id);
 
     // Alias para resolver el educador cuando courses.instructor es un id de
@@ -160,7 +197,14 @@ export async function GET(
           eq(scheduleOptions.id, courses.scheduleOptionId)
         )
         .leftJoin(spaceOptions, eq(spaceOptions.id, courses.spaceOptionId))
-        .where(inArray(grupoCursos.grupoId, ids)),
+        .where(
+          esEmbebido && courseId != null
+            ? and(
+                inArray(grupoCursos.grupoId, ids),
+                eq(grupoCursos.courseId, courseId)
+              )
+            : inArray(grupoCursos.grupoId, ids)
+        ),
       // Cursos con los programas a los que pertenecen
       // (courses ↔ materias(courseid, programaId) ↔ programas), para que el
       // front liste solo los del programa de la hoja.
@@ -179,6 +223,35 @@ export async function GET(
         .from(programas)
         .orderBy(asc(programas.title)),
     ]);
+
+    if (esEmbebido && courseId != null && cursoRows.length === 0) {
+      const cursosLegados = await db
+        .select({
+          grupoId: grupos.id,
+          courseId: courses.id,
+          title: courses.title,
+          instructor: courses.instructor,
+          educadorNombre: educadorUser.name,
+          scheduleOptionId: courses.scheduleOptionId,
+          spaceOptionId: courses.spaceOptionId,
+          horario: sql<
+            string | null
+          >`coalesce(${scheduleOptions.name}, ${courses.horario})`,
+          espacios: sql<
+            string | null
+          >`coalesce(${spaceOptions.name}, ${courses.espacios})`,
+        })
+        .from(grupos)
+        .innerJoin(courses, eq(grupos.courseId, courses.id))
+        .leftJoin(educadorUser, eq(educadorUser.id, courses.instructor))
+        .leftJoin(
+          scheduleOptions,
+          eq(scheduleOptions.id, courses.scheduleOptionId)
+        )
+        .leftJoin(spaceOptions, eq(spaceOptions.id, courses.spaceOptionId))
+        .where(and(eq(grupos.id, grupoId), eq(grupos.courseId, courseId)));
+      cursoRows.push(...cursosLegados);
+    }
 
     // Programas por hoja (grupo_programas). Si la tabla aún no existe, cae al
     // programa de texto legado de cada hoja.
@@ -327,12 +400,27 @@ export async function GET(
         });
     }
 
+    const programasVisibles =
+      session.role === 'educador'
+        ? programasRows.filter(
+            (programa) =>
+              ids.some((idHoja) =>
+                (programasPorHoja.get(idHoja) ?? []).includes(programa.id)
+              ) || ordenadas.some((hoja) => hoja.programa === programa.title)
+          )
+        : programasRows;
+    const cursosVisibles =
+      session.role === 'educador'
+        ? [...cursosPorId.values()].filter((curso) => curso.id === courseId)
+        : [...cursosPorId.values()];
+
     return NextResponse.json({
       rootNombre,
       hojas,
-      cursosDisponibles: [...cursosPorId.values()],
-      programas: programasRows.map((p) => p.title),
-      programasOpciones: programasRows,
+      canAdminister: esAdministradorDeGrupos(session.role),
+      cursosDisponibles: cursosVisibles,
+      programas: programasVisibles.map((p) => p.title),
+      programasOpciones: programasVisibles,
     });
   } catch (error) {
     console.error('[GRUPOS] detail:', error);
