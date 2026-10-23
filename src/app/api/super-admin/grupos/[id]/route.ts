@@ -361,6 +361,7 @@ export async function PATCH(
     curso?: string | null;
     fechaInicio?: string | null;
     fechaFin?: string | null;
+    archivado?: boolean;
   } | null;
   if (!Number.isFinite(grupoId) || !body) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
@@ -370,6 +371,17 @@ export async function PATCH(
   const cambios: Record<string, unknown> = { updatedAt: new Date() };
   const limpiar = (v: unknown) =>
     typeof v === 'string' ? (v.trim() === '' ? null : v.trim()) : null;
+  const fechaValida = (valor: unknown) => {
+    if (valor == null || valor === '') return true;
+    if (typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+      return false;
+    }
+    const fecha = new Date(`${valor}T00:00:00.000Z`);
+    return (
+      !Number.isNaN(fecha.getTime()) &&
+      fecha.toISOString().slice(0, 10) === valor
+    );
+  };
   if (body.nombre !== undefined) {
     const nombre = body.nombre.trim();
     if (!nombre) {
@@ -390,8 +402,50 @@ export async function PATCH(
   if (body.fechaInicio !== undefined)
     cambios.fechaInicio = limpiar(body.fechaInicio);
   if (body.fechaFin !== undefined) cambios.fechaFin = limpiar(body.fechaFin);
+  if (body.archivado !== undefined) {
+    if (typeof body.archivado !== 'boolean') {
+      return NextResponse.json(
+        { error: 'El estado de archivo es inválido' },
+        { status: 400 }
+      );
+    }
+    cambios.archivado = body.archivado;
+  }
+  if (!fechaValida(body.fechaInicio) || !fechaValida(body.fechaFin)) {
+    return NextResponse.json(
+      { error: 'Las fechas no son válidas' },
+      { status: 400 }
+    );
+  }
 
   try {
+    const [actual] = await db
+      .select({
+        id: grupos.id,
+        fechaInicio: grupos.fechaInicio,
+        fechaFin: grupos.fechaFin,
+      })
+      .from(grupos)
+      .where(eq(grupos.id, grupoId))
+      .limit(1);
+    if (!actual) {
+      return NextResponse.json(
+        { error: 'Grupo no encontrado' },
+        { status: 404 }
+      );
+    }
+    const fechaInicio =
+      body.fechaInicio === undefined
+        ? actual.fechaInicio
+        : limpiar(body.fechaInicio);
+    const fechaFin =
+      body.fechaFin === undefined ? actual.fechaFin : limpiar(body.fechaFin);
+    if (fechaInicio && fechaFin && fechaFin < fechaInicio) {
+      return NextResponse.json(
+        { error: 'La fecha de fin debe ser posterior a la fecha de inicio' },
+        { status: 400 }
+      );
+    }
     await db.update(grupos).set(cambios).where(eq(grupos.id, grupoId));
     return NextResponse.json({ ok: true });
   } catch (error) {

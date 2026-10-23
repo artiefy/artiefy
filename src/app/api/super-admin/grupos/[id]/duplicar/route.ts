@@ -9,11 +9,18 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq, or } from 'drizzle-orm';
+import { Pool } from '@neondatabase/serverless';
+import { eq, inArray, isNull, or } from 'drizzle-orm';
+import { drizzle } from 'drizzle-orm/neon-serverless';
 
+import { env } from '~/env';
 import { db } from '~/server/db';
+import * as schema from '~/server/db/schema';
 import {
+  enrollmentProgramSources,
+  grupoAsistencia,
   grupoCursos,
+  grupoEstudiantes,
   grupoProgramas,
   grupos,
   grupoSesiones,
@@ -27,6 +34,226 @@ const autorizar = async () => {
     ok: Boolean(userId) && (role === 'super-admin' || role === 'admin'),
     userId,
   };
+};
+
+const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
+  const pool = new Pool({ connectionString: env.POSTGRES_URL });
+  const transactionalDb = drizzle({ client: pool, schema });
+
+  try {
+    return await transactionalDb.transaction(
+      async (tx) => {
+        const [original] = await tx
+          .select()
+          .from(grupos)
+          .where(eq(grupos.id, grupoId))
+          .for('update')
+          .limit(1);
+        if (!original || original.parentId != null) {
+          throw new Error('Grupo raíz no encontrado');
+        }
+
+        const hojas = await tx
+          .select()
+          .from(grupos)
+          .where(eq(grupos.parentId, grupoId));
+        const raizNombre = original.nombre.replace(
+          /\s*\(copia(?:\s+\d+)?\)\s*$/i,
+          ''
+        );
+        const nombres = await tx
+          .select({ nombre: grupos.nombre })
+          .from(grupos)
+          .where(isNull(grupos.parentId));
+        const existentes = new Set(nombres.map((grupo) => grupo.nombre));
+        let nombre = `${raizNombre} (copia)`;
+        let numero = 2;
+        while (existentes.has(nombre)) {
+          nombre = `${raizNombre} (copia ${numero})`;
+          numero += 1;
+        }
+
+        const [nuevaRaiz] = await tx
+          .insert(grupos)
+          .values({
+            nombre,
+            nombreHoja: original.nombreHoja,
+            parentId: null,
+            programa: original.programa,
+            filtroColumna: original.filtroColumna,
+            filtroValor: original.filtroValor,
+            courseId: original.courseId,
+            espacio: original.espacio,
+            empresa: original.empresa,
+            educador: original.educador,
+            horario: original.horario,
+            curso: original.curso,
+            fechaInicio: original.fechaInicio,
+            fechaFin: original.fechaFin,
+            archivado: false,
+            createdBy: userId,
+          })
+          .returning({ id: grupos.id });
+        if (!nuevaRaiz) throw new Error('No se pudo crear el grupo');
+
+        const grupoIds = new Map<number, number>([[original.id, nuevaRaiz.id]]);
+        for (const hoja of hojas) {
+          const [nuevaHoja] = await tx
+            .insert(grupos)
+            .values({
+              nombre: hoja.nombre,
+              nombreHoja: hoja.nombreHoja,
+              parentId: nuevaRaiz.id,
+              programa: hoja.programa,
+              filtroColumna: hoja.filtroColumna,
+              filtroValor: hoja.filtroValor,
+              courseId: hoja.courseId,
+              espacio: hoja.espacio,
+              empresa: hoja.empresa,
+              educador: hoja.educador,
+              horario: hoja.horario,
+              curso: hoja.curso,
+              fechaInicio: hoja.fechaInicio,
+              fechaFin: hoja.fechaFin,
+              archivado: false,
+              createdBy: userId,
+            })
+            .returning({ id: grupos.id });
+          if (!nuevaHoja) throw new Error('No se pudo copiar una hoja');
+          grupoIds.set(hoja.id, nuevaHoja.id);
+        }
+
+        const idsOriginales = [...grupoIds.keys()];
+        const [miembros, programas, cursos, origenes, sesiones] =
+          await Promise.all([
+            tx
+              .select({
+                grupoId: grupoEstudiantes.grupoId,
+                userId: grupoEstudiantes.userId,
+                modalidad: grupoEstudiantes.modalidad,
+                observaciones: grupoEstudiantes.observaciones,
+              })
+              .from(grupoEstudiantes)
+              .where(inArray(grupoEstudiantes.grupoId, idsOriginales)),
+            tx
+              .select({
+                grupoId: grupoProgramas.grupoId,
+                programaId: grupoProgramas.programaId,
+              })
+              .from(grupoProgramas)
+              .where(inArray(grupoProgramas.grupoId, idsOriginales)),
+            tx
+              .select({
+                grupoId: grupoCursos.grupoId,
+                courseId: grupoCursos.courseId,
+              })
+              .from(grupoCursos)
+              .where(inArray(grupoCursos.grupoId, idsOriginales)),
+            tx
+              .select({
+                grupoId: enrollmentProgramSources.grupoId,
+                enrollmentProgramId:
+                  enrollmentProgramSources.enrollmentProgramId,
+              })
+              .from(enrollmentProgramSources)
+              .where(inArray(enrollmentProgramSources.grupoId, idsOriginales)),
+            tx
+              .select({
+                id: grupoSesiones.id,
+                grupoId: grupoSesiones.grupoId,
+                courseId: grupoSesiones.courseId,
+                fecha: grupoSesiones.fecha,
+                titulo: grupoSesiones.titulo,
+              })
+              .from(grupoSesiones)
+              .where(inArray(grupoSesiones.grupoId, idsOriginales)),
+          ]);
+
+        if (miembros.length > 0) {
+          await tx.insert(grupoEstudiantes).values(
+            miembros.map((miembro) => ({
+              grupoId: grupoIds.get(miembro.grupoId)!,
+              userId: miembro.userId,
+              modalidad: miembro.modalidad,
+              observaciones: miembro.observaciones,
+            }))
+          );
+        }
+        if (programas.length > 0) {
+          await tx.insert(grupoProgramas).values(
+            programas.map((programa) => ({
+              grupoId: grupoIds.get(programa.grupoId)!,
+              programaId: programa.programaId,
+            }))
+          );
+        }
+        if (cursos.length > 0) {
+          await tx.insert(grupoCursos).values(
+            cursos.map((curso) => ({
+              grupoId: grupoIds.get(curso.grupoId)!,
+              courseId: curso.courseId,
+            }))
+          );
+        }
+        if (origenes.length > 0) {
+          await tx.insert(enrollmentProgramSources).values(
+            origenes.map((origen) => ({
+              grupoId: grupoIds.get(origen.grupoId)!,
+              enrollmentProgramId: origen.enrollmentProgramId,
+            }))
+          );
+        }
+
+        const sesionesIds = sesiones.map((sesion) => sesion.id);
+        const asistencias =
+          sesionesIds.length > 0
+            ? await tx
+                .select({
+                  sesionId: grupoAsistencia.sesionId,
+                  userId: grupoAsistencia.userId,
+                  estado: grupoAsistencia.estado,
+                })
+                .from(grupoAsistencia)
+                .where(inArray(grupoAsistencia.sesionId, sesionesIds))
+            : [];
+        const asistenciasPorSesion = new Map<number, typeof asistencias>();
+        for (const asistencia of asistencias) {
+          const actuales = asistenciasPorSesion.get(asistencia.sesionId) ?? [];
+          actuales.push(asistencia);
+          asistenciasPorSesion.set(asistencia.sesionId, actuales);
+        }
+
+        for (const sesion of sesiones) {
+          const [nuevaSesion] = await tx
+            .insert(grupoSesiones)
+            .values({
+              grupoId: grupoIds.get(sesion.grupoId)!,
+              courseId: sesion.courseId,
+              fecha: sesion.fecha,
+              titulo: sesion.titulo,
+            })
+            .returning({ id: grupoSesiones.id });
+          if (!nuevaSesion) throw new Error('No se pudo copiar una sesión');
+
+          const marcas = asistenciasPorSesion.get(sesion.id) ?? [];
+          if (marcas.length > 0) {
+            await tx.insert(grupoAsistencia).values(
+              marcas.map((marca) => ({
+                sesionId: nuevaSesion.id,
+                userId: marca.userId,
+                estado: marca.estado,
+              }))
+            );
+          }
+        }
+
+        return { id: nuevaRaiz.id, nombre };
+      },
+      { isolationLevel: 'serializable' }
+    );
+  } finally {
+    await pool.end();
+  }
 };
 
 export async function POST(
@@ -53,6 +280,11 @@ export async function POST(
         { error: 'Grupo no encontrado' },
         { status: 404 }
       );
+    }
+
+    if (base.parentId == null) {
+      const duplicado = await duplicarGrupoRaiz(grupoId, userId!);
+      return NextResponse.json({ ok: true, ...duplicado });
     }
 
     const familyRoot = base.parentId ?? base.id;
@@ -138,9 +370,9 @@ export async function POST(
 
     return NextResponse.json({ ok: true, id: nueva.id });
   } catch (error) {
-    console.error('[GRUPOS] duplicar hoja:', error);
+    console.error('[GRUPOS] duplicar grupo:', error);
     return NextResponse.json(
-      { error: 'No se pudo duplicar la hoja' },
+      { error: 'No se pudo duplicar el grupo' },
       { status: 500 }
     );
   }

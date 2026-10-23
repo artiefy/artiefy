@@ -5,17 +5,23 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 
 import {
+  Archive,
+  Copy,
   Folder,
   LayoutGrid,
   List,
   Loader2,
+  MoreHorizontal,
+  Pencil,
   Plus,
   Search,
   Trash2,
   Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { ModalCrearGrupo } from './ModalCrearGrupo';
+import { ModalEditarGrupo } from './ModalEditarGrupo';
 
 interface GrupoResumen {
   id: number;
@@ -55,7 +61,13 @@ export default function GruposPage() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [crearAbierto, setCrearAbierto] = useState(false);
+  const [grupoEditar, setGrupoEditar] = useState<GrupoResumen | null>(null);
   const [eliminando, setEliminando] = useState<number | null>(null);
+  const [operacion, setOperacion] = useState<{
+    id: number;
+    tipo: 'duplicar' | 'archivar' | 'restaurar';
+  } | null>(null);
+  const [menuAbierto, setMenuAbierto] = useState<number | null>(null);
   const [porEliminar, setPorEliminar] = useState<{
     id: number;
     nombre: string;
@@ -84,6 +96,98 @@ export default function GruposPage() {
     void cargar();
   }, [cargar]);
 
+  useEffect(() => {
+    if (menuAbierto === null) return;
+    const cerrarFuera = (event: MouseEvent) => {
+      if (
+        !(event.target instanceof Element) ||
+        !event.target.closest('[data-group-actions]')
+      ) {
+        setMenuAbierto(null);
+      }
+    };
+    const cerrarEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuAbierto(null);
+    };
+    document.addEventListener('mousedown', cerrarFuera);
+    document.addEventListener('keydown', cerrarEscape);
+    return () => {
+      document.removeEventListener('mousedown', cerrarFuera);
+      document.removeEventListener('keydown', cerrarEscape);
+    };
+  }, [menuAbierto]);
+
+  const duplicarGrupo = async (grupo: GrupoResumen) => {
+    setMenuAbierto(null);
+    setOperacion({ id: grupo.id, tipo: 'duplicar' });
+    try {
+      const res = await fetch(`/api/super-admin/grupos/${grupo.id}/duplicar`, {
+        method: 'POST',
+      });
+      const json = (await res.json().catch(() => null)) as {
+        id?: number;
+        nombre?: string;
+        error?: string;
+      } | null;
+      if (!res.ok || json?.id == null || !json.nombre) {
+        throw new Error(json?.error ?? 'No se pudo duplicar el grupo');
+      }
+      setGrupos((actuales) => [
+        {
+          ...grupo,
+          id: json.id!,
+          nombre: json.nombre!,
+          archivado: false,
+          createdAt: new Date().toISOString(),
+        },
+        ...actuales,
+      ]);
+      setTab('activos');
+      toast.success('Grupo duplicado');
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : 'No se pudo duplicar el grupo'
+      );
+    } finally {
+      setOperacion(null);
+    }
+  };
+
+  const cambiarArchivado = async (grupo: GrupoResumen) => {
+    const restaurando = grupo.archivado;
+    setMenuAbierto(null);
+    setOperacion({
+      id: grupo.id,
+      tipo: restaurando ? 'restaurar' : 'archivar',
+    });
+    try {
+      const res = await fetch(`/api/super-admin/grupos/${grupo.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archivado: !restaurando }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      if (!res.ok)
+        throw new Error(json?.error ?? 'No se pudo actualizar el grupo');
+      setGrupos((actuales) =>
+        actuales.map((actual) =>
+          actual.id === grupo.id
+            ? { ...actual, archivado: !restaurando }
+            : actual
+        )
+      );
+      toast.success(restaurando ? 'Grupo restaurado' : 'Grupo archivado');
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : 'No se pudo actualizar el grupo'
+      );
+    } finally {
+      setOperacion(null);
+    }
+  };
+
   const confirmarEliminar = async () => {
     if (!porEliminar) return;
     const { id } = porEliminar;
@@ -96,8 +200,11 @@ export default function GruposPage() {
       if (!res.ok) throw new Error('No se pudo eliminar el grupo');
       setGrupos((prev) => prev.filter((g) => g.id !== id));
       setPorEliminar(null);
+      toast.success('Grupo eliminado');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error');
+      toast.error(
+        e instanceof Error ? e.message : 'No se pudo eliminar el grupo'
+      );
     } finally {
       setEliminando(null);
     }
@@ -221,20 +328,80 @@ export default function GruposPage() {
               key={g.id}
               className="group relative rounded-xl border border-white/10 bg-white/[0.03] transition-colors hover:border-[#22C4D3]/40 hover:bg-white/[0.05]"
             >
-              <button
-                type="button"
-                onClick={() => setPorEliminar({ id: g.id, nombre: g.nombre })}
-                disabled={eliminando === g.id}
-                title="Eliminar grupo"
-                aria-label={`Eliminar grupo ${g.nombre}`}
-                className="absolute top-2 right-2 z-10 inline-flex size-8 items-center justify-center rounded-lg text-white/30 transition-colors hover:bg-red-500/15 hover:text-red-400 disabled:opacity-50"
+              <div
+                data-group-actions
+                className="absolute top-2 right-2 z-20"
+                onClick={(event) => event.stopPropagation()}
               >
-                {eliminando === g.id ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="size-4" />
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMenuAbierto((actual) => (actual === g.id ? null : g.id))
+                  }
+                  disabled={operacion !== null || eliminando !== null}
+                  title="Acciones del grupo"
+                  aria-label={`Acciones del grupo ${g.nombre}`}
+                  aria-haspopup="menu"
+                  aria-expanded={menuAbierto === g.id}
+                  className="inline-flex size-8 items-center justify-center rounded-lg text-white/45 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
+                >
+                  {operacion?.id === g.id || eliminando === g.id ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <MoreHorizontal className="size-4" />
+                  )}
+                </button>
+                {menuAbierto === g.id && (
+                  <div
+                    role="menu"
+                    aria-label={`Acciones para ${g.nombre}`}
+                    className="absolute top-9 right-0 w-44 rounded-xl border border-white/10 bg-[#0b1a2f] p-1.5 shadow-2xl shadow-black/40"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuAbierto(null);
+                        setGrupoEditar(g);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <Pencil className="size-4" />
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void duplicarGrupo(g)}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <Copy className="size-4" />
+                      Duplicar
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void cambiarArchivado(g)}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                    >
+                      <Archive className="size-4" />
+                      {g.archivado ? 'Restaurar' : 'Archivar'}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuAbierto(null);
+                        setPorEliminar({ id: g.id, nombre: g.nombre });
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-red-400 transition-colors hover:bg-red-500/15 hover:text-red-300"
+                    >
+                      <Trash2 className="size-4" />
+                      Eliminar
+                    </button>
+                  </div>
                 )}
-              </button>
+              </div>
               <Link
                 href={`/dashboard/super-admin/grupos/${g.id}`}
                 className="block p-4"
@@ -279,6 +446,24 @@ export default function GruposPage() {
           onCreado={() => {
             setCrearAbierto(false);
             void cargar();
+          }}
+        />
+      )}
+
+      {grupoEditar && (
+        <ModalEditarGrupo
+          key={grupoEditar.id}
+          grupo={grupoEditar}
+          onCerrar={() => setGrupoEditar(null)}
+          onGuardado={(cambios) => {
+            setGrupos((actuales) =>
+              actuales.map((actual) =>
+                actual.id === grupoEditar.id
+                  ? { ...actual, ...cambios }
+                  : actual
+              )
+            );
+            setGrupoEditar(null);
           }}
         />
       )}
