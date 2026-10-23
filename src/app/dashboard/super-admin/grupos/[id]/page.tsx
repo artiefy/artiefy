@@ -1093,14 +1093,18 @@ export default function GrupoDetallePage({
   };
 
   const quitarSesion = async (sesionId: number) => {
+    const res = await fetch(
+      `/api/super-admin/grupos/${activeId}/asistencia?sesionId=${sesionId}`,
+      { method: 'DELETE' }
+    );
+    if (!res.ok) {
+      setAvisoFila('No se pudo eliminar la semana');
+      return;
+    }
     patchHoja(activeId, (h) => ({
       ...h,
       sesiones: h.sesiones.filter((s) => s.id !== sesionId),
     }));
-    await fetch(
-      `/api/super-admin/grupos/${activeId}/asistencia?sesionId=${sesionId}`,
-      { method: 'DELETE' }
-    );
   };
 
   const marcar = async (sesionId: number, userId: string, estado: Estado) => {
@@ -1719,7 +1723,7 @@ export default function GrupoDetallePage({
                       if (f && f !== s.fecha) void cambiarFechaSesion(s.id, f);
                     }}
                     onQuitar={() => void quitarSesion(s.id)}
-                    puedeEliminar={puedeAdministrar}
+                    puedeEliminar={puedeAdministrar || attendanceEmbed.enabled}
                   />
                 ))}
                 {fechaNueva && (

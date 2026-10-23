@@ -254,17 +254,34 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getApiSession();
-  if (!session.userId) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
-  if (!esAdministradorDeGrupos(session.role)) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
-  }
   const grupoId = Number((await params).id);
   const sesionId = Number(request.nextUrl.searchParams.get('sesionId'));
-  if (!Number.isFinite(grupoId) || !Number.isFinite(sesionId)) {
+  if (
+    !Number.isInteger(grupoId) ||
+    grupoId <= 0 ||
+    !Number.isInteger(sesionId) ||
+    sesionId <= 0
+  ) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+  }
+  const acceso = await autorizarGrupo(grupoId);
+  if (!acceso.ok) {
+    return NextResponse.json(
+      { error: 'No autorizado' },
+      { status: acceso.status }
+    );
+  }
+  if (!(await sesionPerteneceAGrupo(grupoId, sesionId))) {
+    return NextResponse.json(
+      { error: 'Semana no encontrada' },
+      { status: 404 }
+    );
+  }
+  if (
+    !acceso.admin &&
+    !(await educadorPuedeEditarSesion(grupoId, sesionId, acceso.userId))
+  ) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
   try {
     await db
