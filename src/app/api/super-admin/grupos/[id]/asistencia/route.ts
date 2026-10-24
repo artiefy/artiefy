@@ -127,7 +127,7 @@ export async function PUT(
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     sesionId?: number;
-    marcas?: { userId: string; estado: string }[];
+    marcas?: { userId: string; estado: string | null }[];
   } | null;
   const sesionId = Number(body?.sesionId);
   if (!Number.isFinite(grupoId) || !Number.isFinite(sesionId)) {
@@ -156,9 +156,18 @@ export async function PUT(
     (m): m is { userId: string; estado: Estado } =>
       typeof m?.userId === 'string' && ESTADOS.includes(m?.estado as Estado)
   );
+  // estado '' o null = quitar la marca (volver a "sin marcar").
+  const quitar = (body?.marcas ?? [])
+    .filter(
+      (m) =>
+        typeof m?.userId === 'string' && (m.estado === '' || m.estado === null)
+    )
+    .map((m) => m.userId);
 
   try {
-    const userIds = [...new Set(marcas.map((marca) => marca.userId))];
+    const userIds = [
+      ...new Set([...marcas.map((marca) => marca.userId), ...quitar]),
+    ];
     const miembros =
       userIds.length === 0
         ? []
@@ -186,7 +195,21 @@ export async function PUT(
           set: { estado: m.estado },
         });
     }
-    return NextResponse.json({ ok: true, guardadas: marcas.length });
+    if (quitar.length > 0) {
+      await db
+        .delete(grupoAsistencia)
+        .where(
+          and(
+            eq(grupoAsistencia.sesionId, sesionId),
+            inArray(grupoAsistencia.userId, quitar)
+          )
+        );
+    }
+    return NextResponse.json({
+      ok: true,
+      guardadas: marcas.length,
+      quitadas: quitar.length,
+    });
   } catch (error) {
     console.error('[GRUPOS] guardar asistencia:', error);
     return NextResponse.json(

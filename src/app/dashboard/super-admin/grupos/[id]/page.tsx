@@ -1211,14 +1211,22 @@ export default function GrupoDetallePage({
     }));
   };
 
-  const marcar = async (sesionId: number, userId: string, estado: Estado) => {
-    patchHoja(activeId, (h) => ({
-      ...h,
-      asistencia: {
-        ...h.asistencia,
-        [sesionId]: { ...(h.asistencia[sesionId] ?? {}), [userId]: estado },
-      },
-    }));
+  // estado '' = quitar la marca (la celda vuelve a "sin marcar").
+  const marcar = async (
+    sesionId: number,
+    userId: string,
+    estado: Estado | ''
+  ) => {
+    patchHoja(activeId, (h) => {
+      const { [userId]: _previo, ...resto } = h.asistencia[sesionId] ?? {};
+      return {
+        ...h,
+        asistencia: {
+          ...h.asistencia,
+          [sesionId]: estado ? { ...resto, [userId]: estado } : resto,
+        },
+      };
+    });
     await fetch(`/api/super-admin/grupos/${activeId}/asistencia`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -2122,12 +2130,15 @@ export default function GrupoDetallePage({
                       }
                       const estado = (asistencia[s.id]?.[m.id] ?? '') as
                         Estado | '';
-                      const siguiente: Estado =
+                      // X → A → T → vacío → X
+                      const siguiente: Estado | '' =
                         estado === 'presente'
                           ? 'ausente'
                           : estado === 'ausente'
                             ? 'tarde'
-                            : 'presente';
+                            : estado === 'tarde'
+                              ? ''
+                              : 'presente';
                       return (
                         <td
                           key={s.id}
@@ -2136,12 +2147,21 @@ export default function GrupoDetallePage({
                           <button
                             type="button"
                             onClick={() => void marcar(s.id, m.id, siguiente)}
+                            onContextMenu={(e) => {
+                              // Click derecho: quita la marca de una vez.
+                              e.preventDefault();
+                              if (estado) void marcar(s.id, m.id, '');
+                            }}
                             className={`inline-flex size-6 items-center justify-center rounded text-[11px] font-bold ${
                               estado
                                 ? MARCA[estado].clase
                                 : 'bg-white/5 text-white/25'
                             }`}
-                            title={estado || 'marcar'}
+                            title={
+                              estado
+                                ? `${estado} — clic para cambiar, clic derecho para quitar`
+                                : 'marcar'
+                            }
                           >
                             {estado ? MARCA[estado].letra : '·'}
                           </button>
