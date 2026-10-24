@@ -3078,6 +3078,24 @@ export const grupoEstudiantes = pgTable(
   ]
 );
 
+export const grupoEstudiantesPendientes = pgTable(
+  'grupo_estudiantes_pendientes',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    name: text('name').notNull(),
+    identificacionNumero: text('identificacion_numero'),
+    phone: text('phone'),
+    modalidad: text('modalidad'),
+    observaciones: text('observaciones'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [index('grupo_estudiantes_pendientes_grupo_idx').on(t.grupoId)]
+);
+
 // Comentarios por estudiante (NO ligados a grupos). Cada comentario puede tener
 // respuestas anidadas mediante parentId (self-reference; null = comentario raíz).
 export const studentComments = pgTable(

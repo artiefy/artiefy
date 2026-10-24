@@ -24,10 +24,17 @@ import {
   enrollments,
   grupoCursos,
   grupoEstudiantes,
+  grupoEstudiantesPendientes,
+  grupoProgramas,
   grupos,
+  programas,
   users,
 } from '~/server/db/schema';
-import { sincronizarEstudiantesAgregados } from '~/server/lib/grupos-programas-sync';
+import { matricularEnCurso } from '~/server/lib/grupos-matricula';
+import {
+  sincronizarEstudiantesAgregados,
+  sincronizarProgramasAgregados,
+} from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
 
 const MAIL_FROM = 'direcciongeneral@artiefy.com';
@@ -91,38 +98,110 @@ export async function POST(
     email?: string;
     phone?: string;
     modalidad?: string;
+    observaciones?: string;
     programa?: string;
     existingUserId?: string;
+    pendingId?: number;
   } | null;
 
   const existingUserId = body?.existingUserId?.trim() || null;
   const programaBody = body?.programa?.trim() || null;
-  const nombres = body?.nombres?.trim() ?? '';
-  const apellidos = body?.apellidos?.trim() ?? '';
+  const pendingId =
+    body?.pendingId != null && Number.isInteger(Number(body.pendingId))
+      ? Number(body.pendingId)
+      : null;
+  let nombres = body?.nombres?.trim() ?? '';
+  let apellidos = body?.apellidos?.trim() ?? '';
   const email = body?.email?.trim().toLowerCase() ?? '';
-  const phone = body?.phone?.trim() || null;
-  const identificacionNumero = body?.identificacionNumero?.trim() || null;
-  const modalidad = body?.modalidad?.trim() || null;
+  let phone = body?.phone?.trim() || null;
+  let identificacionNumero = body?.identificacionNumero?.trim() || null;
+  let modalidad = body?.modalidad?.trim() || null;
+  let observaciones = body?.observaciones?.trim() || null;
 
   if (!Number.isFinite(grupoId)) {
     return NextResponse.json({ error: 'Id inválido' }, { status: 400 });
   }
-  if (!existingUserId) {
-    if (!nombres || !email) {
+  if (pendingId != null) {
+    try {
+      const [pendiente] = await db
+        .select()
+        .from(grupoEstudiantesPendientes)
+        .where(
+          and(
+            eq(grupoEstudiantesPendientes.id, pendingId),
+            eq(grupoEstudiantesPendientes.grupoId, grupoId)
+          )
+        )
+        .limit(1);
+      if (!pendiente) {
+        return NextResponse.json(
+          { error: 'Estudiante pendiente no encontrado' },
+          { status: 404 }
+        );
+      }
+      const [primerNombre = '', ...restoNombres] = pendiente.name
+        .trim()
+        .split(/\s+/);
+      nombres = primerNombre;
+      apellidos = restoNombres.join(' ');
+      phone = pendiente.phone;
+      identificacionNumero = pendiente.identificacionNumero;
+      modalidad = pendiente.modalidad;
+      observaciones = pendiente.observaciones;
+    } catch (error) {
+      console.error('[GRUPOS] cargar estudiante pendiente:', error);
       return NextResponse.json(
-        { error: 'Nombre y correo son obligatorios' },
+        { error: 'No se pudo cargar el estudiante pendiente' },
+        { status: 500 }
+      );
+    }
+  }
+
+  if (!existingUserId && !nombres) {
+    return NextResponse.json(
+      { error: 'El nombre es obligatorio' },
+      { status: 400 }
+    );
+  }
+  if (!existingUserId && !email) {
+    if (pendingId != null) {
+      return NextResponse.json(
+        { error: 'Agrega un correo para crear la cuenta' },
         { status: 400 }
       );
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json({ error: 'Correo inválido' }, { status: 400 });
+    try {
+      const [pendiente] = await db
+        .insert(grupoEstudiantesPendientes)
+        .values({
+          grupoId,
+          name: `${nombres} ${apellidos}`.trim(),
+          identificacionNumero,
+          phone,
+          modalidad,
+        })
+        .returning({ id: grupoEstudiantesPendientes.id });
+      return NextResponse.json({
+        ok: true,
+        pendiente: true,
+        pendingId: pendiente?.id,
+      });
+    } catch (error) {
+      console.error('[GRUPOS] guardar estudiante pendiente:', error);
+      return NextResponse.json(
+        { error: 'No se pudo guardar el estudiante pendiente' },
+        { status: 500 }
+      );
     }
+  }
+  if (!existingUserId && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Correo inválido' }, { status: 400 });
   }
 
   try {
     // Datos de la hoja: programa y curso asignado.
     const [grupo] = await db
-      .select({ programa: grupos.programa })
+      .select({ programa: grupos.programa, courseId: grupos.courseId })
       .from(grupos)
       .where(eq(grupos.id, grupoId))
       .limit(1);
@@ -137,9 +216,15 @@ export async function POST(
     const cursoRows = await db
       .select({ courseId: grupoCursos.courseId })
       .from(grupoCursos)
-      .where(eq(grupoCursos.grupoId, grupoId))
-      .limit(1);
-    const courseId = cursoRows[0]?.courseId ?? null;
+      .where(eq(grupoCursos.grupoId, grupoId));
+    const courseIds = [
+      ...new Set(
+        [grupo.courseId, ...cursoRows.map((curso) => curso.courseId)].filter(
+          (id): id is number => id != null
+        )
+      ),
+    ];
+    const courseId = courseIds[0] ?? null;
 
     // ── Estudiante YA EXISTENTE: solo se agrega a la hoja y se matricula al
     // curso (sin crear cuenta ni enviar credenciales). ────────────────────
@@ -246,34 +331,41 @@ export async function POST(
       updatedAt: new Date(),
     });
 
-    // Matricula al CURSO de la hoja (si tiene).
-    if (courseId != null) {
-      const existe = await db
-        .select({ id: enrollments.id })
-        .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.userId, userId),
-            eq(enrollments.courseId, courseId)
-          )
-        )
-        .limit(1);
-      if (existe.length === 0) {
-        await db.insert(enrollments).values({
-          userId,
-          courseId,
-          enrolledAt: new Date(),
-          completed: false,
-        });
-      }
+    // Matricula en todos los cursos asociados a esta hoja.
+    for (const cursoId of courseIds) {
+      await matricularEnCurso(cursoId, [userId]);
     }
 
     // Agrega como miembro de la hoja.
     await db
       .insert(grupoEstudiantes)
-      .values({ grupoId, userId })
+      .values({ grupoId, userId, modalidad, observaciones })
       .onConflictDoNothing();
     await sincronizarEstudiantesAgregados(grupoId, [userId]);
+    const programasHoja = await db
+      .select({ programaId: grupoProgramas.programaId })
+      .from(grupoProgramas)
+      .where(eq(grupoProgramas.grupoId, grupoId));
+    const programaIds = programasHoja.map((programa) => programa.programaId);
+    if (programaIds.length === 0 && programa) {
+      const [programaHoja] = await db
+        .select({ id: programas.id })
+        .from(programas)
+        .where(eq(programas.title, programa))
+        .limit(1);
+      if (programaHoja) programaIds.push(programaHoja.id);
+    }
+    await sincronizarProgramasAgregados(grupoId, programaIds);
+    if (pendingId != null) {
+      await db
+        .delete(grupoEstudiantesPendientes)
+        .where(
+          and(
+            eq(grupoEstudiantesPendientes.id, pendingId),
+            eq(grupoEstudiantesPendientes.grupoId, grupoId)
+          )
+        );
+    }
 
     // Envía las credenciales (no bloquea el alta si el correo falla).
     const usernameFinal = created.user.username ?? nombres;

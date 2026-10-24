@@ -16,6 +16,7 @@ import { db } from '~/server/db';
 import {
   grupoCursos,
   grupoEstudiantes,
+  grupoEstudiantesPendientes,
   grupoProgramas,
   grupos,
   grupoSesiones,
@@ -51,41 +52,53 @@ export async function GET() {
   }
 
   try {
-    const [filas, conteoMiembros, conteoCursos] = await Promise.all([
-      db
-        .select({
-          id: grupos.id,
-          nombre: grupos.nombre,
-          programa: grupos.programa,
-          filtroColumna: grupos.filtroColumna,
-          filtroValor: grupos.filtroValor,
-          fechaInicio: grupos.fechaInicio,
-          fechaFin: grupos.fechaFin,
-          archivado: grupos.archivado,
-          createdAt: grupos.createdAt,
-        })
-        .from(grupos)
-        .where(isNull(grupos.parentId))
-        .orderBy(desc(grupos.createdAt)),
-      db
-        .select({
-          grupoId: grupoEstudiantes.grupoId,
-          total: sql<number>`count(*)`,
-        })
-        .from(grupoEstudiantes)
-        .groupBy(grupoEstudiantes.grupoId),
-      db
-        .select({
-          grupoId: grupoCursos.grupoId,
-          total: sql<number>`count(*)`,
-        })
-        .from(grupoCursos)
-        .groupBy(grupoCursos.grupoId),
-    ]);
+    const [filas, conteoMiembros, conteoPendientes, conteoCursos] =
+      await Promise.all([
+        db
+          .select({
+            id: grupos.id,
+            nombre: grupos.nombre,
+            programa: grupos.programa,
+            filtroColumna: grupos.filtroColumna,
+            filtroValor: grupos.filtroValor,
+            fechaInicio: grupos.fechaInicio,
+            fechaFin: grupos.fechaFin,
+            archivado: grupos.archivado,
+            createdAt: grupos.createdAt,
+          })
+          .from(grupos)
+          .where(isNull(grupos.parentId))
+          .orderBy(desc(grupos.createdAt)),
+        db
+          .select({
+            grupoId: grupoEstudiantes.grupoId,
+            total: sql<number>`count(*)`,
+          })
+          .from(grupoEstudiantes)
+          .groupBy(grupoEstudiantes.grupoId),
+        db
+          .select({
+            grupoId: grupoEstudiantesPendientes.grupoId,
+            total: sql<number>`count(*)`,
+          })
+          .from(grupoEstudiantesPendientes)
+          .groupBy(grupoEstudiantesPendientes.grupoId),
+        db
+          .select({
+            grupoId: grupoCursos.grupoId,
+            total: sql<number>`count(*)`,
+          })
+          .from(grupoCursos)
+          .groupBy(grupoCursos.grupoId),
+      ]);
 
-    const miembrosPorGrupo = new Map(
-      conteoMiembros.map((c) => [c.grupoId, Number(c.total ?? 0)])
-    );
+    const miembrosPorGrupo = new Map<number, number>();
+    for (const conteo of [...conteoMiembros, ...conteoPendientes]) {
+      miembrosPorGrupo.set(
+        conteo.grupoId,
+        (miembrosPorGrupo.get(conteo.grupoId) ?? 0) + Number(conteo.total ?? 0)
+      );
+    }
     const cursosPorGrupo = new Map(
       conteoCursos.map((c) => [c.grupoId, Number(c.total ?? 0)])
     );

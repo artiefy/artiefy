@@ -13,7 +13,11 @@ import { auth } from '@clerk/nextjs/server';
 import { and, asc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { grupoEstudiantes, users } from '~/server/db/schema';
+import {
+  grupoEstudiantes,
+  grupoEstudiantesPendientes,
+  users,
+} from '~/server/db/schema';
 import { cursoDeHoja, matricularEnCurso } from '~/server/lib/grupos-matricula';
 import {
   sincronizarEstudiantesAgregados,
@@ -141,9 +145,73 @@ export async function PATCH(
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     userId?: string;
+    pendingId?: number;
+    name?: string | null;
+    identificacionNumero?: string | null;
+    phone?: string | null;
     modalidad?: string | null;
     observaciones?: string | null;
   } | null;
+  const pendingId = Number(body?.pendingId);
+  if (
+    Number.isInteger(pendingId) &&
+    pendingId > 0 &&
+    Number.isInteger(grupoId) &&
+    grupoId > 0
+  ) {
+    const limpiarPendiente = (value: unknown) =>
+      typeof value === 'string' && value.trim() ? value.trim() : null;
+    const cambiosPendiente: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+    if (body?.name !== undefined) {
+      const name = limpiarPendiente(body.name);
+      if (!name) {
+        return NextResponse.json(
+          { error: 'El nombre es obligatorio' },
+          { status: 400 }
+        );
+      }
+      cambiosPendiente.name = name;
+    }
+    if (body?.identificacionNumero !== undefined)
+      cambiosPendiente.identificacionNumero = limpiarPendiente(
+        body.identificacionNumero
+      );
+    if (body?.phone !== undefined)
+      cambiosPendiente.phone = limpiarPendiente(body.phone);
+    if (body?.modalidad !== undefined)
+      cambiosPendiente.modalidad = limpiarPendiente(body.modalidad);
+    if (body?.observaciones !== undefined)
+      cambiosPendiente.observaciones = limpiarPendiente(body.observaciones);
+
+    try {
+      const actualizados = await db
+        .update(grupoEstudiantesPendientes)
+        .set(cambiosPendiente)
+        .where(
+          and(
+            eq(grupoEstudiantesPendientes.id, pendingId),
+            eq(grupoEstudiantesPendientes.grupoId, grupoId)
+          )
+        )
+        .returning({ id: grupoEstudiantesPendientes.id });
+      if (actualizados.length === 0) {
+        return NextResponse.json(
+          { error: 'Estudiante pendiente no encontrado' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      console.error('[GRUPOS] editar estudiante pendiente:', error);
+      return NextResponse.json(
+        { error: 'No se pudo guardar el estudiante pendiente' },
+        { status: 500 }
+      );
+    }
+  }
+
   const userId = body?.userId?.trim();
   if (!Number.isFinite(grupoId) || !userId) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
@@ -185,6 +253,42 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const pendingIdParam = request.nextUrl.searchParams.get('pendingId');
+  if (pendingIdParam != null) {
+    const pendingId = Number(pendingIdParam);
+    if (
+      !Number.isInteger(grupoId) ||
+      grupoId <= 0 ||
+      !Number.isInteger(pendingId) ||
+      pendingId <= 0
+    ) {
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    }
+    try {
+      const eliminados = await db
+        .delete(grupoEstudiantesPendientes)
+        .where(
+          and(
+            eq(grupoEstudiantesPendientes.id, pendingId),
+            eq(grupoEstudiantesPendientes.grupoId, grupoId)
+          )
+        )
+        .returning({ id: grupoEstudiantesPendientes.id });
+      if (eliminados.length === 0) {
+        return NextResponse.json(
+          { error: 'Estudiante pendiente no encontrado' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      console.error('[GRUPOS] quitar estudiante pendiente:', error);
+      return NextResponse.json(
+        { error: 'No se pudo quitar el estudiante pendiente' },
+        { status: 500 }
+      );
+    }
+  }
   const quitarUserId = request.nextUrl.searchParams.get('userId');
   if (!Number.isFinite(grupoId) || !quitarUserId) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });

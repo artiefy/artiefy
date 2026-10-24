@@ -21,6 +21,7 @@ import {
   grupoAsistencia,
   grupoCursos,
   grupoEstudiantes,
+  grupoEstudiantesPendientes,
   grupoProgramas,
   grupos,
   grupoSesiones,
@@ -124,7 +125,7 @@ const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
         }
 
         const idsOriginales = [...grupoIds.keys()];
-        const [miembros, programas, cursos, origenes, sesiones] =
+        const [miembros, pendientes, programas, cursos, origenes, sesiones] =
           await Promise.all([
             tx
               .select({
@@ -135,6 +136,20 @@ const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
               })
               .from(grupoEstudiantes)
               .where(inArray(grupoEstudiantes.grupoId, idsOriginales)),
+            tx
+              .select({
+                grupoId: grupoEstudiantesPendientes.grupoId,
+                name: grupoEstudiantesPendientes.name,
+                identificacionNumero:
+                  grupoEstudiantesPendientes.identificacionNumero,
+                phone: grupoEstudiantesPendientes.phone,
+                modalidad: grupoEstudiantesPendientes.modalidad,
+                observaciones: grupoEstudiantesPendientes.observaciones,
+              })
+              .from(grupoEstudiantesPendientes)
+              .where(
+                inArray(grupoEstudiantesPendientes.grupoId, idsOriginales)
+              ),
             tx
               .select({
                 grupoId: grupoProgramas.grupoId,
@@ -176,6 +191,18 @@ const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
               userId: miembro.userId,
               modalidad: miembro.modalidad,
               observaciones: miembro.observaciones,
+            }))
+          );
+        }
+        if (pendientes.length > 0) {
+          await tx.insert(grupoEstudiantesPendientes).values(
+            pendientes.map((pendiente) => ({
+              grupoId: grupoIds.get(pendiente.grupoId)!,
+              name: pendiente.name,
+              identificacionNumero: pendiente.identificacionNumero,
+              phone: pendiente.phone,
+              modalidad: pendiente.modalidad,
+              observaciones: pendiente.observaciones,
             }))
           );
         }
@@ -366,6 +393,24 @@ export async function POST(
           titulo: s.titulo,
         }))
       );
+    }
+
+    const pendientes = await db
+      .select({
+        name: grupoEstudiantesPendientes.name,
+        identificacionNumero: grupoEstudiantesPendientes.identificacionNumero,
+        phone: grupoEstudiantesPendientes.phone,
+        modalidad: grupoEstudiantesPendientes.modalidad,
+        observaciones: grupoEstudiantesPendientes.observaciones,
+      })
+      .from(grupoEstudiantesPendientes)
+      .where(eq(grupoEstudiantesPendientes.grupoId, grupoId));
+    if (pendientes.length > 0) {
+      await db
+        .insert(grupoEstudiantesPendientes)
+        .values(
+          pendientes.map((pendiente) => ({ grupoId: nueva.id, ...pendiente }))
+        );
     }
 
     return NextResponse.json({ ok: true, id: nueva.id });

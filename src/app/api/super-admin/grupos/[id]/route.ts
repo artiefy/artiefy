@@ -20,6 +20,7 @@ import {
   grupoAsistencia,
   grupoCursos,
   grupoEstudiantes,
+  grupoEstudiantesPendientes,
   grupoProgramas,
   grupos,
   grupoSesiones,
@@ -134,6 +135,7 @@ export async function GET(
     // Todo en paralelo para TODAS las hojas de la familia.
     const [
       miembrosRows,
+      pendientesRows,
       sesionesRows,
       cursoRows,
       cursosDisponibles,
@@ -159,6 +161,19 @@ export async function GET(
         .leftJoin(userCartera, eq(userCartera.userId, users.id))
         .where(inArray(grupoEstudiantes.grupoId, ids))
         .orderBy(asc(users.name)),
+      db
+        .select({
+          id: grupoEstudiantesPendientes.id,
+          grupoId: grupoEstudiantesPendientes.grupoId,
+          name: grupoEstudiantesPendientes.name,
+          identificacionNumero: grupoEstudiantesPendientes.identificacionNumero,
+          phone: grupoEstudiantesPendientes.phone,
+          modalidad: grupoEstudiantesPendientes.modalidad,
+          observaciones: grupoEstudiantesPendientes.observaciones,
+        })
+        .from(grupoEstudiantesPendientes)
+        .where(inArray(grupoEstudiantesPendientes.grupoId, ids))
+        .orderBy(asc(grupoEstudiantesPendientes.createdAt)),
       db
         .select({
           id: grupoSesiones.id,
@@ -276,7 +291,10 @@ export async function GET(
     const idPorTitulo = new Map(programasRows.map((p) => [p.title, p.id]));
 
     // Agrupa por hoja (dedup por alumno, por si hay varias filas de cartera).
-    type Miembro = Omit<(typeof miembrosRows)[number], 'grupoId'>;
+    type Miembro = Omit<(typeof miembrosRows)[number], 'grupoId'> & {
+      pendingId?: number;
+      pendiente?: boolean;
+    };
     const miembrosPorHoja = new Map<number, Miembro[]>();
     const vistos = new Set<string>();
     for (const r of miembrosRows) {
@@ -287,6 +305,23 @@ export async function GET(
       const lista = miembrosPorHoja.get(gid) ?? [];
       lista.push(m);
       miembrosPorHoja.set(gid, lista);
+    }
+    for (const pendiente of pendientesRows) {
+      const lista = miembrosPorHoja.get(pendiente.grupoId) ?? [];
+      lista.push({
+        id: `pending-${pendiente.id}`,
+        name: pendiente.name,
+        email: '',
+        phone: pendiente.phone,
+        identificacionNumero: pendiente.identificacionNumero,
+        programa: null,
+        modalidad: pendiente.modalidad,
+        observaciones: pendiente.observaciones,
+        carteraStatus: null,
+        pendingId: pendiente.id,
+        pendiente: true,
+      });
+      miembrosPorHoja.set(pendiente.grupoId, lista);
     }
 
     const sesionesPorHoja = new Map<
@@ -617,6 +652,9 @@ export async function DELETE(
     await db
       .delete(grupoEstudiantes)
       .where(inArray(grupoEstudiantes.grupoId, ids));
+    await db
+      .delete(grupoEstudiantesPendientes)
+      .where(inArray(grupoEstudiantesPendientes.grupoId, ids));
     await db.delete(grupoCursos).where(inArray(grupoCursos.grupoId, ids));
     await db.delete(grupos).where(eq(grupos.id, grupoId));
     return NextResponse.json({ ok: true, nuevaRaizId });

@@ -41,6 +41,8 @@ import { formatFechaLarga } from '~/lib/formatDate';
 
 interface Miembro {
   id: string;
+  pendingId?: number;
+  pendiente?: boolean;
   name: string | null;
   email: string;
   phone?: string | null;
@@ -736,6 +738,55 @@ export default function GrupoDetallePage({
       return;
     }
 
+    const miembroActual = data?.hojas
+      .find((hojaActual) => hojaActual.id === activeId)
+      ?.miembros.find((miembro) => miembro.id === userId);
+    if (miembroActual?.pendingId != null) {
+      setGuardandoCorreo(userId);
+      try {
+        const res = await fetch(
+          `/api/super-admin/grupos/${activeId}/alta-estudiante`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pendingId: miembroActual.pendingId,
+              email: nuevo,
+            }),
+          }
+        );
+        const result = (await res.json().catch(() => ({}))) as {
+          error?: string;
+          correoOk?: boolean;
+          matriculadoEnCurso?: string | null;
+        };
+        if (!res.ok)
+          throw new Error(result.error ?? 'No se pudo crear la cuenta');
+        limpiarDraft();
+        void cargar(activeId);
+        setAvisoFila(
+          result.correoOk
+            ? `✓ Cuenta creada y credenciales enviadas a ${nuevo}${
+                result.matriculadoEnCurso
+                  ? ` · matriculado en ${result.matriculadoEnCurso}`
+                  : ''
+              }`
+            : '✓ Cuenta creada; no se pudieron enviar las credenciales por correo'
+        );
+      } catch (error) {
+        setAvisoFila(
+          error instanceof Error ? error.message : 'No se pudo crear la cuenta'
+        );
+        setCorreoDraft((draftActual) => ({
+          ...draftActual,
+          [userId]: emailActual ?? '',
+        }));
+      } finally {
+        setGuardandoCorreo(null);
+      }
+      return;
+    }
+
     setGuardandoCorreo(userId);
     try {
       const res = await fetch('/api/super-admin/udateUser/updateEmail', {
@@ -783,6 +834,49 @@ export default function GrupoDetallePage({
     value: string
   ) => {
     try {
+      const miembroActual = data?.hojas
+        .find((hojaActual) => hojaActual.id === activeId)
+        ?.miembros.find((miembro) => miembro.id === userId);
+      if (miembroActual?.pendingId != null) {
+        const res = await fetch(
+          `/api/super-admin/grupos/${activeId}/miembros`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              pendingId: miembroActual.pendingId,
+              ...(field === 'name' ? { name: value } : { [field]: value }),
+            }),
+          }
+        );
+        const response = (await res.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!res.ok) {
+          setAvisoFila(response.error ?? 'No se pudo guardar el cambio');
+          return;
+        }
+        void mutateGrupo(
+          (prev) =>
+            prev
+              ? {
+                  ...prev,
+                  hojas: prev.hojas.map((hoja) => ({
+                    ...hoja,
+                    miembros: hoja.miembros.map((miembro) =>
+                      miembro.id === userId
+                        ? { ...miembro, [field]: value || null }
+                        : miembro
+                    ),
+                  })),
+                }
+              : prev,
+          { revalidate: false }
+        );
+        setAvisoFila('✓ Dato guardado en la ficha pendiente');
+        return;
+      }
+
       const res = await fetch('/api/super-admin/udateUser/updateCampo', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1044,17 +1138,23 @@ export default function GrupoDetallePage({
     });
   };
 
-  const quitarMiembro = async (userId: string) => {
+  const quitarMiembro = async (miembro: Miembro) => {
+    const query =
+      miembro.pendingId != null
+        ? `pendingId=${miembro.pendingId}`
+        : `userId=${encodeURIComponent(miembro.id)}`;
+    const res = await fetch(
+      `/api/super-admin/grupos/${activeId}/miembros?${query}`,
+      { method: 'DELETE' }
+    );
+    if (!res.ok) {
+      setAvisoFila('No se pudo quitar el estudiante de la hoja');
+      return;
+    }
     patchHoja(activeId, (h) => ({
       ...h,
-      miembros: h.miembros.filter((m) => m.id !== userId),
+      miembros: h.miembros.filter((m) => m.id !== miembro.id),
     }));
-    await fetch(
-      `/api/super-admin/grupos/${activeId}/miembros?userId=${userId}`,
-      {
-        method: 'DELETE',
-      }
-    );
   };
 
   // Guarda la fecha de la columna nueva: recién ahí se crea la clase.
@@ -1176,25 +1276,37 @@ export default function GrupoDetallePage({
     campo: 'modalidad' | 'observaciones',
     valor: string
   ) => {
+    const miembroActual = data?.hojas
+      .find((hojaActual) => hojaActual.id === activeId)
+      ?.miembros.find((miembro) => miembro.id === userId);
     patchHoja(activeId, (h) => ({
       ...h,
       miembros: h.miembros.map((m) =>
         m.id === userId ? { ...m, [campo]: valor } : m
       ),
     }));
-    await fetch(`/api/super-admin/grupos/${activeId}/miembros`, {
+    const res = await fetch(`/api/super-admin/grupos/${activeId}/miembros`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, [campo]: valor }),
+      body: JSON.stringify({
+        ...(miembroActual?.pendingId != null
+          ? { pendingId: miembroActual.pendingId }
+          : { userId }),
+        [campo]: valor,
+      }),
     });
+    if (!res.ok) {
+      setAvisoFila('No se pudo guardar el cambio');
+      void cargar(activeId);
+    }
   };
 
   // Alta de estudiante desde la fila (crea cuenta, envía credenciales,
   // matricula al programa y al curso de la hoja).
   const guardarFila = async () => {
     if (!draft) return;
-    if (!draft.nombres.trim() || !draft.email.trim()) {
-      setAvisoFila('Nombre y correo son obligatorios');
+    if (!draft.nombres.trim()) {
+      setAvisoFila('El nombre es obligatorio');
       return;
     }
     setGuardandoFila(true);
@@ -1236,6 +1348,7 @@ export default function GrupoDetallePage({
         error?: string;
         correoOk?: boolean | null;
         existente?: boolean;
+        pendiente?: boolean;
         matriculadoEnCurso?: string | null;
       };
       if (!res.ok) {
@@ -1243,7 +1356,11 @@ export default function GrupoDetallePage({
         return;
       }
       cargar(activeId);
-      if (j.existente) {
+      if (j.pendiente) {
+        setAvisoFila(
+          '✓ Estudiante guardado sin cuenta. Agrega su correo cuando esté disponible para crearla.'
+        );
+      } else if (j.existente) {
         setAvisoFila(`✓ ${draft.email} agregado a la hoja (usuario existente)`);
       } else {
         setAvisoFila(
@@ -1791,7 +1908,7 @@ export default function GrupoDetallePage({
                       {puedeAdministrar && (
                         <button
                           type="button"
-                          onClick={() => void quitarMiembro(m.id)}
+                          onClick={() => void quitarMiembro(m)}
                           className="absolute inset-0 m-auto flex items-center justify-center text-white/0 group-hover/row:text-red-400"
                           aria-label="Quitar del grupo"
                         >
@@ -1860,6 +1977,9 @@ export default function GrupoDetallePage({
                       <input
                         type="email"
                         value={correoDraft[m.id] ?? m.email ?? ''}
+                        placeholder={
+                          m.pendiente ? 'Correo para crear la cuenta' : ''
+                        }
                         readOnly={!puedeAdministrar}
                         onChange={(e) =>
                           setCorreoDraft((d) => ({
@@ -1895,6 +2015,17 @@ export default function GrupoDetallePage({
                       />
                     </td>
                     {sesiones.map((s) => {
+                      if (m.pendiente) {
+                        return (
+                          <td
+                            key={s.id}
+                            className="w-[42px] border border-white/10 px-2 py-1.5 text-center text-white/25"
+                            title="La asistencia estará disponible cuando tenga una cuenta"
+                          >
+                            —
+                          </td>
+                        );
+                      }
                       const estado = (asistencia[s.id]?.[m.id] ?? '') as
                         Estado | '';
                       const siguiente: Estado =
@@ -1941,14 +2072,20 @@ export default function GrupoDetallePage({
                       {/* Abre la misma ventana de cartera de Estudiantes. */}
                       <span
                         className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-                          m.carteraStatus === 'activo'
-                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                            : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                          m.pendiente
+                            ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300'
+                            : m.carteraStatus === 'activo'
+                              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                              : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
                         }`}
                       >
-                        {m.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}
+                        {m.pendiente
+                          ? 'Pendiente de correo'
+                          : m.carteraStatus === 'activo'
+                            ? 'Al día'
+                            : 'En cartera'}
                       </span>
-                      {puedeAdministrar && (
+                      {puedeAdministrar && !m.pendiente && (
                         <button
                           type="button"
                           onClick={() => abrirCartera(m.id)}
@@ -1989,7 +2126,7 @@ export default function GrupoDetallePage({
                         type="button"
                         onClick={() => void guardarFila()}
                         disabled={guardandoFila}
-                        title="Crear y enviar credenciales"
+                        title="Guardar estudiante"
                         className="inline-flex size-7 items-center justify-center rounded-md bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
                       >
                         {guardandoFila ? (
@@ -2071,7 +2208,7 @@ export default function GrupoDetallePage({
                         setCampoBusqueda('email');
                         setAnchorRect(e.currentTarget.getBoundingClientRect());
                       }}
-                      placeholder="correo@ejemplo.com *"
+                      placeholder="Correo (opcional)"
                       className="w-full min-w-[160px] rounded bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
                     />
                     {draft.existingId && (
