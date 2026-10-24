@@ -36,6 +36,7 @@ import {
   educadorPuedeAccederAGrupo,
   esAdministradorDeGrupos,
 } from '~/server/lib/grupo-asistencia-access';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { sincronizarHojasEliminadas } from '~/server/lib/grupos-programas-sync';
 import { isCourseOwnedByEducator } from '~/server/queries/educatorCourseAccess';
 import { getApiSession } from '~/server/utils/apiAuth';
@@ -106,6 +107,7 @@ export async function GET(
         id: grupos.id,
         nombre: grupos.nombre,
         nombreHoja: grupos.nombreHoja,
+        hojaArchivada: grupos.hojaArchivada,
         parentId: grupos.parentId,
         programa: grupos.programa,
         empresa: grupos.empresa,
@@ -114,7 +116,9 @@ export async function GET(
       })
       .from(grupos)
       .where(or(eq(grupos.id, familyRoot), eq(grupos.parentId, familyRoot)))
-      .orderBy(asc(grupos.createdAt));
+      // id desempata: las hojas copiadas en una misma transacción comparten
+      // createdAt.
+      .orderBy(asc(grupos.createdAt), asc(grupos.id));
 
     const rootNombre =
       familiaRows.find((f) => f.id === familyRoot)?.nombre ?? '';
@@ -155,6 +159,7 @@ export async function GET(
           >`coalesce(${grupoEstudiantes.modalidad}, ${users.modalidad})`,
           observaciones: grupoEstudiantes.observaciones,
           carteraStatus: userCartera.status,
+          enrollmentStatus: users.enrollmentStatus,
         })
         .from(grupoEstudiantes)
         .innerJoin(users, eq(grupoEstudiantes.userId, users.id))
@@ -318,6 +323,7 @@ export async function GET(
         modalidad: pendiente.modalidad,
         observaciones: pendiente.observaciones,
         carteraStatus: null,
+        enrollmentStatus: null,
         pendingId: pendiente.id,
         pendiente: true,
       });
@@ -405,6 +411,7 @@ export async function GET(
       // rootNombre).
       nombre: f.nombreHoja ?? f.nombre,
       parentId: f.parentId,
+      hojaArchivada: f.hojaArchivada,
       programa: f.programa,
       programasIds:
         programasPorHoja.get(f.id) ??
@@ -488,6 +495,12 @@ export async function PATCH(
   } | null;
   if (!Number.isFinite(grupoId) || !body) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+  }
+  // Una hoja archivada es de solo lectura; solo se permite lo que es del grupo
+  // completo (archivarlo y el nombre de la tarjeta).
+  if (Object.keys(body).some((k) => k !== 'archivado' && k !== 'nombre')) {
+    const rechazo = await rechazarSiHojaArchivada(grupoId);
+    if (rechazo) return rechazo;
   }
 
   // Solo escribe los campos que vengan en el body (edición parcial de la planilla).
@@ -577,13 +590,18 @@ export async function PATCH(
   }
 }
 
+// DELETE            → borra UNA hoja (si es la raíz, la hoja más antigua pasa
+//                     a ser la raíz para no perder la familia).
+// DELETE ?familia=1 → borra el GRUPO completo (la raíz y todas sus hojas);
+//                     es lo que usa "Eliminar grupo" en el listado.
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!(await autorizar())) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
+  const familiaCompleta = request.nextUrl.searchParams.get('familia') === '1';
   const grupoId = Number((await params).id);
   if (!Number.isFinite(grupoId)) {
     return NextResponse.json({ error: 'Id inválido' }, { status: 400 });
@@ -602,10 +620,18 @@ export async function DELETE(
     }
     const ids = [grupoId];
 
+    if (familiaCompleta && hoja.parentId == null) {
+      const hijas = await db
+        .select({ id: grupos.id })
+        .from(grupos)
+        .where(eq(grupos.parentId, grupoId));
+      ids.push(...hijas.map((h) => h.id));
+    }
+
     // Si es la raíz y tiene hojas, la más antigua pasa a ser la nueva raíz
     // (las demás cuelgan de ella) para no borrar la familia completa.
     let nuevaRaizId: number | null = null;
-    if (hoja.parentId == null) {
+    if (hoja.parentId == null && !familiaCompleta) {
       const hijas = await db
         .select({ id: grupos.id })
         .from(grupos)
@@ -656,7 +682,7 @@ export async function DELETE(
       .delete(grupoEstudiantesPendientes)
       .where(inArray(grupoEstudiantesPendientes.grupoId, ids));
     await db.delete(grupoCursos).where(inArray(grupoCursos.grupoId, ids));
-    await db.delete(grupos).where(eq(grupos.id, grupoId));
+    await db.delete(grupos).where(inArray(grupos.id, ids));
     return NextResponse.json({ ok: true, nuevaRaizId });
   } catch (error) {
     console.error('[GRUPOS] delete:', error);

@@ -11,6 +11,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { establecerProgramasDeHoja } from '~/server/lib/grupos-programas-sync';
 
 const autorizar = async () => {
@@ -27,6 +28,8 @@ export async function PUT(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     programaIds?: unknown;
   } | null;

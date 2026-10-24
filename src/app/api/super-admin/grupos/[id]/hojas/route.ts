@@ -24,6 +24,7 @@ import {
   grupoEstudiantes,
   grupoSesiones,
 } from '~/server/db/schema';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import {
   desmatricularDeCursoDeHoja,
   matricularEnCurso,
@@ -43,6 +44,8 @@ export async function POST(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     courseId?: number;
   } | null;
@@ -99,6 +102,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const courseId = Number(request.nextUrl.searchParams.get('courseId'));
   if (!Number.isFinite(grupoId) || !Number.isFinite(courseId)) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });

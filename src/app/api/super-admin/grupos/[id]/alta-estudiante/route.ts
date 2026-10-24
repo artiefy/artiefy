@@ -30,6 +30,7 @@ import {
   programas,
   users,
 } from '~/server/db/schema';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { matricularEnCurso } from '~/server/lib/grupos-matricula';
 import {
   sincronizarEstudiantesAgregados,
@@ -91,6 +92,8 @@ export async function POST(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     nombres?: string;
     apellidos?: string;

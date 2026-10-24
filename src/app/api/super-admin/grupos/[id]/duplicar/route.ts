@@ -10,7 +10,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 import { Pool } from '@neondatabase/serverless';
-import { eq, inArray, isNull, or } from 'drizzle-orm';
+import { asc, eq, inArray, isNull, or } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 
 import { env } from '~/env';
@@ -54,10 +54,12 @@ const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
           throw new Error('Grupo raíz no encontrado');
         }
 
+        // Mismo orden que las pestañas, para que la copia las conserve.
         const hojas = await tx
           .select()
           .from(grupos)
-          .where(eq(grupos.parentId, grupoId));
+          .where(eq(grupos.parentId, grupoId))
+          .orderBy(asc(grupos.createdAt), asc(grupos.id));
         const raizNombre = original.nombre.replace(
           /\s*\(copia(?:\s+\d+)?\)\s*$/i,
           ''
@@ -92,6 +94,7 @@ const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
             fechaInicio: original.fechaInicio,
             fechaFin: original.fechaFin,
             archivado: false,
+            hojaArchivada: original.hojaArchivada,
             createdBy: userId,
           })
           .returning({ id: grupos.id });
@@ -117,6 +120,7 @@ const duplicarGrupoRaiz = async (grupoId: number, userId: string) => {
               fechaInicio: hoja.fechaInicio,
               fechaFin: hoja.fechaFin,
               archivado: false,
+              hojaArchivada: hoja.hojaArchivada,
               createdBy: userId,
             })
             .returning({ id: grupos.id });

@@ -21,11 +21,16 @@ import {
   educadorPuedeAccederAGrupo,
   esAdministradorDeGrupos,
 } from '~/server/lib/grupo-asistencia-access';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { getApiSession } from '~/server/utils/apiAuth';
 
+// Todos los handlers de esta ruta escriben: una hoja archivada se rechaza (423).
 const autorizarGrupo = async (grupoId: number, courseId?: number) => {
   const session = await getApiSession();
   if (!session.userId) return { ok: false as const, status: 401 as const };
+  if (await rechazarSiHojaArchivada(grupoId)) {
+    return { ok: false as const, status: 423 as const };
+  }
   if (esAdministradorDeGrupos(session.role)) {
     return { ok: true as const, userId: session.userId, admin: true };
   }
@@ -96,7 +101,12 @@ export async function POST(
   const acceso = await autorizarGrupo(grupoId, courseId ?? undefined);
   if (!acceso.ok) {
     return NextResponse.json(
-      { error: 'No autorizado' },
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
       { status: acceso.status }
     );
   }
@@ -136,7 +146,12 @@ export async function PUT(
   const acceso = await autorizarGrupo(grupoId);
   if (!acceso.ok) {
     return NextResponse.json(
-      { error: 'No autorizado' },
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
       { status: acceso.status }
     );
   }
@@ -240,7 +255,12 @@ export async function PATCH(
   const acceso = await autorizarGrupo(grupoId);
   if (!acceso.ok) {
     return NextResponse.json(
-      { error: 'No autorizado' },
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
       { status: acceso.status }
     );
   }
@@ -290,7 +310,12 @@ export async function DELETE(
   const acceso = await autorizarGrupo(grupoId);
   if (!acceso.ok) {
     return NextResponse.json(
-      { error: 'No autorizado' },
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
       { status: acceso.status }
     );
   }

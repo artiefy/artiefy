@@ -25,6 +25,7 @@ import {
   grupos,
   users,
 } from '~/server/db/schema';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { sincronizarEstudiantesAgregados } from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
 
@@ -81,6 +82,8 @@ export async function POST(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     rows?: Fila[];
     programa?: string;

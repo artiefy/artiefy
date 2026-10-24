@@ -5,7 +5,8 @@
  * nombre, también en Clerk conservando el id). No toca ningún otro campo, a
  * diferencia de updateFullUser que reescribe todo el usuario.
  *
- * Campos permitidos: name, phone, identificacionNumero.
+ * Campos permitidos: name, phone, identificacionNumero, enrollmentStatus
+ * (estado de inscripción de Builders, solo los valores de ESTADOS_INSCRIPCION).
  * (El correo se cambia aparte en /updateEmail por su lógica de Clerk.)
  */
 
@@ -23,8 +24,24 @@ const autorizar = async () => {
   return Boolean(userId) && (role === 'super-admin' || role === 'admin');
 };
 
-const CAMPOS_PERMITIDOS = ['name', 'phone', 'identificacionNumero'] as const;
+const CAMPOS_PERMITIDOS = [
+  'name',
+  'phone',
+  'identificacionNumero',
+  'enrollmentStatus',
+] as const;
 type CampoPermitido = (typeof CAMPOS_PERMITIDOS)[number];
+
+// Mismos valores que acepta Builders (enrolled_users / updateEnrollmentStatus).
+const ESTADOS_INSCRIPCION = [
+  'Nuevo',
+  'Estudiante',
+  'Graduando',
+  'Egresado',
+  'Aplaza',
+  'Retirado',
+] as const;
+type EstadoInscripcion = (typeof ESTADOS_INSCRIPCION)[number];
 
 export async function PATCH(req: Request) {
   if (!(await autorizar())) {
@@ -83,6 +100,22 @@ export async function PATCH(req: Request) {
           .set({ identificacionNumero: value || null })
           .where(eq(users.id, userId));
         break;
+      case 'enrollmentStatus': {
+        if (!ESTADOS_INSCRIPCION.includes(value as EstadoInscripcion)) {
+          return NextResponse.json(
+            { error: 'Estado de inscripción inválido' },
+            { status: 400 }
+          );
+        }
+        await db
+          .update(users)
+          .set({
+            enrollmentStatus: value as EstadoInscripcion,
+            updatedAt: new Date(),
+          })
+          .where(eq(users.id, userId));
+        break;
+      }
     }
 
     return NextResponse.json({ success: true });

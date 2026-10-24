@@ -3052,6 +3052,10 @@ export const grupos = pgTable('grupos', {
   fechaInicio: date('fecha_inicio'),
   fechaFin: date('fecha_fin'),
   archivado: boolean('archivado').default(false).notNull(),
+  // Hoja (pestaña) archivada con "Archivar y duplicar": queda de solo lectura y
+  // al final de las pestañas. Distinto de `archivado`, que archiva el grupo
+  // completo (la tarjeta del listado).
+  hojaArchivada: boolean('hoja_archivada').default(false).notNull(),
   createdBy: text('created_by').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

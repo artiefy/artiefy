@@ -18,6 +18,7 @@ import {
   grupoEstudiantesPendientes,
   users,
 } from '~/server/db/schema';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { cursoDeHoja, matricularEnCurso } from '~/server/lib/grupos-matricula';
 import {
   sincronizarEstudiantesAgregados,
@@ -99,6 +100,8 @@ export async function POST(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     userId?: string;
     userIds?: string[];
@@ -143,6 +146,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     userId?: string;
     pendingId?: number;
@@ -253,6 +258,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const pendingIdParam = request.nextUrl.searchParams.get('pendingId');
   if (pendingIdParam != null) {
     const pendingId = Number(pendingIdParam);

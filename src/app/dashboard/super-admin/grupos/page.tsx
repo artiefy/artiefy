@@ -194,7 +194,9 @@ export default function GruposPage() {
     setEliminando(id);
     setError(null);
     try {
-      const res = await fetch(`/api/super-admin/grupos/${id}`, {
+      // familia=1: borra el grupo con TODAS sus hojas (sin esto, la hoja más
+      // antigua quedaba como un grupo nuevo suelto).
+      const res = await fetch(`/api/super-admin/grupos/${id}?familia=1`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('No se pudo eliminar el grupo');
