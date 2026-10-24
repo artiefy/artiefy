@@ -21,6 +21,7 @@ import {
   enrollments,
   grupoCursos,
   grupoEstudiantes,
+  grupoEstudiantesPendientes,
   grupos,
   users,
 } from '~/server/db/schema';
@@ -93,7 +94,7 @@ export async function POST(
   }
 
   const [grupo] = await db
-    .select({ programa: grupos.programa })
+    .select({ programa: grupos.programa, courseId: grupos.courseId })
     .from(grupos)
     .where(eq(grupos.id, grupoId))
     .limit(1);
@@ -105,31 +106,41 @@ export async function POST(
   const cursoRows = await db
     .select({ courseId: grupoCursos.courseId })
     .from(grupoCursos)
-    .where(eq(grupoCursos.grupoId, grupoId))
-    .limit(1);
-  const courseId = cursoRows[0]?.courseId ?? null;
-
-  const matricularCurso = async (userId: string) => {
-    if (courseId == null) return;
-    const existe = await db
-      .select({ id: enrollments.id })
-      .from(enrollments)
-      .where(
-        and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId))
+    .where(eq(grupoCursos.grupoId, grupoId));
+  const courseIds = [
+    ...new Set(
+      [grupo.courseId, ...cursoRows.map((curso) => curso.courseId)].filter(
+        (courseId): courseId is number => courseId != null
       )
-      .limit(1);
-    if (existe.length === 0) {
-      await db.insert(enrollments).values({
-        userId,
-        courseId,
-        enrolledAt: new Date(),
-        completed: false,
-      });
+    ),
+  ];
+
+  const matricularCursos = async (userId: string) => {
+    for (const courseId of courseIds) {
+      const existe = await db
+        .select({ id: enrollments.id })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.userId, userId),
+            eq(enrollments.courseId, courseId)
+          )
+        )
+        .limit(1);
+      if (existe.length === 0) {
+        await db.insert(enrollments).values({
+          userId,
+          courseId,
+          enrolledAt: new Date(),
+          completed: false,
+        });
+      }
     }
   };
 
   let creados = 0;
   let agregados = 0; // ya existían, solo se agregaron a la hoja
+  let pendientes = 0;
   const errores: { fila: number; email: string; motivo: string }[] = [];
 
   const fin = new Date();
@@ -144,12 +155,38 @@ export async function POST(
     const identificacionNumero = (r.identificacion ?? '').trim() || null;
     const modalidad = (r.modalidad ?? '').trim() || null;
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!nombres) {
       errores.push({
         fila: i + 1,
         email: r.email ?? '',
-        motivo: 'Correo inválido',
+        motivo: 'Falta el nombre',
       });
+      continue;
+    }
+
+    if (!email) {
+      try {
+        await db.insert(grupoEstudiantesPendientes).values({
+          grupoId,
+          name: `${nombres} ${apellidos}`.trim(),
+          identificacionNumero,
+          phone,
+          modalidad,
+        });
+        pendientes++;
+      } catch (error) {
+        console.error('[GRUPOS] alta-masiva pendiente', i + 1, error);
+        errores.push({
+          fila: i + 1,
+          email: '',
+          motivo: 'No se pudo guardar la ficha pendiente',
+        });
+      }
+      continue;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errores.push({ fila: i + 1, email, motivo: 'Correo inválido' });
       continue;
     }
 
@@ -167,13 +204,8 @@ export async function POST(
           .values({ grupoId, userId: existente.id })
           .onConflictDoNothing();
         await sincronizarEstudiantesAgregados(grupoId, [existente.id]);
-        await matricularCurso(existente.id);
+        await matricularCursos(existente.id);
         agregados++;
-        continue;
-      }
-
-      if (!nombres) {
-        errores.push({ fila: i + 1, email, motivo: 'Falta el nombre' });
         continue;
       }
 
@@ -208,7 +240,7 @@ export async function POST(
         updatedAt: new Date(),
       });
 
-      await matricularCurso(userId);
+      await matricularCursos(userId);
       await db
         .insert(grupoEstudiantes)
         .values({ grupoId, userId })
@@ -245,5 +277,11 @@ export async function POST(
     }
   }
 
-  return NextResponse.json({ ok: true, creados, agregados, errores });
+  return NextResponse.json({
+    ok: true,
+    creados,
+    agregados,
+    pendientes,
+    errores,
+  });
 }

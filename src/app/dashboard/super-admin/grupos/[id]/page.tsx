@@ -33,7 +33,10 @@ import {
 import { createPortal } from 'react-dom';
 import useSWR from 'swr';
 
-import AltaMasivaGrupo from '~/app/dashboard/super-admin/grupos/AltaMasivaGrupo';
+import AltaMasivaGrupo, {
+  type CampoFila,
+  parsearTextoPegado,
+} from '~/app/dashboard/super-admin/grupos/AltaMasivaGrupo';
 import { ModalCrearGrupo } from '~/app/dashboard/super-admin/grupos/ModalCrearGrupo';
 import { GrupoAttendanceEmbedContext } from '~/components/educators/layout/GrupoAttendanceEmbedContext';
 import { CalendarioPopover } from '~/components/shared/CalendarioPopover';
@@ -572,6 +575,7 @@ export default function GrupoDetallePage({
   };
   const [draft, setDraft] = useState<typeof filaVacia | null>(null);
   const [guardandoFila, setGuardandoFila] = useState(false);
+  const [pegandoDesdeExcel, setPegandoDesdeExcel] = useState(false);
   const [avisoFila, setAvisoFila] = useState<string | null>(null);
   const [sugerencias, setSugerencias] = useState<Miembro[]>([]);
   // Autocompletado de la fila nueva: campo que dispara la búsqueda y posición
@@ -1503,6 +1507,91 @@ export default function GrupoDetallePage({
     cursoHoja?.curso ?? (programaSel || grupo.programa || grupo.nombre);
   const puedeAdministrar = data.canAdminister === true;
 
+  const pegarFilasDesdeExcel = async (
+    event: React.ClipboardEvent<HTMLDivElement>
+  ) => {
+    const texto = event.clipboardData.getData('text/plain');
+    if (!texto.includes('\t') && !texto.includes('\n')) return;
+    event.preventDefault();
+    if (!puedeAdministrar || pegandoDesdeExcel) return;
+
+    const celda = (event.target as HTMLElement).closest('td');
+    const columnaInicial = celda?.cellIndex ?? 0;
+    const columnasAsistencia =
+      sesiones.length + (fechaNueva || sesiones.length === 0 ? 1 : 0);
+    const columnasTabla: (CampoFila | null)[] = [
+      null,
+      'identificacion',
+      'nombres',
+      'apellidos',
+      'email',
+      'phone',
+      ...Array.from({ length: columnasAsistencia }, () => null),
+      'modalidad',
+      null,
+      null,
+    ];
+    const filas = parsearTextoPegado(
+      texto,
+      columnaInicial === 0 ? undefined : columnasTabla.slice(columnaInicial)
+    );
+    if (filas.length === 0) {
+      setAvisoFila('No se encontraron filas con nombres para pegar');
+      return;
+    }
+
+    setPegandoDesdeExcel(true);
+    setAvisoFila(null);
+    try {
+      const response = await fetch(
+        `/api/super-admin/grupos/${activeId}/alta-masiva`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rows: filas,
+            programa: hoja.programa ?? programaSel ?? null,
+          }),
+        }
+      );
+      const resultadoPegado = (await response.json().catch(() => null)) as {
+        creados?: number;
+        agregados?: number;
+        pendientes?: number;
+        errores?: { fila: number; email: string; motivo: string }[];
+        error?: string;
+      } | null;
+      if (!response.ok || !resultadoPegado) {
+        throw new Error(
+          resultadoPegado?.error ?? 'No se pudieron pegar las filas'
+        );
+      }
+
+      const errores = resultadoPegado.errores ?? [];
+      const resumen = [
+        `${resultadoPegado.creados ?? 0} cuentas creadas`,
+        `${resultadoPegado.agregados ?? 0} existentes agregadas`,
+        `${resultadoPegado.pendientes ?? 0} fichas pendientes`,
+      ].join(' · ');
+      const detalleErrores = errores.length
+        ? ` · ${errores.length} con error: ${errores
+            .slice(0, 3)
+            .map((error) => `fila ${error.fila}: ${error.motivo}`)
+            .join('; ')}`
+        : '';
+      setAvisoFila(`✓ ${resumen}${detalleErrores}`);
+      void cargar(activeId);
+    } catch (error) {
+      setAvisoFila(
+        error instanceof Error
+          ? error.message
+          : 'No se pudieron pegar las filas'
+      );
+    } finally {
+      setPegandoDesdeExcel(false);
+    }
+  };
+
   return (
     <div
       // -mt/min-h van divididos entre el zoom (0.7) para cubrir de verdad los
@@ -1664,7 +1753,12 @@ export default function GrupoDetallePage({
         )}
 
         {/* Tabla */}
-        <div className="overflow-x-auto border-b border-white/10">
+        <div
+          className="overflow-x-auto border-b border-white/10"
+          onPaste={(event) => void pegarFilasDesdeExcel(event)}
+          tabIndex={0}
+          aria-label="Lista de estudiantes; pega aquí filas copiadas de Excel"
+        >
           <table className="w-full min-w-[1320px] border-collapse text-sm">
             <thead className="bg-[#10213b] text-xs text-white/90">
               {/* Cabecera de la planilla: datos de la hoja a la izquierda y

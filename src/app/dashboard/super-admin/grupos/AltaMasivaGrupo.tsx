@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Loader2, Upload, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
-interface Fila {
+export interface Fila {
   nombres: string;
   apellidos: string;
   email: string;
@@ -17,6 +17,7 @@ interface Fila {
 interface Resultado {
   creados: number;
   agregados: number;
+  pendientes: number;
   errores: { fila: number; email: string; motivo: string }[];
 }
 
@@ -27,32 +28,87 @@ const norm = (s: string) =>
     .toLowerCase()
     .trim();
 
+const normalizarEncabezado = (value: string) =>
+  norm(value).replace(/[^a-z0-9]/g, '');
+
+export type CampoFila = keyof Fila;
+
+const crearFilaVacia = (): Fila => ({
+  nombres: '',
+  apellidos: '',
+  email: '',
+  phone: '',
+  identificacion: '',
+  modalidad: '',
+});
+
+const CAMPOS: Record<CampoFila, string[]> = {
+  nombres: ['nombres', 'nombre', 'firstname', 'givenname'],
+  apellidos: ['apellidos', 'apellido', 'lastname', 'surname'],
+  email: ['correo', 'email', 'mail', 'correoelectronico'],
+  phone: ['celular', 'telefono', 'phone', 'tel', 'movil'],
+  identificacion: [
+    'documento',
+    'identificacion',
+    'numeroidentificacion',
+    'identidad',
+    'cedula',
+    'cc',
+  ],
+  modalidad: ['modalidad'],
+};
+
+const campoEncabezado = (value: string): CampoFila | null => {
+  const clave = normalizarEncabezado(value);
+  return (
+    (Object.entries(CAMPOS).find(([, alias]) =>
+      alias.some((item) => normalizarEncabezado(item) === clave)
+    )?.[0] as CampoFila | undefined) ?? null
+  );
+};
+
 // Empareja el encabezado del Excel con el campo interno.
 function mapearFila(row: Record<string, unknown>): Fila {
-  const get = (...alias: string[]) => {
-    for (const key of Object.keys(row)) {
-      if (alias.includes(norm(key))) {
-        const v = row[key];
-        return v == null ? '' : String(v).trim();
-      }
-    }
-    return '';
-  };
-  return {
-    nombres: get('nombres', 'nombre', 'firstname'),
-    apellidos: get('apellidos', 'apellido', 'lastname'),
-    email: get('correo', 'email', 'e-mail'),
-    phone: get('celular', 'telefono', 'phone', 'tel'),
-    identificacion: get(
-      'documento',
-      'identificacion',
-      '# identidad',
-      'identidad',
-      'cedula',
-      'cc'
-    ),
-    modalidad: get('modalidad'),
-  };
+  const fila = crearFilaVacia();
+  for (const [key, value] of Object.entries(row)) {
+    const campo = campoEncabezado(key);
+    if (campo) fila[campo] = value == null ? '' : String(value).trim();
+  }
+  return fila;
+}
+
+export function parsearTextoPegado(
+  value: string,
+  columnasSinEncabezado: (CampoFila | null)[] = [
+    'nombres',
+    'apellidos',
+    'email',
+    'identificacion',
+    'phone',
+    'modalidad',
+  ]
+): Fila[] {
+  const rows = value
+    .split(/\r?\n/)
+    .filter((row) => row.trim() !== '')
+    .map((row) => row.split('\t').map((cell) => cell.trim()));
+  if (rows.length === 0) return [];
+
+  const encabezados = rows[0]!.map(campoEncabezado);
+  const tieneEncabezados = encabezados.filter(Boolean).length >= 2;
+  const datos = tieneEncabezados ? rows.slice(1) : rows;
+  const columnas = tieneEncabezados ? encabezados : columnasSinEncabezado;
+
+  return datos
+    .map((row) => {
+      const fila = crearFilaVacia();
+      row.forEach((value, index) => {
+        const campo = columnas[index];
+        if (campo) fila[campo] = value;
+      });
+      return fila;
+    })
+    .filter((row) => row.nombres || row.email || row.identificacion);
 }
 
 export default function AltaMasivaGrupo({
@@ -66,6 +122,7 @@ export default function AltaMasivaGrupo({
 }) {
   const [abierto, setAbierto] = useState(false);
   const [filas, setFilas] = useState<Fila[]>([]);
+  const [textoPegado, setTextoPegado] = useState('');
   const [nombreArchivo, setNombreArchivo] = useState('');
   const [subiendo, setSubiendo] = useState(false);
   const [resultado, setResultado] = useState<Resultado | null>(null);
@@ -74,6 +131,7 @@ export default function AltaMasivaGrupo({
   const cerrar = () => {
     setAbierto(false);
     setFilas([]);
+    setTextoPegado('');
     setNombreArchivo('');
     setResultado(null);
     setError(null);
@@ -83,6 +141,7 @@ export default function AltaMasivaGrupo({
     const f = e.target.files?.[0];
     if (!f) return;
     setNombreArchivo(f.name);
+    setTextoPegado('');
     setError(null);
     setResultado(null);
     try {
@@ -98,6 +157,16 @@ export default function AltaMasivaGrupo({
     } catch {
       setError('No se pudo leer el archivo. Debe ser un Excel (.xlsx).');
     }
+  };
+
+  const onTextoPegado = (value: string) => {
+    setTextoPegado(value);
+    setNombreArchivo('Portapapeles');
+    setError(null);
+    setResultado(null);
+    const parsed = parsearTextoPegado(value);
+    setFilas(parsed);
+    if (parsed.length === 0) setError('No se encontraron filas con nombres.');
   };
 
   const plantilla = () => {
@@ -208,6 +277,28 @@ export default function AltaMasivaGrupo({
                 )}
               </div>
 
+              <div className="space-y-2 rounded-xl border border-white/10 bg-white/[0.02] p-3">
+                <label
+                  htmlFor="pegar-estudiantes-excel"
+                  className="block text-sm font-semibold text-white"
+                >
+                  Pegar filas desde Excel
+                </label>
+                <textarea
+                  id="pegar-estudiantes-excel"
+                  value={textoPegado}
+                  onChange={(event) => onTextoPegado(event.target.value)}
+                  rows={5}
+                  placeholder="Copia varias celdas en Excel y pégalas aquí. Con encabezados, se detectan las columnas automáticamente."
+                  className="w-full resize-y rounded-lg border border-cyan-500/20 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/35 focus:border-cyan-400/50 focus:outline-none"
+                />
+                <p className="text-xs text-white/45">
+                  Sin encabezados, usa este orden: Nombres, Apellidos, Correo,
+                  Identificación, Teléfono, Modalidad. El correo y la
+                  identificación pueden quedar vacíos.
+                </p>
+              </div>
+
               {error && (
                 <p className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
                   {error}
@@ -217,7 +308,7 @@ export default function AltaMasivaGrupo({
               {filas.length > 0 && !resultado && (
                 <div className="rounded-xl border border-white/10">
                   <div className="border-b border-white/10 px-3 py-2 text-xs text-white/60">
-                    {filas.length} estudiantes detectados
+                    {filas.length} filas detectadas
                   </div>
                   <div className="max-h-64 overflow-y-auto">
                     <table className="w-full text-xs">
@@ -260,8 +351,9 @@ export default function AltaMasivaGrupo({
               {resultado && (
                 <div className="space-y-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">
                   <p>
-                    ✓ {resultado.creados} creados y {resultado.agregados} ya
-                    existentes agregados al grupo.
+                    ✓ {resultado.creados} cuentas creadas, {resultado.agregados}{' '}
+                    usuarios existentes agregados y {resultado.pendientes}{' '}
+                    fichas pendientes de correo guardadas.
                   </p>
                   {resultado.errores.length > 0 && (
                     <details className="text-amber-200">
