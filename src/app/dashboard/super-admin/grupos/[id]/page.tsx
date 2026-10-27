@@ -2716,6 +2716,7 @@ export default function GrupoDetallePage({
             type="button"
             onClick={() => void crearHojaDirecta()}
             disabled={creandoHoja}
+            hidden={!puedeAdministrar}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 text-white/60 hover:bg-white/5 disabled:opacity-50"
             title="Nueva hoja"
           >
@@ -2766,13 +2767,14 @@ export default function GrupoDetallePage({
                     type="button"
                     onClick={() => {
                       if (activa) {
-                        if (!esArchivada) setRenombrando(true);
+                        if (!esArchivada && puedeAdministrar)
+                          setRenombrando(true);
                       } else setActiveId(h.id);
                     }}
                     title={
                       esArchivada
                         ? `${h.nombre} (archivada, solo lectura)`
-                        : activa
+                        : activa && puedeAdministrar
                           ? 'Clic para renombrar'
                           : h.nombre
                     }
@@ -2784,11 +2786,12 @@ export default function GrupoDetallePage({
                       <FileText className="size-4" />
                     )}
                     {h.nombre}
-                    {activa && !esArchivada && (
+                    {activa && !esArchivada && puedeAdministrar && (
                       <Pencil className="size-3 opacity-50" />
                     )}
                   </button>
-                  {h.id > 0 && (
+                  {/* Solo admin/super-admin eliminan hojas (el educador no). */}
+                  {h.id > 0 && puedeAdministrar && (
                     <button
                       type="button"
                       onClick={() => {

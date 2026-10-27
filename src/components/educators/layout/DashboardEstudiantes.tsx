@@ -23,6 +23,7 @@ import {
   UserMinus,
 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
 import { GroupAttendanceEmbed } from '~/components/educators/layout/GroupAttendanceEmbed';
@@ -77,6 +78,7 @@ interface User {
   activitiesWithGrades: {
     activityId: number;
     activityName: string;
+    lessonTitle?: string | null;
     parametroId: number;
     parametroName: string;
     grade: number;
@@ -89,6 +91,8 @@ interface User {
 interface Activity {
   id: number;
   name: string;
+  // Clase (lección) a la que pertenece la actividad.
+  lessonTitle?: string | null;
   parametro: string;
   parametroId: number;
   parametroPeso: number;
@@ -415,6 +419,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
   // ─── State ─────────────────────────────────────────────────────────────────
   const [users, setUsers] = useState<User[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  // Recuadro con la clase y el nombre completo de la actividad (hover).
+  const [tipActividad, setTipActividad] = useState<{
+    x: number;
+    y: number;
+    clase: string | null;
+    nombre: string;
+  } | null>(null);
   const [grades, setGrades] = useState<Record<string, Record<number, number>>>(
     {}
   );
@@ -776,6 +787,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           u.activitiesWithGrades.forEach((a) => {
             activityMap.set(a.activityId, {
               name: a.activityName,
+              lessonTitle: a.lessonTitle ?? null,
               parametro: a.parametroName,
               parametroId: a.parametroId,
               parametroPeso: a.parametroPeso ?? 0,
@@ -1276,7 +1288,23 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                   + Crear
                                 </button>
                               ) : (
-                                <div className="flex flex-col items-center gap-0.5">
+                                <div
+                                  className="flex cursor-default flex-col items-center gap-0.5"
+                                  // Al pasar el mouse: clase y nombre completo
+                                  // en un recuadro (portal, para que el scroll
+                                  // de la tabla no lo recorte).
+                                  onMouseEnter={(e) => {
+                                    const r =
+                                      e.currentTarget.getBoundingClientRect();
+                                    setTipActividad({
+                                      x: r.left + r.width / 2,
+                                      y: r.bottom + 6,
+                                      clase: activity.lessonTitle ?? null,
+                                      nombre: activity.name,
+                                    });
+                                  }}
+                                  onMouseLeave={() => setTipActividad(null)}
+                                >
                                   <span className="max-w-[130px] truncate text-[11px] leading-tight font-medium text-white/85 normal-case">
                                     {activity.name}
                                   </span>
@@ -1289,6 +1317,26 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           ))
                         )}
                       </tr>
+                      {tipActividad &&
+                        createPortal(
+                          <div
+                            className="pointer-events-none fixed z-[9999] max-w-xs -translate-x-1/2 rounded-lg border border-cyan-400/30 bg-[#061c37] px-3 py-2 text-left shadow-2xl"
+                            style={{
+                              left: tipActividad.x,
+                              top: tipActividad.y,
+                            }}
+                          >
+                            {tipActividad.clase && (
+                              <p className="text-[11px] text-cyan-300/80">
+                                Clase: {tipActividad.clase}
+                              </p>
+                            )}
+                            <p className="text-xs font-medium break-words text-white">
+                              {tipActividad.nombre}
+                            </p>
+                          </div>,
+                          document.body
+                        )}
                     </thead>
 
                     <tbody className="divide-y divide-cyan-500/10">

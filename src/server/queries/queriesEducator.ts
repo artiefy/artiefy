@@ -7,6 +7,7 @@ import { db } from '~/server/db';
 import {
   activities,
   enrollments,
+  lessons,
   parametros,
   userActivitiesProgress,
   userLessonsProgress,
@@ -158,6 +159,8 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           .select({
             activityId: activities.id,
             activityName: activities.name,
+            // Clase (lección) de la actividad, para el encabezado de la tabla.
+            lessonTitle: lessons.title,
             parametroId: parametros.id,
             parametroName: parametros.name,
             parametroPeso: parametros.porcentaje,
@@ -169,6 +172,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           })
           .from(activities)
           .innerJoin(parametros, eq(activities.parametroId, parametros.id))
+          .leftJoin(lessons, eq(lessons.id, activities.lessonsId))
           .leftJoin(
             userActivitiesProgress,
             and(
@@ -190,6 +194,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           .map((p) => ({
             activityId: -p.parametroId,
             activityName: 'Sin actividad',
+            lessonTitle: null,
             parametroId: p.parametroId,
             parametroName: p.parametroName,
             parametroPeso: p.parametroPeso,
@@ -224,6 +229,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           activitiesWithGrades: actividadNotas.map((a) => ({
             activityId: a.activityId,
             activityName: a.activityName,
+            lessonTitle: a.lessonTitle,
             parametroId: a.parametroId,
             parametroName: a.parametroName,
             parametroPeso: a.parametroPeso,
