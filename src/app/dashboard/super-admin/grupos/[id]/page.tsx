@@ -2424,7 +2424,10 @@ export default function GrupoDetallePage({
                       <td className="border border-white/10 px-2 py-1.5">
                         <input
                           defaultValue={m.observaciones ?? ''}
-                          readOnly={!puedeAdministrar}
+                          // El educador (vista embebida) también las edita.
+                          readOnly={
+                            !puedeAdministrar && !attendanceEmbed.enabled
+                          }
                           onBlur={(e) => {
                             if (e.target.value !== (m.observaciones ?? '')) {
                               void guardarNota(

@@ -18,12 +18,17 @@ import {
   grupoEstudiantesPendientes,
   users,
 } from '~/server/db/schema';
+import {
+  educadorPuedeAccederAGrupo,
+  esAdministradorDeGrupos,
+} from '~/server/lib/grupo-asistencia-access';
 import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { cursoDeHoja, matricularEnCurso } from '~/server/lib/grupos-matricula';
 import {
   sincronizarEstudiantesAgregados,
   sincronizarEstudiantesRetirados,
 } from '~/server/lib/grupos-programas-sync';
+import { getApiSession } from '~/server/utils/apiAuth';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -142,12 +147,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
   const grupoId = Number((await params).id);
-  const rechazo = await rechazarSiHojaArchivada(grupoId);
-  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     userId?: string;
     pendingId?: number;
@@ -157,6 +157,28 @@ export async function PATCH(
     modalidad?: string | null;
     observaciones?: string | null;
   } | null;
+
+  // Admin/super-admin editan todo. El educador solo puede cambiar las
+  // observaciones, y solo en hojas a las que tiene acceso (su curso).
+  const session = await getApiSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  if (!esAdministradorDeGrupos(session.role)) {
+    const soloObservaciones = Object.keys(body ?? {}).every((k) =>
+      ['userId', 'pendingId', 'observaciones'].includes(k)
+    );
+    if (
+      session.role !== 'educador' ||
+      !soloObservaciones ||
+      !Number.isInteger(grupoId) ||
+      !(await educadorPuedeAccederAGrupo(grupoId, session.userId))
+    ) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+  }
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const pendingId = Number(body?.pendingId);
   if (
     Number.isInteger(pendingId) &&
