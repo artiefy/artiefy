@@ -18,16 +18,22 @@ const POINT_VERTEX = /* glsl */ `
   attribute float aAlpha;
   uniform float uScale;
   uniform float uPixelRatio;
+  uniform float uFocus;
+  uniform float uFocusRange;
   varying float vAlpha;
   varying float vDepth;
+  varying float vBlur;
 
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPosition;
     vDepth = -mvPosition.z;
+    // Depth of field: 0 on the focal plane, 1 fully out of focus.
+    vBlur = clamp(abs(vDepth - uFocus) / uFocusRange, 0.0, 1.0);
+    // Out-of-focus nodes spread into wider, softer bokeh discs.
     gl_PointSize = min(
-      aSize * uScale * uPixelRatio / max(vDepth, 0.1),
-      48.0 * uPixelRatio
+      aSize * uScale * uPixelRatio / max(vDepth, 0.1) * (1.0 + vBlur * 1.6),
+      64.0 * uPixelRatio
     );
     vAlpha = aAlpha;
   }
@@ -39,30 +45,40 @@ const POINT_FRAGMENT = /* glsl */ `
   uniform float uFar;
   varying float vAlpha;
   varying float vDepth;
+  varying float vBlur;
 
   void main() {
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
-    // A crisp core inside a soft halo, like a lit synapse.
+    // In focus: a crisp core inside a soft halo, like a lit synapse.
+    // Out of focus: the core melts into the halo and dims, so the light
+    // spreads over a wider disc instead of piling up.
     float halo = 1.0 - smoothstep(0.0, 0.5, dist);
-    float core = 1.0 - smoothstep(0.0, 0.16, dist);
+    float core = 1.0 - smoothstep(0.0, mix(0.16, 0.45, vBlur), dist);
     float depthFade =
       (1.0 - smoothstep(uNear, uFar, vDepth)) * smoothstep(1.0, 4.0, vDepth);
-    gl_FragColor =
-      vec4(uColor, (halo * halo * 0.55 + core) * vAlpha * depthFade);
+    float focus = mix(1.0, 0.35, vBlur);
+    gl_FragColor = vec4(
+      uColor,
+      (halo * halo * 0.55 + core) * vAlpha * depthFade * focus
+    );
     #include <colorspace_fragment>
   }
 `;
 
 const LINK_VERTEX = /* glsl */ `
   attribute float aAlpha;
+  uniform float uFocus;
+  uniform float uFocusRange;
   varying float vAlpha;
   varying float vDepth;
+  varying float vBlur;
 
   void main() {
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPosition;
     vDepth = -mvPosition.z;
+    vBlur = clamp(abs(vDepth - uFocus) / uFocusRange, 0.0, 1.0);
     vAlpha = aAlpha;
   }
 `;
@@ -73,11 +89,13 @@ const LINK_FRAGMENT = /* glsl */ `
   uniform float uFar;
   varying float vAlpha;
   varying float vDepth;
+  varying float vBlur;
 
   void main() {
     float depthFade =
       (1.0 - smoothstep(uNear, uFar, vDepth)) * smoothstep(1.0, 4.0, vDepth);
-    gl_FragColor = vec4(uColor, vAlpha * depthFade);
+    // Lines cannot blur, so out-of-focus ones fade back instead.
+    gl_FragColor = vec4(uColor, vAlpha * depthFade * mix(1.0, 0.25, vBlur));
     #include <colorspace_fragment>
   }
 `;
@@ -101,6 +119,10 @@ const MAX_LINK_CELLS = 1.6;
 const LINK_ALPHA = 0.28;
 const FADE_NEAR = 10;
 const FADE_FAR = 58;
+/** Camera distance that stays sharp; it moves with the camera on scroll. */
+const FOCUS_DISTANCE = 17;
+/** Distance from the focal plane at which a node is fully blurred. */
+const FOCUS_RANGE = 12;
 
 const COLORS = {
   node: '#7ee7f2',
@@ -138,6 +160,8 @@ function createPointMaterial(color: string, scale: number) {
       uPixelRatio: { value: 1 },
       uNear: { value: FADE_NEAR },
       uFar: { value: FADE_FAR },
+      uFocus: { value: FOCUS_DISTANCE },
+      uFocusRange: { value: FOCUS_RANGE },
     },
     transparent: true,
     depthWrite: false,
@@ -182,6 +206,8 @@ export class NeuralNetwork {
       uColor: { value: new Color(COLORS.link) },
       uNear: { value: FADE_NEAR },
       uFar: { value: FADE_FAR },
+      uFocus: { value: FOCUS_DISTANCE },
+      uFocusRange: { value: FOCUS_RANGE },
     },
     transparent: true,
     depthWrite: false,
