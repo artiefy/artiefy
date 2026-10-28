@@ -105,14 +105,20 @@ export const NETWORK_CAMERA = { z: 12, fov: 55 } as const;
 /** Depth span of the nodes, in world units along z. */
 const DEPTH = { near: 4, far: -38 } as const;
 /** Depth layers of the layout grid; more layers read as more depth. */
-const DEPTH_LAYERS = 7;
+const DEPTH_LAYERS = 5;
 /** Spread a little past the screen edges so parallax never shows a border. */
 const OVERSCAN = 1.25;
+/**
+ * Share of hubs that grow a tight cluster of one or two satellites. Links
+ * inside a cluster come out short and links between hubs stay long, so the
+ * network mixes both lengths with very few lines.
+ */
+const CLUSTER_CHANCE = 0.35;
 /**
  * Share of nodes that get one extra link on top of the spanning tree, so the
  * graph has a few loops and reads as a mesh instead of a bare tree.
  */
-const EXTRA_LINK_CHANCE = 0.2;
+const EXTRA_LINK_CHANCE = 0.08;
 /** Longest extra link, in grid cells at that node's depth. */
 const MAX_LINK_CELLS = 1.6;
 /** Resting link opacity; a node lit by a signal brightens its links. */
@@ -131,6 +137,7 @@ const COLORS = {
 } as const;
 
 export interface NeuralNetworkOptions {
+  /** Approximate number of hub nodes; clusters add a few satellites. */
   nodeCount: number;
   pulseCount: number;
   /** Same seed, same network: the layout never jumps between visits. */
@@ -224,27 +231,23 @@ export class NeuralNetwork {
 
     // The camera sees a pyramid, not a box: a box leaves the edges empty up
     // close and piles nodes into the middle far away. So the layout is a grid
-    // in screen space, one node per cell at a random spot inside it, mapped
+    // in screen space, one hub per cell at a random spot inside it, mapped
     // onto the view pyramid. Every depth layer then covers the whole screen
     // evenly, and near and far layers slide past each other with parallax.
     const perLayer = targetCount / DEPTH_LAYERS;
     const columns = Math.max(2, Math.round(Math.sqrt(perLayer * aspect)));
     const rows = Math.max(2, Math.round(perLayer / columns));
-    const count = columns * rows * DEPTH_LAYERS;
+    const hubCount = columns * rows * DEPTH_LAYERS;
     const tanHalfFov = Math.tan(((NETWORK_CAMERA.fov / 2) * Math.PI) / 180);
     const halfHeightAt = (z: number) =>
       tanHalfFov * (NETWORK_CAMERA.z - z) * OVERSCAN;
 
-    this.base = new Float32Array(count * 3);
-    this.drift = new Float32Array(count * 3);
-    this.baseSizes = new Float32Array(count);
-    this.glow = new Float32Array(count);
-    const linkReach = new Float32Array(count);
-
-    for (let i = 0; i < count; i++) {
-      const column = i % columns;
-      const row = Math.floor(i / columns) % rows;
-      const layer = Math.floor(i / (columns * rows));
+    const positions: number[] = [];
+    const reaches: number[] = [];
+    for (let hub = 0; hub < hubCount; hub++) {
+      const column = hub % columns;
+      const row = Math.floor(hub / columns) % rows;
+      const layer = Math.floor(hub / (columns * rows));
       // Stay away from the cell walls so neighbours never touch.
       const jitter = () => 0.15 + random() * 0.7;
       const z =
@@ -254,18 +257,41 @@ export class NeuralNetwork {
       const halfWidth = halfHeight * aspect;
       const x = -halfWidth + ((column + jitter()) / columns) * halfWidth * 2;
       const y = -halfHeight + ((row + jitter()) / rows) * halfHeight * 2;
+      // Cells grow with depth, so far nodes may reach further to link.
+      const cellHeight = (halfHeight * 2) / rows;
 
-      this.base.set([x, y, z], i * 3);
+      positions.push(x, y, z);
+      reaches.push(cellHeight * MAX_LINK_CELLS);
+      if (random() >= CLUSTER_CHANCE) continue;
+
+      const satellites = 1 + Math.floor(random() * 2);
+      for (let s = 0; s < satellites; s++) {
+        // A random direction on the sphere, close to the hub.
+        const radius = cellHeight * (0.12 + random() * 0.18);
+        const theta = random() * Math.PI * 2;
+        const phi = Math.acos(2 * random() - 1);
+        positions.push(
+          x + radius * Math.sin(phi) * Math.cos(theta),
+          y + radius * Math.sin(phi) * Math.sin(theta),
+          z + radius * Math.cos(phi)
+        );
+        reaches.push(cellHeight * MAX_LINK_CELLS);
+      }
+    }
+
+    const nodeCount = positions.length / 3;
+    this.base = new Float32Array(positions);
+    this.drift = new Float32Array(nodeCount * 3);
+    this.baseSizes = new Float32Array(nodeCount);
+    this.glow = new Float32Array(nodeCount);
+    const linkReach = new Float32Array(reaches);
+    for (let i = 0; i < nodeCount; i++) {
       this.drift.set(
         [0.35 + random() * 0.6, 0.08 + random() * 0.14, random() * Math.PI * 2],
         i * 3
       );
       this.baseSizes[i] = 0.7 + random() * 0.9;
-      // Cells grow with depth, so far nodes may reach further to link.
-      linkReach[i] = ((halfHeight * 2) / rows) * MAX_LINK_CELLS;
     }
-    // The grid rounds the requested count to whole rows and columns.
-    const nodeCount = count;
 
     const distanceBetween = (a: number, b: number) =>
       Math.hypot(
