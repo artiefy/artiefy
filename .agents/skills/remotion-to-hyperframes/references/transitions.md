@@ -100,17 +100,7 @@ const customPresentation: PresentationComponent = ({
   presentationProgress,
   presentationDirection,
 }) => {
-  return (
-    <div
-      style={
-        {
-          /* compute transform from progress */
-        }
-      }
-    >
-      {children}
-    </div>
-  );
+  return <div style={{/* compute transform from progress */}}>{children}</div>;
 };
 ```
 

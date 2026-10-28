@@ -66,7 +66,7 @@
       "source": "proffesor-for-testing/agentic-qe",
       "sourceType": "github",
       "skillPath": ".claude/skills/compatibility-testing/SKILL.md",
-      "computedHash": "0e31a9c3069279f1808f930b1065f8075630dcf6805d78be4bc85f9351c2592f"
+      "computedHash": "baadcf1f4069b43e92ec90245d1f5edfe7f71e0c4a1321a6245e3a962aeb87ce"
     },
     "competitive-analysis": {
       "source": "mverab/eGEOagents",
@@ -87,13 +87,13 @@
       "source": "upstash/context7",
       "sourceType": "github",
       "skillPath": "skills/context7-cli/SKILL.md",
-      "computedHash": "6077b3c638fb7efb31d9b2c815436650de4aef73e7b671edec2f1c63f6a1e105"
+      "computedHash": "5b7e4068e8995830733e92088fcf58d72181c279e648e22e53207e5628b94feb"
     },
     "context7-mcp": {
       "source": "upstash/context7",
       "sourceType": "github",
       "skillPath": "skills/context7-mcp/SKILL.md",
-      "computedHash": "6b02383f86f87e81a722b3b6c6d6e06efa5c72f23bc87bb02599e3d499ca2c58"
+      "computedHash": "a696522f8af9566bd6c457f0feb905b1dbfec43ac3b9064a944acdb351b48f38"
     },
     "contribute-catalog": {
       "source": "heygen-com/hyperframes",
@@ -172,13 +172,13 @@
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/hyperframes/SKILL.md",
-      "computedHash": "3b5f77521af944502a991d2fac23dffc9c40a2aa1d0380de2c329f2e5c2977a3"
+      "computedHash": "126f3b0588ba564c4d5767d12357eebda38c006a375015eb4a563c23337ce6f9"
     },
     "hyperframes-cli": {
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/hyperframes-cli/SKILL.md",
-      "computedHash": "6272f5136a7ab54f274c13c767ef9942281c7fdd0ab9ca3067c2ccfb4be279e7"
+      "computedHash": "2c2a83c2ed092feb114eeec1b26b7ee961bd68bdee8106d33e1720667927536d"
     },
     "hyperframes-media": {
       "source": "heygen-com/hyperframes",
@@ -190,7 +190,7 @@
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/hyperframes-registry/SKILL.md",
-      "computedHash": "141fcd863a1a02117706712508e8b0df407c3d0ff36e5863123fa4ce2defd14d"
+      "computedHash": "11e2e5da7d5a8cd5f86c7d45a7d70cfe5e2713a59ac2aaec6ba014530d44715c"
     },
     "lottie": {
       "source": "heygen-com/hyperframes",
@@ -202,7 +202,7 @@
       "source": "czlonkowski/n8n-skills",
       "sourceType": "github",
       "skillPath": "skills/n8n-workflow-patterns/SKILL.md",
-      "computedHash": "cf28d3c39ca33cc380e065e5c31dbd7dd83cc8d154b1bf1797353cee6b84db47"
+      "computedHash": "0048569dea2b9a6f5854094d3405266e5dca5f4fdc72c61677e5c2d3bc388c8b"
     },
     "neon-postgres": {
       "source": "neondatabase/agent-skills",
@@ -228,7 +228,7 @@
       "source": "vercel/next.js",
       "sourceType": "github",
       "skillPath": "skills/next-partial-prefetching-adoption/SKILL.md",
-      "computedHash": "cfed44cfce68b08b2a7edf3d6f07b230a49dfbf180825ca49a5bbf12b27a558a"
+      "computedHash": "6aa8c96d816dcbf061be6dcf58b7f49686c74be09be436ed4b06251bd74fabf3"
     },
     "next-upgrade": {
       "source": "vercel-labs/next-skills",
@@ -259,18 +259,23 @@
       "source": "microsoft/playwright",
       "sourceType": "github",
       "skillPath": ".claude/skills/playwright-dev/SKILL.md",
-      "computedHash": "b87ec8cabef862d5da7819f73e1ddb41d622205cbec7cb2b7d339df2727a169e"
+      "computedHash": "6732c26053ce90deeaa7ba1456dc32e950c625a40fd14c95a04ecac7b71f75e6"
     },
     "react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "autoskills-registry",
       "computedHash": "502eb06700e2c3cb1bd7f710860528f72281320bd5171a2087b05a090b573dc1"
     },
+    "react-three-fiber": {
+      "source": "vercel-labs/json-render",
+      "sourceType": "autoskills-registry",
+      "computedHash": "1158a4910694206be05c820faca73de932bcbdd23f12fb98897f859b61cb7005"
+    },
     "remotion-to-hyperframes": {
       "source": "heygen-com/hyperframes",
       "sourceType": "github",
       "skillPath": "skills/remotion-to-hyperframes/SKILL.md",
-      "computedHash": "98ea022922936308f1deec7a341c576365591842ba7f38f45b674e74826b634f"
+      "computedHash": "8dc5992b03e30398ebd855b4a0902e007757d3387027accf43de09250f9cc683"
     },
     "responsive-design": {
       "source": "wshobson/agents",

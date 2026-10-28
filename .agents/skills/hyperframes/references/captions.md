@@ -1,171 +1,46 @@
 # Captions
 
-## Language Rule (Non-Negotiable)
+## Words and timings
 
-**Never use `.en` models unless the user explicitly states the audio is English.** `.en` models TRANSLATE non-English audio into English instead of transcribing it.
+- `npx hyperframes transcribe <file> --json` and a HeyGen voiceover (`/media-use`) give every word's start and end. Work from those as `[{ "id": "w0", "text": "Hello", "start": 0.0, "end": 0.5 }, …]`.
+- `npx hyperframes transcribe` defaults to the `small.en` whisper model, which **translates** non-English speech into English. Pass the model: `npx hyperframes transcribe <file> --model small.en` for English, `--model small --language <code>` otherwise, `--model medium.en` for speech over music. It writes `assets/transcript.json` (its JSON names the path) and overwrites it on the next run; `--to srt` or `--to vtt` writes a sidecar.
+- For Chinese, Japanese and other unspaced scripts, local transcription returns a whole sentence as one "word", sometimes in the other script (Traditional for Simplified speech). Split each segment's text into short phrases and spread its time across them by character count; check the characters against what is said.
+- Whisper invents "Thank you." over silence and repeats lines over a silent tail: drop words that start inside a final silence (`silencedetect=noise=-35dB:d=0.6`; real speech sits around −16 to −26 dB).
+- Never put two words in one timed entry, and match transcript words to caption words by position, not text, or a repeated word takes the wrong time.
+- Read the transcript before using it. More than 20% `♪` or `�` tokens, or nonsense words, means it failed: retry with a larger model, or take lyrics from the person. Drop non-word tokens before building groups.
 
-1. User says the language → `--model small --language <code>` (no `.en`)
-2. User says English → `--model small.en`
-3. Language unknown → `--model small` (no `.en`, no `--language`) — auto-detects
+## Structure
 
----
+- One sub-composition host with `data-track-kind="captions"` holds every caption group, so Studio shows them on one captions track.
+- Ready-made styles: `npx hyperframes catalog --tag caption-style --json`. An installed one is source you can restyle.
 
-Analyze spoken content to determine caption style. If user specifies a style, use that. Otherwise, detect tone from the transcript.
+## Groups
 
-## Transcript Source
-
-```json
-[
-  { "text": "Hello", "start": 0.0, "end": 0.5 },
-  { "text": "world.", "start": 0.6, "end": 1.2 }
-]
-```
-
-For transcription commands, whisper models, external APIs, see [transcript-guide.md](transcript-guide.md).
-
-## Style Detection (When No Style Specified)
-
-Read the full transcript before choosing. Four dimensions:
-
-**1. Visual feel** — corporate→clean; energetic→bold; storytelling→elegant; technical→precise; social→playful.
-
-**2. Color palette** — dark+bright for energy; muted for professional; high contrast for clarity; one accent color.
-
-**3. Font mood** — heavy/condensed for impact; clean sans for modern; rounded for friendly; serif for elegance.
-
-**4. Animation character** — scale-pop for punchy; gentle fade for calm; word-by-word for emphasis; typewriter for technical.
-
-## Per-Word Styling
-
-Scan for words deserving distinct treatment:
-
-- **Brand/product names** — larger size, unique color
-- **ALL CAPS** — scale boost, flash, accent color
-- **Numbers/statistics** — bold weight, accent color
-- **Emotional keywords** — exaggerated animation (overshoot, bounce)
-- **Call-to-action** — highlight, underline, color pop
-- **Marker highlight** — for beyond-color emphasis, see [css-patterns.md](css-patterns.md)
-
-## Script-to-Style Mapping
-
-| Tone         | Font mood                | Animation                          | Color                       | Size    |
-| ------------ | ------------------------ | ---------------------------------- | --------------------------- | ------- |
-| Hype/launch  | Heavy condensed, 800-900 | Scale-pop, back.out(1.7), 0.1-0.2s | Bright on dark              | 72-96px |
-| Corporate    | Clean sans, 600-700      | Fade+slide, power3.out, 0.3s       | White/neutral, muted accent | 56-72px |
-| Tutorial     | Mono/clean sans, 500-600 | Typewriter/fade, 0.4-0.5s          | High contrast, minimal      | 48-64px |
-| Storytelling | Serif/elegant, 400-500   | Slow fade, power2.out, 0.5-0.6s    | Warm muted tones            | 44-56px |
-| Social       | Rounded sans, 700-800    | Bounce, elastic.out, word-by-word  | Playful, colored pills      | 56-80px |
-
-## Word Grouping
-
-- **High energy:** 2-3 words. Quick turnover.
-- **Conversational:** 3-5 words. Natural phrases.
-- **Measured/calm:** 4-6 words. Longer groups.
-
-Break on sentence boundaries, 150ms+ pauses, or max word count.
-
-## Positioning
-
-- **Landscape (1920x1080):** Bottom 80-120px, centered
-- **Portrait (1080x1920):** Lower middle ~600-700px from bottom, centered
-- Never cover the subject's face
-- `position: absolute` — never relative
-- One caption group visible at a time
-
-## Text Overflow Prevention
-
-Use `window.__hyperframes.fitTextFontSize()`:
+- 2–3 words for high energy, 3–5 conversational, 4–6 calm. Break at a sentence end, a pause of 150 ms or more, or the word limit.
+- One group visible at a time. A group opens at or before its first word's start and closes at or after its last word's end. A caption at exactly 0 s looks pre-existing: start 0.1–0.3 s in.
+- Every group ends with a hard kill after its exit, or a stale group can stay on screen:
 
 ```js
-var result = window.__hyperframes.fitTextFontSize(group.text.toUpperCase(), {
-  fontFamily: 'Outfit',
-  fontWeight: 900,
-  maxWidth: 1600,
-});
-el.style.fontSize = result.fontSize + 'px';
+tl.to(group, { opacity: 0, duration: 0.12, ease: 'power2.in' }, end - 0.12);
+tl.set(group, { opacity: 0, visibility: 'hidden' }, end);
 ```
 
-Options: `maxWidth` (1600 landscape, 900 portrait), `baseFontSize` (78), `minFontSize` (42), `fontWeight`, `fontFamily`, `step` (2).
+`tl.set` is an instant flip, so setting `visibility` on the group is fine; never tween it on a `.clip`.
 
-CSS safety nets: `max-width` on container, `overflow: visible` (**not** `hidden` — hidden clips scaled emphasis words and glow effects), `position: absolute`, explicit `height`. When per-word styling uses `scale > 1.0`, compute `maxWidth = safeWidth / maxScale` to leave headroom.
+## Fit and place
 
-**Container pattern:** Full-width absolute container, centered. Do **not** use `left: 50%; transform: translateX(-50%)` — causes clipping at composition edges.
+- Size each group to fit: `window.__hyperframes.fitTextFontSize(text, { fontFamily, fontWeight, maxWidth })` returns `{ fontSize }`. Defaults: `maxWidth` 1600 landscape, 900 portrait; base 78, minimum 42, step 2. When a word scales up for emphasis, divide `maxWidth` by that scale.
+- A full-width absolute container, centred with text alignment. Never `left: 50%; transform: translateX(-50%)`, which clips at the frame edges.
+- `overflow: visible`, not `hidden`, which cuts off scaled words and glows.
+- Landscape: 80–120 px from the bottom. Portrait: about 600–700 px from the bottom. Never over the speaker's face; inside the 80% title-safe box.
+- Position each group absolutely. In a flex column a group hidden with `visibility: hidden` still takes space, so the next one lands lower. In a stack that accumulates, groups in one block share one exit time, or the stack reflows.
+- Fade the group or its words, not both: the opacities multiply and read as a pop. A gradient or `background-clip: text` fill goes on the inner text span, not the transformed container.
+- Over footage, choose the blend by the brightness (0–255) behind the text: under 60 `screen`, 60–180 `overlay`, over 180 `normal` with opaque colour. Plain subtitles above brightness 60 get a scrim sized to the text (30–40%), never a full-width bar.
+- Footage may already carry burned-in subtitles only mid-clip: scan a 1 fps contact sheet before placing captions.
 
-## Caption Exit Guarantee
+## Text behind the speaker
 
-Every group **must** have a hard kill after exit animation:
-
-```js
-tl.to(
-  groupEl,
-  { opacity: 0, scale: 0.95, duration: 0.12, ease: 'power2.in' },
-  group.end - 0.12
-);
-tl.set(groupEl, { opacity: 0, visibility: 'hidden' }, group.end); // deterministic kill
-```
-
-Self-lint after building timeline — place **before** `window.__timelines[id] = tl` so it runs at composition init:
-
-```js
-GROUPS.forEach(function (group, gi) {
-  var el = document.getElementById('cg-' + gi);
-  if (!el) return;
-  tl.seek(group.end + 0.01);
-  var computed = window.getComputedStyle(el);
-  if (computed.opacity !== '0' && computed.visibility !== 'hidden') {
-    console.warn(
-      '[caption-lint] group ' +
-        gi +
-        ' still visible at t=' +
-        (group.end + 0.01).toFixed(2) +
-        's'
-    );
-  }
-});
-tl.seek(0);
-```
-
-## Pre-Built Caption Components
-
-Before building caption styles from scratch, check the registry — 15 ready-to-use caption components cover the most common styles. Install with `npx hyperframes add <name>` and use as a sub-composition via `data-composition-src`.
-
-```bash
-npx hyperframes catalog --tag caption-style   # list all caption components
-npx hyperframes add caption-highlight         # install a specific one
-```
-
-| Style                     | Component                    | Best for                     |
-| ------------------------- | ---------------------------- | ---------------------------- |
-| TikTok-style highlight    | `caption-highlight`          | Social, high-energy          |
-| Karaoke pill              | `caption-pill-karaoke`       | Music, lyric videos          |
-| Cinematic editorial       | `caption-editorial-emphasis` | Documentary, storytelling    |
-| Glitch / cyber            | `caption-glitch-rgb`         | Tech, gaming                 |
-| Full-screen slam          | `caption-kinetic-slam`       | Hype, announcements          |
-| Neon glow                 | `caption-neon-glow`          | Night, club, neon aesthetics |
-| Neon accent (multi-color) | `caption-neon-accent`        | Colorful, playful            |
-| Wipe reveal               | `caption-clip-wipe`          | Clean, modern                |
-| Gradient fill             | `caption-gradient-fill`      | Vibrant, eye-catching        |
-| Matrix decode             | `caption-matrix-decode`      | Sci-fi, tech reveals         |
-| Emoji pop                 | `caption-emoji-pop`          | Social, casual               |
-| Parallax layers           | `caption-parallax-layers`    | Depth, cinematic             |
-| Particle burst            | `caption-particle-burst`     | Celebration, impact keywords |
-| Lava texture              | `caption-texture`            | Bold, dramatic               |
-| Weight shift              | `caption-weight-shift`       | Elegant, typographic         |
-
-Browse all with previews: [hyperframes.heygen.com/catalog](https://hyperframes.heygen.com/catalog)
-
-Caption components ship with transparent backgrounds — they're pure overlays. If the underlying video is bright or busy, add a contrast layer (e.g. a semi-transparent dark div) in the host composition beneath the caption sub-composition, not inside the component itself.
-
-## Further References
-
-- [dynamic-techniques.md](dynamic-techniques.md) — karaoke, clip-path reveals, slam words, scatter exits, elastic, 3D rotation
-- [transcript-guide.md](transcript-guide.md) — transcription commands, whisper models, external APIs
-- [css-patterns.md](css-patterns.md) — CSS+GSAP marker highlighting (deterministic, fully seekable)
-
-## Constraints
-
-- Deterministic. No `Math.random()`, no `Date.now()`.
-- Sync to transcript timestamps.
-- One group visible at a time.
-- Every group must have a hard `tl.set` kill at `group.end`.
-- The compiler embeds supported fonts automatically — just declare `font-family` in CSS.
+- Stack the video, then the captions, then a cutout of the person from `npx hyperframes remove-background` (`/media-use`), ordered by `z-index`. Shake or punch in the video and the cutout together in one wrapper.
+- `check` treats a `<video>` as opaque across its whole box, so a WebM cutout fails every caption behind it with `text_occluded`: put `data-layout-allow-occlusion` on the cutout and judge from `snapshot`.
+- A big word behind the head reads best 30–55% covered: under about 15% it floats, over about 65% it is eaten. Re-lay out when a content word is 80% covered, or two adjacent words 50% each. Measure the rendered word boxes against the matte over each caption's own time window (heads move: one clip went from y=224 to y=96 in 8 s); estimates from character widths were wrong both ways.
+- The matte model drops mic arms, lets large rigs near the body leak in, and flickers on held objects. Its first run downloads 168 MB, and it runs at about 2 fps at 1080p on CPU.

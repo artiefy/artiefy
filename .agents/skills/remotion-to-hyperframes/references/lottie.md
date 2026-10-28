@@ -4,7 +4,7 @@ Lottie animations are a clean translation case — HF has a built-in
 [Lottie adapter](https://github.com/heygen-com/hyperframes/blob/main/packages/core/src/runtime/adapters/lottie.ts)
 that supports both `lottie-web` and `@lottiefiles/dotlottie-web`. The
 adapter auto-discovers animations registered on `window.__hfLottie`
-and seeks them per-frame via `goToAndStop`.
+and seeks lottie-web via `goToAndStop` and current dotLottie players via `setFrame`.
 
 ## Pattern
 
@@ -51,27 +51,42 @@ Key differences from a typical Lottie embed:
 Remotion bundles the animation JSON via webpack import. HF needs the JSON
 on disk under `assets/` and references it via path:
 
-1. Copy `hello.json` from the Remotion project into `hf-src/assets/`.
-2. Reference as `path: "assets/hello.json"` in `loadAnimation`.
+1. Copy the animation JSON from the Remotion project into the HyperFrames project’s assets folder.
+2. Pass that local path to `loadAnimation`, as shown in the example above.
 
-For dotlottie (binary) format, swap in `@lottiefiles/dotlottie-web`:
+For dotlottie (binary) format, use the ESM build of `@lottiefiles/dotlottie-web`.
+Before rendering, copy `dist/index.js` and `dist/dotlottie-player.wasm` from the
+same pinned release into `hf-src/lib/dotlottie-web/`. Version 0.81.0 provides:
+
+- https://unpkg.com/@lottiefiles/dotlottie-web@0.81.0/dist/index.js
+- https://unpkg.com/@lottiefiles/dotlottie-web@0.81.0/dist/dotlottie-player.wasm
+
+The package's CommonJS entry cannot run as a classic browser script. Set the
+local WASM URL before constructing the player; the render then loads the SDK,
+WASM and animation from project files.
 
 ```html
-<script src="https://unpkg.com/@lottiefiles/dotlottie-web"></script>
 <canvas id="anim" style="width:100%;height:100%"></canvas>
-<script>
+<script type="module">
+  import { DotLottie } from './lib/dotlottie-web/index.js';
+
+  DotLottie.setWasmUrl(
+    new URL('./lib/dotlottie-web/dotlottie-player.wasm', import.meta.url).href
+  );
   const player = new DotLottie({
     canvas: document.getElementById('anim'),
     src: 'assets/hello.lottie',
     autoplay: false,
+    loop: false,
+    renderConfig: { autoResize: false, freezeOnOffscreen: false },
   });
   window.__hfLottie = window.__hfLottie || [];
   window.__hfLottie.push(player);
 </script>
 ```
 
-The HF adapter handles both player APIs (it duck-types `goToAndStop`
-vs `setCurrentRawFrameValue` / `seek`).
+The HF adapter supports `goToAndStop` for lottie-web, `setFrame` for current
+dotLottie players, and `setCurrentRawFrameValue` / `seek` for older player shapes.
 
 ## Multiple Lottie animations
 
@@ -104,11 +119,11 @@ for the full supported feature list.
 
 ## Loop behavior
 
-Remotion's `loop={true}` plays the animation continuously. Translate to
-the lottie-web `loop: true` setting AND rely on the adapter's natural
-seek behavior (it'll seek modulo the animation's duration). For
-non-default playback rates, set `playbackRate` in `loadAnimation` and HF
-will respect it during seek.
+Remotion's `loop={true}` plays the animation continuously. Translate it
+to `loop: true` on the player: the HF adapter wraps composition time into
+the animation's own length, so the cycle repeats for the whole scene. It
+does not add playback-rate scaling; bake a non-default rate into the
+Lottie asset and verify the rendered output.
 
 ## Performance note
 

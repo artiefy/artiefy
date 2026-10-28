@@ -38,7 +38,7 @@ export key lives in `utils/build/utilsBundleMapping.js`.
 
 | Output                             | Entry                              | Purpose                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `lib/transform/babelBundle.js`     | `src/transform/babelBundle.ts`     | Wraps `@babel/core`, `@babel/traverse`, `@babel/code-frame`, plugins. Shared by every consumer that needs babel.                                                         |
+| `lib/transform/babelBundle.js`     | `src/transform/babelBundle.ts`     | Wraps `@babel/core`, `@babel/traverse`, plugins. Shared by every consumer that needs babel.                                                                              |
 | `lib/transform/esmLoader.js`       | `src/transform/esmLoader.ts`       | Node ESM loader registered via `node:module.register()`. Output sits next to `babelBundle.js` so its `./babelBundle` sibling require resolves correctly.                 |
 | `lib/common/index.js`              | `src/common/index.ts`              | Barrel of `common/*` + `transform/*` (compilationCache, test, configLoader, fixtures, globals, …). State-holding singletons (currentTestInfo, memoryCache, …) live here. |
 | `lib/runner/index.js`              | `src/runner/index.ts`              | Barrel of `runner/*` + `reporters/*` + `plugins/*`.                                                                                                                      |
@@ -49,7 +49,7 @@ export key lives in `utils/build/utilsBundleMapping.js`.
 
 The `common` and `runner` bundles externalize `../transform/babelBundle`
 (among other things) so babel code is not duplicated across them. The
-`lib/transform/transform.ts` module uses `libPath('transform', 'babelBundle')`
+`src/transform/transform.ts` module uses `libPath('transform', 'babelBundle')`
 (absolute path via `package.ts` root) to load the babel bundle at runtime,
 so it works regardless of which bundle has inlined it.
 
@@ -113,7 +113,6 @@ inlined into `utilsBundle` (i.e., loaded through `require('./utilsBundle').<key>
    // or:
    'foo': { named: { namedSymbol: 'fooNamedSymbol' } },
    ```
-
    - `default` — matches `import foo from 'foo'` and rewrites to
      `require('./utilsBundle').foo`.
    - `namespace` — matches `import * as foo from 'foo'`.
@@ -137,12 +136,12 @@ inlined into `utilsBundle` (i.e., loaded through `require('./utilsBundle').<key>
 ## In-tree Third-Party Helpers
 
 Some vendored code isn't a published npm package but lives in-tree at
-`packages/playwright-core/src/server/utils/third_party/` (e.g.
+`packages/utils/third_party/` (e.g.
 `extractZip.ts`, `lockfile.ts`). These are TypeScript files, not
 node_modules. They're exposed to callers via two different routes:
 
 - **Through `coreBundle.utils`.** Re-exported from
-  `src/server/utils/index.ts` via `export * from './third_party/extractZip'`
+  `packages/utils/index.ts` via `export * from './third_party/extractZip'`
   etc. Callers import via the `@utils/*` path alias:
   ```ts
   import { extractZip } from '@utils/third_party/extractZip';
@@ -233,7 +232,7 @@ imports to the sibling bundle at consumer output level:
 - To add a new vendored npm dep: root `package.json` → `utilsBundle.ts`
   export → `utilsBundleMapping.js` entry → DEPS.list → `npm run flint`.
 - To add a new in-tree third-party helper: drop the `.ts` file under
-  `server/utils/third_party/`, re-export from `server/utils/index.ts`,
+  `packages/utils/third_party/`, re-export from `packages/utils/index.ts`,
   and use `@utils/third_party/<name>` at call sites.
 - To add a new bundle entry: add an `EsbuildStep` in
   `utils/build/build.js`, pick output location so relative externals

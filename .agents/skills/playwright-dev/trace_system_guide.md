@@ -16,25 +16,22 @@ The Playwright trace system is a comprehensive recording and visualization frame
 
 ## 2. File Structure
 
-### packages/trace/src/ - Trace Type Definitions
-
-Located in `/home/pfeldman/code/playwright/packages/trace/src/`
+### packages/isomorphic/trace/ - Trace Type Definitions
 
 **Key Files:**
 
-- **trace.ts** - Core trace event type definitions
-- **har.ts** - HTTP Archive format (network traffic)
-- **snapshot.ts** - DOM snapshot data structures
-- **DEPS.list** - Dependencies marker
+- **trace.ts** - Current trace event and snapshot types; re-exports the latest version
+- **versions/** - One file per trace format version, plus legacy formats kept for modernization
+- **versions/har.ts** - HTTP Archive format (network traffic)
 
 **File List:**
 
 ```
-trace/src/
-├── trace.ts        (183 lines) - Main trace event types
-├── har.ts          (189 lines) - HAR format types
-├── snapshot.ts     (62 lines)  - Snapshot data structures
-└── DEPS.list       - Dependencies file
+isomorphic/trace/
+├── trace.ts                - Current trace event + snapshot types (re-export)
+└── versions/
+    ├── traceV*.ts          - Per-version trace event types
+    └── har.ts              - HAR format types
 ```
 
 ---
@@ -227,7 +224,7 @@ type ErrorTraceEvent = {
 
 ---
 
-## 4. HAR Format (har.ts)
+## 4. HAR Format (versions/har.ts)
 
 Follows HTTP Archive 1.2 specification. Key structure for network traffic:
 
@@ -268,7 +265,7 @@ type Entry = {
 
 ---
 
-## 5. Snapshot Format (snapshot.ts)
+## 5. Snapshot Format (trace.ts)
 
 ### FrameSnapshot
 
@@ -355,7 +352,7 @@ traces-dir/
 
 ## 7. Trace Recording (tracing.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/server/trace/recorder/tracing.ts`
+Located: `packages/playwright-core/src/server/trace/recorder/tracing.ts`
 
 ### Tracing Class Architecture
 
@@ -472,7 +469,7 @@ type RecordingState = {
 
 ## 8. Trace Loading (traceLoader.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/utils/isomorphic/trace/traceLoader.ts`
+Located: `packages/isomorphic/trace/traceLoader.ts`
 
 ### TraceLoaderBackend Interface
 
@@ -541,7 +538,7 @@ type ContextEntry = {
 
 ## 9. Trace Model (traceModel.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/utils/isomorphic/trace/traceModel.ts`
+Located: `packages/isomorphic/trace/traceModel.ts`
 
 ### TraceModel Class
 
@@ -602,7 +599,7 @@ type ActionTraceEventInContext = ActionEntry & {
 
 ## 10. Trace Modernizer (traceModernizer.ts)
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/utils/isomorphic/trace/traceModernizer.ts`
+Located: `packages/isomorphic/trace/traceModernizer.ts`
 
 ### Version Support
 
@@ -637,7 +634,7 @@ class TraceModernizer {
 
 ## 11. Trace Viewer
 
-Located: `/home/pfeldman/code/playwright/packages/trace-viewer/src/`
+Located: `packages/trace-viewer/src/`
 
 ### Structure
 
@@ -679,7 +676,7 @@ trace-viewer/src/
 
 ## 12. CLI Commands
 
-Located: `/home/pfeldman/code/playwright/packages/playwright-core/src/cli/program.ts`
+Located: `packages/playwright-core/src/cli/program.ts`
 
 ### show-trace Command
 
@@ -984,16 +981,15 @@ Every action uses a unique `callId` to correlate:
 
 ## 17. File Reference Guide
 
-| File                                     | Size       | Purpose           |
-| ---------------------------------------- | ---------- | ----------------- |
-| `trace/src/trace.ts`                     | 183 lines  | Trace event types |
-| `trace/src/har.ts`                       | 189 lines  | Network HAR types |
-| `trace/src/snapshot.ts`                  | 62 lines   | Snapshot types    |
-| `playwright-core/.../tracing.ts`         | 700+ lines | Recording engine  |
-| `playwright-core/.../traceParser.ts`     | 62 lines   | ZIP backend       |
-| `playwright-core/.../traceViewer.ts`     | 288 lines  | Viewer server     |
-| `playwright-core/.../traceLoader.ts`     | 158 lines  | Load traces       |
-| `playwright-core/.../traceModel.ts`      | 300+ lines | Data model        |
-| `playwright-core/.../traceModernizer.ts` | 500+ lines | Version upgrades  |
-| `trace-viewer/src/index.tsx`             | 48 lines   | Viewer entry      |
-| `trace-viewer/src/ui/workbench.tsx`      | Main UI    | Display           |
+| File                                  | Size                           | Purpose          |
+| ------------------------------------- | ------------------------------ | ---------------- |
+| `isomorphic/trace/trace.ts`           | Trace event and snapshot types |
+| `isomorphic/trace/versions/har.ts`    | Network HAR types              |
+| `playwright-core/.../tracing.ts`      | 700+ lines                     | Recording engine |
+| `playwright-core/.../traceParser.ts`  | 62 lines                       | ZIP backend      |
+| `playwright-core/.../traceViewer.ts`  | 288 lines                      | Viewer server    |
+| `isomorphic/trace/traceLoader.ts`     | 158 lines                      | Load traces      |
+| `isomorphic/trace/traceModel.ts`      | 300+ lines                     | Data model       |
+| `isomorphic/trace/traceModernizer.ts` | 500+ lines                     | Version upgrades |
+| `trace-viewer/src/index.tsx`          | 48 lines                       | Viewer entry     |
+| `trace-viewer/src/ui/workbench.tsx`   | Main UI                        | Display          |

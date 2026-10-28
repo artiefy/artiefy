@@ -44,9 +44,9 @@ Webhook → [Validate] → [Transform] → [Action] → [Response/Notify]
 
 **Options**:
 
-- **IF node** - Check required fields exist
-- **Code node** - Custom validation logic
+- **IF node** - Check required fields exist (one condition per rule)
 - **Stop and Error** - Fail gracefully with message
+- **Code node** - Only when the caller needs per-field error messages (a loop over a schema; see `n8n-error-handling`)
 
 **Example**:
 
@@ -62,10 +62,11 @@ Webhook → [Validate] → [Transform] → [Action] → [Response/Notify]
 
 **Typical nodes**:
 
-- **Set** - Field mapping
-- **Code** - Complex transformations
+- **None** - Map fields in the action node's own slots (`{{ $json.body.email }}` straight in the CRM or database node)
+- **Edit Fields (Set)** - A named step: a payload several nodes read, constants, an error or return item
+- **Native transforms** - Split Out, Filter, Summarize, Date & Time (see the job-to-node table in `using-n8n-mcp-skills`)
 
-**Example** (Set node):
+**Example** (Edit Fields, when several nodes read these values):
 
 ```javascript
 {
@@ -148,26 +149,18 @@ Message: {
 
 **Flow**: Payment Provider → Webhook → Verify → Update Database → Send Receipt
 
-**Security**: Verify webhook signatures
+**Security**: Verify webhook signatures — with the provider's trigger node when one exists (Stripe Trigger, GitHub
+Trigger), otherwise natively:
 
-```javascript
-// Code node - verify Stripe signature
-const crypto = require('crypto');
-const signature = $input.item.headers['stripe-signature'];
-const secret = $credentials.stripeWebhookSecret;
-
-// Verify signature matches
-const expectedSig = crypto
-  .createHmac('sha256', secret)
-  .update($input.item.body)
-  .digest('hex');
-
-if (signature !== expectedSig) {
-  throw new Error('Invalid webhook signature');
-}
-
-return $input.item.body; // Return validated body
 ```
+Webhook (options.rawBody: true)
+  → Crypto (hmac SHA256 over the binary "data"; secret from a crypto credential)
+  → IF (signature header equals the computed value) → process / Respond 401
+```
+
+The signature is computed over the **raw** body; re-serialising `$json.body` breaks it. Stripe signs
+`<timestamp>.<raw body>` rather than the body alone, so its check needs that string built first. Full node JSON:
+`n8n-node-configuration` → NATIVE_NODES.md → "Webhook signature".
 
 ### 3. Chat Platform Integrations (Slack, Discord, Teams)
 
@@ -177,11 +170,11 @@ return $input.item.body; // Return validated body
 
 ```
 1. Webhook (path: "slack-command", POST)
-2. Code (parse Slack payload: $json.body.text, $json.body.user_id)
-3. HTTP Request (fetch data from API)
-4. Set (format Slack message)
-5. Webhook Response (immediate Slack response)
+2. HTTP Request (fetch data from API; query = {{ $json.body.text }})
+3. Respond to Webhook (immediate Slack response; the message is built with expressions from $json and $('Webhook').item.json.body)
 ```
+
+The Slack payload fields are read where they're used (`$json.body.text`, `$json.body.user_id`); no parsing node is needed.
 
 **Slack Data Access**:
 
@@ -201,10 +194,12 @@ Channel ID: {{$json.body.channel_id}}
 ```
 1. Webhook (path: "github", POST)
 2. IF (check $json.body.action equals "opened")
-3. Set (extract PR details: title, author, url)
-4. Slack (notify #dev-team)
-5. Webhook Response (200 OK)
+3. Slack (notify #dev-team; title, author and URL read with the expressions below)
+4. Webhook Response (200 OK)
 ```
+
+The GitHub Trigger node registers the webhook and filters events for you; prefer it over a bare Webhook (service node
+first).
 
 **GitHub Data Access**:
 
@@ -224,10 +219,9 @@ URL: {{$json.body.pull_request.html_url}}
 
 ```
 1. Webhook (path: "sensor-data", POST)
-2. Set (extract sensor readings)
-3. Postgres (insert into sensor_readings)
-4. IF (temperature > 80)
-5. Email (alert admin)
+2. Postgres (insert into sensor_readings; columns from $json.body.*)
+3. IF (temperature > 80)
+4. Email (alert admin)
 ```
 
 ---
@@ -313,53 +307,48 @@ URL: {{$json.body.pull_request.html_url}}
 
 ## Authentication & Security
 
-### 1. Query Parameter Token
+### 1. Header or Basic Auth (shared secret)
 
-**Simple but less secure**
+**Simple and enough for most internal callers**
 
-```javascript
-// IF node - validate token
-{{$json.query.token}} equals "your-secret-token"
-```
+Set the Webhook node's `authentication` to `headerAuth` (or `basicAuth` / `jwtAuth`) and attach a credential. n8n
+rejects requests without the right header before the workflow runs. Never compare a token in an IF node: the secret
+then sits in the workflow JSON, which breaks the "secrets never go in text fields" rule.
 
-### 2. Header-Based Auth
-
-**Better security**
-
-```javascript
-// IF node - check header
-{{$json.headers['x-api-key']}} equals "your-api-key"
-```
-
-### 3. Signature Verification
-
-**Best security** (for webhooks from services like Stripe, GitHub)
-
-```javascript
-// Code node
-const crypto = require('crypto');
-const signature = $input.item.headers['x-signature'];
-const secret = $credentials.webhookSecret;
-
-const calculatedSig = crypto
-  .createHmac('sha256', secret)
-  .update(JSON.stringify($input.item.body))
-  .digest('hex');
-
-if (signature !== `sha256=${calculatedSig}`) {
-  throw new Error('Invalid signature');
+```json
+{
+  "httpMethod": "POST",
+  "path": "orders",
+  "authentication": "headerAuth",
+  "responseMode": "responseNode",
+  "options": {}
 }
-
-return $input.item.body;
 ```
 
-### 4. IP Whitelist
+Query-string tokens leak into logs and browser history; prefer a header.
 
-**Restrict access by IP** (n8n workflow settings)
+### 2. Signature Verification (HMAC)
 
-- Configure in workflow settings
-- Only allow specific IP ranges
-- Use for internal systems
+**Best security** (for webhooks from services like GitHub, Shopify, Stripe)
+
+```
+Webhook (options.rawBody: true)
+  → Crypto (typeVersion 2, action hmac, type SHA256, binaryData true, binaryPropertyName "data", encoding hex;
+            secret from a crypto credential)
+  → IF {{ $('Webhook').item.json.headers['x-hub-signature-256'] }} equals {{ 'sha256=' + $json.computedSignature }}
+      ├─ true  → process
+      └─ false → Respond to Webhook 401
+```
+
+- Compute over the raw body (`rawBody: true` puts it in binary `data`); `JSON.stringify($json.body)` changes the bytes.
+- Header name and prefix differ per provider (GitHub `x-hub-signature-256: sha256=…`, Shopify base64). Read their docs.
+- Use the provider's trigger node if n8n has one (GitHub Trigger, Stripe Trigger) before building this by hand.
+- Full JSON: `n8n-node-configuration` → NATIVE_NODES.md → "Webhook signature".
+
+### 3. IP Allowlist
+
+**Restrict access by IP** with the Webhook node's `options.ipWhitelist` ("IP(s) Allowlist"): comma-separated
+addresses or CIDR ranges; empty allows all. Good for internal callers with fixed addresses, on top of auth.
 
 ---
 
@@ -380,7 +369,7 @@ return $input.item.body;
 ```javascript
 {
   responseMode: "onReceived",
-  responseCode: 200
+  options: { responseCode: { values: { responseCode: 200 } } }   // Webhook v2+: a nested collection
 }
 ```
 
@@ -520,7 +509,6 @@ curl -X POST https://n8n.example.com/webhook/form-submit \
 
 - Webhook timeout: 120 seconds (default)
 - For large data, consider async processing:
-
   ```
   Webhook → Queue (Redis/DB) → Response (immediate)
 
@@ -571,7 +559,7 @@ Using Webhook Response node with responseMode: "onReceived" (ignored)
 
 ### ✅ Correct
 
-Set responseMode: "lastNode" to use Webhook Response node
+Set responseMode: "responseNode" to use a Respond to Webhook node (`lastNode` returns the last node's output instead)
 
 ### 3. ❌ Wrong: No validation
 
@@ -579,7 +567,7 @@ Assuming data is always present and valid
 
 ### ✅ Correct
 
-Validate data early with IF node or Code node
+Validate data early with an IF node (per-field messages: the Code validator in `n8n-error-handling`)
 
 ### 4. ❌ Wrong: Hardcoded paths
 
