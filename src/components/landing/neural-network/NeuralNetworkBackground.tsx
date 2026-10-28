@@ -57,8 +57,8 @@ function NetworkScene({
     () =>
       new NeuralNetwork(
         compact
-          ? { nodeCount: 60, pulseCount: 6, aspect: viewportAspect() }
-          : { nodeCount: 120, pulseCount: 12, aspect: viewportAspect() }
+          ? { nodeCount: 45, pulseCount: 6, aspect: viewportAspect() }
+          : { nodeCount: 90, pulseCount: 12, aspect: viewportAspect() }
       )
   );
   // Pointer in [-1, 1] and page scroll in [0, 1], written by window listeners

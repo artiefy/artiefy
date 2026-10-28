@@ -90,12 +90,15 @@ const DEPTH = { near: 4, far: -38 } as const;
 const DEPTH_LAYERS = 7;
 /** Spread a little past the screen edges so parallax never shows a border. */
 const OVERSCAN = 1.25;
-/** Nearest neighbours each node tries to link to; kept low to avoid clutter. */
-const LINKS_PER_NODE = 1;
-/** Longest link, in grid cells at that node's depth. */
+/**
+ * Share of nodes that get one extra link on top of the spanning tree, so the
+ * graph has a few loops and reads as a mesh instead of a bare tree.
+ */
+const EXTRA_LINK_CHANCE = 0.2;
+/** Longest extra link, in grid cells at that node's depth. */
 const MAX_LINK_CELLS = 1.6;
 /** Resting link opacity; a node lit by a signal brightens its links. */
-const LINK_ALPHA = 0.2;
+const LINK_ALPHA = 0.28;
 const FADE_NEAR = 10;
 const FADE_FAR = 58;
 
@@ -238,25 +241,61 @@ export class NeuralNetwork {
     // The grid rounds the requested count to whole rows and columns.
     const nodeCount = count;
 
+    const distanceBetween = (a: number, b: number) =>
+      Math.hypot(
+        this.base[a * 3]! - this.base[b * 3]!,
+        this.base[a * 3 + 1]! - this.base[b * 3 + 1]!,
+        this.base[a * 3 + 2]! - this.base[b * 3 + 2]!
+      );
     const linkPairs: number[] = [];
     const seen = new Set<number>();
-    for (let i = 0; i < nodeCount; i++) {
-      const nearest: { index: number; distance: number }[] = [];
+    const addLink = (a: number, b: number) => {
+      const key = Math.min(a, b) * nodeCount + Math.max(a, b);
+      if (seen.has(key)) return;
+      seen.add(key);
+      linkPairs.push(a, b);
+    };
+
+    // Minimum spanning tree (Prim): every node joins one network with the
+    // fewest and shortest possible links, so no point floats on its own.
+    const inTree = new Uint8Array(nodeCount);
+    const bestDistance = new Float32Array(nodeCount);
+    const bestParent = new Int32Array(nodeCount);
+    inTree[0] = 1;
+    for (let j = 1; j < nodeCount; j++) bestDistance[j] = distanceBetween(0, j);
+    for (let added = 1; added < nodeCount; added++) {
+      let next = -1;
       for (let j = 0; j < nodeCount; j++) {
-        if (j === i) continue;
-        const dx = this.base[i * 3]! - this.base[j * 3]!;
-        const dy = this.base[i * 3 + 1]! - this.base[j * 3 + 1]!;
-        const dz = this.base[i * 3 + 2]! - this.base[j * 3 + 2]!;
-        const distance = Math.hypot(dx, dy, dz);
-        if (distance <= linkReach[i]!) nearest.push({ index: j, distance });
+        if (inTree[j]) continue;
+        if (next < 0 || bestDistance[j]! < bestDistance[next]!) next = j;
       }
-      nearest.sort((a, b) => a.distance - b.distance);
-      for (const { index } of nearest.slice(0, LINKS_PER_NODE)) {
-        const key = Math.min(i, index) * nodeCount + Math.max(i, index);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        linkPairs.push(i, index);
+      inTree[next] = 1;
+      addLink(bestParent[next]!, next);
+      for (let j = 0; j < nodeCount; j++) {
+        if (inTree[j]) continue;
+        const distance = distanceBetween(next, j);
+        if (distance < bestDistance[j]!) {
+          bestDistance[j] = distance;
+          bestParent[j] = next;
+        }
       }
+    }
+
+    // A few short extra links close loops, like synapses between neighbours.
+    for (let i = 0; i < nodeCount; i++) {
+      if (random() >= EXTRA_LINK_CHANCE) continue;
+      let nearest = -1;
+      let nearestDistance = linkReach[i]!;
+      for (let j = 0; j < nodeCount; j++) {
+        const key = Math.min(i, j) * nodeCount + Math.max(i, j);
+        if (j === i || seen.has(key)) continue;
+        const distance = distanceBetween(i, j);
+        if (distance <= nearestDistance) {
+          nearest = j;
+          nearestDistance = distance;
+        }
+      }
+      if (nearest >= 0) addLink(i, nearest);
     }
     this.links = new Uint16Array(linkPairs);
     const linkCount = this.links.length / 2;
