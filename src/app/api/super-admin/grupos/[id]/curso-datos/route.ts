@@ -15,6 +15,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { courseInstructors, courses } from '~/server/db/schema';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -22,10 +23,15 @@ const autorizar = async () => {
   return Boolean(userId) && (role === 'super-admin' || role === 'admin');
 };
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   if (!(await autorizar())) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
+  const rechazo = await rechazarSiHojaArchivada(Number((await params).id));
+  if (rechazo) return rechazo;
 
   const body = (await request.json().catch(() => null)) as {
     courseId?: number;

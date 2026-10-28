@@ -9,16 +9,69 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { grupoAsistencia, grupoSesiones } from '~/server/db/schema';
+import {
+  grupoAsistencia,
+  grupoEstudiantes,
+  grupoSesiones,
+} from '~/server/db/schema';
+import {
+  educadorPuedeAccederAGrupo,
+  esAdministradorDeGrupos,
+} from '~/server/lib/grupo-asistencia-access';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
+import { getApiSession } from '~/server/utils/apiAuth';
 
-const autorizar = async () => {
-  const { userId, sessionClaims } = await auth();
-  const role = String(sessionClaims?.metadata?.role ?? '');
-  return Boolean(userId) && (role === 'super-admin' || role === 'admin');
+// Todos los handlers de esta ruta escriben: una hoja archivada se rechaza (423).
+const autorizarGrupo = async (grupoId: number, courseId?: number) => {
+  const session = await getApiSession();
+  if (!session.userId) return { ok: false as const, status: 401 as const };
+  if (await rechazarSiHojaArchivada(grupoId)) {
+    return { ok: false as const, status: 423 as const };
+  }
+  if (esAdministradorDeGrupos(session.role)) {
+    return { ok: true as const, userId: session.userId, admin: true };
+  }
+  if (
+    session.role !== 'educador' ||
+    !(await educadorPuedeAccederAGrupo(grupoId, session.userId, courseId))
+  ) {
+    return { ok: false as const, status: 403 as const };
+  }
+  return { ok: true as const, userId: session.userId, admin: false };
+};
+
+const educadorPuedeEditarSesion = async (
+  grupoId: number,
+  sesionId: number,
+  userId: string
+) => {
+  const [sesion] = await db
+    .select({ courseId: grupoSesiones.courseId })
+    .from(grupoSesiones)
+    .where(
+      and(eq(grupoSesiones.id, sesionId), eq(grupoSesiones.grupoId, grupoId))
+    )
+    .limit(1);
+  if (!sesion) return false;
+  return educadorPuedeAccederAGrupo(
+    grupoId,
+    userId,
+    sesion.courseId ?? undefined
+  );
+};
+
+const sesionPerteneceAGrupo = async (grupoId: number, sesionId: number) => {
+  const [sesion] = await db
+    .select({ id: grupoSesiones.id })
+    .from(grupoSesiones)
+    .where(
+      and(eq(grupoSesiones.id, sesionId), eq(grupoSesiones.grupoId, grupoId))
+    )
+    .limit(1);
+  return Boolean(sesion);
 };
 
 const ESTADOS = ['presente', 'ausente', 'tarde'] as const;
@@ -28,9 +81,6 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     fecha?: string;
@@ -44,13 +94,28 @@ export async function POST(
       { status: 400 }
     );
   }
-  const courseId = Number(body?.courseId);
+  const courseId = body?.courseId == null ? null : Number(body.courseId);
+  if (courseId != null && (!Number.isInteger(courseId) || courseId <= 0)) {
+    return NextResponse.json({ error: 'courseId inválido' }, { status: 400 });
+  }
+  const acceso = await autorizarGrupo(grupoId, courseId ?? undefined);
+  if (!acceso.ok) {
+    return NextResponse.json(
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
+      { status: acceso.status }
+    );
+  }
   try {
     const [sesion] = await db
       .insert(grupoSesiones)
       .values({
         grupoId,
-        courseId: Number.isFinite(courseId) ? courseId : null,
+        courseId,
         fecha,
         titulo: body?.titulo?.trim() ?? null,
       })
@@ -69,24 +134,73 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     sesionId?: number;
-    marcas?: { userId: string; estado: string }[];
+    marcas?: { userId: string; estado: string | null }[];
   } | null;
   const sesionId = Number(body?.sesionId);
   if (!Number.isFinite(grupoId) || !Number.isFinite(sesionId)) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
   }
+  const acceso = await autorizarGrupo(grupoId);
+  if (!acceso.ok) {
+    return NextResponse.json(
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
+      { status: acceso.status }
+    );
+  }
+  if (!(await sesionPerteneceAGrupo(grupoId, sesionId))) {
+    return NextResponse.json(
+      { error: 'Semana no encontrada' },
+      { status: 404 }
+    );
+  }
+  if (
+    !acceso.admin &&
+    !(await educadorPuedeEditarSesion(grupoId, sesionId, acceso.userId))
+  ) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
   const marcas = (body?.marcas ?? []).filter(
     (m): m is { userId: string; estado: Estado } =>
       typeof m?.userId === 'string' && ESTADOS.includes(m?.estado as Estado)
   );
+  // estado '' o null = quitar la marca (volver a "sin marcar").
+  const quitar = (body?.marcas ?? [])
+    .filter(
+      (m) =>
+        typeof m?.userId === 'string' && (m.estado === '' || m.estado === null)
+    )
+    .map((m) => m.userId);
 
   try {
+    const userIds = [
+      ...new Set([...marcas.map((marca) => marca.userId), ...quitar]),
+    ];
+    const miembros =
+      userIds.length === 0
+        ? []
+        : await db
+            .select({ userId: grupoEstudiantes.userId })
+            .from(grupoEstudiantes)
+            .where(
+              and(
+                eq(grupoEstudiantes.grupoId, grupoId),
+                inArray(grupoEstudiantes.userId, userIds)
+              )
+            );
+    if (!acceso.admin && miembros.length !== userIds.length) {
+      return NextResponse.json(
+        { error: 'Hay estudiantes que no pertenecen a esta hoja' },
+        { status: 400 }
+      );
+    }
     for (const m of marcas) {
       await db
         .insert(grupoAsistencia)
@@ -96,7 +210,21 @@ export async function PUT(
           set: { estado: m.estado },
         });
     }
-    return NextResponse.json({ ok: true, guardadas: marcas.length });
+    if (quitar.length > 0) {
+      await db
+        .delete(grupoAsistencia)
+        .where(
+          and(
+            eq(grupoAsistencia.sesionId, sesionId),
+            inArray(grupoAsistencia.userId, quitar)
+          )
+        );
+    }
+    return NextResponse.json({
+      ok: true,
+      guardadas: marcas.length,
+      quitadas: quitar.length,
+    });
   } catch (error) {
     console.error('[GRUPOS] guardar asistencia:', error);
     return NextResponse.json(
@@ -110,9 +238,6 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     sesionId?: number;
@@ -126,6 +251,30 @@ export async function PATCH(
     !/^\d{4}-\d{2}-\d{2}$/.test(fecha)
   ) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+  }
+  const acceso = await autorizarGrupo(grupoId);
+  if (!acceso.ok) {
+    return NextResponse.json(
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
+      { status: acceso.status }
+    );
+  }
+  if (!(await sesionPerteneceAGrupo(grupoId, sesionId))) {
+    return NextResponse.json(
+      { error: 'Semana no encontrada' },
+      { status: 404 }
+    );
+  }
+  if (
+    !acceso.admin &&
+    !(await educadorPuedeEditarSesion(grupoId, sesionId, acceso.userId))
+  ) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
   }
   try {
     await db
@@ -148,16 +297,46 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
   const grupoId = Number((await params).id);
   const sesionId = Number(request.nextUrl.searchParams.get('sesionId'));
-  if (!Number.isFinite(grupoId) || !Number.isFinite(sesionId)) {
+  if (
+    !Number.isInteger(grupoId) ||
+    grupoId <= 0 ||
+    !Number.isInteger(sesionId) ||
+    sesionId <= 0
+  ) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
   }
+  const acceso = await autorizarGrupo(grupoId);
+  if (!acceso.ok) {
+    return NextResponse.json(
+      {
+        error:
+          acceso.status === 423
+            ? 'Esta hoja está archivada y no se puede modificar'
+            : 'No autorizado',
+      },
+      { status: acceso.status }
+    );
+  }
+  if (!(await sesionPerteneceAGrupo(grupoId, sesionId))) {
+    return NextResponse.json(
+      { error: 'Semana no encontrada' },
+      { status: 404 }
+    );
+  }
+  if (
+    !acceso.admin &&
+    !(await educadorPuedeEditarSesion(grupoId, sesionId, acceso.userId))
+  ) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+  }
   try {
-    await db.delete(grupoSesiones).where(eq(grupoSesiones.id, sesionId));
+    await db
+      .delete(grupoSesiones)
+      .where(
+        and(eq(grupoSesiones.id, sesionId), eq(grupoSesiones.grupoId, grupoId))
+      );
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[GRUPOS] eliminar sesión:', error);

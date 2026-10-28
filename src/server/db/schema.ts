@@ -3025,6 +3025,9 @@ export const forumRelations = relations(forums, ({ one, many }) => ({
 export const grupos = pgTable('grupos', {
   id: serial('id').primaryKey(),
   nombre: text('nombre').notNull(),
+  // Nombre de la pestaña de la raíz, independiente del nombre del grupo
+  // (tarjeta). Null = la pestaña muestra `nombre`.
+  nombreHoja: text('nombre_hoja'),
   // Grupo padre: si está set, este registro es una "hoja" (sub-grupo) dentro
   // de otro grupo. Null = grupo de nivel superior (contenedor).
   parentId: integer('parent_id'),
@@ -3049,6 +3052,10 @@ export const grupos = pgTable('grupos', {
   fechaInicio: date('fecha_inicio'),
   fechaFin: date('fecha_fin'),
   archivado: boolean('archivado').default(false).notNull(),
+  // Hoja (pestaña) archivada con "Archivar y duplicar": queda de solo lectura y
+  // al final de las pestañas. Distinto de `archivado`, que archiva el grupo
+  // completo (la tarjeta del listado).
+  hojaArchivada: boolean('hoja_archivada').default(false).notNull(),
   createdBy: text('created_by').references(() => users.id),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -3073,6 +3080,24 @@ export const grupoEstudiantes = pgTable(
     unique('uniq_grupo_estudiante').on(t.grupoId, t.userId),
     index('grupo_estudiantes_grupo_idx').on(t.grupoId),
   ]
+);
+
+export const grupoEstudiantesPendientes = pgTable(
+  'grupo_estudiantes_pendientes',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => grupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    name: text('name').notNull(),
+    identificacionNumero: text('identificacion_numero'),
+    phone: text('phone'),
+    modalidad: text('modalidad'),
+    observaciones: text('observaciones'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (t) => [index('grupo_estudiantes_pendientes_grupo_idx').on(t.grupoId)]
 );
 
 // Comentarios por estudiante (NO ligados a grupos). Cada comentario puede tener

@@ -22,6 +22,7 @@ import { and } from 'drizzle-orm';
 import { getGraphToken } from '~/lib/getGraphToken';
 import { db } from '~/server/db';
 import { grupoCursos, grupos } from '~/server/db/schema';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 
 const ORGANIZADOR = '0843f2fa-3e0b-493f-8bb9-84b0aa1b2417';
 
@@ -42,6 +43,8 @@ export async function POST(
   }
 
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   if (!Number.isFinite(grupoId)) {
     return NextResponse.json({ error: 'Id inválido' }, { status: 400 });
   }

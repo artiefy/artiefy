@@ -45,9 +45,12 @@ export function TicketNotificationBell() {
       type="button"
       aria-label="Tickets de soporte"
     >
+      {/* pointer-events-none: el tooltip es invisible pero ocupa espacio bajo
+          la campana; sin esto atrapa los clics de los botones de abajo. */}
       <span
         className="
-          absolute top-full left-1/2 z-50 mt-2 hidden -translate-x-1/2 rounded
+          pointer-events-none absolute top-full left-1/2 z-50 mt-2 hidden
+          -translate-x-1/2 rounded
           bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0
           shadow-lg transition-opacity
           group-hover:opacity-100

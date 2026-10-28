@@ -10,15 +10,25 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, asc, eq, ilike, notInArray, or } from 'drizzle-orm';
+import { and, asc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { grupoEstudiantes, users } from '~/server/db/schema';
+import {
+  grupoEstudiantes,
+  grupoEstudiantesPendientes,
+  users,
+} from '~/server/db/schema';
+import {
+  educadorPuedeAccederAGrupo,
+  esAdministradorDeGrupos,
+} from '~/server/lib/grupo-asistencia-access';
+import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { cursoDeHoja, matricularEnCurso } from '~/server/lib/grupos-matricula';
 import {
   sincronizarEstudiantesAgregados,
   sincronizarEstudiantesRetirados,
 } from '~/server/lib/grupos-programas-sync';
+import { getApiSession } from '~/server/utils/apiAuth';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -46,12 +56,18 @@ export async function GET(
       .where(eq(grupoEstudiantes.grupoId, grupoId));
     const excluir = yaEnGrupo.map((m) => m.userId);
 
+    // Las cédulas se guardan con o sin separadores (1.111.482.571,
+    // 1.111482571...): se comparan solo letras y dígitos en ambos lados.
+    const qIdent = q.replace(/[^0-9a-z]/gi, '');
     const condiciones = [
       eq(users.role, 'estudiante'),
       or(
         ilike(users.name, `%${q}%`),
         ilike(users.email, `%${q}%`),
-        ilike(users.identificacionNumero, `%${q}%`)
+        ilike(users.identificacionNumero, `%${q}%`),
+        qIdent.length >= 2
+          ? sql`regexp_replace(${users.identificacionNumero}, '[^0-9A-Za-z]', '', 'g') ilike ${`%${qIdent}%`}`
+          : undefined
       ),
     ];
     if (excluir.length > 0) condiciones.push(notInArray(users.id, excluir));
@@ -89,6 +105,8 @@ export async function POST(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
   const body = (await request.json().catch(() => null)) as {
     userId?: string;
     userIds?: string[];
@@ -129,15 +147,98 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!(await autorizar())) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
   const grupoId = Number((await params).id);
   const body = (await request.json().catch(() => null)) as {
     userId?: string;
+    pendingId?: number;
+    name?: string | null;
+    identificacionNumero?: string | null;
+    phone?: string | null;
     modalidad?: string | null;
     observaciones?: string | null;
   } | null;
+
+  // Admin/super-admin editan todo. El educador solo puede cambiar las
+  // observaciones, y solo en hojas a las que tiene acceso (su curso).
+  const session = await getApiSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
+  if (!esAdministradorDeGrupos(session.role)) {
+    const soloObservaciones = Object.keys(body ?? {}).every((k) =>
+      ['userId', 'pendingId', 'observaciones'].includes(k)
+    );
+    if (
+      session.role !== 'educador' ||
+      !soloObservaciones ||
+      !Number.isInteger(grupoId) ||
+      !(await educadorPuedeAccederAGrupo(grupoId, session.userId))
+    ) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+  }
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
+  const pendingId = Number(body?.pendingId);
+  if (
+    Number.isInteger(pendingId) &&
+    pendingId > 0 &&
+    Number.isInteger(grupoId) &&
+    grupoId > 0
+  ) {
+    const limpiarPendiente = (value: unknown) =>
+      typeof value === 'string' && value.trim() ? value.trim() : null;
+    const cambiosPendiente: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+    if (body?.name !== undefined) {
+      const name = limpiarPendiente(body.name);
+      if (!name) {
+        return NextResponse.json(
+          { error: 'El nombre es obligatorio' },
+          { status: 400 }
+        );
+      }
+      cambiosPendiente.name = name;
+    }
+    if (body?.identificacionNumero !== undefined)
+      cambiosPendiente.identificacionNumero = limpiarPendiente(
+        body.identificacionNumero
+      );
+    if (body?.phone !== undefined)
+      cambiosPendiente.phone = limpiarPendiente(body.phone);
+    if (body?.modalidad !== undefined)
+      cambiosPendiente.modalidad = limpiarPendiente(body.modalidad);
+    if (body?.observaciones !== undefined)
+      cambiosPendiente.observaciones = limpiarPendiente(body.observaciones);
+
+    try {
+      const actualizados = await db
+        .update(grupoEstudiantesPendientes)
+        .set(cambiosPendiente)
+        .where(
+          and(
+            eq(grupoEstudiantesPendientes.id, pendingId),
+            eq(grupoEstudiantesPendientes.grupoId, grupoId)
+          )
+        )
+        .returning({ id: grupoEstudiantesPendientes.id });
+      if (actualizados.length === 0) {
+        return NextResponse.json(
+          { error: 'Estudiante pendiente no encontrado' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      console.error('[GRUPOS] editar estudiante pendiente:', error);
+      return NextResponse.json(
+        { error: 'No se pudo guardar el estudiante pendiente' },
+        { status: 500 }
+      );
+    }
+  }
+
   const userId = body?.userId?.trim();
   if (!Number.isFinite(grupoId) || !userId) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
@@ -179,6 +280,44 @@ export async function DELETE(
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   const grupoId = Number((await params).id);
+  const rechazo = await rechazarSiHojaArchivada(grupoId);
+  if (rechazo) return rechazo;
+  const pendingIdParam = request.nextUrl.searchParams.get('pendingId');
+  if (pendingIdParam != null) {
+    const pendingId = Number(pendingIdParam);
+    if (
+      !Number.isInteger(grupoId) ||
+      grupoId <= 0 ||
+      !Number.isInteger(pendingId) ||
+      pendingId <= 0
+    ) {
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    }
+    try {
+      const eliminados = await db
+        .delete(grupoEstudiantesPendientes)
+        .where(
+          and(
+            eq(grupoEstudiantesPendientes.id, pendingId),
+            eq(grupoEstudiantesPendientes.grupoId, grupoId)
+          )
+        )
+        .returning({ id: grupoEstudiantesPendientes.id });
+      if (eliminados.length === 0) {
+        return NextResponse.json(
+          { error: 'Estudiante pendiente no encontrado' },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      console.error('[GRUPOS] quitar estudiante pendiente:', error);
+      return NextResponse.json(
+        { error: 'No se pudo quitar el estudiante pendiente' },
+        { status: 500 }
+      );
+    }
+  }
   const quitarUserId = request.nextUrl.searchParams.get('userId');
   if (!Number.isFinite(grupoId) || !quitarUserId) {
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });

@@ -23,8 +23,10 @@ import {
   UserMinus,
 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import { createPortal } from 'react-dom';
 import { toast } from 'sonner';
 
+import { GroupAttendanceEmbed } from '~/components/educators/layout/GroupAttendanceEmbed';
 import { ModalFormActivityQuick } from '~/components/educators/modals/ModalFormActivityQuick';
 import {
   AlertDialog,
@@ -76,6 +78,7 @@ interface User {
   activitiesWithGrades: {
     activityId: number;
     activityName: string;
+    lessonTitle?: string | null;
     parametroId: number;
     parametroName: string;
     grade: number;
@@ -88,6 +91,8 @@ interface User {
 interface Activity {
   id: number;
   name: string;
+  // Clase (lección) a la que pertenece la actividad.
+  lessonTitle?: string | null;
   parametro: string;
   parametroId: number;
   parametroPeso: number;
@@ -99,6 +104,13 @@ interface LessonsListProps {
   courseId: number;
   selectedColor: string;
   onCrearActividad?: (parametroId: number) => void;
+}
+
+type DashboardTab = 'actuales' | 'completos' | 'asistencia';
+
+interface GrupoAsistenciaDisponible {
+  id: number;
+  nombre: string;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -407,6 +419,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
   // ─── State ─────────────────────────────────────────────────────────────────
   const [users, setUsers] = useState<User[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  // Recuadro con la clase y el nombre completo de la actividad (hover).
+  const [tipActividad, setTipActividad] = useState<{
+    x: number;
+    y: number;
+    clase: string | null;
+    nombre: string;
+  } | null>(null);
   const [grades, setGrades] = useState<Record<string, Record<number, number>>>(
     {}
   );
@@ -415,9 +434,18 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'actuales' | 'completos'>(
-    'actuales'
+  const [activeTab, setActiveTab] = useState<DashboardTab>('actuales');
+  const [gruposAsistencia, setGruposAsistencia] = useState<
+    GrupoAsistenciaDisponible[]
+  >([]);
+  const [grupoAsistenciaId, setGrupoAsistenciaId] = useState<number | null>(
+    null
   );
+  const [contextoCargadoParaCurso, setContextoCargadoParaCurso] = useState<
+    number | null
+  >(null);
+  const [cargandoContextoAsistencia, setCargandoContextoAsistencia] =
+    useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -434,6 +462,44 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     name: string;
     peso: number;
   } | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setCargandoContextoAsistencia(true);
+    setGruposAsistencia([]);
+    setGrupoAsistenciaId(null);
+
+    void fetch(`/api/courses/${courseId}/attendance-context`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) return [];
+        const json = (await res.json()) as {
+          groups?: GrupoAsistenciaDisponible[];
+        };
+        return json.groups ?? [];
+      })
+      .then((groups) => {
+        setGruposAsistencia(groups);
+        setGrupoAsistenciaId(groups[0]?.id ?? null);
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setContextoCargadoParaCurso(courseId);
+          setCargandoContextoAsistencia(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [courseId]);
+
+  useEffect(() => {
+    if (!cargandoContextoAsistencia && gruposAsistencia.length === 0) {
+      setActiveTab((actual) => (actual === 'asistencia' ? 'actuales' : actual));
+    }
+  }, [cargandoContextoAsistencia, gruposAsistencia.length]);
 
   /**
    * Agrupa las actividades por parámetro conservando el orden de aparición.
@@ -516,16 +582,23 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
   };
 
   const USERS_PER_PAGE = 10;
+  const contextoAsistenciaDisponible =
+    contextoCargadoParaCurso === courseId &&
+    !cargandoContextoAsistencia &&
+    gruposAsistencia.length > 0;
 
   // ─── Computed ──────────────────────────────────────────────────────────────
 
   const isStudentCompleted = (user: User): boolean => user.completed;
 
-  const tabFilteredUsers = users.filter((user) =>
-    activeTab === 'completos'
-      ? isStudentCompleted(user)
-      : !isStudentCompleted(user)
-  );
+  const tabFilteredUsers =
+    activeTab === 'asistencia'
+      ? []
+      : users.filter((user) =>
+          activeTab === 'completos'
+            ? isStudentCompleted(user)
+            : !isStudentCompleted(user)
+        );
 
   const searchedUsers = tabFilteredUsers
     .filter(
@@ -714,6 +787,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           u.activitiesWithGrades.forEach((a) => {
             activityMap.set(a.activityId, {
               name: a.activityName,
+              lessonTitle: a.lessonTitle ?? null,
               parametro: a.parametroName,
               parametroId: a.parametroId,
               parametroPeso: a.parametroPeso ?? 0,
@@ -839,10 +913,14 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         </header>
 
         {/* Tabs */}
-        <div className="relative z-20 mt-4 flex justify-center space-x-4">
-          {(['actuales', 'completos'] as const).map((tab) => (
+        <div className="relative z-20 mt-4 flex justify-center gap-4 overflow-x-auto whitespace-nowrap">
+          {(contextoAsistenciaDisponible
+            ? (['actuales', 'completos', 'asistencia'] as const)
+            : (['actuales', 'completos'] as const)
+          ).map((tab) => (
             <button
               key={tab}
+              type="button"
               onClick={() => {
                 setActiveTab(tab);
                 setCurrentPage(1);
@@ -866,236 +944,271 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
             >
               {tab === 'actuales'
                 ? 'Estudiantes Actuales'
-                : 'Estudiantes calificación al 100%'}
+                : tab === 'completos'
+                  ? 'Estudiantes calificación al 100%'
+                  : 'Asistencia'}
             </button>
           ))}
         </div>
 
-        {/* Content */}
-        <div
-          className="
-            relative z-20 mt-4 rounded-2xl border border-cyan-500/10
-            bg-slate-800 p-6
-          "
-        >
-          {error && currentUsers.length === 0 && (
-            <div
-              className="
+        {activeTab === 'asistencia' ? (
+          contextoAsistenciaDisponible && grupoAsistenciaId != null ? (
+            <div className="relative z-20 mt-4 min-w-0 overflow-hidden">
+              {gruposAsistencia.length > 1 && (
+                <label className="mb-3 flex items-center gap-2 text-sm text-white/70">
+                  Hoja del grupo
+                  <select
+                    value={grupoAsistenciaId}
+                    onChange={(event) =>
+                      setGrupoAsistenciaId(Number(event.target.value))
+                    }
+                    className="max-w-full rounded-lg border border-white/10 bg-[#0b1a2f] px-3 py-2 text-sm text-white focus:border-cyan-400/50 focus:outline-none"
+                  >
+                    {gruposAsistencia.map((grupo) => (
+                      <option key={grupo.id} value={grupo.id}>
+                        {grupo.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <GroupAttendanceEmbed
+                key={grupoAsistenciaId}
+                groupId={grupoAsistenciaId}
+                courseId={courseId}
+              />
+            </div>
+          ) : (
+            <div className="relative z-20 mt-4 flex items-center justify-center gap-2 py-10 text-white/50">
+              <Loader2 className="size-5 animate-spin" />
+              Cargando hoja de asistencia…
+            </div>
+          )
+        ) : (
+          <div
+            className="
+              relative z-20 mt-4 rounded-2xl border border-cyan-500/10
+              bg-slate-800 p-6
+            "
+          >
+            {error && currentUsers.length === 0 && (
+              <div
+                className="
                 mb-6 rounded border border-red-400 bg-red-100 px-4 py-3
                 text-red-700
               "
-            >
-              <p>{error}</p>
-            </div>
-          )}
+              >
+                <p>{error}</p>
+              </div>
+            )}
 
-          {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="size-6 animate-spin text-primary" />
-              <span className="ml-2 text-white">Cargando usuarios...</span>
-            </div>
-          ) : (
-            <>
-              {/* Search */}
-              <div
-                className="
+            {loading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="size-6 animate-spin text-primary" />
+                <span className="ml-2 text-white">Cargando usuarios...</span>
+              </div>
+            ) : (
+              <>
+                {/* Search */}
+                <div
+                  className="
                   mb-6 rounded-xl border border-cyan-500/10 bg-slate-700/50 p-4
                   shadow-md
                 "
-              >
-                <label className="mb-2 block text-sm font-semibold text-white">
-                  Buscar estudiante
-                </label>
-                <input
-                  type="text"
-                  placeholder="Nombre o correo..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="
+                >
+                  <label className="mb-2 block text-sm font-semibold text-white">
+                    Buscar estudiante
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nombre o correo..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="
                     w-full rounded-md border border-cyan-500/20 bg-slate-800
                     px-4 py-2 text-sm text-white placeholder-gray-400
                     focus:ring-2 focus:ring-cyan-400/40 focus:outline-none
                   "
-                />
-              </div>
+                  />
+                </div>
 
-              {/* Bulk actions */}
-              {activeTab === 'actuales' ? (
-                <button
-                  disabled={!selectedIds.length}
-                  onClick={() => handleMarkComplete(selectedIds)}
-                  className="
+                {/* Bulk actions */}
+                {activeTab === 'actuales' ? (
+                  <button
+                    disabled={!selectedIds.length}
+                    onClick={() => handleMarkComplete(selectedIds)}
+                    className="
                     mb-4 rounded bg-green-600 px-4 py-2 text-sm text-white
                     hover:bg-green-700
                     disabled:opacity-50
                   "
-                >
-                  Marcar como completos
-                </button>
-              ) : (
-                <button
-                  disabled={!selectedIds.length}
-                  onClick={() => handleMarkIncomplete(selectedIds)}
-                  className="
+                  >
+                    Marcar como completos
+                  </button>
+                ) : (
+                  <button
+                    disabled={!selectedIds.length}
+                    onClick={() => handleMarkIncomplete(selectedIds)}
+                    className="
                     mb-4 rounded bg-red-700 px-4 py-2 text-sm text-white
                     hover:bg-red-950
                     disabled:opacity-50
                   "
-                >
-                  Desmarcar como completo
-                </button>
-              )}
-              <button
-                disabled={!selectedIds.length}
-                onClick={handleBulkRemoveStudents}
-                className="
+                  >
+                    Desmarcar como completo
+                  </button>
+                )}
+                <button
+                  disabled={!selectedIds.length}
+                  onClick={handleBulkRemoveStudents}
+                  className="
                   mb-4 ml-2 inline-flex items-center gap-1 rounded bg-red-700
                   px-4 py-2 text-sm text-white
                   hover:bg-red-800
                   disabled:opacity-50
                 "
-              >
-                <UserMinus size={14} />
-                Desmatricular seleccionados
-                {selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
-              </button>
+                >
+                  <UserMinus size={14} />
+                  Desmatricular seleccionados
+                  {selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
+                </button>
 
-              {/* Mobile cards */}
-              <div
-                className="
+                {/* Mobile cards */}
+                <div
+                  className="
                   block space-y-3 bg-gray-800 p-2
                   sm:hidden
                 "
-              >
-                {currentUsers.map((user) => (
-                  <MobileUserCard
-                    key={user.id}
-                    user={user}
-                    activities={activities}
-                    grades={grades}
-                    onGradeChange={handleGradeChange}
-                    onSaveGrade={saveGrade}
-                    onViewDetails={openUserDetails}
-                    onRemove={handleRemoveStudent}
-                  />
-                ))}
-              </div>
+                >
+                  {currentUsers.map((user) => (
+                    <MobileUserCard
+                      key={user.id}
+                      user={user}
+                      activities={activities}
+                      grades={grades}
+                      onGradeChange={handleGradeChange}
+                      onSaveGrade={saveGrade}
+                      onViewDetails={openUserDetails}
+                      onRemove={handleRemoveStudent}
+                    />
+                  ))}
+                </div>
 
-              {/* Desktop table */}
-              <div
-                className="
+                {/* Desktop table */}
+                <div
+                  className="
                   hidden overflow-x-auto rounded-2xl border border-cyan-500/20
                   shadow-[0_0_20px_rgba(34,211,238,0.08)]
                   sm:block
                 "
-              >
-                <table className="w-full divide-y divide-cyan-500/10 text-white">
-                  <thead className="sticky top-0 z-20 bg-slate-900">
-                    <tr>
-                      <th
-                        rowSpan={2}
-                        className="
+                >
+                  <table className="w-full divide-y divide-cyan-500/10 text-white">
+                    <thead className="sticky top-0 z-20 bg-slate-900">
+                      <tr>
+                        <th
+                          rowSpan={2}
+                          className="
                           sticky left-0 z-10 min-w-[48px] bg-slate-900 px-4
                         "
-                      >
-                        <input
-                          type="checkbox"
-                          checked={
-                            currentUsers.length > 0 &&
-                            selectedIds.length === currentUsers.length
-                          }
-                          onChange={(e) =>
-                            setSelectedIds(
-                              e.target.checked
-                                ? currentUsers.map((u) => u.id)
-                                : []
-                            )
-                          }
-                        />
-                      </th>
-                      <th
-                        rowSpan={2}
-                        className="
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              currentUsers.length > 0 &&
+                              selectedIds.length === currentUsers.length
+                            }
+                            onChange={(e) =>
+                              setSelectedIds(
+                                e.target.checked
+                                  ? currentUsers.map((u) => u.id)
+                                  : []
+                              )
+                            }
+                          />
+                        </th>
+                        <th
+                          rowSpan={2}
+                          className="
                           sticky left-[48px] z-10 bg-slate-900 px-4 py-3
                           text-left text-xs font-semibold text-cyan-300/80
                           uppercase
                         "
-                      >
-                        Nombre
-                      </th>
-                      <th
-                        rowSpan={2}
-                        className="
+                        >
+                          Nombre
+                        </th>
+                        <th
+                          rowSpan={2}
+                          className="
                           px-4 py-3 text-left text-xs font-semibold
                           text-cyan-300/80 uppercase
                         "
-                      >
-                        Correo
-                      </th>
-                      <th
-                        rowSpan={2}
-                        className="
+                        >
+                          Correo
+                        </th>
+                        <th
+                          rowSpan={2}
+                          className="
                           px-4 py-3 text-left text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
                         "
-                      >
-                        Progreso
-                      </th>
-                      <th
-                        rowSpan={2}
-                        className="
+                        >
+                          Progreso
+                        </th>
+                        <th
+                          rowSpan={2}
+                          className="
                           px-4 py-3 text-left text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
                         "
-                      >
-                        Última conexión
-                      </th>
-                      <th
-                        rowSpan={2}
-                        className="
+                        >
+                          Última conexión
+                        </th>
+                        <th
+                          rowSpan={2}
+                          className="
                           px-4 py-3 text-left text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
                         "
-                      >
-                        Tiempo
-                      </th>
+                        >
+                          Tiempo
+                        </th>
 
-                      {/* Cabecera combinada: el parámetro abarca todas sus
+                        {/* Cabecera combinada: el parámetro abarca todas sus
                           actividades, igual que "combinar celdas" en Excel. */}
-                      {activityGroups.map((group, gi) => {
-                        const usadas = countRealActivities(group.items);
-                        const lleno =
-                          group.maxActivities > 0 &&
-                          usadas >= group.maxActivities;
+                        {activityGroups.map((group, gi) => {
+                          const usadas = countRealActivities(group.items);
+                          const lleno =
+                            group.maxActivities > 0 &&
+                            usadas >= group.maxActivities;
 
-                        return (
-                          <th
-                            key={`param-${group.parametroId}`}
-                            colSpan={group.items.length}
-                            className={`
+                          return (
+                            <th
+                              key={`param-${group.parametroId}`}
+                              colSpan={group.items.length}
+                              className={`
                               hidden bg-cyan-500/[0.07] px-3 py-2.5
                               lg:table-cell
                               ${gi > 0 ? 'border-l border-cyan-400/25' : ''}
                             `}
-                          >
-                            <div className="flex items-center justify-center gap-2">
-                              <span className="text-[11px] leading-tight font-semibold tracking-wide text-cyan-300 normal-case">
-                                {group.parametro}
-                              </span>
+                            >
+                              <div className="flex items-center justify-center gap-2">
+                                <span className="text-[11px] leading-tight font-semibold tracking-wide text-cyan-300 normal-case">
+                                  {group.parametro}
+                                </span>
 
-                              <span className="rounded-full bg-cyan-400/15 px-1.5 py-0.5 text-[10px] leading-none font-bold text-cyan-200">
-                                {group.parametroPeso}%
-                              </span>
+                                <span className="rounded-full bg-cyan-400/15 px-1.5 py-0.5 text-[10px] leading-none font-bold text-cyan-200">
+                                  {group.parametroPeso}%
+                                </span>
 
-                              <button
-                                type="button"
-                                onClick={() => handleAddActivity(group)}
-                                title={
-                                  lleno
-                                    ? `Tope alcanzado (${group.maxActivities})`
-                                    : 'Agregar actividad a este parámetro'
-                                }
-                                className={`
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddActivity(group)}
+                                  title={
+                                    lleno
+                                      ? `Tope alcanzado (${group.maxActivities})`
+                                      : 'Agregar actividad a este parámetro'
+                                  }
+                                  className={`
                                   flex size-[18px] items-center justify-center
                                   rounded-full text-[13px] leading-none
                                   font-bold transition-colors
@@ -1108,50 +1221,50 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                       `
                                   }
                                 `}
-                              >
-                                +
-                              </button>
+                                >
+                                  +
+                                </button>
 
-                              {group.maxActivities > 0 && (
-                                <span
-                                  className={`
+                                {group.maxActivities > 0 && (
+                                  <span
+                                    className={`
                                     text-[10px] leading-none font-medium
                                     ${lleno ? 'text-amber-400/80' : 'text-white/35'}
                                   `}
-                                >
-                                  {usadas}/{group.maxActivities}
-                                </span>
-                              )}
-                            </div>
-                          </th>
-                        );
-                      })}
-                      <th
-                        rowSpan={2}
-                        className="
+                                  >
+                                    {usadas}/{group.maxActivities}
+                                  </span>
+                                )}
+                              </div>
+                            </th>
+                          );
+                        })}
+                        <th
+                          rowSpan={2}
+                          className="
                           px-4 py-3 text-center text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
                         "
-                      >
-                        Nota Final
-                      </th>
-                      <th
-                        rowSpan={2}
-                        className="
+                        >
+                          Nota Final
+                        </th>
+                        <th
+                          rowSpan={2}
+                          className="
                           px-4 py-3 text-center text-xs font-semibold
                           whitespace-nowrap text-cyan-300/80 uppercase
                         "
-                      >
-                        Acciones
-                      </th>
-                    </tr>
+                        >
+                          Acciones
+                        </th>
+                      </tr>
 
-                    <tr>
-                      {activityGroups.flatMap((group, gi) =>
-                        group.items.map((activity, ai) => (
-                          <th
-                            key={`${activity.parametroId}-${activity.id}`}
-                            className={`
+                      <tr>
+                        {activityGroups.flatMap((group, gi) =>
+                          group.items.map((activity, ai) => (
+                            <th
+                              key={`${activity.parametroId}-${activity.id}`}
+                              className={`
                               hidden px-3 py-2 text-center align-middle
                               lg:table-cell
                               ${
@@ -1160,111 +1273,147 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                   : ''
                               }
                             `}
-                          >
-                            {activity.name === 'Sin actividad' ? (
-                              <button
-                                type="button"
-                                onClick={() => openQuickActivity(activity)}
-                                className="
+                            >
+                              {activity.name === 'Sin actividad' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => openQuickActivity(activity)}
+                                  className="
                                   rounded-full bg-green-600/90 px-2 py-1
                                   text-[10px] font-semibold text-white
                                   transition-colors
                                   hover:bg-green-600
                                 "
-                              >
-                                + Crear
-                              </button>
-                            ) : (
-                              <div className="flex flex-col items-center gap-0.5">
-                                <span className="max-w-[130px] truncate text-[11px] leading-tight font-medium text-white/85 normal-case">
-                                  {activity.name}
-                                </span>
-                                <span className="text-[10px] leading-none text-white/35">
-                                  {activity.actividadPeso}%
-                                </span>
-                              </div>
+                                >
+                                  + Crear
+                                </button>
+                              ) : (
+                                <div
+                                  className="flex cursor-default flex-col items-center gap-0.5"
+                                  // Al pasar el mouse: clase y nombre completo
+                                  // en un recuadro (portal, para que el scroll
+                                  // de la tabla no lo recorte).
+                                  onMouseEnter={(e) => {
+                                    const r =
+                                      e.currentTarget.getBoundingClientRect();
+                                    setTipActividad({
+                                      x: r.left + r.width / 2,
+                                      y: r.bottom + 6,
+                                      clase: activity.lessonTitle ?? null,
+                                      nombre: activity.name,
+                                    });
+                                  }}
+                                  onMouseLeave={() => setTipActividad(null)}
+                                >
+                                  <span className="max-w-[130px] truncate text-[11px] leading-tight font-medium text-white/85 normal-case">
+                                    {activity.name}
+                                  </span>
+                                  <span className="text-[10px] leading-none text-white/35">
+                                    {activity.actividadPeso}%
+                                  </span>
+                                </div>
+                              )}
+                            </th>
+                          ))
+                        )}
+                      </tr>
+                      {tipActividad &&
+                        createPortal(
+                          <div
+                            className="pointer-events-none fixed z-[9999] max-w-xs -translate-x-1/2 rounded-lg border border-cyan-400/30 bg-[#061c37] px-3 py-2 text-left shadow-2xl"
+                            style={{
+                              left: tipActividad.x,
+                              top: tipActividad.y,
+                            }}
+                          >
+                            {tipActividad.clase && (
+                              <p className="text-[11px] text-cyan-300/80">
+                                Clase: {tipActividad.clase}
+                              </p>
                             )}
-                          </th>
-                        ))
-                      )}
-                    </tr>
-                  </thead>
+                            <p className="text-xs font-medium break-words text-white">
+                              {tipActividad.nombre}
+                            </p>
+                          </div>,
+                          document.body
+                        )}
+                    </thead>
 
-                  <tbody className="divide-y divide-cyan-500/10">
-                    {currentUsers.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="
+                    <tbody className="divide-y divide-cyan-500/10">
+                      {currentUsers.map((user) => (
+                        <tr
+                          key={user.id}
+                          className="
                           group transition-colors
                           hover:bg-cyan-950/30
                         "
-                      >
-                        <td
-                          className="
+                        >
+                          <td
+                            className="
                             sticky left-0 z-10 bg-slate-800 px-4 text-center
                             group-hover:bg-slate-700
                           "
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(user.id)}
-                            onChange={(e) =>
-                              setSelectedIds((prev) =>
-                                e.target.checked
-                                  ? [...prev, user.id]
-                                  : prev.filter((id) => id !== user.id)
-                              )
-                            }
-                          />
-                        </td>
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.includes(user.id)}
+                              onChange={(e) =>
+                                setSelectedIds((prev) =>
+                                  e.target.checked
+                                    ? [...prev, user.id]
+                                    : prev.filter((id) => id !== user.id)
+                                )
+                              }
+                            />
+                          </td>
 
-                        <td
-                          className="
+                          <td
+                            className="
                             sticky left-[48px] z-10 bg-slate-800 px-4 py-2
                             whitespace-nowrap
                             group-hover:bg-slate-700
                           "
-                        >
-                          {user.firstName} {user.lastName}
-                        </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-gray-300">
-                          {user.email}
-                        </td>
+                          >
+                            {user.firstName} {user.lastName}
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-gray-300">
+                            {user.email}
+                          </td>
 
-                        <td className="px-4 py-2 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div className="h-2.5 w-full rounded-full bg-slate-700">
-                              <div
-                                className="h-2.5 rounded-full bg-cyan-400"
-                                style={{ width: `${user.averageProgress}%` }}
-                              />
+                          <td className="px-4 py-2 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <div className="h-2.5 w-full rounded-full bg-slate-700">
+                                <div
+                                  className="h-2.5 rounded-full bg-cyan-400"
+                                  style={{ width: `${user.averageProgress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs">
+                                {user.averageProgress.toFixed(1)}%
+                              </span>
                             </div>
-                            <span className="text-xs">
-                              {user.averageProgress.toFixed(1)}%
-                            </span>
-                          </div>
-                        </td>
+                          </td>
 
-                        <td
-                          className="
+                          <td
+                            className="
                             px-4 py-2 text-xs whitespace-nowrap text-gray-400
                           "
-                        >
-                          {user.lastConnection ?? 'N/D'}
-                        </td>
-                        <td
-                          className="
+                          >
+                            {user.lastConnection ?? 'N/D'}
+                          </td>
+                          <td
+                            className="
                             px-4 py-2 text-xs whitespace-nowrap text-gray-400
                           "
-                        >
-                          {user.tiempoEnCurso ?? 'N/D'}
-                        </td>
+                          >
+                            {user.tiempoEnCurso ?? 'N/D'}
+                          </td>
 
-                        {activityGroups.flatMap((group, gi) =>
-                          group.items.map((activity, ai) => (
-                            <td
-                              key={`${user.id}-${activity.id}`}
-                              className={`
+                          {activityGroups.flatMap((group, gi) =>
+                            group.items.map((activity, ai) => (
+                              <td
+                                key={`${user.id}-${activity.id}`}
+                                className={`
                                 hidden px-4 py-2 text-center text-xs
                                 whitespace-nowrap
                                 lg:table-cell
@@ -1274,182 +1423,186 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                     : ''
                                 }
                               `}
-                            >
-                              {activity.name === 'Sin actividad' ||
-                              activity.name === 'Agregar actividad' ? (
-                                <div
-                                  className="
+                              >
+                                {activity.name === 'Sin actividad' ||
+                                activity.name === 'Agregar actividad' ? (
+                                  <div
+                                    className="
                                   flex items-center justify-center space-x-2
                                 "
-                                >
-                                  <input
-                                    type="number"
-                                    value={
-                                      user.parameterGrades.find(
-                                        (p) =>
-                                          p.parametroName === activity.parametro
-                                      )?.grade ?? 0
-                                    }
-                                    disabled
-                                    className="
+                                  >
+                                    <input
+                                      type="number"
+                                      value={
+                                        user.parameterGrades.find(
+                                          (p) =>
+                                            p.parametroName ===
+                                            activity.parametro
+                                        )?.grade ?? 0
+                                      }
+                                      disabled
+                                      className="
                                     w-16 cursor-not-allowed rounded bg-gray-700
                                     p-1 text-center text-white opacity-50
                                   "
-                                  />
-                                  <button
-                                    onClick={() => openQuickActivity(activity)}
-                                    className="
+                                    />
+                                    <button
+                                      onClick={() =>
+                                        openQuickActivity(activity)
+                                      }
+                                      className="
                                     rounded bg-green-600 px-2 py-1 text-xs
                                     text-white
                                     hover:bg-green-700
                                   "
-                                  >
-                                    Crear
-                                  </button>
-                                </div>
-                              ) : (
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={100}
-                                  step={0.5}
-                                  data-tour-id={
-                                    user.id === firstVisibleUserId &&
-                                    activity.id === firstGradeActivityId
-                                      ? 'tutorial-first-grade-input'
-                                      : undefined
-                                  }
-                                  className="
+                                    >
+                                      Crear
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    step={0.5}
+                                    data-tour-id={
+                                      user.id === firstVisibleUserId &&
+                                      activity.id === firstGradeActivityId
+                                        ? 'tutorial-first-grade-input'
+                                        : undefined
+                                    }
+                                    className="
                                   w-16 rounded bg-gray-700 p-1 text-center
                                   text-white
                                 "
-                                  value={grades[user.id]?.[activity.id] ?? ''}
-                                  onChange={(e) =>
-                                    handleGradeChange(
-                                      user.id,
-                                      activity.id,
-                                      parseFloat(e.target.value)
-                                    )
-                                  }
-                                  onBlur={() =>
-                                    saveGrade(
-                                      user.id,
-                                      activity.id,
-                                      grades[user.id]?.[activity.id] ?? 0
-                                    )
-                                  }
-                                />
-                              )}
-                            </td>
-                          ))
-                        )}
+                                    value={grades[user.id]?.[activity.id] ?? ''}
+                                    onChange={(e) =>
+                                      handleGradeChange(
+                                        user.id,
+                                        activity.id,
+                                        parseFloat(e.target.value)
+                                      )
+                                    }
+                                    onBlur={() =>
+                                      saveGrade(
+                                        user.id,
+                                        activity.id,
+                                        grades[user.id]?.[activity.id] ?? 0
+                                      )
+                                    }
+                                  />
+                                )}
+                              </td>
+                            ))
+                          )}
 
-                        <td
-                          className="
+                          <td
+                            className="
                             px-4 py-2 text-center text-sm font-semibold
                             whitespace-nowrap text-green-300
                           "
-                        >
-                          {calcNotaFinal(user, activities, grades)}
-                        </td>
+                          >
+                            {calcNotaFinal(user, activities, grades)}
+                          </td>
 
-                        <td className="px-4 py-2 text-center whitespace-nowrap">
-                          <button
-                            onClick={() => openUserDetails(user)}
-                            className="
+                          <td className="px-4 py-2 text-center whitespace-nowrap">
+                            <button
+                              onClick={() => openUserDetails(user)}
+                              className="
                               inline-flex items-center gap-1 rounded-md
                               bg-cyan-600 px-3 py-1 text-xs font-medium
                               text-white
                               hover:bg-cyan-700
                             "
-                          >
-                            <Eye size={14} /> Ver
-                          </button>
-                          <button
-                            onClick={() => handleMarkComplete([user.id])}
-                            className="
+                            >
+                              <Eye size={14} /> Ver
+                            </button>
+                            <button
+                              onClick={() => handleMarkComplete([user.id])}
+                              className="
                               ml-2 inline-flex items-center gap-1 rounded-md
                               bg-green-600 px-3 py-1 text-xs font-medium
                               text-white
                               hover:bg-green-700
                             "
-                          >
-                            <CheckCircle2 size={14} /> Completar
-                          </button>
-                          <button
-                            onClick={() => handleRemoveStudent(user)}
-                            className="
+                            >
+                              <CheckCircle2 size={14} /> Completar
+                            </button>
+                            <button
+                              onClick={() => handleRemoveStudent(user)}
+                              className="
                               ml-2 inline-flex items-center gap-1 rounded-md
                               bg-red-700 px-3 py-1 text-xs font-medium
                               text-white
                               hover:bg-red-800
                             "
-                          >
-                            <UserMinus size={14} /> Desmatricular
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                            >
+                              <UserMinus size={14} /> Desmatricular
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              {/* Pagination */}
-              <div className="mt-4 flex items-center justify-center gap-2">
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(prev - 1, 1))
-                  }
-                  disabled={currentPage === 1}
-                  aria-label="Página anterior"
-                  className="
+                {/* Pagination */}
+                <div className="mt-4 flex items-center justify-center gap-2">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    aria-label="Página anterior"
+                    className="
                     flex size-8 items-center justify-center rounded-lg border
                     border-cyan-500/20 bg-slate-700 text-white transition
                     hover:bg-cyan-950/40
                     disabled:opacity-50
                   "
-                >
-                  <ChevronLeft className="size-4" />
-                </button>
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
 
-                <span
-                  className="
+                  <span
+                    className="
                     rounded-lg border border-cyan-500/10 bg-slate-800 px-3 py-1
                     text-sm font-medium text-cyan-300
                   "
-                >
-                  <span className="sm:hidden">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <span
-                    className="
+                  >
+                    <span className="sm:hidden">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <span
+                      className="
                       hidden
                       sm:inline
                     "
-                  >
-                    Página {currentPage} de {totalPages}
+                    >
+                      Página {currentPage} de {totalPages}
+                    </span>
                   </span>
-                </span>
 
-                <button
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                  }
-                  disabled={currentPage === totalPages}
-                  aria-label="Página siguiente"
-                  className="
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    aria-label="Página siguiente"
+                    className="
                     flex size-8 items-center justify-center rounded-lg border
                     border-cyan-500/20 bg-slate-700 text-white transition
                     hover:bg-cyan-950/40
                     disabled:opacity-50
                   "
-                >
-                  <ChevronRight className="size-4" />
-                </button>
-              </div>
-            </>
-          )}
-        </div>
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {quickActivityParametro && (
