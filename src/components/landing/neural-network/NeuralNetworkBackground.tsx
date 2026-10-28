@@ -57,8 +57,8 @@ function NetworkScene({
     () =>
       new NeuralNetwork(
         compact
-          ? { nodeCount: 150, pulseCount: 20, aspect: viewportAspect() }
-          : { nodeCount: 300, pulseCount: 40, aspect: viewportAspect() }
+          ? { nodeCount: 60, pulseCount: 6, aspect: viewportAspect() }
+          : { nodeCount: 120, pulseCount: 12, aspect: viewportAspect() }
       )
   );
   // Pointer in [-1, 1] and page scroll in [0, 1], written by window listeners
@@ -167,7 +167,7 @@ export default function NeuralNetworkBackground() {
         />
         {/* Fine dust deep in the scene adds a third depth layer. */}
         <Sparkles
-          count={environment.compact ? 35 : 70}
+          count={environment.compact ? 15 : 30}
           scale={[34, 20, 26]}
           position={[0, 0, -8]}
           size={2.2}

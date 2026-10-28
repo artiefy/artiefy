@@ -90,10 +90,12 @@ const DEPTH = { near: 4, far: -38 } as const;
 const DEPTH_LAYERS = 7;
 /** Spread a little past the screen edges so parallax never shows a border. */
 const OVERSCAN = 1.25;
-/** Nearest neighbours each node tries to link to. */
-const LINKS_PER_NODE = 3;
+/** Nearest neighbours each node tries to link to; kept low to avoid clutter. */
+const LINKS_PER_NODE = 1;
 /** Longest link, in grid cells at that node's depth. */
-const MAX_LINK_CELLS = 2.2;
+const MAX_LINK_CELLS = 1.6;
+/** Resting link opacity; a node lit by a signal brightens its links. */
+const LINK_ALPHA = 0.2;
 const FADE_NEAR = 10;
 const FADE_FAR = 58;
 
@@ -366,7 +368,7 @@ export class NeuralNetwork {
           nodePositions.subarray(node * 3, node * 3 + 3),
           (link * 2 + end) * 3
         );
-        linkAlphas[link * 2 + end] = 0.32 + this.glow[node]! * 0.55;
+        linkAlphas[link * 2 + end] = LINK_ALPHA + this.glow[node]! * 0.45;
       }
     }
 
