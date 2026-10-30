@@ -22,6 +22,7 @@ export interface ProjectDetail {
   requirements?: string;
   coverImageKey?: string | null;
   coverVideoKey?: string | null;
+  repositoryUrl: string | null;
   type_project: string;
   userId: string;
   /** Curso al que pertenece el proyecto, si lo hay. */
@@ -173,6 +174,7 @@ export async function getProjectById(
     requirements: project.requirements ?? undefined,
     coverImageKey: project.coverImageKey ?? null,
     coverVideoKey: project.coverVideoKey ?? null,
+    repositoryUrl: project.repositoryUrl ?? null,
     type_project: project.type_project,
     userId: project.userId,
     courseId: project.courseId ?? null,

@@ -43,6 +43,7 @@ export interface Project {
   needsCollaborators?: boolean;
   progressPercentage?: number;
   coverImageKey?: string | null;
+  repositoryUrl?: string | null;
   fecha_inicio?: string;
   fecha_fin?: string;
   duration_unit?: string; // 'dias', 'semanas', 'meses'

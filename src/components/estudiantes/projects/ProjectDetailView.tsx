@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Clock,
   FileText,
+  GitBranch,
   Lightbulb,
   ListChecks,
   MessageSquare,
@@ -23,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 
+import { ProjectRepositoryPanel } from '~/components/estudiantes/proyectos/ProjectRepositoryPanel';
 import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
 import {
   Tabs,
@@ -119,6 +121,8 @@ export default function ProjectDetailView({
   const canEditProject = Boolean(
     user?.id && project.userId && user.id === project.userId
   );
+  // Visitors only get the tab once there is a repository to browse.
+  const showRepositoryTab = canEditProject || Boolean(project.repositoryUrl);
 
   // Estado para verificar si el usuario es invitado
   const [isInvited, setIsInvited] = useState(false);
@@ -1371,6 +1375,20 @@ export default function ProjectDetailView({
             <Zap className="size-3.5" />
             Posts
           </TabsTrigger>
+          {showRepositoryTab && (
+            <TabsTrigger
+              value="repository"
+              className="
+                gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
+                text-muted-foreground
+                data-[state=active]:bg-accent data-[state=active]:text-background
+                data-[state=active]:shadow-sm
+              "
+            >
+              <GitBranch className="size-3.5" />
+              Repositorio
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -4251,6 +4269,17 @@ export default function ProjectDetailView({
             canPublish={canEditProject}
           />
         </TabsContent>
+
+        {showRepositoryTab && (
+          <TabsContent value="repository" className="space-y-4">
+            <ProjectRepositoryPanel
+              projectId={project.id}
+              repositoryUrl={project.repositoryUrl ?? null}
+              canEdit={canEditProject}
+              showHeading={false}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* Secciones Agregadas */}
