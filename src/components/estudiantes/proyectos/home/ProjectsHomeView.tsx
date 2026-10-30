@@ -158,9 +158,14 @@ export function ProjectsHomeView({
   };
 
   const query = normalize(searchQuery.trim());
+  // /proyectos only shelves global user projects; a course-linked project
+  // is reached from its course.
   const visibleProjects = (
     activeTab === 'shared' ? collaborationItems : ownItems
-  ).filter((item) => matchesQuery(query, item.title, item.description));
+  ).filter(
+    (item) =>
+      !item.courseId && matchesQuery(query, item.title, item.description)
+  );
   const visibleTemplates = PROJECT_TEMPLATES.filter((template) =>
     matchesQuery(query, template.title)
   );
