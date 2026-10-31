@@ -158,19 +158,20 @@ export async function PATCH(
     observaciones?: string | null;
   } | null;
 
-  // Admin/super-admin editan todo. El educador solo puede cambiar las
-  // observaciones, y solo en hojas a las que tiene acceso (su curso).
+  // Admin/super-admin editan todo. El educador solo puede cambiar la
+  // modalidad y las observaciones, y solo en hojas a las que tiene acceso
+  // (su curso).
   const session = await getApiSession();
   if (!session.userId) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
   if (!esAdministradorDeGrupos(session.role)) {
-    const soloObservaciones = Object.keys(body ?? {}).every((k) =>
-      ['userId', 'pendingId', 'observaciones'].includes(k)
+    const soloCamposEducador = Object.keys(body ?? {}).every((k) =>
+      ['userId', 'pendingId', 'modalidad', 'observaciones'].includes(k)
     );
     if (
       session.role !== 'educador' ||
-      !soloObservaciones ||
+      !soloCamposEducador ||
       !Number.isInteger(grupoId) ||
       !(await educadorPuedeAccederAGrupo(grupoId, session.userId))
     ) {

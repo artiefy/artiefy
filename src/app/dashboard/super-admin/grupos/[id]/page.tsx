@@ -629,6 +629,23 @@ export default function GrupoDetallePage({
   const [pegandoDesdeExcel, setPegandoDesdeExcel] = useState(false);
   const [avisoFila, setAvisoFila] = useState<string | null>(null);
   const [sugerencias, setSugerencias] = useState<Miembro[]>([]);
+  // Catálogo de modalidades para el select de la columna Modalidad.
+  const [modalidades, setModalidades] = useState<string[]>([]);
+
+  useEffect(() => {
+    void fetch('/api/modalidades')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: { name: string }[]) =>
+        setModalidades(d.map((x) => x.name).filter(Boolean))
+      )
+      .catch(() => undefined);
+  }, []);
+
+  // Conserva un valor antiguo (texto libre) aunque no esté en el catálogo.
+  const opcionesModalidad = (actual?: string | null) =>
+    actual && !modalidades.includes(actual)
+      ? [actual, ...modalidades]
+      : modalidades;
   // Autocompletado de la fila nueva: campo que dispara la búsqueda y posición
   // del dropdown (en portal para que no lo clipee la tabla).
   const [campoBusqueda, setCampoBusqueda] = useState<
@@ -2378,20 +2395,30 @@ export default function GrupoDetallePage({
                         <td className="border border-white/10" />
                       )}
                       <td className="border border-white/10 px-2 py-1.5">
-                        <input
-                          defaultValue={m.modalidad ?? ''}
-                          readOnly={!puedeAdministrar}
-                          onBlur={(e) => {
-                            if (e.target.value !== (m.modalidad ?? '')) {
-                              void guardarNota(
-                                m.id,
-                                'modalidad',
-                                e.target.value
-                              );
-                            }
-                          }}
-                          className="w-24 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/80 placeholder:text-white/25 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
-                        />
+                        <select
+                          value={m.modalidad ?? ''}
+                          // El educador (vista embebida) también la edita.
+                          disabled={
+                            !puedeAdministrar && !attendanceEmbed.enabled
+                          }
+                          onChange={(e) =>
+                            void guardarNota(m.id, 'modalidad', e.target.value)
+                          }
+                          className="w-24 rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/80 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none disabled:opacity-100"
+                        >
+                          <option value="" className="bg-[#0b1220]">
+                            —
+                          </option>
+                          {opcionesModalidad(m.modalidad).map((nombre) => (
+                            <option
+                              key={nombre}
+                              value={nombre}
+                              className="bg-[#0b1220]"
+                            >
+                              {nombre}
+                            </option>
+                          ))}
+                        </select>
                       </td>
                       <td className="border border-white/10 px-3 py-1.5 whitespace-nowrap">
                         {/* Abre la misma ventana de cartera de Estudiantes. */}
@@ -2609,7 +2636,7 @@ export default function GrupoDetallePage({
                     {fechaNueva && <td className="border border-white/10" />}
                     {nFechas === 0 && <td className="border border-white/10" />}
                     <td className="border border-white/10 p-1">
-                      <input
+                      <select
                         value={draft.modalidad}
                         onChange={(e) =>
                           setDraft({ ...draft, modalidad: e.target.value })
@@ -2617,9 +2644,21 @@ export default function GrupoDetallePage({
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') void guardarFila();
                         }}
-                        placeholder="Modalidad"
-                        className="w-full min-w-[100px] rounded bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 focus:outline-none"
-                      />
+                        className="w-full min-w-[100px] rounded bg-transparent px-1 py-0.5 text-xs text-white focus:outline-none"
+                      >
+                        <option value="" className="bg-[#0b1220]">
+                          Modalidad
+                        </option>
+                        {opcionesModalidad(draft.modalidad).map((nombre) => (
+                          <option
+                            key={nombre}
+                            value={nombre}
+                            className="bg-[#0b1220]"
+                          >
+                            {nombre}
+                          </option>
+                        ))}
+                      </select>
                     </td>
                     <td className="border border-white/10 text-center text-white/25">
                       —
