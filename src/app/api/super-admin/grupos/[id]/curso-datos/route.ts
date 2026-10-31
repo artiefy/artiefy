@@ -39,6 +39,9 @@ export async function PATCH(
     // Educador: id de usuario (elegido) o texto libre (digitado).
     instructor?: string;
     educadorTexto?: string;
+    // Varios educadores (ids): el primero queda como principal del curso y
+    // todos van a course_instructors, así todos ven el curso.
+    instructors?: string[];
     // Horario / Espacio: id de opción (elegido) o texto libre (digitado).
     scheduleOptionId?: number | null;
     horarioTexto?: string | null;
@@ -78,9 +81,21 @@ export async function PATCH(
       set.spaceOptionId = null;
     }
 
+    // Varios educadores: lista de ids sin duplicados ni vacíos.
+    const listaEducadores = Array.isArray(body?.instructors)
+      ? [
+          ...new Set(
+            body.instructors
+              .map((v) => (typeof v === 'string' ? v.trim() : ''))
+              .filter(Boolean)
+          ),
+        ]
+      : null;
+
     // Educador elegido (id) o digitado (texto).
     const esId = typeof body?.instructor === 'string' && body.instructor.trim();
-    if (esId) set.instructor = body!.instructor!.trim();
+    if (listaEducadores) set.instructor = listaEducadores[0] ?? '';
+    else if (esId) set.instructor = body!.instructor!.trim();
     else if (typeof body?.educadorTexto === 'string')
       set.instructor = body.educadorTexto.trim() || null;
 
@@ -90,7 +105,19 @@ export async function PATCH(
 
     // Educador: mantener la tabla intermedia (muchos-a-muchos) solo cuando es
     // un usuario real (id). Con texto libre se limpia (no hay id válido).
-    if (esId) {
+    if (listaEducadores) {
+      await db
+        .delete(courseInstructors)
+        .where(eq(courseInstructors.courseId, courseId));
+      if (listaEducadores.length > 0) {
+        await db
+          .insert(courseInstructors)
+          .values(
+            listaEducadores.map((instructorId) => ({ courseId, instructorId }))
+          )
+          .onConflictDoNothing();
+      }
+    } else if (esId) {
       await db
         .delete(courseInstructors)
         .where(eq(courseInstructors.courseId, courseId));

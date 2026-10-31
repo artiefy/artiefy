@@ -74,6 +74,7 @@ interface CursoHoja {
   courseId: number;
   curso: string;
   educador: string | null;
+  educadores?: { id: string; name: string }[];
   horario: string | null;
   espacio: string | null;
   instructorId: string | null;
@@ -367,15 +368,20 @@ function ComboCampo({
   );
 }
 
-// Multi-selección de programas: buscador con chips; cada chip se quita solo.
-function ProgramasMultiCampo({
+// Multi-selección (programas, educadores): buscador con chips; cada chip se
+// quita solo.
+function MultiCampo<T extends string | number>({
+  label,
+  placeholder,
   opciones,
   seleccion,
   onChange,
 }: {
-  opciones: { id: number; title: string }[];
-  seleccion: number[];
-  onChange: (ids: number[]) => void;
+  label: string;
+  placeholder: string;
+  opciones: { id: T; title: string }[];
+  seleccion: T[];
+  onChange: (ids: T[]) => void;
 }) {
   const [texto, setTexto] = useState('');
   const [abierto, setAbierto] = useState(false);
@@ -411,12 +417,12 @@ function ProgramasMultiCampo({
 
   const elegidos = seleccion
     .map((id) => opciones.find((o) => o.id === id))
-    .filter((o): o is { id: number; title: string } => !!o);
+    .filter((o): o is { id: T; title: string } => !!o);
   const q = texto.trim().toLowerCase();
   const disponibles = opciones.filter(
     (o) => !seleccion.includes(o.id) && o.title.toLowerCase().includes(q)
   );
-  const agregar = (id: number) => {
+  const agregar = (id: T) => {
     if (seleccion.includes(id)) return;
     onChange([...seleccion, id]);
     setTexto('');
@@ -425,7 +431,7 @@ function ProgramasMultiCampo({
   return (
     <div className="flex items-baseline gap-2">
       <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-        Programas
+        {label}
       </span>
       <div
         ref={cajaRef}
@@ -473,7 +479,7 @@ function ProgramasMultiCampo({
               onChange(seleccion.slice(0, -1));
             }
           }}
-          placeholder={elegidos.length ? 'Agregar…' : '— Buscar programas —'}
+          placeholder={elegidos.length ? 'Agregar…' : placeholder}
           className="min-w-[70px] flex-1 bg-transparent text-sm leading-5 text-white/80 placeholder:text-white/25 focus:outline-none"
         />
       </div>
@@ -629,6 +635,9 @@ export default function GrupoDetallePage({
   const [pegandoDesdeExcel, setPegandoDesdeExcel] = useState(false);
   const [avisoFila, setAvisoFila] = useState<string | null>(null);
   const [sugerencias, setSugerencias] = useState<Miembro[]>([]);
+  // Fila (estudiante) a quitar de la hoja: se confirma antes de borrar.
+  const [filaAQuitar, setFilaAQuitar] = useState<Miembro | null>(null);
+  const [quitandoFila, setQuitandoFila] = useState(false);
   // Catálogo de modalidades para el select de la columna Modalidad.
   const [modalidades, setModalidades] = useState<string[]>([]);
 
@@ -1035,6 +1044,7 @@ export default function GrupoDetallePage({
       title?: string;
       instructor?: string;
       educadorTexto?: string;
+      instructors?: string[];
       scheduleOptionId?: number | null;
       horarioTexto?: string | null;
       spaceOptionId?: number | null;
@@ -1687,6 +1697,14 @@ export default function GrupoDetallePage({
   const programasHojaTitulos = hoja.programasIds
     .map((i) => programasOpciones.find((p) => p.id === i)?.title)
     .filter((t): t is string => !!t);
+  // Educadores para la cabecera: el catálogo más los ya asignados al curso
+  // (aunque no estén en el catálogo), para que se vean sus chips.
+  const educadoresOpciones = [
+    ...educadores.map((e) => ({ id: e.id, title: e.name })),
+    ...(cursoHoja?.educadores ?? [])
+      .filter((e) => !educadores.some((x) => x.id === e.id))
+      .map((e) => ({ id: e.id, title: e.name })),
+  ];
   const tituloPlanilla =
     cursoHoja?.curso ?? (programaSel || grupo.programa || grupo.nombre);
   const puedeAdministrar = data.canAdminister === true;
@@ -1805,7 +1823,7 @@ export default function GrupoDetallePage({
             </span>
           </Link>
 
-          <div className="scrollbar-marca flex min-h-[61px] items-center gap-2 overflow-x-auto border-b border-white/10 py-2">
+          <div className="flex min-h-[61px] flex-wrap items-center gap-2 border-b border-white/10 py-2">
             <input
               key={`${grupo.id}:${grupo.nombre}`}
               aria-label="Nombre de la hoja"
@@ -1816,7 +1834,7 @@ export default function GrupoDetallePage({
                   void renombrarHoja(e.target.value);
                 }
               }}
-              className={`h-9 w-[min(384px,40vw)] min-w-[180px] shrink-0 rounded-full border px-5 text-base focus:outline-none ${
+              className={`h-9 w-full min-w-[180px] shrink-0 rounded-full border px-5 text-base focus:outline-none sm:w-[min(384px,40vw)] ${
                 archivada
                   ? 'border-red-500/40 bg-red-500/10 text-red-300'
                   : 'border-white/10 bg-[#021832] text-white focus:border-white/30'
@@ -1865,7 +1883,7 @@ export default function GrupoDetallePage({
               <Trash2 className="size-4" /> Eliminar hoja
             </button>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setClaseModal(true)}
@@ -1967,6 +1985,158 @@ export default function GrupoDetallePage({
           </div>
         )}
 
+        {/* Datos de la hoja (fuera de la tabla para que se acomoden en
+            pantallas angostas). Archivada: solo lectura. */}
+        <fieldset disabled={archivada} className="contents">
+          <div className="grid grid-cols-1 gap-x-6 border-b border-white/10 pb-2 text-white/90 md:grid-cols-2 2xl:grid-cols-3">
+            <div className="border-b border-white/10 py-1">
+              <ComboCampo
+                label="Espacio"
+                valor={cursoHoja?.espacio ?? null}
+                opciones={espacios}
+                disabled={!cursoHoja || !puedeAdministrar}
+                onElegir={(o) =>
+                  cursoHoja &&
+                  void guardarCampoCurso(cursoHoja.courseId, {
+                    spaceOptionId: Number(o.id),
+                  })
+                }
+                onTexto={(v) =>
+                  cursoHoja &&
+                  void guardarCampoCurso(cursoHoja.courseId, {
+                    espacioTexto: v,
+                  })
+                }
+              />
+            </div>
+            <div className="border-b border-white/10 py-1">
+              {puedeAdministrar ? (
+                <CampoCabecera
+                  label="Empresa"
+                  valor={grupo.empresa}
+                  onSave={(v) => void guardarEmpresa(v)}
+                />
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                    Empresa
+                  </span>
+                  {grupo.empresa || '—'}
+                </div>
+              )}
+            </div>
+            <div className="border-b border-white/10 py-1">
+              {puedeAdministrar ? (
+                <MultiCampo
+                  label="Programas"
+                  placeholder="— Buscar programas —"
+                  opciones={programasOpciones}
+                  seleccion={hoja.programasIds}
+                  onChange={(ids) => void asignarProgramas(ids)}
+                />
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-white/80">
+                  <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                    Programas
+                  </span>
+                  {programasHojaTitulos.join(', ') || '—'}
+                </div>
+              )}
+            </div>
+            <div className="border-b border-white/10 py-1">
+              {cursoHoja && puedeAdministrar ? (
+                <MultiCampo
+                  label="Educadores"
+                  placeholder="— Buscar educadores —"
+                  opciones={educadoresOpciones}
+                  seleccion={(cursoHoja.educadores ?? []).map((e) => e.id)}
+                  onChange={(ids) =>
+                    void guardarCampoCurso(cursoHoja.courseId, {
+                      instructors: ids,
+                    })
+                  }
+                />
+              ) : (
+                <div className="flex items-baseline gap-2 text-sm text-white/80">
+                  <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                    Educadores
+                  </span>
+                  <span className="min-w-0 flex-1 px-1 py-0.5">
+                    {cursoHoja?.educador ?? '—'}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="border-b border-white/10 py-1">
+              <ComboCampo
+                label="Horario"
+                valor={cursoHoja?.horario ?? null}
+                opciones={horarios}
+                disabled={!cursoHoja || !puedeAdministrar}
+                onElegir={(o) =>
+                  cursoHoja &&
+                  void guardarCampoCurso(cursoHoja.courseId, {
+                    scheduleOptionId: Number(o.id),
+                  })
+                }
+                onTexto={(v) =>
+                  cursoHoja &&
+                  void guardarCampoCurso(cursoHoja.courseId, {
+                    horarioTexto: v,
+                  })
+                }
+              />
+            </div>
+            <div className="border-b border-white/10 py-1">
+              <div className="flex items-baseline gap-2">
+                <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                  Curso
+                </span>
+                {cursoHoja && puedeAdministrar ? (
+                  <>
+                    <input
+                      key={`${cursoHoja.courseId}:${cursoHoja.curso}`}
+                      defaultValue={cursoHoja.curso}
+                      onBlur={(e) => {
+                        const nv = e.target.value.trim();
+                        if (nv && nv !== cursoHoja.curso)
+                          void guardarCampoCurso(cursoHoja.courseId, {
+                            title: nv,
+                          });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') e.currentTarget.blur();
+                      }}
+                      title="Edita el título del curso (se guarda en el curso)"
+                      className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 focus:border-[#22C4D3] focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCursoModal(true)}
+                      title="Cambiar de curso"
+                      className="shrink-0 text-white/25 hover:text-[#22C4D3]"
+                    >
+                      <Pencil className="size-3" />
+                    </button>
+                  </>
+                ) : cursoHoja ? (
+                  <span className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm text-white/80">
+                    {cursoHoja.curso}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCursoModal(true)}
+                    disabled={!puedeAdministrar}
+                    className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm font-medium text-[#22C4D3] hover:underline"
+                  >
+                    Agregar curso
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </fieldset>
         {/* Tabla */}
         <div
           className="scrollbar-marca overflow-x-auto border-b border-white/10"
@@ -1987,148 +2157,7 @@ export default function GrupoDetallePage({
                     rowSpan={2}
                     className="border-b border-white/10 p-0 text-left align-bottom font-normal"
                   >
-                    <div className="grid grid-cols-2 gap-x-4 pr-4 pb-1">
-                      <div className="border-b border-white/10 py-1">
-                        <ComboCampo
-                          label="Espacio"
-                          valor={cursoHoja?.espacio ?? null}
-                          opciones={espacios}
-                          disabled={!cursoHoja || !puedeAdministrar}
-                          onElegir={(o) =>
-                            cursoHoja &&
-                            void guardarCampoCurso(cursoHoja.courseId, {
-                              spaceOptionId: Number(o.id),
-                            })
-                          }
-                          onTexto={(v) =>
-                            cursoHoja &&
-                            void guardarCampoCurso(cursoHoja.courseId, {
-                              espacioTexto: v,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="border-b border-white/10 py-1">
-                        {puedeAdministrar ? (
-                          <CampoCabecera
-                            label="Empresa"
-                            valor={grupo.empresa}
-                            onSave={(v) => void guardarEmpresa(v)}
-                          />
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-white/80">
-                            <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                              Empresa
-                            </span>
-                            {grupo.empresa || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div className="border-b border-white/10 py-1">
-                        {puedeAdministrar ? (
-                          <ProgramasMultiCampo
-                            opciones={programasOpciones}
-                            seleccion={hoja.programasIds}
-                            onChange={(ids) => void asignarProgramas(ids)}
-                          />
-                        ) : (
-                          <div className="flex items-center gap-2 text-sm text-white/80">
-                            <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                              Programas
-                            </span>
-                            {programasHojaTitulos.join(', ') || '—'}
-                          </div>
-                        )}
-                      </div>
-                      <div className="border-b border-white/10 py-1">
-                        <ComboCampo
-                          label="Educador"
-                          valor={cursoHoja?.educador ?? null}
-                          opciones={educadores}
-                          disabled={!cursoHoja || !puedeAdministrar}
-                          onElegir={(o) =>
-                            cursoHoja &&
-                            void guardarCampoCurso(cursoHoja.courseId, {
-                              instructor: String(o.id),
-                            })
-                          }
-                          onTexto={(v) =>
-                            cursoHoja &&
-                            void guardarCampoCurso(cursoHoja.courseId, {
-                              educadorTexto: v,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="border-b border-white/10 py-1">
-                        <ComboCampo
-                          label="Horario"
-                          valor={cursoHoja?.horario ?? null}
-                          opciones={horarios}
-                          disabled={!cursoHoja || !puedeAdministrar}
-                          onElegir={(o) =>
-                            cursoHoja &&
-                            void guardarCampoCurso(cursoHoja.courseId, {
-                              scheduleOptionId: Number(o.id),
-                            })
-                          }
-                          onTexto={(v) =>
-                            cursoHoja &&
-                            void guardarCampoCurso(cursoHoja.courseId, {
-                              horarioTexto: v,
-                            })
-                          }
-                        />
-                      </div>
-                      <div className="border-b border-white/10 py-1">
-                        <div className="flex items-baseline gap-2">
-                          <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                            Curso
-                          </span>
-                          {cursoHoja && puedeAdministrar ? (
-                            <>
-                              <input
-                                key={`${cursoHoja.courseId}:${cursoHoja.curso}`}
-                                defaultValue={cursoHoja.curso}
-                                onBlur={(e) => {
-                                  const nv = e.target.value.trim();
-                                  if (nv && nv !== cursoHoja.curso)
-                                    void guardarCampoCurso(cursoHoja.courseId, {
-                                      title: nv,
-                                    });
-                                }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') e.currentTarget.blur();
-                                }}
-                                title="Edita el título del curso (se guarda en el curso)"
-                                className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 focus:border-[#22C4D3] focus:outline-none"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => setCursoModal(true)}
-                                title="Cambiar de curso"
-                                className="shrink-0 text-white/25 hover:text-[#22C4D3]"
-                              >
-                                <Pencil className="size-3" />
-                              </button>
-                            </>
-                          ) : cursoHoja ? (
-                            <span className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm text-white/80">
-                              {cursoHoja.curso}
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setCursoModal(true)}
-                              disabled={!puedeAdministrar}
-                              className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm font-medium text-[#22C4D3] hover:underline"
-                            >
-                              Agregar curso
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+                    {/* Los datos de la hoja van arriba de la tabla. */}
                   </th>
                   <th
                     colSpan={Math.max(nFechas, 1)}
@@ -2230,7 +2259,7 @@ export default function GrupoDetallePage({
                         {puedeAdministrar && (
                           <button
                             type="button"
-                            onClick={() => void quitarMiembro(m)}
+                            onClick={() => setFilaAQuitar(m)}
                             className="absolute inset-0 m-auto flex items-center justify-center text-white/0 group-hover/row:text-red-400"
                             aria-label="Quitar del grupo"
                           >
@@ -3089,6 +3118,63 @@ export default function GrupoDetallePage({
                   <Archive className="size-4" />
                 )}
                 Archivar y duplicar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {filaAQuitar && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => !quitandoFila && setFilaAQuitar(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl border border-red-500/30 bg-[#061c37] p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex size-9 items-center justify-center rounded-full bg-red-500/15 text-red-400">
+                <Trash2 className="size-4" />
+              </span>
+              <h2 className="text-lg font-bold text-white">
+                Quitar estudiante
+              </h2>
+            </div>
+            <p className="text-sm text-white/70">
+              ¿Quitar a{' '}
+              <span className="font-semibold text-white">
+                “{filaAQuitar.name ?? filaAQuitar.email ?? 'este estudiante'}”
+              </span>{' '}
+              de esta hoja?
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setFilaAQuitar(null)}
+                disabled={quitandoFila}
+                className="rounded-xl border border-white/15 px-4 py-2 text-sm text-white/70 hover:bg-white/5 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setQuitandoFila(true);
+                  void quitarMiembro(filaAQuitar).finally(() => {
+                    setQuitandoFila(false);
+                    setFilaAQuitar(null);
+                  });
+                }}
+                disabled={quitandoFila}
+                className="inline-flex items-center gap-2 rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {quitandoFila ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+                Quitar
               </button>
             </div>
           </div>

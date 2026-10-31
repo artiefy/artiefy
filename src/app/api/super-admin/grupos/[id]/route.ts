@@ -16,6 +16,7 @@ import { alias } from 'drizzle-orm/pg-core';
 
 import { db } from '~/server/db';
 import {
+  courseInstructors,
   courses,
   grupoAsistencia,
   grupoCursos,
@@ -377,6 +378,35 @@ export async function GET(
       }
     }
 
+    // Todos los educadores de cada curso (principal + course_instructors),
+    // para la cabecera con varios educadores.
+    const courseIdsCabecera = [...new Set(cursoRows.map((c) => c.courseId))];
+    const coEducadores =
+      courseIdsCabecera.length > 0
+        ? await db
+            .select({
+              courseId: courseInstructors.courseId,
+              id: courseInstructors.instructorId,
+              name: users.name,
+            })
+            .from(courseInstructors)
+            .leftJoin(users, eq(users.id, courseInstructors.instructorId))
+            .where(inArray(courseInstructors.courseId, courseIdsCabecera))
+        : [];
+    const educadoresDeCurso = (c: (typeof cursoRows)[number]) => {
+      const lista: { id: string; name: string }[] = [];
+      if (c.instructor && c.educadorNombre) {
+        lista.push({ id: c.instructor, name: c.educadorNombre });
+      }
+      for (const e of coEducadores) {
+        if (e.courseId !== c.courseId || lista.some((x) => x.id === e.id)) {
+          continue;
+        }
+        lista.push({ id: e.id, name: e.name ?? e.id });
+      }
+      return lista;
+    };
+
     // Curso (uno por hoja) → cabecera.
     const cursoPorHoja = new Map<
       number,
@@ -384,6 +414,7 @@ export async function GET(
         courseId: number;
         curso: string;
         educador: string | null;
+        educadores: { id: string; name: string }[];
         horario: string | null;
         espacio: string | null;
         instructorId: string | null;
@@ -393,10 +424,16 @@ export async function GET(
     >();
     for (const c of cursoRows) {
       if (cursoPorHoja.has(c.grupoId)) continue;
+      const educadores = educadoresDeCurso(c);
       cursoPorHoja.set(c.grupoId, {
         courseId: c.courseId,
         curso: c.title,
-        educador: c.educadorNombre ?? c.instructor ?? null,
+        educador:
+          educadores.map((e) => e.name).join(', ') ||
+          c.educadorNombre ||
+          c.instructor ||
+          null,
+        educadores,
         horario: c.horario ?? null,
         espacio: c.espacios ?? null,
         instructorId: c.instructor ?? null,
