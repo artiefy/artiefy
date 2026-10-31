@@ -1699,9 +1699,26 @@ export default function GrupoDetallePage({
     .filter((t): t is string => !!t);
   // Educadores para la cabecera: el catálogo más los ya asignados al curso
   // (aunque no estén en el catálogo), para que se vean sus chips.
+  // Siempre incluye al principal (courses.instructor) además de los de
+  // course_instructors.
+  const educadoresCurso: { id: string; name: string }[] = [
+    ...(cursoHoja?.instructorId &&
+    !(cursoHoja.educadores ?? []).some((e) => e.id === cursoHoja.instructorId)
+      ? [
+          {
+            id: cursoHoja.instructorId,
+            name:
+              educadores.find((e) => e.id === cursoHoja.instructorId)?.name ??
+              cursoHoja.educador ??
+              cursoHoja.instructorId,
+          },
+        ]
+      : []),
+    ...(cursoHoja?.educadores ?? []),
+  ];
   const educadoresOpciones = [
     ...educadores.map((e) => ({ id: e.id, title: e.name })),
-    ...(cursoHoja?.educadores ?? [])
+    ...educadoresCurso
       .filter((e) => !educadores.some((x) => x.id === e.id))
       .map((e) => ({ id: e.id, title: e.name })),
   ];
@@ -2049,7 +2066,7 @@ export default function GrupoDetallePage({
                   label="Educadores"
                   placeholder="— Buscar educadores —"
                   opciones={educadoresOpciones}
-                  seleccion={(cursoHoja.educadores ?? []).map((e) => e.id)}
+                  seleccion={educadoresCurso.map((e) => e.id)}
                   onChange={(ids) =>
                     void guardarCampoCurso(cursoHoja.courseId, {
                       instructors: ids,
