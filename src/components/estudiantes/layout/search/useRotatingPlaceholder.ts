@@ -14,7 +14,7 @@ export type PlaceholderPhase = 'typing' | 'holding' | 'erasing';
 //
 // Deliberately not gated on prefers-reduced-motion: it is text changing in
 // place, not movement, and Windows turns that flag on for everyone who
-// switches off "Animation effects" (same call as `.neon-search-ring`).
+// switches off "Animation effects" (same call as the composer's `.neon-search-ring`).
 export function useRotatingPlaceholder(phrases: readonly string[]) {
   const [index, setIndex] = useState(0);
   const [length, setLength] = useState(phrases[0]?.length ?? 0);

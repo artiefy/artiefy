@@ -193,14 +193,18 @@ export function Header({
         now !== null &&
         subscriptionEndTime > now));
 
-  const renderProfileMenuButton = () => (
-    <div
-      title="Abrir menú de cuenta"
+  // Desktop: avatar and name go straight to the profile page; the account
+  // menu lives on the gear button next to it, as on mobile.
+  const renderProfileLink = () => (
+    <Link
+      href="/estudiantes/perfil"
+      title="Ir a mi perfil"
       className="
         group/profile relative flex min-w-0 items-center rounded-lg
         transition-all duration-200
-        focus-within:ring-2 focus-within:ring-primary
         hover:bg-muted/50
+        focus-visible:ring-2 focus-visible:ring-primary
+        focus-visible:outline-none
       "
     >
       <span
@@ -248,15 +252,10 @@ export function Header({
           />
         ) : null}
       </span>
-      <div className={CLERK_TRIGGER_OVERLAY_CLASS}>
-        <Suspense fallback={null}>
-          <UserButtonWrapper hidePlanBadge />
-        </Suspense>
-      </div>
-    </div>
+    </Link>
   );
 
-  const renderMobileAccountMenuButton = () => (
+  const renderAccountMenuButton = () => (
     <div
       className="
         group/account liquid-glass mobile-header-floating-control relative flex
@@ -690,7 +689,8 @@ export function Header({
                 <div className="relative">
                   <NotificationHeader compact />
                 </div>
-                {renderProfileMenuButton()}
+                {renderProfileLink()}
+                <div className="ml-1">{renderAccountMenuButton()}</div>
               </div>
             </Show>
           </>
@@ -1106,7 +1106,7 @@ export function Header({
                       >
                         <NotificationHeader />
                       </div>
-                      {renderMobileAccountMenuButton()}
+                      {renderAccountMenuButton()}
                     </div>
                   </Show>
                 </>

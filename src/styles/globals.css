@@ -1333,16 +1333,15 @@ body[data-animate-server-sections='true'] #courses-list-section {
   }
 }
 
-/* Header search and the Artie idea composer on /proyectos: a beam of light
-   that travels the whole border. */
+/* Artie idea composer (landing and /proyectos): a beam of light that travels
+   the whole border. */
 @property --neon-search-angle {
   syntax: '<angle>';
   inherits: false;
   initial-value: 0deg;
 }
 
-.neon-search-ring,
-.neon-search-glow {
+.neon-search-ring {
   background:
     conic-gradient(
       from var(--neon-search-angle),
@@ -1358,21 +1357,41 @@ body[data-animate-server-sections='true'] #courses-list-section {
   animation: neon-search-travel 3s linear infinite;
 }
 
-/* Halo behind the ring: the whole pill glows softly and the beam glows
-   brighter as it travels. */
-.neon-search-glow {
-  background:
-    conic-gradient(
-      from var(--neon-search-angle),
-      transparent 0%,
-      transparent 55%,
-      rgb(34 196 211 / 0.6) 85%,
-      rgb(34 196 211) 93%,
-      transparent 100%
-    ),
-    rgb(34 196 211 / 0.25);
-  filter: blur(10px);
-  opacity: 0.8;
+/* View pills on /proyectos (search + tabs). In the components layer so
+   Tailwind utilities on the same element (width transition, padding) win. */
+@layer components {
+  .menu-pill {
+    background-color: rgb(255 255 255 / 0.04);
+    color: var(--color-muted-foreground);
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1);
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      box-shadow 0.2s;
+  }
+
+  .menu-pill:hover:not(:disabled) {
+    background-color: rgb(255 255 255 / 0.08);
+    color: var(--color-foreground);
+  }
+
+  .menu-pill[data-open='true'] {
+    background-color: rgb(255 255 255 / 0.08);
+    box-shadow: inset 0 0 0 1px rgb(34 196 211 / 0.4);
+  }
+
+  .menu-pill[data-state='active'] {
+    background-color: var(--color-primary);
+    color: rgb(2 6 23);
+    box-shadow:
+      inset 0 0 0 1px rgb(34 196 211 / 0.6),
+      0 0 20px rgb(34 196 211 / 0.35);
+  }
+
+  .menu-pill:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
 }
 
 /* Send buttons of the Artie idea composer: a band of lighter cyan that

@@ -2,26 +2,29 @@
 
 import { Fragment, useSyncExternalStore } from 'react';
 
-/** Ideas a learner could build with Artie; three are shown per page load. */
+/**
+ * Ideas a learner could build with Artie; two are shown per page load. Kept
+ * to two short words so a picked example is a short prompt.
+ */
 const IDEA_EXAMPLES = [
-  'Vender productos hechos en casa por redes sociales',
-  'Crear sitios web con IA para emprendedores',
-  'Dar tutorías virtuales',
-  'Abrir una tienda online de ropa de segunda mano',
-  'Lanzar un podcast sobre finanzas personales',
-  'Crear una app para reservar turnos en barberías',
-  'Ofrecer clases de cocina saludable por video',
-  'Hacer un menú digital para restaurantes',
-  'Vender plantillas de diseño para Instagram',
-  'Montar un servicio de paseo de perros en mi barrio',
-  'Enseñar fotografía con el celular',
-  'Organizar talleres para mi comunidad',
-  'Atender clientes de un negocio con un chatbot de IA',
-  'Emprender con comida saludable para llevar',
-  'Ayudar a pequeños negocios a vender por WhatsApp',
+  'Tienda online',
+  'Tutorías virtuales',
+  'Podcast financiero',
+  'Menú digital',
+  'Ropa reciclada',
+  'Chatbot IA',
+  'Cocina saludable',
+  'Paseo perros',
+  'Clases fotografía',
+  'Talleres comunitarios',
+  'Reservas barbería',
+  'Plantillas Instagram',
+  'Ventas WhatsApp',
+  'Comida saludable',
+  'Sitio web',
 ] as const;
 
-const VISIBLE_EXAMPLES = 3;
+const VISIBLE_EXAMPLES = 2;
 
 let pickedExamples: readonly string[] | null = null;
 
@@ -55,7 +58,7 @@ interface IdeaSuggestionsProps {
 }
 
 /**
- * Three example ideas under the Artie composer, in the brand blue. Picking
+ * Two example ideas under the Artie composer, in the brand blue. Picking
  * one drops it into the composer.
  */
 export function IdeaSuggestions({

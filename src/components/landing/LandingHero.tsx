@@ -200,7 +200,7 @@ export function LandingHero({
 
           <div
             data-hero="composer"
-            className="landing-idea-composer mx-auto mb-8 max-w-2xl"
+            className="landing-idea-composer mx-auto mb-6 max-w-2xl"
           >
             <ArtieIdeaComposer
               size="lg"
@@ -209,14 +209,12 @@ export function LandingHero({
               onIdeaChange={onIdeaChange}
               onSubmit={onSubmit}
             />
+            <p className="mt-2 text-xs text-slate-500">
+              Artie es una IA y puede cometer errores.
+            </p>
           </div>
 
-          {/* Wider than the copy on large screens so the three fit on one row. */}
-          <IdeaSuggestions
-            label="Prueba:"
-            onPick={applySuggestion}
-            className="xl:-mx-32"
-          />
+          <IdeaSuggestions label="Prueba:" onPick={applySuggestion} />
         </div>
       </div>
     </section>

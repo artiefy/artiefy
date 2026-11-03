@@ -60,10 +60,21 @@ const PROJECT_TEMPLATES = [
   },
 ] as const;
 
-const TABS: { id: HomeTab; label: string; icon: typeof Folder }[] = [
+const TABS: {
+  id: HomeTab;
+  label: string;
+  icon: typeof Folder;
+  disabled?: boolean;
+}[] = [
   { id: 'mine', label: 'Mis Proyectos', icon: Folder },
   { id: 'shared', label: 'Compartidos', icon: Users },
-  { id: 'templates', label: 'Plantillas de proyectos', icon: LayoutTemplate },
+  // Not available yet: shown but cannot be opened.
+  {
+    id: 'templates',
+    label: 'Plantillas de proyectos',
+    icon: LayoutTemplate,
+    disabled: true,
+  },
 ];
 
 const SIGN_IN_HREF = '/sign-in?redirect_url=%2Fproyectos';
@@ -209,6 +220,9 @@ export function ProjectsHomeView({
                 onSubmit={handleComposerSubmit}
               />
             </div>
+            <p className="mt-2 text-[11px] text-muted-foreground/80">
+              Artie es una IA y puede cometer errores.
+            </p>
             <IdeaSuggestions
               label="Hazlo con IA:"
               onPick={(example) => {
@@ -217,11 +231,8 @@ export function ProjectsHomeView({
                   ?.querySelector<HTMLInputElement>('input:not([type="file"])')
                   ?.focus();
               }}
-              className="mt-3"
+              className="mt-2"
             />
-            <p className="mt-2 text-[11px] text-muted-foreground/80">
-              Artie es una IA y puede cometer errores.
-            </p>
           </div>
 
           <div className="mt-20 mb-8">
@@ -230,16 +241,13 @@ export function ProjectsHomeView({
               className="flex flex-wrap items-center gap-1.5"
             >
               <div
+                data-open={isSearchOpen}
                 className={`
-                  flex items-center gap-2 overflow-hidden rounded-full px-4 py-2
-                  whitespace-nowrap ring-1 transition-[width,background-color,box-shadow]
-                  duration-300 ease-out
-                  ring-inset
-                  ${
-                    isSearchOpen
-                      ? 'w-[240px] bg-white/[0.08] ring-primary/40'
-                      : 'w-[100px] bg-white/[0.04] ring-white/10 hover:ring-white/20'
-                  }
+                  menu-pill flex items-center gap-2 overflow-hidden rounded-full
+                  px-4 py-2 whitespace-nowrap
+                  transition-[width,background-color,box-shadow] duration-300
+                  ease-out
+                  ${isSearchOpen ? 'w-[240px]' : 'w-[100px]'}
                 `}
               >
                 <Search
@@ -301,17 +309,14 @@ export function ProjectsHomeView({
                     key={tab.id}
                     type="button"
                     aria-current={isActive ? 'page' : undefined}
+                    data-state={isActive ? 'active' : 'inactive'}
+                    disabled={tab.disabled}
+                    title={tab.disabled ? 'Próximamente' : undefined}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`
-                      inline-flex items-center gap-2 rounded-full px-4 py-2
-                      text-xs font-medium ring-1 transition-colors duration-200
-                      ring-inset
-                      ${
-                        isActive
-                          ? 'bg-primary text-slate-950 shadow-[0_0_20px_hsl(185_72%_48%/0.35)] ring-primary/60'
-                          : 'bg-white/[0.04] text-muted-foreground ring-white/10 hover:bg-white/[0.08] hover:text-foreground'
-                      }
-                    `}
+                    className="
+                      menu-pill inline-flex items-center gap-2 rounded-full px-4
+                      py-2 text-xs font-medium
+                    "
                   >
                     <Icon className="size-4 shrink-0" />
                     <span>{tab.label}</span>
