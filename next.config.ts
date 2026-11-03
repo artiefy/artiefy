@@ -39,6 +39,9 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   expireTime: 3600,
   experimental: {
+    // Let `next dev` and `next build` surface upgrade reminders for the latest
+    // stable release. Set by the agent upgrade flow.
+    agentUpgrade: 'latest',
     // Next.js 16.3 turned `useTypeScriptCli` on by default, which makes
     // `next build` shell out to the `tsc` binary owned by the `typescript`
     // package. This project aliases `typescript` to
