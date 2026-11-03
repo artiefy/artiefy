@@ -14,6 +14,7 @@ import {
   savePendingLandingSeed,
   takePendingLandingSeed,
 } from '~/components/landing/pendingLandingSeed';
+import { useMarca } from '~/components/marca/MarcaProvider';
 import { generateProjectFromIdea } from '~/lib/projects/generateProjectFromIdea';
 import { getPrivilegedDashboardRoute, getUserRole } from '~/utils/roles';
 
@@ -102,6 +103,9 @@ export default function HomePage() {
   // visitor's idea back in the box.
   const [idea, setIdea] = useState('');
   const userRole = getUserRole(user?.publicMetadata?.role);
+  // The same page is an academy's home (<slug>.artiefy.com): there the
+  // Artiefy role and Artiefy announcements do not apply.
+  const { esAcademia } = useMarca();
 
   useEffect(() => {
     const fetchAnuncioActivo = async (userId: string) => {
@@ -132,10 +136,10 @@ export default function HomePage() {
       }
     };
 
-    if (user?.id) {
+    if (user?.id && !esAcademia) {
       void fetchAnuncioActivo(user.id);
     }
-  }, [user]);
+  }, [user, esAcademia]);
 
   useEffect(() => {
     setMounted(true);
@@ -144,13 +148,14 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoaded) return;
     if (!_isSignedIn) return;
+    if (esAcademia) return;
 
     const privilegedDashboardRoute = getPrivilegedDashboardRoute(userRole);
 
     if (!privilegedDashboardRoute) return;
 
     router.replace(privilegedDashboardRoute);
-  }, [_isSignedIn, isLoaded, router, userRole]);
+  }, [_isSignedIn, isLoaded, router, userRole, esAcademia]);
 
   // An idea sent before signing in is built as soon as the session exists,
   // whether the visitor signed in here or came back from the OAuth redirect.

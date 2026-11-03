@@ -16,7 +16,10 @@ import {
   CardTitle,
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
+import { useMarca } from '~/components/marca/MarcaProvider';
 import { type CourseData } from '~/server/queries/queries';
+
+import type { Route } from 'next';
 
 interface Course {
   id?: number;
@@ -45,13 +48,23 @@ interface CourseListAdminProps {
   courses: Course[];
   onEditCourse: (course: CourseData | null) => void; // ✅ Agregar esta línea
   onDeleteCourse: (courseId: number) => void; // ✅ También asegurar que esta está definida
+  // Academias: nombres de modalidades desde SU catálogo, y adónde lleva "Ver"
+  // (null: sin botón, mientras no exista el detalle del curso).
+  urlModalidades?: string;
+  hrefCurso?: (id: number) => string | null;
 }
 
 export default function CourseListAdmin({
   courses,
   onEditCourse,
+  urlModalidades = '/api/modalidades',
+  hrefCurso = (id) => `/dashboard/super-admin/cursos/${id}`,
 }: CourseListAdminProps) {
-  console.log('Courses received in CourseListAdmin:', courses);
+  // En una academia, los acentos turquesa toman su color primario.
+  const academia = useMarca().esAcademia;
+  const acento = academia
+    ? 'border-primary/30 bg-primary/10 text-primary'
+    : 'border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]';
 
   // Nombre de cada modalidad (el curso solo trae `modalidadesid`). Se pide una
   // vez y se reutiliza para todas las tarjetas.
@@ -59,7 +72,7 @@ export default function CourseListAdmin({
 
   useEffect(() => {
     let activo = true;
-    void fetch('/api/modalidades')
+    void fetch(urlModalidades)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: unknown) => {
         if (!activo || !Array.isArray(data)) return;
@@ -75,7 +88,7 @@ export default function CourseListAdmin({
     return () => {
       activo = false;
     };
-  }, []);
+  }, [urlModalidades]);
 
   return (
     <div
@@ -88,8 +101,20 @@ export default function CourseListAdmin({
       {courses.map((course) => {
         return (
           <div key={course.id} className="group relative">
-            <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <Card className="relative flex h-full flex-col justify-between gap-0 overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37] p-0 py-0 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02]">
+            <div
+              className={`absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r opacity-0 blur transition duration-500 group-hover:opacity-100 ${
+                academia
+                  ? 'from-primary via-primary/60 to-background'
+                  : 'from-[#3AF4EF] via-[#00BDD8] to-[#01142B]'
+              }`}
+            />
+            <Card
+              className={`relative flex h-full flex-col justify-between gap-0 overflow-hidden rounded-2xl border p-0 py-0 text-white transition-transform duration-300 ease-in-out zoom-in hover:scale-[1.02] ${
+                academia
+                  ? 'border-border bg-card'
+                  : 'border-[#1d283a] bg-[#061c37]'
+              }`}
+            >
               <CardHeader className="p-0">
                 <AspectRatio ratio={16 / 9}>
                   <div className="relative size-full bg-[#04101f]">
@@ -112,14 +137,20 @@ export default function CourseListAdmin({
                         <span className="text-4xl">📚</span>
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#061c37] to-transparent" />
+                    <div
+                      className={`absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t to-transparent ${
+                        academia ? 'from-card' : 'from-[#061c37]'
+                      }`}
+                    />
                   </div>
                 </AspectRatio>
               </CardHeader>
 
               <CardContent className="flex grow flex-col justify-between gap-3 px-4 pt-4">
                 <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-2.5 py-1 text-xs font-medium text-[#22C4D3]">
+                  <span
+                    className={`rounded-full border px-2.5 py-1 text-xs font-medium ${acento}`}
+                  >
                     {course.categoryName ?? 'Sin categoría'}
                   </span>
                   {course.programas?.map((programa) => (
@@ -163,7 +194,7 @@ export default function CourseListAdmin({
                       course.instructorName.split(', ').map((name, i) => (
                         <span
                           key={i}
-                          className="rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-2 py-0.5 text-xs font-medium text-[#22C4D3]"
+                          className={`rounded-full border px-2 py-0.5 text-xs font-medium ${acento}`}
                         >
                           {name}
                         </span>
@@ -191,24 +222,30 @@ export default function CourseListAdmin({
                           (course.instructor ? [course.instructor] : []),
                       } as unknown as CourseData)
                     }
-                    className="flex w-full flex-1 items-center justify-center gap-1.5 border border-[#22C4D3]/40 bg-[#22C4D3]/10 p-2 text-[#22C4D3] hover:bg-[#22C4D3]/20"
+                    className={`flex w-full flex-1 items-center justify-center gap-1.5 border p-2 ${
+                      academia
+                        ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20'
+                        : 'border-[#22C4D3]/40 bg-[#22C4D3]/10 text-[#22C4D3] hover:bg-[#22C4D3]/20'
+                    }`}
                   >
                     <p className="text-sm font-bold">Editar</p>
                   </Button>
-                  <Link
-                    data-tour-id={
-                      course.id === courses[0]?.id
-                        ? 'tutorial-course-list'
-                        : undefined
-                    }
-                    href={`/dashboard/super-admin/cursos/${course.id}`}
-                    className="flex-1"
-                  >
-                    <Button className="flex w-full items-center justify-center gap-1.5 border border-[#1d283a] bg-[#0d2a4d] p-2 text-white hover:bg-[#0d2a4d]/70">
-                      <p className="text-sm font-bold">Ver</p>
-                      <ArrowRightIcon className="size-4 animate-bounce-right" />
-                    </Button>
-                  </Link>
+                  {course.id != null && hrefCurso(course.id) && (
+                    <Link
+                      data-tour-id={
+                        course.id === courses[0]?.id
+                          ? 'tutorial-course-list'
+                          : undefined
+                      }
+                      href={hrefCurso(course.id)! as Route}
+                      className="flex-1"
+                    >
+                      <Button className="flex w-full items-center justify-center gap-1.5 border border-[#1d283a] bg-[#0d2a4d] p-2 text-white hover:bg-[#0d2a4d]/70">
+                        <p className="text-sm font-bold">Ver</p>
+                        <ArrowRightIcon className="size-4 animate-bounce-right" />
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </CardFooter>
             </Card>

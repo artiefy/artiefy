@@ -44,6 +44,10 @@ declare global {
       subscriptionStatus?: string;
       subscriptionEndDate?: string;
       planType?: string;
+      // Cuentas de academia: subdominio al que pertenecen. Requiere
+      // "academySlug": "{{user.public_metadata.academySlug}}" en el session
+      // token de Clerk (ver proxy.ts).
+      academySlug?: string;
     };
     fullName?: string;
     primaryEmail?: string;

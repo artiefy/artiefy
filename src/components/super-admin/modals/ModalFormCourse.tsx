@@ -114,6 +114,10 @@ interface CourseFormProps {
   userRole?: string;
   visibility: boolean;
   setVisibility: (val: boolean) => void;
+  // Curso de una academia: carga SUS catálogos (/api/academia/<slug>/
+  // catalogos/*) y oculta lo que es solo de Artiefy (planes y tipo de curso,
+  // rating, parámetros, materias). Sin esto es el modal de Artiefy.
+  academiaSlug?: string;
 }
 
 // Interfaz para los niveles
@@ -197,7 +201,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setIdTypesCourses,
   visibility,
   setVisibility,
+  academiaSlug,
 }) => {
+  // Academia: catálogos propios desde su API; sin lo exclusivo de Artiefy.
+  const catalogosAcademia = academiaSlug
+    ? `/api/academia/${academiaSlug}/catalogos`
+    : null;
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
   const [fileSize, setFileSize] = useState<number | null>(null); // Estado para el tamaño del archivo
@@ -415,21 +424,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       }
     };
 
-    if (isOpen) {
+    // Las materias son de los programas de Artiefy.
+    if (isOpen && !academiaSlug) {
       void fetchSubjects();
     }
-  }, [isOpen, editingCourseId]);
+  }, [isOpen, editingCourseId, academiaSlug]);
 
   useEffect(() => {
     const fetchNiveles = async () => {
       setIsLoadingNiveles(true);
       try {
-        const response = await fetch('/api/educadores/nivel', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await fetch(
+          catalogosAcademia
+            ? `${catalogosAcademia}/niveles`
+            : '/api/educadores/nivel',
+          {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.text();
@@ -446,17 +461,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchNiveles();
-  }, []);
+  }, [catalogosAcademia]);
 
   // Add these useEffects after other useEffects
   useEffect(() => {
     const fetchCategories = async () => {
       setIsLoadingCategories(true);
       try {
-        const response = await fetch('/api/educadores/categories', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const response = await fetch(
+          catalogosAcademia
+            ? `${catalogosAcademia}/categorias`
+            : '/api/educadores/categories',
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -474,16 +494,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchCategories();
-  }, []);
+  }, [catalogosAcademia]);
 
   useEffect(() => {
     const fetchModalidades = async () => {
       setIsLoadingModalidades(true);
       try {
-        const response = await fetch('/api/educadores/modalidades', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const response = await fetch(
+          catalogosAcademia
+            ? `${catalogosAcademia}/modalidades`
+            : '/api/educadores/modalidades',
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -501,17 +526,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchModalidades();
-  }, []);
+  }, [catalogosAcademia]);
 
   // ✅ Fetch schedule options
   useEffect(() => {
     const fetchSchedules = async () => {
       setIsLoadingSchedules(true);
       try {
-        const response = await fetch('/api/super-admin/schedule-options', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const response = await fetch(
+          catalogosAcademia
+            ? `${catalogosAcademia}/horarios`
+            : '/api/super-admin/schedule-options',
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -519,10 +549,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as {
-          data: { id: number; name: string }[];
-        };
-        setScheduleOptions(data.data ?? []);
+        // Artiefy responde { data: [...] }; la academia, el arreglo directo.
+        const data = (await response.json()) as
+          | { data: { id: number; name: string }[] }
+          | { id: number; name: string }[];
+        setScheduleOptions(Array.isArray(data) ? data : (data.data ?? []));
       } catch (error) {
         console.error('Error detallado:', error);
       } finally {
@@ -531,17 +562,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchSchedules();
-  }, []);
+  }, [catalogosAcademia]);
 
   // ✅ Fetch space options
   useEffect(() => {
     const fetchSpaces = async () => {
       setIsLoadingSpaces(true);
       try {
-        const response = await fetch('/api/super-admin/space-options', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const response = await fetch(
+          catalogosAcademia
+            ? `${catalogosAcademia}/espacios`
+            : '/api/super-admin/space-options',
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -549,10 +585,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as {
-          data: { id: number; name: string }[];
-        };
-        setSpaceOptions(data.data ?? []);
+        const data = (await response.json()) as
+          | { data: { id: number; name: string }[] }
+          | { id: number; name: string }[];
+        setSpaceOptions(Array.isArray(data) ? data : (data.data ?? []));
       } catch (error) {
         console.error('Error detallado:', error);
       } finally {
@@ -561,17 +597,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchSpaces();
-  }, []);
+  }, [catalogosAcademia]);
 
   // ✅ Fetch certification types
   useEffect(() => {
     const fetchCertifications = async () => {
       setIsLoadingCertifications(true);
       try {
-        const response = await fetch('/api/super-admin/certification-types', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
+        const response = await fetch(
+          catalogosAcademia
+            ? `${catalogosAcademia}/tipos-certificacion`
+            : '/api/super-admin/certification-types',
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
 
         if (!response.ok) {
           throw new Error(
@@ -579,12 +620,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as {
-          success: boolean;
-          data: { id: number; name: string; description: string | null }[];
+        type Certificacion = {
+          id: number;
+          name: string;
+          description: string | null;
         };
-        console.log('✅ Tipos de certificación cargados:', data.data);
-        setLocalCertificationTypes(data.data ?? []);
+        const data = (await response.json()) as
+          { success: boolean; data: Certificacion[] } | Certificacion[];
+        setLocalCertificationTypes(
+          Array.isArray(data) ? data : (data.data ?? [])
+        );
       } catch (error) {
         console.error('Error al cargar certificaciones:', error);
         // Si el API falla, usa el prop como fallback
@@ -601,7 +646,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     };
 
     void fetchCertifications();
-  }, [certificationTypes]);
+  }, [certificationTypes, catalogosAcademia]);
 
   // 🆕 Cargar parámetros y plantillas existentes
   useEffect(() => {
@@ -626,8 +671,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       }
     };
 
-    void fetchParametrosAndTemplates();
-  }, []);
+    // Parámetros y plantillas son de los cursos de Artiefy.
+    if (!academiaSlug) void fetchParametrosAndTemplates();
+  }, [academiaSlug]);
 
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
@@ -766,11 +812,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       modalidadesid: !editingCourseId && !modalidadesid,
       nivelid: !editingCourseId && !nivelid,
       nivel: false,
-      rating: !editingCourseId && !rating,
+      // En una academia no hay rating ni planes (tipo de curso).
+      rating: !academiaSlug && !editingCourseId && !rating,
       file: !editingCourseId && !file && !coverImageKey,
       modalidad: false,
       courseTypeId:
-        !editingCourseId && (!courseTypeId || courseTypeId.length === 0),
+        !academiaSlug &&
+        !editingCourseId &&
+        (!courseTypeId || courseTypeId.length === 0),
     };
 
     if (editingCourseId) {
@@ -782,8 +831,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       newErrors.file = modifiedFields.has('file') && !file;
       newErrors.modalidadesid =
         modifiedFields.has('modalidadesid') && !modalidadesid;
-      newErrors.rating = modifiedFields.has('rating') && !rating;
+      newErrors.rating =
+        !academiaSlug && modifiedFields.has('rating') && !rating;
       newErrors.courseTypeId =
+        !academiaSlug &&
         modifiedFields.has('courseTypeId') &&
         (!courseTypeId || courseTypeId.length === 0); // 👈 NUEVO
     }
@@ -1380,8 +1431,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         setTypesCourses(data);
       }
     };
-    void fetchTypesCourses();
-  }, []);
+    if (!academiaSlug) void fetchTypesCourses();
+  }, [academiaSlug]);
 
   // ✅ Efecto para sincronizar todos los campos locales cuando cambian los props
   useEffect(() => {
@@ -1584,6 +1635,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       setNivelid(val); // ✅ sincronizar con padre
                     }}
                   >
+                    {/* Sin esta opción, el primer nivel se veía elegido con
+                        el valor real en 0 (y la validación lo rechazaba). */}
+                    <option value={0}>Seleccionar nivel</option>
                     {niveles.map((nivel) => (
                       <option key={nivel.id} value={nivel.id}>
                         {nivel.name}
@@ -1618,6 +1672,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       setModalidadesid(val); // ✅ sincronizar con padre
                     }}
                   >
+                    <option value={0}>Seleccionar modalidad</option>
                     {modalidades.map((modalidad) => (
                       <option key={modalidad.id} value={modalidad.id}>
                         {modalidad.name}
@@ -1652,6 +1707,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       setCategoryid(val); // ✅ sincronizar con padre
                     }}
                   >
+                    <option value={0}>Seleccionar categoría</option>
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {category.name}
@@ -1755,39 +1811,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     ))}
                   </select>
                 </div>
-                <div className="w-full">
-                  <label
-                    className="
-                      text-sm font-medium text-primary
-                      md:text-lg
-                    "
-                  >
-                    Modalidad del Curso{' '}
-                  </label>
-                  <select
-                    className="
-                      mt-1 w-full rounded border bg-background p-2 text-sm
-                      text-white
-                      md:text-base
-                    "
-                    value={localIdTypesCourses ?? ''}
-                    onChange={(e) => {
-                      const val = e.target.value
-                        ? Number(e.target.value)
-                        : null;
-                      setLocalIdTypesCourses(val); // actualiza estado local
-                      setIdTypesCourses(val); // también actualiza el padre
-                    }}
-                  >
-                    <option value="">Seleccionar tipo de curso</option>
-                    {typesCourses.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <>
+                {/* Tipos de curso y planes: solo de Artiefy. */}
+                {!academiaSlug && (
                   <div className="w-full">
                     <label
                       className="
@@ -1795,19 +1820,55 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         md:text-lg
                       "
                     >
-                      Tipo de Curso
+                      Modalidad del Curso{' '}
                     </label>
-                    <CourseTypeDropdown
-                      courseTypeId={courseTypeId}
-                      setCourseTypeId={setCourseTypeId}
-                    />
+                    <select
+                      className="
+                        mt-1 w-full rounded border bg-background p-2 text-sm
+                        text-white
+                        md:text-base
+                      "
+                      value={localIdTypesCourses ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                          ? Number(e.target.value)
+                          : null;
+                        setLocalIdTypesCourses(val); // actualiza estado local
+                        setIdTypesCourses(val); // también actualiza el padre
+                      }}
+                    >
+                      <option value="">Seleccionar tipo de curso</option>
+                      {typesCourses.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.type}
+                        </option>
+                      ))}
+                    </select>
                   </div>
+                )}
+                <>
+                  {!academiaSlug && (
+                    <div className="w-full">
+                      <label
+                        className="
+                          text-sm font-medium text-primary
+                          md:text-lg
+                        "
+                      >
+                        Tipo de Curso
+                      </label>
+                      <CourseTypeDropdown
+                        courseTypeId={courseTypeId}
+                        setCourseTypeId={setCourseTypeId}
+                      />
+                    </div>
+                  )}
                   {errors.courseTypeId && (
                     <p className="text-sm text-red-500">
                       Este campo es obligatorio.
                     </p>
                   )}
-                  {safeCourseTypeId.includes(4) && (
+                  {(academiaSlug ?? safeCourseTypeId.includes(4)) && (
                     <div className="w-full">
                       <label className="text-sm font-medium text-primary md:text-lg">
                         Precio Individual
@@ -1860,7 +1921,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </>
               </div>
             )}
-            {userRole !== 'educador' && (
+            {userRole !== 'educador' && !academiaSlug && (
               <div>
                 <label
                   htmlFor="rating"
@@ -2230,7 +2291,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </div>
               </div>
             )}
-            <div className="mt-6 flex flex-col text-white">
+            {/* Parámetros de evaluación: los de las academias llegan con las
+                actividades. */}
+            <div
+              className={`mt-6 flex flex-col text-white ${academiaSlug ? 'hidden' : ''}`}
+            >
               <p>
                 ¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
                 parametros
@@ -2268,7 +2333,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </span>
               </div>
             </div>
-            {addParametros && (
+            {addParametros && !academiaSlug && (
               <div
                 className="
                   space-y-3
@@ -2533,7 +2598,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 ))}
               </div>
             )}
-            {isOpen && userRole !== 'educador' && (
+            {isOpen && userRole !== 'educador' && !academiaSlug && (
               <div className="my-4 flex flex-col">
                 <label
                   htmlFor="subjects"

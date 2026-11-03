@@ -5,6 +5,7 @@ import {
   type ClerkMiddlewareOptions,
 } from '@clerk/nextjs/server';
 
+import { slugAcademiaDesdeHost, urlAcademia } from '~/lib/academy/host';
 import {
   getDashboardRouteByRole,
   getUserRole,
@@ -204,127 +205,204 @@ const middlewareConfig: ClerkMiddlewareOptions = {
   clockSkewInMs: 60 * 1000, // 60 seconds tolerance
 };
 
+// Academias (<slug>.artiefy.com): cada subdominio es una "copia" de Artiefy
+// con sus propias cuentas. Sus páginas viven en src/app/academia/[slug]/ y se
+// llega a ellas reescribiendo la ruta; no pasan por la lógica de roles de
+// Artiefy (el rol de cada cuenta está en academy_users y lo valida cada página).
+function manejarAcademia(
+  slug: string,
+  req: Request,
+  pathname: string,
+  userId: string | null
+) {
+  // Las APIs se autentican y autorizan solas.
+  if (isApiPath(pathname)) return NextResponse.next();
+
+  const url = new URL(req.url);
+  if (pathname.startsWith('/dashboard') && !userId) {
+    const signIn = new URL('/sign-in', req.url);
+    signIn.searchParams.set('redirect_url', url.pathname + url.search);
+    return NextResponse.redirect(signIn);
+  }
+
+  const destino = new URL(`/academia/${slug}${pathname}`, req.url);
+  destino.search = url.search;
+  return NextResponse.rewrite(destino);
+}
+
 const whatsAppWebhookPaths = new Set([
   '/api/super-admin/whatsapp/webhook',
   '/api/super-admin/whatsapp/health',
   '/api/super-admin/whatsapp/inbox',
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  try {
-    const pathname = getPathname(req);
+export default clerkMiddleware(
+  async (auth, req) => {
+    try {
+      const pathname = getPathname(req);
 
-    // Webhooks y APIs públicas: nunca tocan auth ni redirecciones.
-    if (whatsAppWebhookPaths.has(pathname) || isPublicApiPath(pathname)) {
-      return NextResponse.next();
-    }
-
-    // Archivos estáticos de /public: se sirven tal cual, sin redirecciones.
-    if (isPublicAssetPath(pathname)) {
-      return NextResponse.next();
-    }
-
-    const { userId, sessionClaims } = await auth();
-    const metadata = sessionClaims?.metadata;
-    const role = getUserRole(metadata?.role);
-
-    // 1) Redirect por rol: un usuario con rol privilegiado (educador/admin/
-    //    super-admin) siempre es llevado a SU dashboard, sea cual sea la ruta
-    //    desde la que inicie sesión. Estudiantes y usuarios sin rol siguen en el
-    //    front normal. No aplica a /api ni a las rutas de auth (para no romper
-    //    llamadas ni el propio flujo de login/logout).
-    if (userId && role && role !== STUDENT_ROLE && !isApiPath(pathname)) {
-      const dashboardRoute = getDashboardRouteByRole(role);
-      const isInOwnDashboard =
-        pathname.startsWith(dashboardRoute) ||
-        // Las rutas públicas del dashboard (el formulario de inscripción) no
-        // son de nadie: se comprueban más abajo, pero el redirect por rol se
-        // ejecuta antes y expulsaba de ahí a educadores y administradores.
-        isPublicDashboardPath(pathname) ||
-        (role === 'super-admin' && isSuperAdminSharedDashboardPath(pathname));
-      const isAuthRoute =
-        pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
-
-      // Excepciones al redirect por rol hacia el dashboard:
-      //  - super-admin: solo el DETALLE de cursos y programas (y clases). Los
-      //    listados y el resto del front de estudiantes lo devuelven a su
-      //    dashboard.
-      //  - educador: puede ver las rutas [id] de cursos/clases que tenga
-      //    asignados (la propiedad del curso se valida en la página server-side).
-      const canBrowseStudents =
-        (role === 'super-admin' && isSuperAdminStudentPath(pathname)) ||
-        (role === 'educador' && isEducadorStudentPath(pathname));
-
-      if (!isInOwnDashboard && !isAuthRoute && !canBrowseStudents) {
-        return NextResponse.redirect(new URL(dashboardRoute, req.url));
+      // Webhooks y APIs públicas: nunca tocan auth ni redirecciones.
+      if (whatsAppWebhookPaths.has(pathname) || isPublicApiPath(pathname)) {
+        return NextResponse.next();
       }
-    }
 
-    // 2) Gating de suscripción: un estudiante autenticado con la suscripción
-    //    vencida/inactiva no puede ver las clases; se le envía a /planes. El
-    //    detalle de cursos, programas y proyectos guiados sigue siendo visible
-    //    para que pueda explorar el catálogo y comprar desde ahí. Los visitantes
-    //    anónimos siguen pudiendo ver las páginas públicas.
-    if (
-      userId &&
-      (role === STUDENT_ROLE || !role) &&
-      isSubscriptionGatedPath(pathname) &&
-      isSubscriptionExpired(metadata)
-    ) {
-      return NextResponse.redirect(new URL('/planes', req.url));
-    }
+      // Archivos estáticos de /public: se sirven tal cual, sin redirecciones.
+      if (isPublicAssetPath(pathname)) {
+        return NextResponse.next();
+      }
 
-    if (isLegacyEducadorPath(pathname)) {
-      return NextResponse.redirect(
-        new URL(
-          pathname.replace('/dashboard/educador', '/dashboard/educadores'),
-          req.url
-        )
-      );
-    }
+      const { userId, sessionClaims } = await auth();
+      const metadata = sessionClaims?.metadata;
 
-    // Rutas públicas: dejar pasar (después de los checks de rol/suscripción).
-    if (
-      isPublicAppPath(pathname) ||
-      isPublicContentPath(pathname) ||
-      isPublicDashboardPath(pathname)
-    ) {
-      return NextResponse.next();
-    }
+      // Subdominio de una academia: flujo propio, sin la lógica de Artiefy.
+      const slugAcademia = slugAcademiaDesdeHost(req.headers.get('host'));
+      if (slugAcademia) {
+        return manejarAcademia(slugAcademia, req, pathname, userId);
+      }
 
-    if (isProtectedStudentPath(pathname) || isDashboardPath(pathname)) {
-      if (!userId) {
+      // En Artiefy, /academia/<slug>/... solo existe como destino interno de la
+      // reescritura: se manda al subdominio real.
+      const rutaInterna = /^\/academia\/([^/]+)(\/.*)?$/.exec(pathname);
+      if (rutaInterna?.[1]) {
+        return NextResponse.redirect(
+          urlAcademia(rutaInterna[1], rutaInterna[2] ?? '/', req.url)
+        );
+      }
+
+      // Una cuenta de academia no usa Artiefy: va a su academia. Requiere
+      // academySlug en el session token (ver CustomJwtSessionClaims); si no
+      // está configurado, no se redirige (fail-open) y cada página de Artiefy
+      // sigue con sus propias validaciones. Las cuentas propias de una
+      // academia no tienen `role` de Artiefy: si lo tiene, es una cuenta de
+      // Artiefy vinculada y se queda aquí aunque arrastre un academySlug.
+      if (
+        userId &&
+        metadata?.academySlug &&
+        !metadata.role &&
+        !isApiPath(pathname) &&
+        !pathname.startsWith('/sign-in') &&
+        !pathname.startsWith('/sign-up')
+      ) {
+        return NextResponse.redirect(
+          urlAcademia(metadata.academySlug, '/dashboard', req.url)
+        );
+      }
+
+      const role = getUserRole(metadata?.role);
+
+      // 1) Redirect por rol: un usuario con rol privilegiado (educador/admin/
+      //    super-admin) siempre es llevado a SU dashboard, sea cual sea la ruta
+      //    desde la que inicie sesión. Estudiantes y usuarios sin rol siguen en el
+      //    front normal. No aplica a /api ni a las rutas de auth (para no romper
+      //    llamadas ni el propio flujo de login/logout).
+      if (userId && role && role !== STUDENT_ROLE && !isApiPath(pathname)) {
+        const dashboardRoute = getDashboardRouteByRole(role);
+        const isInOwnDashboard =
+          pathname.startsWith(dashboardRoute) ||
+          // Las rutas públicas del dashboard (el formulario de inscripción) no
+          // son de nadie: se comprueban más abajo, pero el redirect por rol se
+          // ejecuta antes y expulsaba de ahí a educadores y administradores.
+          isPublicDashboardPath(pathname) ||
+          (role === 'super-admin' && isSuperAdminSharedDashboardPath(pathname));
+        const isAuthRoute =
+          pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
+
+        // Excepciones al redirect por rol hacia el dashboard:
+        //  - super-admin: solo el DETALLE de cursos y programas (y clases). Los
+        //    listados y el resto del front de estudiantes lo devuelven a su
+        //    dashboard.
+        //  - educador: puede ver las rutas [id] de cursos/clases que tenga
+        //    asignados (la propiedad del curso se valida en la página server-side).
+        const canBrowseStudents =
+          (role === 'super-admin' && isSuperAdminStudentPath(pathname)) ||
+          (role === 'educador' && isEducadorStudentPath(pathname));
+
+        if (!isInOwnDashboard && !isAuthRoute && !canBrowseStudents) {
+          return NextResponse.redirect(new URL(dashboardRoute, req.url));
+        }
+      }
+
+      // 2) Gating de suscripción: un estudiante autenticado con la suscripción
+      //    vencida/inactiva no puede ver las clases; se le envía a /planes. El
+      //    detalle de cursos, programas y proyectos guiados sigue siendo visible
+      //    para que pueda explorar el catálogo y comprar desde ahí. Los visitantes
+      //    anónimos siguen pudiendo ver las páginas públicas.
+      if (
+        userId &&
+        (role === STUDENT_ROLE || !role) &&
+        isSubscriptionGatedPath(pathname) &&
+        isSubscriptionExpired(metadata)
+      ) {
+        return NextResponse.redirect(new URL('/planes', req.url));
+      }
+
+      if (isLegacyEducadorPath(pathname)) {
         return NextResponse.redirect(
           new URL(
-            `/sign-in?redirect_url=${encodeURIComponent(req.url)}`,
+            pathname.replace('/dashboard/educador', '/dashboard/educadores'),
             req.url
           )
         );
       }
-    }
 
-    if (isAdminPath(pathname) && role !== 'admin') {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+      // Rutas públicas: dejar pasar (después de los checks de rol/suscripción).
+      if (
+        isPublicAppPath(pathname) ||
+        isPublicContentPath(pathname) ||
+        isPublicDashboardPath(pathname)
+      ) {
+        return NextResponse.next();
+      }
 
-    if (isSuperAdminPath(pathname) && role !== 'super-admin') {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+      if (isProtectedStudentPath(pathname) || isDashboardPath(pathname)) {
+        if (!userId) {
+          return NextResponse.redirect(
+            new URL(
+              `/sign-in?redirect_url=${encodeURIComponent(req.url)}`,
+              req.url
+            )
+          );
+        }
+      }
 
-    if (
-      isEducadorPath(pathname) &&
-      role !== 'educador' &&
-      role !== 'super-admin'
-    ) {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+      if (isAdminPath(pathname) && role !== 'admin') {
+        return NextResponse.redirect(new URL('/', req.url));
+      }
 
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware error:', error);
-    return NextResponse.redirect(new URL('/error', req.url));
+      if (isSuperAdminPath(pathname) && role !== 'super-admin') {
+        return NextResponse.redirect(new URL('/', req.url));
+      }
+
+      if (
+        isEducadorPath(pathname) &&
+        role !== 'educador' &&
+        role !== 'super-admin'
+      ) {
+        return NextResponse.redirect(new URL('/', req.url));
+      }
+
+      return NextResponse.next();
+    } catch (error) {
+      console.error('Middleware error:', error);
+      return NextResponse.redirect(new URL('/error', req.url));
+    }
+    // En el subdominio de una academia, su propio origen también es un
+    // "authorized party" de Clerk (no se puede listar cada academia a mano).
+  },
+  (req) => {
+    const host = req.headers.get('host');
+    if (!host || !slugAcademiaDesdeHost(host)) return middlewareConfig;
+    // El origen sale del header host: en desarrollo req.url llega normalizado
+    // a localhost y Clerk rechazaba la sesión del subdominio (azp distinto).
+    const protocolo =
+      req.headers.get('x-forwarded-proto') ??
+      req.nextUrl.protocol.replace(':', '');
+    return {
+      ...middlewareConfig,
+      authorizedParties: [...authorizedParties, `${protocolo}://${host}`],
+    };
   }
-}, middlewareConfig);
+);
 
 export const config = {
   matcher: [

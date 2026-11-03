@@ -221,6 +221,16 @@ export class NeuralNetwork {
     blending: AdditiveBlending,
   });
 
+  /** Recolors the network with a brand color (academies); links take the
+   * color and nodes a lighter tint of it. */
+  setColor(primary: string) {
+    const base = new Color(primary);
+    this.linkMaterial.uniforms.uColor!.value = base;
+    this.nodeMaterial.uniforms.uColor!.value = base
+      .clone()
+      .lerp(new Color('#ffffff'), 0.35);
+  }
+
   constructor({
     nodeCount: targetCount,
     pulseCount,

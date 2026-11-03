@@ -1,0 +1,53 @@
+/**
+ * /api/academia/[slug]/cursos
+ *
+ * GET  — cursos de la academia (super-admin y educadores).
+ * POST — crea un curso (super-admin). Cuerpo con los nombres del modal de
+ *        cursos de Artiefy: { title, subtitle, description, coverImageKey,
+ *        coverVideoCourseKey, categoryid, modalidadesid, nivelid, horario,
+ *        espacios, certificationTypeId, instructor, individualPrice,
+ *        isActive, visibility }.
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+
+import {
+  cuentaDeAcademia,
+  respuestaDeError,
+} from '~/server/academy/autorizacion';
+import {
+  crearCurso,
+  listarCursos,
+  validarCurso,
+} from '~/server/academy/cursos';
+
+type Ctx = { params: Promise<{ slug: string }> };
+
+export async function GET(_request: NextRequest, { params }: Ctx) {
+  try {
+    const { academia } = await cuentaDeAcademia((await params).slug, [
+      'super-admin',
+      'educador',
+    ]);
+    return NextResponse.json({ cursos: await listarCursos(academia.id) });
+  } catch (error) {
+    return respuestaDeError(error, 'cursos: listar');
+  }
+}
+
+export async function POST(request: NextRequest, { params }: Ctx) {
+  try {
+    const { academia, cuenta } = await cuentaDeAcademia((await params).slug, [
+      'super-admin',
+    ]);
+    const body = (await request.json().catch(() => ({}))) as Record<
+      string,
+      unknown
+    >;
+    const datos = await validarCurso(academia.id, body);
+    const nuevo = await crearCurso(academia.id, cuenta.userId, datos);
+    return NextResponse.json({ ok: true, ...nuevo }, { status: 201 });
+  } catch (error) {
+    return respuestaDeError(error, 'cursos: crear');
+  }
+}

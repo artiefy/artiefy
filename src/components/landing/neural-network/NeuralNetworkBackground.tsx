@@ -6,6 +6,8 @@ import { PerformanceMonitor, Sparkles } from '@react-three/drei';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { MathUtils } from 'three';
 
+import { useMarca } from '~/components/marca/MarcaProvider';
+
 import { NETWORK_CAMERA, NeuralNetwork } from './NeuralNetwork';
 
 /** Point the camera looks at: the middle of the network's depth. */
@@ -48,10 +50,13 @@ function readEnvironment(): Environment {
 function NetworkScene({
   travel,
   compact,
+  color,
 }: {
   /** Fly the camera with scroll and pointer; off under reduced motion. */
   travel: boolean;
   compact: boolean;
+  /** Brand color; null keeps the Artiefy palette. */
+  color: string | null;
 }) {
   const [network] = useState(
     () =>
@@ -66,6 +71,11 @@ function NetworkScene({
   const motion = useRef({ pointerX: 0, pointerY: 0, scroll: 0 });
 
   useEffect(() => () => network.dispose(), [network]);
+
+  // Academies: the network takes their primary color.
+  useEffect(() => {
+    if (color) network.setColor(color);
+  }, [network, color]);
 
   useEffect(() => {
     if (!travel) return;
@@ -130,6 +140,7 @@ function NetworkScene({
  * like the header's neon beam) but the camera no longer travels.
  */
 export default function NeuralNetworkBackground() {
+  const marca = useMarca();
   const [environment] = useState(readEnvironment);
   const [dpr, setDpr] = useState(1.5);
   const [isReady, setIsReady] = useState(false);
@@ -164,6 +175,7 @@ export default function NeuralNetworkBackground() {
         <NetworkScene
           travel={!environment.reducedMotion}
           compact={environment.compact}
+          color={marca.colorPrimario}
         />
         {/* Fine dust deep in the scene adds a third depth layer. */}
         <Sparkles
@@ -174,7 +186,7 @@ export default function NeuralNetworkBackground() {
           speed={0.18}
           opacity={0.35}
           noise={0.6}
-          color="#67e8f9"
+          color={marca.colorPrimario ?? '#67e8f9'}
         />
       </Canvas>
     </div>

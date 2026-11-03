@@ -41,7 +41,14 @@ export async function POST(request: NextRequest) {
     primary_email_address_id,
     first_name,
     last_name,
+    public_metadata,
   } = event.data;
+
+  // Cuentas de una academia (src/server/academy): no son usuarios de Artiefy,
+  // así que no se registran ni reciben el trial.
+  if (public_metadata && 'academyId' in public_metadata) {
+    return Response.json({ received: true, handled: false, academy: true });
+  }
 
   const primaryEmail =
     email_addresses.find(

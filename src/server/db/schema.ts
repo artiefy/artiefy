@@ -3227,3 +3227,173 @@ export const grupoAsistencia = pgTable(
     index('grupo_asistencia_sesion_idx').on(t.sesionId),
   ]
 );
+
+// ============================================================================
+// ACADEMIAS (multi-tenant)
+//
+// Cada academia es una "copia" de Artiefy con su propio subdominio
+// (<slug>.artiefy.com), logo y colores. Sus cuentas viven en academy_users:
+// cada cuenta de Clerk pertenece a UNA academia y no se registra en `users`,
+// así que Artiefy y las demás academias no la ven. SQL: scripts/academies.sql.
+// ============================================================================
+
+export const ACADEMY_ROLES = ['super-admin', 'educador', 'estudiante'] as const;
+export type AcademyRole = (typeof ACADEMY_ROLES)[number];
+
+export const academies = pgTable('academies', {
+  id: serial('id').primaryKey(),
+  // Subdominio: ponao → ponao.artiefy.com
+  slug: text('slug').notNull().unique(),
+  nombre: text('nombre').notNull(),
+  acronimo: text('acronimo'),
+  tipo: text('tipo', { enum: ['personal', 'empresa'] })
+    .default('personal')
+    .notNull(),
+  documentoTipo: text('documento_tipo'),
+  documentoNumero: text('documento_numero'),
+  esArtiefy: boolean('es_artiefy').default(false).notNull(),
+  // Key en S3 del logo (se sirve desde NEXT_PUBLIC_AWS_S3_URL).
+  logoKey: text('logo_key'),
+  colorPrimario: text('color_primario').default('#22C4D3').notNull(),
+  colorFondo: text('color_fondo').default('#01142B').notNull(),
+  activa: boolean('activa').default(true).notNull(),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const academyUsers = pgTable(
+  'academy_users',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Id de Clerk. Una cuenta puede estar en varias academias (y en Artiefy).
+    userId: text('user_id').notNull(),
+    email: text('email').notNull(),
+    name: text('name'),
+    role: text('role', { enum: ACADEMY_ROLES }).notNull(),
+    // true: la creó la academia (aislada de Artiefy; se borra de Clerk al
+    // quitarla de su última academia). false: cuenta existente vinculada.
+    cuentaPropia: boolean('cuenta_propia').default(true).notNull(),
+    // false: desactivada ("Desactivar" en Usuarios y Roles); no entra.
+    activo: boolean('activo').default(true).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    unique('academy_users_email_unico').on(t.academyId, t.email),
+    unique('academy_users_cuenta_unica').on(t.academyId, t.userId),
+    index('academy_users_academy_idx').on(t.academyId),
+    index('academy_users_user_idx').on(t.userId),
+  ]
+);
+
+// Catálogos de cada academia (aparte de los de Artiefy). Todos tienen la misma
+// forma; SQL: scripts/academy_courses.sql.
+const catalogoAcademia = (tabla: string) =>
+  pgTable(
+    tabla,
+    {
+      id: serial('id').primaryKey(),
+      academyId: integer('academy_id')
+        .references(() => academies.id, { onDelete: 'cascade' })
+        .notNull(),
+      name: text('name').notNull(),
+      description: text('description'),
+      createdAt: timestamp('created_at', { withTimezone: true })
+        .defaultNow()
+        .notNull(),
+    },
+    (t) => [unique(`${tabla}_unico`).on(t.academyId, t.name)]
+  );
+
+export const academyCategorias = catalogoAcademia('academy_categorias');
+export const academyModalidades = catalogoAcademia('academy_modalidades');
+export const academyNiveles = catalogoAcademia('academy_niveles');
+export const academyHorarios = catalogoAcademia('academy_horarios');
+export const academyEspacios = catalogoAcademia('academy_espacios');
+export const academyTiposCertificacion = catalogoAcademia(
+  'academy_tipos_certificacion'
+);
+
+// Cursos de las academias: tabla APARTE de `courses` (Artiefy), así nunca se
+// mezclan. Misma estructura (se reutilizan la pantalla y el modal de cursos de
+// Artiefy) más academy_id, con los catálogos de la academia. El instructor es
+// una cuenta de academy_users (id de Clerk).
+export const academyCourses = pgTable(
+  'academy_courses',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    title: varchar('title', { length: 255 }).notNull(),
+    subtitle: varchar('subtitle', { length: 255 }),
+    description: text('description'),
+    coverImageKey: text('cover_image_key'),
+    coverVideoCourseKey: text('cover_video_course_key'),
+    categoriaId: integer('categoria_id')
+      .references(() => academyCategorias.id)
+      .notNull(),
+    modalidadId: integer('modalidad_id')
+      .references(() => academyModalidades.id)
+      .notNull(),
+    nivelId: integer('nivel_id')
+      .references(() => academyNiveles.id)
+      .notNull(),
+    horarioId: integer('horario_id').references(() => academyHorarios.id, {
+      onDelete: 'set null',
+    }),
+    espacioId: integer('espacio_id').references(() => academyEspacios.id, {
+      onDelete: 'set null',
+    }),
+    tipoCertificacionId: integer('tipo_certificacion_id').references(
+      () => academyTiposCertificacion.id,
+      { onDelete: 'set null' }
+    ),
+    instructor: text('instructor'),
+    creatorId: text('creator_id').notNull(),
+    individualPrice: integer('individual_price'),
+    isActive: boolean('is_active').default(true).notNull(),
+    visibility: boolean('visibility').default(true).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_courses_academy_idx').on(t.academyId)]
+);
+
+// Matrículas de estudiantes en cursos de la academia (aparte de enrollments).
+// SQL: scripts/academy_enrollments.sql.
+export const academyEnrollments = pgTable(
+  'academy_enrollments',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    // Cuenta de Clerk del estudiante (fila de academy_users de esa academia).
+    userId: text('user_id').notNull(),
+    completed: boolean('completed').default(false).notNull(),
+    enrolledAt: timestamp('enrolled_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    unique('academy_enrollments_unica').on(t.courseId, t.userId),
+    index('academy_enrollments_academy_user_idx').on(t.academyId, t.userId),
+  ]
+);

@@ -26,6 +26,7 @@ import {
   FiX,
 } from 'react-icons/fi';
 
+import { CambiarVistaAcademia } from '~/components/academy/CambiarVistaAcademia';
 import { TicketNotificationBell } from '~/components/TicketNotificationBell';
 import { useFinancialsSummary } from '~/hooks/useFinancialsSummary';
 import { useTicketsUnread } from '~/hooks/useTicketsUnread';
@@ -35,6 +36,10 @@ import { ModalError } from './educators/modals/modalError';
 
 interface ResponsiveSidebarProps {
   children: React.ReactNode;
+  // Menú propio (academias): reemplaza el menú por rol de Artiefy y oculta lo
+  // que es solo de Artiefy (tickets, finanzas). Mismos ítems que el menú de
+  // super-admin de Artiefy: enlaces y grupos con subítems.
+  menu?: ItemMenu[];
 }
 
 interface NavSubItem {
@@ -69,10 +74,16 @@ interface NavGroupItem {
 
 type SuperAdminNavItem = NavLinkItem | NavPlaceholderItem | NavGroupItem;
 
-const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
+/** Ítem del menú lateral (las academias pasan los suyos por `menu`). */
+export type ItemMenu = SuperAdminNavItem;
+
+const ResponsiveSidebar = ({ children, menu }: ResponsiveSidebarProps) => {
   const { user } = useUser();
   const { totalUnread } = useTicketsUnread(); // ✅ Agregar esto
-  const { totalRecaudado } = useFinancialsSummary(); // ✅ Total recaudado
+  // Solo el super-admin de Artiefy muestra el total recaudado.
+  const { totalRecaudado } = useFinancialsSummary(
+    !menu && user?.publicMetadata?.role === 'super-admin'
+  );
 
   const sidebarUserName =
     user?.fullName ??
@@ -198,7 +209,10 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     badge?: number;
   }[] = [];
 
-  if (user?.publicMetadata?.role === 'admin') {
+  // Con `menu` (academias) se dibuja abajo con renderSuperAdminItem.
+  if (menu) {
+    navItems = [];
+  } else if (user?.publicMetadata?.role === 'admin') {
     navItems = navItemsAdmin;
   } else if (user?.publicMetadata?.role === 'educador') {
     navItems = navItemsEducator;
@@ -350,10 +364,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Educación',
     },
     {
-      kind: 'placeholder',
+      kind: 'link',
       id: 'academy',
       icon: <FiAward size={18} />,
-      title: 'Academy',
+      title: 'Academias',
+      link: '/dashboard/super-admin/academias',
     },
     {
       kind: 'group',
@@ -733,15 +748,18 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
               />
-              <div
-                className="
-                  liquid-glass mobile-header-floating-control flex size-10
-                  items-center justify-center rounded-full !bg-[#01152d]/55
-                  !backdrop-blur-2xl !backdrop-saturate-150
-                "
-              >
-                <TicketNotificationBell />
-              </div>
+              {!menu && (
+                <div
+                  className="
+                    liquid-glass mobile-header-floating-control flex size-10
+                    items-center justify-center rounded-full !bg-[#01152d]/55
+                    !backdrop-blur-2xl !backdrop-saturate-150
+                  "
+                >
+                  <TicketNotificationBell />
+                </div>
+              )}
+              <CambiarVistaAcademia />
               <div
                 className="
                   liquid-glass mobile-header-floating-control flex
@@ -872,8 +890,10 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
               );
             })}
 
-            {user?.publicMetadata?.role === 'super-admin' &&
-              superAdminNav.map(renderSuperAdminItem)}
+            {menu
+              ? menu.map(renderSuperAdminItem)
+              : user?.publicMetadata?.role === 'super-admin' &&
+                superAdminNav.map(renderSuperAdminItem)}
           </ul>
         </div>
       </aside>

@@ -13,6 +13,13 @@ export async function POST() {
   }
 
   const user = await currentUser();
+
+  // Cuenta creada por una academia (src/server/academy): no es usuario de
+  // Artiefy, así que no recibe rol, trial ni registro en la tabla users.
+  if (user?.publicMetadata && 'academyId' in user.publicMetadata) {
+    return NextResponse.json({ role: null, updated: false });
+  }
+
   const currentRole = getUserRole(user?.publicMetadata?.role);
 
   if (currentRole) {

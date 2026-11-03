@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { ArtieIdeaComposer } from '~/components/estudiantes/proyectos/home/ArtieIdeaComposer';
 import { IdeaSuggestions } from '~/components/estudiantes/proyectos/home/IdeaSuggestions';
+import { useMarca } from '~/components/marca/MarcaProvider';
 
 import type { ProjectAiSeed } from '~/components/projects/Modals/ProjectModeChooser';
 
@@ -29,6 +30,8 @@ export function LandingHero({
   onSubmit,
 }: LandingHeroProps) {
   const scope = useRef<HTMLElement>(null);
+  // In an academy the cyan/teal accents take its primary color instead.
+  const academia = useMarca().esAcademia;
 
   useGSAP(
     () => {
@@ -99,26 +102,32 @@ export function LandingHero({
     >
       <div
         aria-hidden="true"
-        className="
+        className={`
           pointer-events-none absolute top-1/4 left-1/4 size-[600px]
-          rounded-full bg-cyan-500/10 blur-[150px]
-        "
+          rounded-full blur-[150px]
+          ${academia ? 'bg-primary/10' : 'bg-cyan-500/10'}
+        `}
       />
       <div
         aria-hidden="true"
-        className="
+        className={`
           pointer-events-none absolute right-1/4 bottom-1/4 size-[500px]
-          rounded-full bg-teal-500/8 blur-[120px]
-        "
+          rounded-full blur-[120px]
+          ${academia ? 'bg-primary/8' : 'bg-teal-500/8'}
+        `}
       />
       {/* Calms the 3D network right behind the copy so the lines never cut
           through the text, while it stays vivid around the edges. */}
       <div
         aria-hidden="true"
-        className="
+        className={`
           pointer-events-none absolute inset-0
-          bg-[radial-gradient(ellipse_45%_50%_at_50%_50%,rgb(1_20_43/0.75),transparent_75%)]
-        "
+          ${
+            academia
+              ? 'bg-[radial-gradient(ellipse_45%_50%_at_50%_50%,color-mix(in_oklab,var(--color-background)_75%,transparent),transparent_75%)]'
+              : 'bg-[radial-gradient(ellipse_45%_50%_at_50%_50%,rgb(1_20_43/0.75),transparent_75%)]'
+          }
+        `}
       />
 
       {/* The header floats over the hero, so the top padding clears it. */}
@@ -138,18 +147,24 @@ export function LandingHero({
               <span className="relative inline-block whitespace-nowrap">
                 <span
                   aria-hidden="true"
-                  className="
+                  className={`
                     pointer-events-none absolute -inset-x-3 -inset-y-2
-                    bg-[radial-gradient(ellipse_at_center,hsl(185_85%_55%/0.3),transparent_70%)]
-                  "
+                    ${
+                      academia
+                        ? 'bg-[radial-gradient(ellipse_at_center,color-mix(in_oklab,var(--color-primary)_30%,transparent),transparent_70%)]'
+                        : 'bg-[radial-gradient(ellipse_at_center,hsl(185_85%_55%/0.3),transparent_70%)]'
+                    }
+                  `}
                 />
                 <span
-                  className="
-                    text-shimmer relative
-                    bg-[linear-gradient(100deg,var(--color-primary),hsl(185_95%_76%),var(--color-primary))]
-                    bg-clip-text text-transparent
-                    drop-shadow-[0_0_20px_hsl(185_72%_48%/0.55)]
-                  "
+                  className={`
+                    text-shimmer relative bg-clip-text text-transparent
+                    ${
+                      academia
+                        ? 'bg-[linear-gradient(100deg,var(--color-primary),color-mix(in_oklab,var(--color-primary)_55%,white),var(--color-primary))] drop-shadow-[0_0_20px_color-mix(in_oklab,var(--color-primary)_55%,transparent)]'
+                        : 'bg-[linear-gradient(100deg,var(--color-primary),hsl(185_95%_76%),var(--color-primary))] drop-shadow-[0_0_20px_hsl(185_72%_48%/0.55)]'
+                    }
+                  `}
                 >
                   idea
                 </span>
@@ -157,11 +172,14 @@ export function LandingHero({
             </span>{' '}
             <span
               data-hero="line-end"
-              className="
-                block bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-400
-                bg-clip-text pb-1 text-transparent
-                drop-shadow-[0_0_30px_rgba(34,211,238,0.6)]
-              "
+              className={`
+                block bg-clip-text pb-1 text-transparent
+                ${
+                  academia
+                    ? 'bg-[linear-gradient(90deg,var(--color-primary),color-mix(in_oklab,var(--color-primary)_60%,white),var(--color-primary))] drop-shadow-[0_0_30px_color-mix(in_oklab,var(--color-primary)_60%,transparent)]'
+                    : 'bg-gradient-to-r from-cyan-400 via-teal-300 to-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.6)]'
+                }
+              `}
             >
               {/* Same break as the design from tablets up; phones wrap freely. */}
               y consigue tus primeros

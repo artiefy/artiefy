@@ -16,15 +16,18 @@ interface SummaryResponse {
   };
 }
 
-export function useFinancialsSummary(): FinancialSummary {
+// habilitado = false: no consulta nada (p. ej. el menú de una academia, que
+// no debe pedir las finanzas de Artiefy).
+export function useFinancialsSummary(habilitado = true): FinancialSummary {
   const [summary, setSummary] = useState<FinancialSummary>({
     totalRecaudado: 0,
     totalTransacciones: 0,
-    loading: true,
+    loading: habilitado,
     error: null,
   });
 
   useEffect(() => {
+    if (!habilitado) return;
     const fetchSummary = async () => {
       try {
         // Modo agregado: el servidor devuelve SUM/COUNT en una sola fila,
@@ -64,7 +67,7 @@ export function useFinancialsSummary(): FinancialSummary {
     };
 
     fetchSummary();
-  }, []);
+  }, [habilitado]);
 
   return summary;
 }

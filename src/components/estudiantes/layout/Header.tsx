@@ -33,6 +33,7 @@ import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { useMarca } from '~/components/marca/MarcaProvider';
 import {
   getCreateEntryRoute,
   requestCreateEntry,
@@ -83,6 +84,8 @@ export function Header({
 }: {
   onEspaciosClickAction?: () => void;
 }) {
+  // Logo y nombre: Artiefy, o la academia del subdominio.
+  const marca = useMarca();
   const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -819,14 +822,29 @@ export function Header({
             >
               <div className="flex min-w-0 items-center gap-1">
                 <Link href="/" className="mr-2 flex shrink-0 items-center">
-                  <Image
-                    src="/artiefy-logo.svg"
-                    alt="Artiefy"
-                    width={96}
-                    height={24}
-                    unoptimized
-                    className="h-6 w-auto"
-                  />
+                  {marca.esAcademia ? (
+                    marca.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={marca.logoUrl}
+                        alt={marca.nombre}
+                        className="h-8 w-auto object-contain"
+                      />
+                    ) : (
+                      <span className="text-sm font-bold text-primary">
+                        {marca.nombre}
+                      </span>
+                    )
+                  ) : (
+                    <Image
+                      src="/artiefy-logo.svg"
+                      alt="Artiefy"
+                      width={96}
+                      height={24}
+                      unoptimized
+                      className="h-6 w-auto"
+                    />
+                  )}
                 </Link>
                 <ul
                   className="
@@ -939,7 +957,7 @@ export function Header({
               <div ref={brandMenuRef} className="pointer-events-auto relative">
                 <button
                   type="button"
-                  aria-label="Menú Artiefy"
+                  aria-label={`Menú ${marca.nombre}`}
                   aria-expanded={brandMenuOpen}
                   aria-controls="mobile-brand-menu"
                   className="
@@ -957,22 +975,35 @@ export function Header({
                 >
                   <span
                     className="
-                    flex size-7 items-center justify-center rounded-full
-                    bg-[#22c4d3]
-                    shadow-[0_0_10px_rgba(34,196,211,0.4)]
+                    flex size-7 items-center justify-center overflow-hidden
+                    rounded-full bg-primary
+                    shadow-[0_0_10px_color-mix(in_oklab,var(--color-primary)_40%,transparent)]
                   "
                   >
-                    <span className="text-sm leading-none font-bold text-[#080c16]">
-                      A
-                    </span>
+                    {marca.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={marca.logoUrl}
+                        alt=""
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-sm leading-none font-bold text-[#080c16]">
+                        {marca.nombre.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </span>
                   <span
-                    className="
+                    className={
+                      marca.esAcademia
+                        ? 'text-sm font-bold text-primary'
+                        : `
                     bg-gradient-to-r from-primary to-[#3AF4EF] bg-clip-text
                     text-sm font-bold text-transparent
-                  "
+                  `
+                    }
                   >
-                    Artiefy
+                    {marca.nombre}
                   </span>
                   <ChevronDown
                     className={`

@@ -8,6 +8,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import { SoloArtiefy } from '~/components/academy/SoloArtiefy';
 import { GlobalAgentChat } from '~/components/agents/GlobalAgentChat';
 import { SiteHeader } from '~/components/estudiantes/layout/SiteHeader';
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
@@ -126,11 +127,16 @@ export default function RootLayout({
 
           <Providers>
             <ServiceWorkerRegister />
-            <TourManager />
-            <NotificationSubscription />
-            <SiteHeader />
+            {/* Las academias tienen su propia interfaz (src/app/academia). */}
+            <SoloArtiefy>
+              <TourManager />
+              <NotificationSubscription />
+              <SiteHeader />
+            </SoloArtiefy>
             {children}
-            <GlobalAgentChat />
+            <SoloArtiefy>
+              <GlobalAgentChat />
+            </SoloArtiefy>
           </Providers>
           <SpeedInsights />
           <Analytics />
