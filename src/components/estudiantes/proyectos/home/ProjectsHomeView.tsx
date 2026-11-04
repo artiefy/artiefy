@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -41,6 +42,9 @@ import { ProjectHomeCard } from './ProjectHomeCard';
 import type { ProjectSocialItem } from '../types';
 
 type HomeTab = 'mine' | 'shared' | 'templates';
+
+// The view pills follow the reference design's typeface; only that nav uses it.
+const pillFont = Inter({ subsets: ['latin'], display: 'swap' });
 
 const PROJECT_TEMPLATES = [
   {
@@ -238,7 +242,10 @@ export function ProjectsHomeView({
           <div className="mt-20 mb-8">
             <nav
               aria-label="Vistas de proyectos"
-              className="flex flex-wrap items-center gap-1.5"
+              className={`
+                flex flex-wrap items-center gap-1.5
+                ${pillFont.className}
+              `}
             >
               <div
                 data-open={isSearchOpen}
