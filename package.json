@@ -210,9 +210,10 @@
   },
   "overrides": {
     "@n8n/chat": {
-      "markdown-it": "14.2.0",
+      "markdown-it": "^14.3.3",
       "@tiptap/core": "3.31.3",
-      "element-plus": "2.14.6"
+      "element-plus": "2.14.6",
+      "zod": "$zod"
     },
     "satori": {
       "fflate": "0.7.5"
