@@ -2002,158 +2002,6 @@ export default function GrupoDetallePage({
           </div>
         )}
 
-        {/* Datos de la hoja (fuera de la tabla para que se acomoden en
-            pantallas angostas). Archivada: solo lectura. */}
-        <fieldset disabled={archivada} className="contents">
-          <div className="grid grid-cols-1 gap-x-6 border-b border-white/10 pb-2 text-white/90 md:grid-cols-2 2xl:grid-cols-3">
-            <div className="border-b border-white/10 py-1">
-              <ComboCampo
-                label="Espacio"
-                valor={cursoHoja?.espacio ?? null}
-                opciones={espacios}
-                disabled={!cursoHoja || !puedeAdministrar}
-                onElegir={(o) =>
-                  cursoHoja &&
-                  void guardarCampoCurso(cursoHoja.courseId, {
-                    spaceOptionId: Number(o.id),
-                  })
-                }
-                onTexto={(v) =>
-                  cursoHoja &&
-                  void guardarCampoCurso(cursoHoja.courseId, {
-                    espacioTexto: v,
-                  })
-                }
-              />
-            </div>
-            <div className="border-b border-white/10 py-1">
-              {puedeAdministrar ? (
-                <CampoCabecera
-                  label="Empresa"
-                  valor={grupo.empresa}
-                  onSave={(v) => void guardarEmpresa(v)}
-                />
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-white/80">
-                  <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                    Empresa
-                  </span>
-                  {grupo.empresa || '—'}
-                </div>
-              )}
-            </div>
-            <div className="border-b border-white/10 py-1">
-              {puedeAdministrar ? (
-                <MultiCampo
-                  label="Programas"
-                  placeholder="— Buscar programas —"
-                  opciones={programasOpciones}
-                  seleccion={hoja.programasIds}
-                  onChange={(ids) => void asignarProgramas(ids)}
-                />
-              ) : (
-                <div className="flex items-center gap-2 text-sm text-white/80">
-                  <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                    Programas
-                  </span>
-                  {programasHojaTitulos.join(', ') || '—'}
-                </div>
-              )}
-            </div>
-            <div className="border-b border-white/10 py-1">
-              {cursoHoja && puedeAdministrar ? (
-                <MultiCampo
-                  label="Educadores"
-                  placeholder="— Buscar educadores —"
-                  opciones={educadoresOpciones}
-                  seleccion={educadoresCurso.map((e) => e.id)}
-                  onChange={(ids) =>
-                    void guardarCampoCurso(cursoHoja.courseId, {
-                      instructors: ids,
-                    })
-                  }
-                />
-              ) : (
-                <div className="flex items-baseline gap-2 text-sm text-white/80">
-                  <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                    Educadores
-                  </span>
-                  <span className="min-w-0 flex-1 px-1 py-0.5">
-                    {cursoHoja?.educador ?? '—'}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="border-b border-white/10 py-1">
-              <ComboCampo
-                label="Horario"
-                valor={cursoHoja?.horario ?? null}
-                opciones={horarios}
-                disabled={!cursoHoja || !puedeAdministrar}
-                onElegir={(o) =>
-                  cursoHoja &&
-                  void guardarCampoCurso(cursoHoja.courseId, {
-                    scheduleOptionId: Number(o.id),
-                  })
-                }
-                onTexto={(v) =>
-                  cursoHoja &&
-                  void guardarCampoCurso(cursoHoja.courseId, {
-                    horarioTexto: v,
-                  })
-                }
-              />
-            </div>
-            <div className="border-b border-white/10 py-1">
-              <div className="flex items-baseline gap-2">
-                <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
-                  Curso
-                </span>
-                {cursoHoja && puedeAdministrar ? (
-                  <>
-                    <input
-                      key={`${cursoHoja.courseId}:${cursoHoja.curso}`}
-                      defaultValue={cursoHoja.curso}
-                      onBlur={(e) => {
-                        const nv = e.target.value.trim();
-                        if (nv && nv !== cursoHoja.curso)
-                          void guardarCampoCurso(cursoHoja.courseId, {
-                            title: nv,
-                          });
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') e.currentTarget.blur();
-                      }}
-                      title="Edita el título del curso (se guarda en el curso)"
-                      className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 focus:border-[#22C4D3] focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setCursoModal(true)}
-                      title="Cambiar de curso"
-                      className="shrink-0 text-white/25 hover:text-[#22C4D3]"
-                    >
-                      <Pencil className="size-3" />
-                    </button>
-                  </>
-                ) : cursoHoja ? (
-                  <span className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm text-white/80">
-                    {cursoHoja.curso}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setCursoModal(true)}
-                    disabled={!puedeAdministrar}
-                    className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm font-medium text-[#22C4D3] hover:underline"
-                  >
-                    Agregar curso
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </fieldset>
         {/* Tabla */}
         <div
           className="scrollbar-marca overflow-x-auto border-b border-white/10"
@@ -2174,7 +2022,156 @@ export default function GrupoDetallePage({
                     rowSpan={2}
                     className="border-b border-white/10 p-0 text-left align-bottom font-normal"
                   >
-                    {/* Los datos de la hoja van arriba de la tabla. */}
+                    {/* Datos de la hoja a la izquierda del cuadro CLASES, en
+                        dos columnas (como estaba antes). */}
+                    <div className="grid grid-cols-2 gap-x-4 pr-4 pb-1">
+                      <div className="border-b border-white/10 py-1">
+                        <ComboCampo
+                          label="Espacio"
+                          valor={cursoHoja?.espacio ?? null}
+                          opciones={espacios}
+                          disabled={!cursoHoja || !puedeAdministrar}
+                          onElegir={(o) =>
+                            cursoHoja &&
+                            void guardarCampoCurso(cursoHoja.courseId, {
+                              spaceOptionId: Number(o.id),
+                            })
+                          }
+                          onTexto={(v) =>
+                            cursoHoja &&
+                            void guardarCampoCurso(cursoHoja.courseId, {
+                              espacioTexto: v,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="border-b border-white/10 py-1">
+                        {puedeAdministrar ? (
+                          <CampoCabecera
+                            label="Empresa"
+                            valor={grupo.empresa}
+                            onSave={(v) => void guardarEmpresa(v)}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2 text-sm text-white/80">
+                            <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                              Empresa
+                            </span>
+                            {grupo.empresa || '—'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-b border-white/10 py-1">
+                        {puedeAdministrar ? (
+                          <MultiCampo
+                            label="Programas"
+                            placeholder="— Buscar programas —"
+                            opciones={programasOpciones}
+                            seleccion={hoja.programasIds}
+                            onChange={(ids) => void asignarProgramas(ids)}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2 text-sm text-white/80">
+                            <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                              Programas
+                            </span>
+                            {programasHojaTitulos.join(', ') || '—'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-b border-white/10 py-1">
+                        {cursoHoja && puedeAdministrar ? (
+                          <MultiCampo
+                            label="Educadores"
+                            placeholder="— Buscar educadores —"
+                            opciones={educadoresOpciones}
+                            seleccion={educadoresCurso.map((e) => e.id)}
+                            onChange={(ids) =>
+                              void guardarCampoCurso(cursoHoja.courseId, {
+                                instructors: ids,
+                              })
+                            }
+                          />
+                        ) : (
+                          <div className="flex items-baseline gap-2 text-sm text-white/80">
+                            <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                              Educadores
+                            </span>
+                            <span className="min-w-0 flex-1 px-1 py-0.5">
+                              {cursoHoja?.educador ?? '—'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="border-b border-white/10 py-1">
+                        <ComboCampo
+                          label="Horario"
+                          valor={cursoHoja?.horario ?? null}
+                          opciones={horarios}
+                          disabled={!cursoHoja || !puedeAdministrar}
+                          onElegir={(o) =>
+                            cursoHoja &&
+                            void guardarCampoCurso(cursoHoja.courseId, {
+                              scheduleOptionId: Number(o.id),
+                            })
+                          }
+                          onTexto={(v) =>
+                            cursoHoja &&
+                            void guardarCampoCurso(cursoHoja.courseId, {
+                              horarioTexto: v,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="border-b border-white/10 py-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="w-24 shrink-0 text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+                            Curso
+                          </span>
+                          {cursoHoja && puedeAdministrar ? (
+                            <>
+                              <input
+                                key={`${cursoHoja.courseId}:${cursoHoja.curso}`}
+                                defaultValue={cursoHoja.curso}
+                                onBlur={(e) => {
+                                  const nv = e.target.value.trim();
+                                  if (nv && nv !== cursoHoja.curso)
+                                    void guardarCampoCurso(cursoHoja.courseId, {
+                                      title: nv,
+                                    });
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') e.currentTarget.blur();
+                                }}
+                                title="Edita el título del curso (se guarda en el curso)"
+                                className="min-w-0 flex-1 border-b border-transparent bg-transparent px-1 py-0.5 text-sm text-white/80 focus:border-[#22C4D3] focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setCursoModal(true)}
+                                title="Cambiar de curso"
+                                className="shrink-0 text-white/25 hover:text-[#22C4D3]"
+                              >
+                                <Pencil className="size-3" />
+                              </button>
+                            </>
+                          ) : cursoHoja ? (
+                            <span className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm text-white/80">
+                              {cursoHoja.curso}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setCursoModal(true)}
+                              disabled={!puedeAdministrar}
+                              className="min-w-0 flex-1 px-1 py-0.5 text-left text-sm font-medium text-[#22C4D3] hover:underline"
+                            >
+                              Agregar curso
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </th>
                   <th
                     colSpan={Math.max(nFechas, 1)}
