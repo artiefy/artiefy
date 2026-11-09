@@ -4,7 +4,12 @@ import { auth } from '@clerk/nextjs/server';
 import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { projects, projectsTaken, users } from '~/server/db/schema';
+import {
+  projectInvitations,
+  projects,
+  projectsTaken,
+  users,
+} from '~/server/db/schema';
 import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 export async function POST(request: Request) {
@@ -26,6 +31,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // `isInvited` grants invited-member access, so it is only honored when an
+    // accepted invitation to this project exists for this user. Otherwise the
+    // request falls back to a regular (non-invited) enrollment.
+    let hasAcceptedInvitation = false;
+    if (isInvited === true) {
+      const accepted = await db
+        .select({ id: projectInvitations.id })
+        .from(projectInvitations)
+        .where(
+          and(
+            eq(projectInvitations.invitedUserId, String(userId)),
+            eq(projectInvitations.projectId, Number(projectId)),
+            eq(projectInvitations.status, 'accepted')
+          )
+        )
+        .limit(1);
+      hasAcceptedInvitation = accepted.length > 0;
+    }
+    const invitedFlag = isInvited === true && hasAcceptedInvitation;
+
     // Verificar si ya está inscrito
     const existingEnrollment = await db
       .select()
@@ -42,11 +67,11 @@ export async function POST(request: Request) {
       // Si ya existe, actualizar el campo isInvited si es necesario
       if (
         isInvited !== undefined &&
-        existingEnrollment[0]?.isInvited !== isInvited
+        existingEnrollment[0]?.isInvited !== invitedFlag
       ) {
         await db
           .update(projectsTaken)
-          .set({ isInvited: Boolean(isInvited) })
+          .set({ isInvited: invitedFlag })
           .where(
             and(
               eq(projectsTaken.userId, String(userId)),
@@ -69,7 +94,7 @@ export async function POST(request: Request) {
     await db.insert(projectsTaken).values({
       userId: String(userId),
       projectId: Number(projectId),
-      isInvited: Boolean(isInvited),
+      isInvited: invitedFlag,
       createdAt: new Date(), // ✅ Agregar explícitamente para evitar null
     });
 

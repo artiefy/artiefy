@@ -1,5 +1,6 @@
 'use server';
 
+import { auth } from '@clerk/nextjs/server';
 import { and, desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -24,10 +25,12 @@ interface DbNotification {
 }
 
 export async function getNotifications(
-  userId: string,
+  _userId?: string,
   options?: { limit?: number }
 ): Promise<Notification[]> {
   try {
+    const { userId } = await auth();
+    if (!userId) return [];
     const limit = options?.limit ?? 1000; // Por defecto trae 1000
     const results = (await db
       .select()
@@ -36,27 +39,26 @@ export async function getNotifications(
       .orderBy(desc(notifications.createdAt))
       .limit(limit)) as DbNotification[];
 
-    return results.map(
-      (result): Notification => ({
-        id: result.id,
-        userId: result.userId,
-        type: result.type as NotificationType,
-        title: result.title,
-        message: result.message,
-        isRead: result.isRead ?? false,
-        isMarked: result.isMarked ?? false, // <-- nuevo campo
-        createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
-        metadata: result.metadata as NotificationMetadata | undefined, // <-- asegúrate de incluir metadata
-      })
-    );
+    return results.map((result): Notification => ({
+      id: result.id,
+      userId: result.userId,
+      type: result.type as NotificationType,
+      title: result.title,
+      message: result.message,
+      isRead: result.isRead ?? false,
+      isMarked: result.isMarked ?? false, // <-- nuevo campo
+      createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
+      metadata: result.metadata as NotificationMetadata | undefined, // <-- asegúrate de incluir metadata
+    }));
   } catch (error) {
-    console.error('Error fetching notifications:', error);
     return [];
   }
 }
 
-export async function getUnreadCount(userId: string): Promise<number> {
+export async function getUnreadCount(_userId?: string): Promise<number> {
   try {
+    const { userId } = await auth();
+    if (!userId) return 0;
     const result = await db
       .select({
         count: sql<number>`COUNT(*)::int`,
@@ -68,7 +70,6 @@ export async function getUnreadCount(userId: string): Promise<number> {
 
     return result[0]?.count ?? 0;
   } catch (error) {
-    console.error('Error getting unread count:', error);
     return 0;
   }
 }

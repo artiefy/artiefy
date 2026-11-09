@@ -1,5 +1,6 @@
 'use server';
 
+import { currentUser } from '@clerk/nextjs/server';
 import { and, count, desc, eq, or } from 'drizzle-orm';
 
 import {
@@ -20,14 +21,41 @@ import {
   getOrCreateUserByEmail,
   SUPPORT_AUTO_ASSIGN_EMAILS,
 } from '~/server/helpers/supportTicketAssignments';
+import { getApiSession } from '~/server/utils/apiAuth';
 
 const FALLBACK_EMAIL_DOMAIN = 'artiefy.local';
 const TICKET_REUSE_WINDOW_MS = 1000 * 60 * 30; // 30 minutos
 
-export async function getTicketByUser(userId: string): Promise<{
+// Canned replies the student UI persists as "support" messages after a menu
+// choice. A student may only author a support-side message with exactly these
+// texts; anything else is stored as the student's own message.
+const STUDENT_CANNED_SUPPORT_REPLIES: ReadonlySet<string> = new Set([
+  'Por favor, describe el error que encontraste. Incluye todos los detalles posibles como qué estabas haciendo cuando ocurrió el problema.',
+  '¡Perfecto! Hazme tu pregunta y te ayudaré con la información que necesites sobre Artiefy.',
+  'Entiendo que tienes un problema técnico. Describe detalladamente qué está pasando y qué dispositivo/navegador estás usando.',
+  'Te ayudo con tu consulta de pagos. ¿Tienes algún problema con una transacción, facturación o necesitas información sobre los planes?',
+]);
+
+// Every exported function here is a public server action: the caller is always
+// resolved from the session and client-supplied user ids are ignored.
+async function requireSession() {
+  const session = await getApiSession();
+  if (!session.userId) throw new Error('No autorizado');
+  return { userId: session.userId, isStaff: session.isStaff };
+}
+
+async function sessionEmail(fallback?: string) {
+  const user = await currentUser();
+  return user?.primaryEmailAddress?.emailAddress ?? fallback;
+}
+
+export async function getTicketByUser(_userId?: string): Promise<{
   ticket: typeof tickets.$inferSelect | undefined;
   mensajes: (typeof ticketComments.$inferSelect)[];
 }> {
+  const session = await getApiSession();
+  if (!session.userId) return { ticket: undefined, mensajes: [] };
+  const userId = session.userId;
   // Buscar el ticket creado por el usuario (solo uno)
   const ticket = await db
     .select()
@@ -53,8 +81,11 @@ export async function getTicketByUser(userId: string): Promise<{
 
 // Lista todos los tickets del usuario, más recientes primero
 export async function getTicketsByUser(
-  userId: string
+  _userId?: string
 ): Promise<(typeof tickets.$inferSelect & { unreadCount: number })[]> {
+  const session = await getApiSession();
+  if (!session.userId) return [];
+  const userId = session.userId;
   const rows = await db
     .select()
     .from(tickets)
@@ -91,9 +122,9 @@ export async function getTicketsByUser(
 
 // Devuelve el ticket abierto más reciente (si existe)
 export async function getUserOpenTicket(
-  userId: string
+  _userId?: string
 ): Promise<typeof tickets.$inferSelect | undefined> {
-  const list = await getTicketsByUser(userId);
+  const list = await getTicketsByUser();
   const open = list.find(
     (t) =>
       (t.estado ?? '').toLowerCase() !== 'cerrado' &&
@@ -104,15 +135,16 @@ export async function getUserOpenTicket(
 
 // Función para crear un ticket completamente nuevo (sin reutilizar)
 export async function createNewTicket({
-  creatorId,
-  email,
+  email: clientEmail,
   description,
 }: {
   description?: string;
-  creatorId: string;
+  /** @deprecated Ignored: the creator is always the signed-in user. */
+  creatorId?: string;
   email?: string;
 }) {
-  console.log('🆕 Creando ticket completamente nuevo para usuario:', creatorId);
+  const { userId: creatorId } = await requireSession();
+  const email = await sessionEmail(clientEmail);
 
   try {
     await ensureUserExists(creatorId, email);
@@ -137,12 +169,6 @@ export async function createNewTicket({
       })
       .returning();
 
-    console.log('✅ Nuevo ticket creado exitosamente:', {
-      id: created.id,
-      email: created.email,
-      description: created.description,
-    });
-
     // Asignar a super-admins y enviar notificaciones
     await assignTicketToSuperAdmins(
       created.id,
@@ -154,7 +180,6 @@ export async function createNewTicket({
       messages: [], // Siempre empezar con mensajes vacíos
     };
   } catch (error) {
-    console.error('❌ Error al crear nuevo ticket:', error);
     throw error;
   }
 }
@@ -186,11 +211,6 @@ async function ensureUserExists(creatorId: string, email?: string) {
 
     if (insertedRows.length > 0) {
       const inserted = insertedRows[0];
-      console.log('👤 Usuario creado automáticamente en la tabla users:', {
-        id: inserted.id,
-        email: inserted.email,
-        role: inserted.role,
-      });
       return inserted;
     }
 
@@ -204,7 +224,6 @@ async function ensureUserExists(creatorId: string, email?: string) {
 
     return fallbackUser;
   } catch (error) {
-    console.error('❌ Error creando usuario local para ticket:', error);
     throw error;
   }
 }
@@ -239,15 +258,7 @@ async function assignTicketToSuperAdmins(
   description: string
 ) {
   try {
-    console.log(
-      `📧 Iniciando asignación automática para ticket #${ticketId}...`
-    );
-
     // Solo obtener usuarios de los emails configurados en SUPPORT_AUTO_ASSIGN_EMAILS
-    console.log(
-      '📧 Obteniendo usuarios de correos auto-asignados:',
-      SUPPORT_AUTO_ASSIGN_EMAILS
-    );
 
     const assignees = await Promise.all(
       SUPPORT_AUTO_ASSIGN_EMAILS.map(async (email) =>
@@ -255,15 +266,7 @@ async function assignTicketToSuperAdmins(
       )
     );
 
-    console.log(
-      '✅ Usuarios para asignación automática:',
-      assignees.map((u) => ({ id: u.id, email: u.email, role: u.role }))
-    );
-
     if (assignees.length === 0) {
-      console.warn(
-        '⚠️ No se encontraron usuarios para asignar automáticamente'
-      );
       return;
     }
 
@@ -272,13 +275,7 @@ async function assignTicketToSuperAdmins(
       assignees.map(async (admin) => {
         try {
           await ensureTicketAssignment(ticketId, admin.id);
-          console.log(`✅ Ticket asignado a: ${admin.email ?? admin.id}`);
-        } catch (error) {
-          console.error(
-            `❌ Error asignando ticket a ${admin.email ?? admin.id}:`,
-            error
-          );
-        }
+        } catch (error) {}
       })
     );
 
@@ -291,10 +288,6 @@ async function assignTicketToSuperAdmins(
       }
     }
 
-    console.log(
-      `📨 Enviando emails de notificación a ${emailRecipients.size} destinatarios`
-    );
-
     await Promise.all(
       Array.from(emailRecipients).map(async (email) => {
         try {
@@ -303,21 +296,29 @@ async function assignTicketToSuperAdmins(
             subject: `🎫 Nuevo Ticket de Soporte #${ticketId}`,
             html: getNewTicketAssignmentEmail(ticketId, description),
           });
-          console.log(`✅ Email de ticket enviado a: ${email}`);
-        } catch (error) {
-          console.error(`❌ Error enviando email a ${email}:`, error);
-        }
+        } catch (error) {}
       })
     );
-
-    console.log('✅ Proceso de asignación completado');
   } catch (error) {
-    console.error('❌ Error en assignTicketToSuperAdmins:', error);
     // No lanzar el error para que el ticket se cree aunque falle la asignación
   }
 }
 
 export async function getOrCreateSuportChat({
+  email: clientEmail,
+  description,
+}: {
+  description?: string;
+  /** @deprecated Ignored: the creator is always the signed-in user. */
+  creatorId?: string;
+  email?: string;
+}) {
+  const { userId: creatorId } = await requireSession();
+  const email = await sessionEmail(clientEmail);
+  return getOrCreateSuportChatFor({ creatorId, email, description });
+}
+
+async function getOrCreateSuportChatFor({
   creatorId,
   email,
   description,
@@ -326,8 +327,6 @@ export async function getOrCreateSuportChat({
   creatorId: string;
   email?: string;
 }) {
-  console.log('🔍 Buscando ticket existente para usuario:', creatorId);
-
   // Verificar si ya existe un ticket para el usuario
   const existing = await db
     .select()
@@ -340,9 +339,8 @@ export async function getOrCreateSuportChat({
   const reuseExisting = existing && shouldCreateNewTicket(existing) === false;
 
   if (reuseExisting && existing) {
-    console.log('✅ Ticket existente encontrado:', existing.id);
     // Si ya hay un ticket, obtenerlo con los mensajes
-    const ticketWithMessages = await getTicketWithMessages(existing.id);
+    const ticketWithMessages = await loadTicketWithMessages(existing.id);
     return {
       ...ticketWithMessages.ticket,
       messages: ticketWithMessages.messages,
@@ -350,25 +348,15 @@ export async function getOrCreateSuportChat({
     };
   }
 
-  console.log('📝 Creando nuevo ticket desde chatbot...');
-  console.log('📋 Datos del ticket:', {
-    creatorId,
-    email: email ?? 'sin email',
-    description: description ?? 'Ticket de soporte desde chatbot',
-  });
-
   try {
     await ensureUserExists(creatorId, email);
 
     let previousTicketData: Awaited<
-      ReturnType<typeof getTicketWithMessages>
+      ReturnType<typeof loadTicketWithMessages>
     > | null = null;
 
     if (existing && !reuseExisting) {
-      console.log(
-        '♻️ Ticket existente demasiado antiguo o cerrado. Se creará uno nuevo.'
-      );
-      previousTicketData = await getTicketWithMessages(existing.id);
+      previousTicketData = await loadTicketWithMessages(existing.id);
     }
 
     // Si no existe, crearlo
@@ -392,14 +380,7 @@ export async function getOrCreateSuportChat({
       })
       .returning();
 
-    console.log('✅ Ticket creado exitosamente:', {
-      id: created.id,
-      email: created.email,
-      description: created.description,
-    });
-
     // Asignar a super-admins y enviar notificaciones
-    console.log('📧 Iniciando asignación a super-admins...');
     await assignTicketToSuperAdmins(
       created.id,
       created.description ?? 'Sin descripción'
@@ -411,20 +392,36 @@ export async function getOrCreateSuportChat({
       continuationOfTicket: previousTicketData?.ticket ?? null,
     };
   } catch (error) {
-    console.error('❌ Error al crear ticket:', error);
     throw error;
   }
 }
 
 export async function getTicketWithMessages(
   ticket_id: number,
-  user_id?: string
+  _user_id?: string
 ): Promise<{
   ticket: typeof tickets.$inferSelect | undefined;
   messages: (typeof ticketComments.$inferSelect)[];
 }> {
-  console.log('Fetching ticket with ID:', ticket_id);
+  const session = await getApiSession();
+  if (!session.userId) return { ticket: undefined, messages: [] };
 
+  const result = await loadTicketWithMessages(ticket_id);
+  // Students only see their own tickets; staff may open any ticket.
+  if (
+    result.ticket &&
+    result.ticket.creatorId !== session.userId &&
+    !session.isStaff
+  ) {
+    return { ticket: undefined, messages: [] };
+  }
+  return result;
+}
+
+async function loadTicketWithMessages(ticket_id: number): Promise<{
+  ticket: typeof tickets.$inferSelect | undefined;
+  messages: (typeof ticketComments.$inferSelect)[];
+}> {
   let ticket: typeof tickets.$inferSelect | undefined = undefined;
   let msgs: (typeof ticketComments.$inferSelect)[] = [];
 
@@ -437,20 +434,9 @@ export async function getTicketWithMessages(
       .limit(1)
       .then((rows) => rows[0]);
   }
-  // Solo si no hay ticket_id, buscar por user_id
-  else if (user_id) {
-    ticket = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.creatorId, user_id))
-      .orderBy(desc(tickets.createdAt))
-      .limit(1)
-      .then((rows) => rows[0]);
-  }
 
   // Obtener mensajes solo si encontramos el ticket y coincide con el ticket_id solicitado
   if (ticket && (!ticket_id || ticket.id === ticket_id)) {
-    console.log('Ticket found:', ticket);
     msgs = await db
       .select()
       .from(ticketComments)
@@ -464,19 +450,24 @@ export async function getTicketWithMessages(
 }
 
 export async function SaveTicketMessage(
-  userId: string,
+  _userId: string,
   content: string,
-  sender: string,
+  requestedSender: string,
   userEmail?: string,
   ticketId?: number
 ) {
-  console.log('💬 SaveTicketMessage llamado:', {
-    userId,
-    sender,
-    userEmail: userEmail ?? 'sin email',
-    ticketId: ticketId ?? 'sin ticketId específico',
-    contentLength: content.length,
-  });
+  const { userId, isStaff } = await requireSession();
+
+  // The author side is derived on the server, never trusted from the client.
+  // Staff replying to a ticket write as support; students write as the user,
+  // except for the fixed canned support replies the student UI persists.
+  const replyingAsStaff = isStaff && Boolean(ticketId);
+  const sender = replyingAsStaff
+    ? 'support'
+    : requestedSender === 'support' &&
+        STUDENT_CANNED_SUPPORT_REPLIES.has(content)
+      ? 'support'
+      : 'user';
 
   try {
     let targetTicket: typeof tickets.$inferSelect;
@@ -484,18 +475,21 @@ export async function SaveTicketMessage(
       const existingTicket = await db
         .select()
         .from(tickets)
-        .where(and(eq(tickets.id, ticketId), eq(tickets.creatorId, userId)))
+        .where(
+          replyingAsStaff
+            ? eq(tickets.id, ticketId)
+            : and(eq(tickets.id, ticketId), eq(tickets.creatorId, userId))
+        )
         .limit(1)
         .then((rows) => rows[0]);
       if (!existingTicket) {
-        console.error('❌ Ticket no encontrado o no pertenece al usuario');
         throw new Error('Ticket no válido');
       }
       targetTicket = existingTicket;
     } else {
-      const createdOrExisting = await getOrCreateSuportChat({
+      const createdOrExisting = await getOrCreateSuportChatFor({
         creatorId: userId,
-        email: userEmail ?? '',
+        email: (await sessionEmail(userEmail)) ?? '',
         description: content,
       });
       targetTicket = {
@@ -579,20 +573,15 @@ export async function SaveTicketMessage(
                     html,
                   }).then((res) => {
                     if (res.success) {
-                      console.log(`✅ Email enviado a admin ${adminEmail}`);
                     } else {
-                      console.error('❌ Error email admin', res.error);
                     }
                   });
                 })
             );
           } else {
-            console.log('⚠️ Sin admins asignados para notificar');
           }
         }
-      } catch (err) {
-        console.error('❌ Error notificando admins:', err);
-      }
+      } catch (err) {}
     }
 
     // Retornar información para que el cliente pueda mostrar mensaje automático y timestamp universal
@@ -602,7 +591,6 @@ export async function SaveTicketMessage(
       sender,
     };
   } catch (error) {
-    console.error('❌ Error en SaveTicketMessage:', error);
     throw error;
   }
 }
