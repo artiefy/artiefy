@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMeetings/getClassMeetingsByCourseId';
+import { checkCourseContentAccess } from '~/server/queries/courseContentAccess';
 
 export async function GET(request: Request) {
   try {
@@ -20,6 +21,18 @@ export async function GET(request: Request) {
       return NextResponse.json(
         { error: 'courseId must be a valid number' },
         { status: 400 }
+      );
+    }
+
+    // Class meetings carry join links and recording keys.
+    const access = await checkCourseContentAccess(courseId);
+    if (!access.ok) {
+      return NextResponse.json(
+        {
+          error: access.status === 401 ? 'No autorizado' : 'Acceso denegado',
+          meetings: [],
+        },
+        { status: access.status }
       );
     }
 
