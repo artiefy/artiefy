@@ -12,7 +12,6 @@ import {
   GraduationCap,
   Loader2,
   Mail,
-  MessageCircle,
   MessageSquare,
   Pencil,
   Plus,
@@ -236,7 +235,6 @@ export function ListaEstudiantesAcademia({
   const [modal, setModal] = useState<
     | 'crear'
     | 'correo'
-    | 'whatsapp'
     | 'masivo'
     | 'matricular'
     | 'columnas'
@@ -432,12 +430,6 @@ export function ListaEstudiantesAcademia({
                 icon: <Mail />,
                 tono: tonoBase,
                 onClick: () => setModal('correo'),
-              },
-              {
-                label: 'WhatsApp',
-                icon: <MessageCircle />,
-                tono: 'border-emerald-500/50 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25',
-                onClick: () => setModal('whatsapp'),
               },
               {
                 label: 'Editar Masivamente',
@@ -927,13 +919,6 @@ export function ListaEstudiantesAcademia({
       {modal === 'correo' && (
         <EnviarCorreo
           slug={slug}
-          destinatarios={seleccionados}
-          onClose={() => setModal(null)}
-        />
-      )}
-
-      {modal === 'whatsapp' && (
-        <EnviarWhatsapp
           destinatarios={seleccionados}
           onClose={() => setModal(null)}
         />
@@ -1548,75 +1533,6 @@ function EnviarCorreo({
           {enviando && <Loader2 className="size-4 animate-spin" />}
           Enviar correo
         </button>
-      </div>
-    </Modal>
-  );
-}
-
-/** Número para wa.me: solo dígitos; 10 dígitos de Colombia → con 57. */
-const numeroWhatsapp = (tel: string) => {
-  const digitos = tel.replace(/\D/g, '');
-  if (digitos.length === 10) return `57${digitos}`;
-  return digitos.length >= 11 ? digitos : '';
-};
-
-function EnviarWhatsapp({
-  destinatarios,
-  onClose,
-}: {
-  destinatarios: EstudianteAcademia[];
-  onClose: () => void;
-}) {
-  const [mensaje, setMensaje] = useState('');
-  const conNumero = destinatarios.filter((d) =>
-    numeroWhatsapp(d.datos.telefono ?? '')
-  );
-
-  return (
-    <Modal titulo="Enviar WhatsApp" onClose={onClose} ancho="max-w-lg">
-      <div className="space-y-4">
-        <textarea
-          value={mensaje}
-          onChange={(e) => setMensaje(e.target.value)}
-          placeholder="Mensaje"
-          className={area}
-        />
-        {destinatarios.length === 0 ? (
-          <p className="text-sm text-amber-300">
-            Selecciona en la tabla a quién escribir.
-          </p>
-        ) : conNumero.length === 0 ? (
-          <p className="text-sm text-amber-300">Sin números válidos.</p>
-        ) : (
-          <ul className="max-h-64 space-y-1 overflow-y-auto">
-            {conNumero.map((d) => (
-              <li
-                key={d.userId}
-                className="flex items-center justify-between gap-2 rounded-lg border border-[var(--ac-borde)] px-3 py-2 text-sm"
-              >
-                <span className="min-w-0 truncate">
-                  {d.name ?? d.email}
-                  <span className="ml-2 text-xs text-white/50">
-                    {d.datos.telefono}
-                  </span>
-                </span>
-                <a
-                  href={`https://wa.me/${numeroWhatsapp(d.datos.telefono ?? '')}?text=${encodeURIComponent(mensaje)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/25"
-                >
-                  <MessageCircle className="size-3.5" /> Abrir
-                </a>
-              </li>
-            ))}
-          </ul>
-        )}
-        {destinatarios.length > conNumero.length && conNumero.length > 0 && (
-          <p className="text-xs text-white/50">
-            {destinatarios.length - conNumero.length} sin teléfono válido.
-          </p>
-        )}
       </div>
     </Modal>
   );

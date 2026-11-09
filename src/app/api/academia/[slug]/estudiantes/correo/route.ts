@@ -1,8 +1,9 @@
 /**
  * POST /api/academia/[slug]/estudiantes/correo  (super-admin de esa academia)
  *
- * { userIds[], asunto, mensaje } envía un correo a los estudiantes elegidos,
- * a nombre de la academia. Límite: 10 envíos cada 10 minutos por academia.
+ * { userIds[], extras?[], asunto, mensaje } envía un correo a las cuentas
+ * elegidas de la academia (y a correos escritos a mano), a su nombre.
+ * Límite: 10 envíos cada 10 minutos por academia.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -40,9 +41,15 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     ]);
     const body = (await request.json().catch(() => ({}))) as {
       userIds?: unknown;
+      extras?: unknown;
       asunto?: unknown;
       mensaje?: unknown;
     };
+    const extras = (Array.isArray(body.extras) ? body.extras : [])
+      .filter((v): v is string => typeof v === 'string')
+      .map((v) => v.trim().toLowerCase())
+      .filter((v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))
+      .slice(0, 50);
     const asunto = (typeof body.asunto === 'string' ? body.asunto : '')
       .trim()
       .slice(0, 200);
@@ -66,7 +73,10 @@ export async function POST(request: NextRequest, { params }: Ctx) {
             )
           )
       : [];
-    if (destinos.length === 0) {
+    const correos = [
+      ...new Set([...destinos.map((d) => d.email.toLowerCase()), ...extras]),
+    ];
+    if (correos.length === 0) {
       throw new ErrorAcademia('Selecciona a quién enviar el correo.');
     }
     const { success } = await limite.limit(String(academia.id));
@@ -78,16 +88,16 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     }
     const enviados = await enviarCorreoAcademia(
       academia,
-      destinos.map((d) => d.email),
+      correos,
       asunto,
       mensaje
     );
     await registrarLog(
       academia.id,
       'Correo enviado a estudiantes',
-      `${asunto} (${enviados} de ${destinos.length})`
+      `${asunto} (${enviados} de ${correos.length})`
     );
-    return NextResponse.json({ ok: true, enviados, total: destinos.length });
+    return NextResponse.json({ ok: true, enviados, total: correos.length });
   } catch (error) {
     return respuestaDeError(error, 'estudiantes: correo');
   }

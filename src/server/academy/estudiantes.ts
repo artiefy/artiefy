@@ -153,8 +153,12 @@ export async function listarEstudiantes(
 
 const CLAVE_RE = /^[a-z0-9_]{1,40}$/;
 
-/** Estudiantes (de la academia) entre esos ids. */
-async function estudiantesValidos(academyId: number, userIds: string[]) {
+/** Cuentas (de la academia) entre esos ids; por defecto solo estudiantes. */
+async function estudiantesValidos(
+  academyId: number,
+  userIds: string[],
+  soloEstudiantes = true
+) {
   if (userIds.length === 0) return [];
   const filas = await db
     .select({ userId: academyUsers.userId })
@@ -162,7 +166,7 @@ async function estudiantesValidos(academyId: number, userIds: string[]) {
     .where(
       and(
         eq(academyUsers.academyId, academyId),
-        eq(academyUsers.role, 'estudiante'),
+        soloEstudiantes ? eq(academyUsers.role, 'estudiante') : undefined,
         inArray(academyUsers.userId, userIds)
       )
     );
@@ -177,10 +181,12 @@ export async function guardarDato(
   academyId: number,
   userIds: string[],
   campo: string,
-  valor: string
+  valor: string,
+  // false: cualquier cuenta de la academia (Usuarios y Roles).
+  soloEstudiantes = true
 ) {
   if (!CLAVE_RE.test(campo)) throw new ErrorAcademia('Campo inválido.');
-  const ids = await estudiantesValidos(academyId, userIds);
+  const ids = await estudiantesValidos(academyId, userIds, soloEstudiantes);
   if (ids.length === 0) throw new ErrorAcademia('Selecciona estudiantes.');
   const limpio = valor.trim().slice(0, 500);
   const parche = sql`jsonb_build_object(${campo}::text, ${limpio}::text)`;
