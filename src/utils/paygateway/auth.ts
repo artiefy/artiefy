@@ -10,7 +10,7 @@ export function getCheckoutUrl(mode: PayUMode): string {
   return CHECKOUT_URLS[mode];
 }
 
-function resolvePayUMode(): PayUMode {
+export function resolvePayUMode(): PayUMode {
   // Outside a production runtime nothing may charge a real card, so sandbox is
   // forced here and PAYU_MODE cannot override it. Without this, a single stray
   // `PAYU_MODE=production` in a local .env turns every checkout on a developer

@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { env } from '~/env';
+import { getCourseSale } from '~/server/payments/productPricing';
 import { type PaymentFormResponse } from '~/types/payu';
 import { getAuthConfig, getCheckoutUrl } from '~/utils/paygateway/auth';
 import { createFormData } from '~/utils/paygateway/form';
 
+// `amount` and `description` are still sent by the checkout client but are
+// ignored: the server prices the product from the database.
 interface RequestBody {
   productId: number;
-  amount: string;
-  description: string;
   buyerEmail: string;
   buyerFullName: string;
   telephone: string;
@@ -17,28 +18,43 @@ interface RequestBody {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as RequestBody;
+    const productId = Number(body.productId);
 
-    // Limpiar la descripción - quitar "Curso Individual:"
-    const cleanDescription = body.description.replace(
-      /^Curso Individual:\s*/i,
-      ''
-    );
+    if (!Number.isInteger(productId) || productId <= 0) {
+      return NextResponse.json(
+        { error: 'Producto no valido' },
+        { status: 400 }
+      );
+    }
+
+    const sale = await getCourseSale(productId);
+    if (!sale) {
+      return NextResponse.json(
+        { error: 'Curso no encontrado' },
+        { status: 404 }
+      );
+    }
+    if (!sale.isPurchasable) {
+      return NextResponse.json(
+        { error: 'Este curso no esta disponible para compra individual' },
+        { status: 400 }
+      );
+    }
 
     const auth = getAuthConfig();
-    const formattedAmount = Number(body.amount).toFixed(2);
 
     const formData = createFormData(
       auth,
       {
-        id: body.productId,
-        name: cleanDescription,
-        amount: formattedAmount,
-        description: cleanDescription,
+        id: productId,
+        name: sale.title,
+        amount: sale.amount.toFixed(2),
+        description: sale.title,
       },
       body.buyerEmail,
       body.buyerFullName,
       body.telephone,
-      `${env.NEXT_PUBLIC_BASE_URL}/agradecimiento-curso/${body.productId}?from=payu&email=${encodeURIComponent(body.buyerEmail)}`, // incluir email del comprador
+      `${env.NEXT_PUBLIC_BASE_URL}/agradecimiento-curso/${productId}?from=payu&email=${encodeURIComponent(body.buyerEmail)}`, // incluir email del comprador
       'course'
     );
 
@@ -47,10 +63,12 @@ export async function POST(req: NextRequest) {
       checkoutUrl: getCheckoutUrl(auth.mode),
     };
 
-    console.log('Generated payment data:', payload);
     return NextResponse.json(payload);
   } catch (error) {
-    console.error('Error generating payment data:', error);
+    console.error(
+      'Error generating course payment data:',
+      error instanceof Error ? error.message : 'unknown error'
+    );
     return NextResponse.json(
       { error: 'Failed to generate payment data' },
       { status: 500 }
