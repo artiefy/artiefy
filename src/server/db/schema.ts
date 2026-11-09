@@ -3828,3 +3828,67 @@ export const academyParametros = pgTable(
   },
   (t) => [index('academy_parametros_course_idx').on(t.courseId)]
 );
+
+// Datos de cada estudiante de una academia (como "Gestión de Builders" de
+// Artiefy): teléfono, documento, estado de inscripción, cartera, origen, sede,
+// horario… y los de las columnas que agregue la academia. Clave → valor.
+// SQL: scripts/academy_gestion_estudiantes.sql.
+export const academyEstudianteDatos = pgTable(
+  'academy_estudiante_datos',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    datos: jsonb('datos')
+      .$type<Record<string, string>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique('academy_estudiante_datos_unico').on(t.academyId, t.userId)]
+);
+
+// Columnas propias de la tabla de estudiantes ("Agregar columna").
+export const academyColumnas = pgTable(
+  'academy_columnas',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    clave: text('clave').notNull(),
+    etiqueta: text('etiqueta').notNull(),
+    // Vacío: texto libre. Con valores: lista para elegir.
+    opciones: text('opciones')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique('academy_columnas_unica').on(t.academyId, t.clave)]
+);
+
+// Comentarios sobre un estudiante ("Comentarios" en Gestión de Estudiantes).
+export const academyComentarios = pgTable(
+  'academy_comentarios',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    autorId: text('autor_id').notNull(),
+    autor: text('autor').notNull(),
+    texto: text('texto').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_comentarios_usuario_idx').on(t.academyId, t.userId)]
+);

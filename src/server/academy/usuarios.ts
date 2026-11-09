@@ -158,6 +158,38 @@ async function enviarAvisoDeAcceso(
   });
 }
 
+/**
+ * Correo libre de la academia a varios destinatarios ("Correo" en Gestión de
+ * Estudiantes). Uno por destinatario, para no exponer los correos entre sí.
+ * Devuelve cuántos se enviaron.
+ */
+export async function enviarCorreoAcademia(
+  academia: Academia,
+  destinos: string[],
+  asunto: string,
+  mensaje: string
+): Promise<number> {
+  const html = `<div style="font-family:sans-serif;white-space:pre-line">${escapar(
+    mensaje
+  )}</div>`;
+  let enviados = 0;
+  for (const to of destinos.slice(0, 200)) {
+    const ok = await intentarCorreo(
+      transporter
+        .sendMail({
+          from: `"${academia.nombre.replace(/"/g, '')}" <direcciongeneral@artiefy.com>`,
+          to,
+          subject: asunto,
+          html,
+          text: mensaje,
+        })
+        .then(() => undefined)
+    );
+    if (ok) enviados++;
+  }
+  return enviados;
+}
+
 /** Envía un correo sin que su fallo tumbe la operación. */
 async function intentarCorreo(envio: Promise<void>): Promise<boolean> {
   try {
