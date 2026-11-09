@@ -5,7 +5,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { BadgeCheck, Folder, Loader2, Plus, PlusCircle } from 'lucide-react';
+import {
+  BadgeCheck,
+  Folder,
+  Loader2,
+  MessageSquare,
+  Plus,
+  PlusCircle,
+} from 'lucide-react';
 import useSWR from 'swr';
 
 import { urlLogo } from '~/lib/academy/marca';
@@ -53,13 +60,21 @@ export default function AcademiasPage() {
             Doble clic en una academia para abrir su panel.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setCreando(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-[#22C4D3] px-5 py-2.5 font-semibold text-[#04101f] shadow-[0_0_24px_rgba(34,196,211,0.35)] hover:bg-[#3ad4e2]"
-        >
-          <Plus className="size-5" /> Crear academia
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/dashboard/super-admin/academias/tickets"
+            className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-2.5 font-semibold text-white hover:bg-white/5"
+          >
+            <MessageSquare className="size-5" /> Tickets de academias
+          </Link>
+          <button
+            type="button"
+            onClick={() => setCreando(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-[#22C4D3] px-5 py-2.5 font-semibold text-[#04101f] shadow-[0_0_24px_rgba(34,196,211,0.35)] hover:bg-[#3ad4e2]"
+          >
+            <Plus className="size-5" /> Crear academia
+          </button>
+        </div>
       </div>
 
       {error ? (

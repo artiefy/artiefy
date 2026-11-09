@@ -6,6 +6,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
+import { Building2, Copy, Loader2, MoreVertical } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import {
@@ -17,6 +19,10 @@ import {
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 import { useMarca } from '~/components/marca/MarcaProvider';
+import {
+  type EnvioAcademia,
+  ModalEnviarAcademia,
+} from '~/components/super-admin/modals/ModalEnviarAcademia';
 import { type CourseData } from '~/server/queries/queries';
 
 import type { Route } from 'next';
@@ -52,6 +58,8 @@ interface CourseListAdminProps {
   // (null: sin botón, mientras no exista el detalle del curso).
   urlModalidades?: string;
   hrefCurso?: (id: number) => string | null;
+  // Artiefy: tras "Duplicar" (menú ⋯) se recarga la lista.
+  onDuplicated?: () => void | Promise<void>;
 }
 
 export default function CourseListAdmin({
@@ -59,6 +67,7 @@ export default function CourseListAdmin({
   onEditCourse,
   urlModalidades = '/api/modalidades',
   hrefCurso = (id) => `/dashboard/super-admin/cursos/${id}`,
+  onDuplicated,
 }: CourseListAdminProps) {
   // En una academia, los acentos turquesa toman su color primario.
   const academia = useMarca().esAcademia;
@@ -69,6 +78,33 @@ export default function CourseListAdmin({
   // Nombre de cada modalidad (el curso solo trae `modalidadesid`). Se pide una
   // vez y se reutiliza para todas las tarjetas.
   const [modalidades, setModalidades] = useState<Record<number, string>>({});
+  // Menú ⋯ de la tarjeta (solo Artiefy): duplicar y enviar a academia.
+  const [menuAbierto, setMenuAbierto] = useState<number | null>(null);
+  const [envio, setEnvio] = useState<EnvioAcademia | null>(null);
+  const [duplicando, setDuplicando] = useState<number | null>(null);
+
+  const duplicar = async (id: number) => {
+    setMenuAbierto(null);
+    setDuplicando(id);
+    try {
+      const res = await fetch(`/api/super-admin/courses/${id}/duplicar`, {
+        method: 'POST',
+      });
+      const j = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        title?: string;
+      };
+      if (!res.ok) throw new Error(j.error ?? 'No se pudo duplicar el curso');
+      toast.success('Curso duplicado', {
+        description: `${j.title ?? 'La copia'} quedó oculta hasta que la revises.`,
+      });
+      await onDuplicated?.();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setDuplicando(null);
+    }
+  };
 
   useEffect(() => {
     let activo = true;
@@ -142,6 +178,61 @@ export default function CourseListAdmin({
                         academia ? 'from-card' : 'from-[#061c37]'
                       }`}
                     />
+                    {!academia && course.id != null && (
+                      <div className="absolute top-2 right-2 z-20">
+                        <button
+                          type="button"
+                          aria-label="Más opciones"
+                          onClick={() =>
+                            setMenuAbierto(
+                              menuAbierto === course.id
+                                ? null
+                                : (course.id ?? null)
+                            )
+                          }
+                          className="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+                        >
+                          {duplicando === course.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <MoreVertical className="size-4" />
+                          )}
+                        </button>
+                        {menuAbierto === course.id && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setMenuAbierto(null)}
+                            />
+                            <div className="absolute right-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0b1f3d] py-1 shadow-2xl">
+                              <button
+                                type="button"
+                                onClick={() => void duplicar(course.id!)}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-white/10"
+                              >
+                                <Copy className="size-4 text-[#22C4D3]" />
+                                Duplicar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setMenuAbierto(null);
+                                  setEnvio({
+                                    tipo: 'curso',
+                                    courseId: course.id!,
+                                    titulo: course.title,
+                                  });
+                                }}
+                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-white/10"
+                              >
+                                <Building2 className="size-4 text-[#22C4D3]" />
+                                Enviar a academia
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </AspectRatio>
               </CardHeader>
@@ -252,6 +343,9 @@ export default function CourseListAdmin({
           </div>
         );
       })}
+      {envio && (
+        <ModalEnviarAcademia envio={envio} onClose={() => setEnvio(null)} />
+      )}
     </div>
   );
 }

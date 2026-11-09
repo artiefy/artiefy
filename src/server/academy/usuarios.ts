@@ -1,5 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import { env } from '~/env';
@@ -158,6 +158,38 @@ async function enviarAvisoDeAcceso(
   });
 }
 
+/**
+ * Correo libre de la academia a varios destinatarios ("Correo" en Gestión de
+ * Estudiantes). Uno por destinatario, para no exponer los correos entre sí.
+ * Devuelve cuántos se enviaron.
+ */
+export async function enviarCorreoAcademia(
+  academia: Academia,
+  destinos: string[],
+  asunto: string,
+  mensaje: string
+): Promise<number> {
+  const html = `<div style="font-family:sans-serif;white-space:pre-line">${escapar(
+    mensaje
+  )}</div>`;
+  let enviados = 0;
+  for (const to of destinos.slice(0, 200)) {
+    const ok = await intentarCorreo(
+      transporter
+        .sendMail({
+          from: `"${academia.nombre.replace(/"/g, '')}" <direcciongeneral@artiefy.com>`,
+          to,
+          subject: asunto,
+          html,
+          text: mensaje,
+        })
+        .then(() => undefined)
+    );
+    if (ok) enviados++;
+  }
+  return enviados;
+}
+
 /** Envía un correo sin que su fallo tumbe la operación. */
 async function intentarCorreo(envio: Promise<void>): Promise<boolean> {
   try {
@@ -306,6 +338,44 @@ export async function cambiarRol(
       and(
         eq(academyUsers.academyId, academyId),
         eq(academyUsers.userId, userId)
+      )
+    );
+}
+
+/** Nombre de la cuenta dentro de la academia ("Editar" en Usuarios). */
+export async function renombrarUsuario(
+  academyId: number,
+  userId: string,
+  nombre: string
+) {
+  await db
+    .update(academyUsers)
+    .set({ name: nombre })
+    .where(
+      and(
+        eq(academyUsers.academyId, academyId),
+        eq(academyUsers.userId, userId)
+      )
+    );
+}
+
+/**
+ * Activa o desactiva cuentas ("Activar / Desactivar" de Artiefy). Una cuenta
+ * desactivada no puede entrar a la academia.
+ */
+export async function cambiarEstado(
+  academyId: number,
+  userIds: string[],
+  activo: boolean
+) {
+  if (userIds.length === 0) return;
+  await db
+    .update(academyUsers)
+    .set({ activo })
+    .where(
+      and(
+        eq(academyUsers.academyId, academyId),
+        inArray(academyUsers.userId, userIds)
       )
     );
 }

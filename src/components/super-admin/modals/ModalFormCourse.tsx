@@ -152,6 +152,12 @@ function isFile(val: unknown): val is File {
   return val instanceof File;
 }
 
+// Valor por defecto estable: un `[]` nuevo en cada render re-dispara el
+// efecto que carga las certificaciones y entra en bucle (pasaba en academias,
+// que no envían la lista).
+const SIN_CERTIFICACIONES: NonNullable<CourseFormProps['certificationTypes']> =
+  [];
+
 const ModalFormCourse: React.FC<CourseFormProps> = ({
   onSubmitAction,
   uploading,
@@ -195,7 +201,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setEspacios,
   certificationTypeId,
   setCertificationTypeId,
-  certificationTypes = [],
+  certificationTypes = SIN_CERTIFICACIONES,
   userRole,
   idTypesCourses,
   setIdTypesCourses,
@@ -652,9 +658,16 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   useEffect(() => {
     const fetchParametrosAndTemplates = async () => {
       try {
+        // En una academia: sus propios parámetros; no hay plantillas.
         const [parametrosRes, templatesRes] = await Promise.all([
-          fetch('/api/educadores/parametros'),
-          fetch('/api/educadores/templates'),
+          fetch(
+            academiaSlug
+              ? `/api/academia/${academiaSlug}/parametros`
+              : '/api/educadores/parametros'
+          ),
+          academiaSlug
+            ? Promise.resolve(null)
+            : fetch('/api/educadores/templates'),
         ]);
 
         if (parametrosRes.ok) {
@@ -662,7 +675,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           setExistingParametros(parametrosData);
         }
 
-        if (templatesRes.ok) {
+        if (templatesRes?.ok) {
           const templatesData = await templatesRes.json();
           setExistingTemplates(templatesData);
         }
@@ -671,8 +684,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       }
     };
 
-    // Parámetros y plantillas son de los cursos de Artiefy.
-    if (!academiaSlug) void fetchParametrosAndTemplates();
+    void fetchParametrosAndTemplates();
   }, [academiaSlug]);
 
   // Función para manejar el cambio de parámetros
@@ -812,8 +824,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       modalidadesid: !editingCourseId && !modalidadesid,
       nivelid: !editingCourseId && !nivelid,
       nivel: false,
-      // En una academia no hay rating ni planes (tipo de curso).
-      rating: !academiaSlug && !editingCourseId && !rating,
+      // En una academia no hay planes (tipo de curso).
+      rating: !editingCourseId && !rating,
       file: !editingCourseId && !file && !coverImageKey,
       modalidad: false,
       courseTypeId:
@@ -831,8 +843,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       newErrors.file = modifiedFields.has('file') && !file;
       newErrors.modalidadesid =
         modifiedFields.has('modalidadesid') && !modalidadesid;
-      newErrors.rating =
-        !academiaSlug && modifiedFields.has('rating') && !rating;
+      newErrors.rating = modifiedFields.has('rating') && !rating;
       newErrors.courseTypeId =
         !academiaSlug &&
         modifiedFields.has('courseTypeId') &&
@@ -1921,7 +1932,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </>
               </div>
             )}
-            {userRole !== 'educador' && !academiaSlug && (
+            {(academiaSlug !== undefined || userRole !== 'educador') && (
               <div>
                 <label
                   htmlFor="rating"
@@ -2291,11 +2302,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </div>
               </div>
             )}
-            {/* Parámetros de evaluación: los de las academias llegan con las
-                actividades. */}
-            <div
-              className={`mt-6 flex flex-col text-white ${academiaSlug ? 'hidden' : ''}`}
-            >
+            {/* Parámetros de evaluación (también en las academias). */}
+            <div className="mt-6 flex flex-col text-white">
               <p>
                 ¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
                 parametros
@@ -2333,7 +2341,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </span>
               </div>
             </div>
-            {addParametros && !academiaSlug && (
+            {addParametros && (
               <div
                 className="
                   space-y-3

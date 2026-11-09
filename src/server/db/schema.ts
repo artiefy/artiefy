@@ -3397,3 +3397,498 @@ export const academyEnrollments = pgTable(
     index('academy_enrollments_academy_user_idx').on(t.academyId, t.userId),
   ]
 );
+
+// ---------------------------------------------------------------------------
+// Secciones del panel de super-admin de las academias. Tablas APARTE de las de
+// Artiefy (las cuentas propias de una academia no están en `users`). Todas
+// cuelgan de academies con ON DELETE CASCADE. SQL: scripts/academy_*.sql.
+// ---------------------------------------------------------------------------
+
+export const ACADEMY_TICKET_ESTADOS = [
+  'abierto',
+  'en proceso',
+  'en revision',
+  'solucionado',
+  'cerrado',
+] as const;
+export const ACADEMY_TICKET_TIPOS = [
+  'soporte',
+  'bug',
+  'revision',
+  'otro',
+] as const;
+
+// Tickets de una academia hacia el soporte de Artiefy. La academia ve los
+// suyos; el super-admin de Artiefy, los de todas. SQL: academy_tickets.sql.
+export const academyTickets = pgTable(
+  'academy_tickets',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    creatorId: text('creator_id').notNull(),
+    email: text('email').notNull(),
+    title: varchar('title', { length: 120 }).notNull(),
+    description: text('description').notNull(),
+    tipo: text('tipo', { enum: ACADEMY_TICKET_TIPOS })
+      .default('soporte')
+      .notNull(),
+    estado: text('estado', { enum: ACADEMY_TICKET_ESTADOS })
+      .default('abierto')
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_tickets_academy_idx').on(t.academyId)]
+);
+
+export const academyTicketComments = pgTable(
+  'academy_ticket_comments',
+  {
+    id: serial('id').primaryKey(),
+    ticketId: integer('ticket_id')
+      .references(() => academyTickets.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    // Quién escribe: la academia o el soporte de Artiefy.
+    sender: text('sender', { enum: ['academia', 'artiefy'] }).notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_ticket_comments_ticket_idx').on(t.ticketId)]
+);
+
+// Programas: agrupan cursos de la academia. SQL: academy_programas.sql.
+export const academyProgramas = pgTable(
+  'academy_programas',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    isActive: boolean('is_active').default(true).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_programas_academy_idx').on(t.academyId)]
+);
+
+export const academyProgramaCursos = pgTable(
+  'academy_programa_cursos',
+  {
+    id: serial('id').primaryKey(),
+    programaId: integer('programa_id')
+      .references(() => academyProgramas.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+  },
+  (t) => [unique('academy_programa_cursos_unico').on(t.programaId, t.courseId)]
+);
+
+// Grupos de estudiantes (opcionalmente de un curso). SQL: academy_grupos.sql.
+export const academyGrupos = pgTable(
+  'academy_grupos',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    nombre: text('nombre').notNull(),
+    courseId: integer('course_id').references(() => academyCourses.id, {
+      onDelete: 'set null',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_grupos_academy_idx').on(t.academyId)]
+);
+
+export const academyGrupoEstudiantes = pgTable(
+  'academy_grupo_estudiantes',
+  {
+    id: serial('id').primaryKey(),
+    grupoId: integer('grupo_id')
+      .references(() => academyGrupos.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+  },
+  (t) => [unique('academy_grupo_estudiantes_unico').on(t.grupoId, t.userId)]
+);
+
+export const ACADEMY_PAGO_ESTADOS = ['pagado', 'pendiente', 'anulado'] as const;
+
+// Pagos registrados por la academia (cartera de sus estudiantes), en pesos.
+// SQL: academy_pagos.sql.
+export const academyPagos = pgTable(
+  'academy_pagos',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    concepto: text('concepto').notNull(),
+    monto: integer('monto').notNull(),
+    fecha: date('fecha').notNull(),
+    metodo: text('metodo'),
+    estado: text('estado', { enum: ACADEMY_PAGO_ESTADOS })
+      .default('pagado')
+      .notNull(),
+    createdBy: text('created_by').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_pagos_academy_idx').on(t.academyId, t.userId)]
+);
+
+export const ACADEMY_PROYECTO_ESTADOS = [
+  'en progreso',
+  'entregado',
+  'aprobado',
+] as const;
+
+// Proyectos de los estudiantes dentro de los cursos de la academia.
+// SQL: academy_proyectos.sql.
+export const academyProyectos = pgTable(
+  'academy_proyectos',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    titulo: text('titulo').notNull(),
+    descripcion: text('descripcion'),
+    enlace: text('enlace'),
+    estado: text('estado', { enum: ACADEMY_PROYECTO_ESTADOS })
+      .default('en progreso')
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_proyectos_academy_idx').on(t.academyId)]
+);
+
+export const ACADEMY_INSCRIPCION_ESTADOS = [
+  'nueva',
+  'contactada',
+  'inscrita',
+  'descartada',
+] as const;
+
+// Formulario de inscripción público de la academia (<slug>.artiefy.com/
+// inscripcion) y sus respuestas. SQL: academy_inscripciones.sql.
+export const academyInscripciones = pgTable(
+  'academy_inscripciones',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    nombre: text('nombre').notNull(),
+    email: text('email').notNull(),
+    telefono: text('telefono'),
+    documento: text('documento'),
+    courseId: integer('course_id').references(() => academyCourses.id, {
+      onDelete: 'set null',
+    }),
+    mensaje: text('mensaje'),
+    estado: text('estado', { enum: ACADEMY_INSCRIPCION_ESTADOS })
+      .default('nueva')
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_inscripciones_academy_idx').on(t.academyId)]
+);
+
+// Registro de actividad de la academia (cuentas, credenciales, cursos,
+// configuración…). SQL: academy_logs.sql.
+export const academyLogs = pgTable(
+  'academy_logs',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    actorId: text('actor_id'),
+    actorEmail: text('actor_email'),
+    accion: text('accion').notNull(),
+    detalle: text('detalle'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_logs_academy_idx').on(t.academyId, t.createdAt)]
+);
+
+// Roles secundarios de la academia (etiquetas con permisos) y a qué cuentas
+// se asignan. SQL: academy_roles_secundarios.sql.
+export const academyRolesSecundarios = pgTable(
+  'academy_roles_secundarios',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    nombre: text('nombre').notNull(),
+    permisos: text('permisos')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique('academy_roles_secundarios_unico').on(t.academyId, t.nombre)]
+);
+
+export const academyUsuarioRoles = pgTable(
+  'academy_usuario_roles',
+  {
+    id: serial('id').primaryKey(),
+    rolId: integer('rol_id')
+      .references(() => academyRolesSecundarios.id, { onDelete: 'cascade' })
+      .notNull(),
+    academyUserId: integer('academy_user_id')
+      .references(() => academyUsers.id, { onDelete: 'cascade' })
+      .notNull(),
+  },
+  (t) => [unique('academy_usuario_roles_unico').on(t.rolId, t.academyUserId)]
+);
+
+// Contenido de los cursos de la academia: lecciones, clases (sesiones en
+// vivo o presenciales) y actividades de cada lección.
+// SQL: scripts/academy_contenido.sql (o academy_seed_completo.sql).
+export const academyLessons = pgTable(
+  'academy_lessons',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    orden: integer('orden').default(1).notNull(),
+    videoUrl: text('video_url'),
+    duracionMin: integer('duracion_min'),
+    // Como las lecciones de Artiefy (modal "Crear clase"): portada y video en
+    // S3 ('none' = la clase no lleva video) y recursos (archivos, imágenes y
+    // enlaces) separados por comas. SQL: academy_cursos_detalle.sql.
+    coverImageKey: text('cover_image_key'),
+    coverVideoKey: text('cover_video_key'),
+    resourceKey: text('resource_key'),
+    resourceNames: text('resource_names'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_lessons_course_idx').on(t.courseId, t.orden)]
+);
+
+export const academyClases = pgTable(
+  'academy_clases',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    lessonId: integer('lesson_id').references(() => academyLessons.id, {
+      onDelete: 'set null',
+    }),
+    titulo: text('titulo').notNull(),
+    inicio: timestamp('inicio', { withTimezone: true }).notNull(),
+    fin: timestamp('fin', { withTimezone: true }).notNull(),
+    enlace: text('enlace'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_clases_course_idx').on(t.courseId, t.inicio)]
+);
+
+export const ACADEMY_ACTIVIDAD_TIPOS = ['tarea', 'quiz', 'proyecto'] as const;
+
+export const academyActivities = pgTable(
+  'academy_activities',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    lessonId: integer('lesson_id')
+      .references(() => academyLessons.id, { onDelete: 'cascade' })
+      .notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    tipo: text('tipo', { enum: ACADEMY_ACTIVIDAD_TIPOS })
+      .default('tarea')
+      .notNull(),
+    fechaLimite: timestamp('fecha_limite', { withTimezone: true }),
+    puntaje: integer('puntaje').default(100).notNull(),
+    // Como las actividades de Artiefy: calificable (tiene parámetro de
+    // evaluación), el parámetro y su peso dentro de él (se reparte igual
+    // entre las actividades del parámetro) y la fecha de inicio.
+    // SQL: academy_cursos_detalle.sql.
+    calificable: boolean('calificable').default(true).notNull(),
+    parametroId: integer('parametro_id'),
+    porcentaje: real('porcentaje'),
+    fechaInicio: timestamp('fecha_inicio', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_activities_lesson_idx').on(t.lessonId)]
+);
+
+// Notas de los estudiantes en las actividades (puntos sobre el puntaje de la
+// actividad). SQL: scripts/academy_seed_completo.sql.
+export const academyActivityGrades = pgTable(
+  'academy_activity_grades',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    activityId: integer('activity_id')
+      .references(() => academyActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    nota: real('nota').notNull(),
+    comentario: text('comentario'),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    unique('academy_activity_grades_unica').on(t.activityId, t.userId),
+    index('academy_activity_grades_user_idx').on(t.academyId, t.userId),
+  ]
+);
+
+// Instructores adicionales de un curso de la academia (el principal sigue en
+// academy_courses.instructor), como course_instructors de Artiefy.
+// SQL: scripts/academy_cursos_detalle.sql.
+export const academyCourseInstructors = pgTable(
+  'academy_course_instructors',
+  {
+    id: serial('id').primaryKey(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+  },
+  (t) => [unique('academy_course_instructors_unico').on(t.courseId, t.userId)]
+);
+
+// Parámetros de evaluación de un curso (nombre, porcentaje y número de
+// actividades), como parametros de Artiefy. SQL: academy_cursos_detalle.sql.
+export const academyParametros = pgTable(
+  'academy_parametros',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    name: text('name').notNull(),
+    description: text('description').default('').notNull(),
+    porcentaje: integer('porcentaje').notNull(),
+    numberOfActivities: integer('number_of_activities').default(1).notNull(),
+  },
+  (t) => [index('academy_parametros_course_idx').on(t.courseId)]
+);
+
+// Datos de cada estudiante de una academia (como "Gestión de Builders" de
+// Artiefy): teléfono, documento, estado de inscripción, cartera, origen, sede,
+// horario… y los de las columnas que agregue la academia. Clave → valor.
+// SQL: scripts/academy_gestion_estudiantes.sql.
+export const academyEstudianteDatos = pgTable(
+  'academy_estudiante_datos',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    datos: jsonb('datos')
+      .$type<Record<string, string>>()
+      .default(sql`'{}'::jsonb`)
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique('academy_estudiante_datos_unico').on(t.academyId, t.userId)]
+);
+
+// Columnas propias de la tabla de estudiantes ("Agregar columna").
+export const academyColumnas = pgTable(
+  'academy_columnas',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    clave: text('clave').notNull(),
+    etiqueta: text('etiqueta').notNull(),
+    // Vacío: texto libre. Con valores: lista para elegir.
+    opciones: text('opciones')
+      .array()
+      .default(sql`'{}'::text[]`)
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique('academy_columnas_unica').on(t.academyId, t.clave)]
+);
+
+// Comentarios sobre un estudiante ("Comentarios" en Gestión de Estudiantes).
+export const academyComentarios = pgTable(
+  'academy_comentarios',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    autorId: text('autor_id').notNull(),
+    autor: text('autor').notNull(),
+    texto: text('texto').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_comentarios_usuario_idx').on(t.academyId, t.userId)]
+);

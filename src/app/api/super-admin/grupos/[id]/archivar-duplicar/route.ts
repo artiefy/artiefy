@@ -2,23 +2,23 @@
  * POST /api/super-admin/grupos/[id]/archivar-duplicar
  *
  * "Archivar y duplicar" una hoja: crea una hoja nueva en la misma familia con
- * TODO lo de la original (estudiantes, pendientes, fechas con su asistencia,
- * curso, programas, encabezado) y marca la original como hoja archivada (solo
- * lectura, al final de las pestañas). Todo en una transacción.
+ * lo de la original (estudiantes, pendientes, fechas, curso, programas,
+ * encabezado) y marca la original como hoja archivada (solo lectura, al final
+ * de las pestañas). Las fechas se copian SIN la asistencia marcada: la hoja
+ * nueva arranca en blanco. Todo en una transacción.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
 import { Pool } from '@neondatabase/serverless';
-import { eq, inArray } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 
 import { env } from '~/env';
 import * as schema from '~/server/db/schema';
 import {
   enrollmentProgramSources,
-  grupoAsistencia,
   grupoCursos,
   grupoEstudiantes,
   grupoEstudiantesPendientes,
@@ -144,7 +144,6 @@ export async function POST(
               .where(eq(enrollmentProgramSources.grupoId, grupoId)),
             tx
               .select({
-                id: grupoSesiones.id,
                 courseId: grupoSesiones.courseId,
                 fecha: grupoSesiones.fecha,
                 titulo: grupoSesiones.titulo,
@@ -182,40 +181,16 @@ export async function POST(
             .onConflictDoNothing();
         }
 
-        // Fechas con su asistencia.
-        const sesionesIds = sesiones.map((s) => s.id);
-        const marcas =
-          sesionesIds.length > 0
-            ? await tx
-                .select({
-                  sesionId: grupoAsistencia.sesionId,
-                  userId: grupoAsistencia.userId,
-                  estado: grupoAsistencia.estado,
-                })
-                .from(grupoAsistencia)
-                .where(inArray(grupoAsistencia.sesionId, sesionesIds))
-            : [];
-        for (const s of sesiones) {
-          const [nuevaSesion] = await tx
-            .insert(grupoSesiones)
-            .values({
+        // Fechas, sin la asistencia marcada (queda en la hoja archivada).
+        if (sesiones.length > 0) {
+          await tx.insert(grupoSesiones).values(
+            sesiones.map((s) => ({
               grupoId: nueva.id,
               courseId: s.courseId,
               fecha: s.fecha,
               titulo: s.titulo,
-            })
-            .returning({ id: grupoSesiones.id });
-          if (!nuevaSesion) throw new Error('No se pudo copiar una fecha');
-          const deSesion = marcas.filter((m) => m.sesionId === s.id);
-          if (deSesion.length > 0) {
-            await tx.insert(grupoAsistencia).values(
-              deSesion.map((m) => ({
-                sesionId: nuevaSesion.id,
-                userId: m.userId,
-                estado: m.estado,
-              }))
-            );
-          }
+            }))
+          );
         }
 
         await tx

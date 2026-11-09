@@ -33,11 +33,36 @@ export async function cuentaDeAcademia(
   if (!cuenta || !roles.includes(cuenta.role)) {
     throw new ErrorAcademia('No autorizado', 403);
   }
+  if (!cuenta.activo) {
+    throw new ErrorAcademia(
+      'Tu cuenta en esta academia está desactivada.',
+      403
+    );
+  }
   return { academia, cuenta };
 }
 
+// Postgres 42P01 (undefined_table) o 42703 (undefined_column): la tabla o
+// columna de la sección aún no existe porque no se ha ejecutado su script de
+// scripts/academy_*.sql.
+const SQL_PENDIENTE = ['42P01', '42703'];
+const esTablaFaltante = (error: unknown) =>
+  SQL_PENDIENTE.includes(
+    String((error as { cause?: { code?: string } })?.cause?.code)
+  ) || SQL_PENDIENTE.includes(String((error as { code?: string })?.code));
+
 /** Convierte un error en respuesta JSON (mensaje visible si es de negocio). */
 export function respuestaDeError(error: unknown, contexto: string) {
+  if (esTablaFaltante(error)) {
+    return NextResponse.json(
+      {
+        error:
+          'Esta sección aún no está habilitada: falta ejecutar su script SQL.',
+        sqlPendiente: true,
+      },
+      { status: 503 }
+    );
+  }
   if (error instanceof ErrorAcademia) {
     return NextResponse.json(
       { error: error.message },

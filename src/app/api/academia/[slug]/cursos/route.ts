@@ -18,8 +18,10 @@ import {
 import {
   crearCurso,
   listarCursos,
+  totalEstudiantesInscritos,
   validarCurso,
 } from '~/server/academy/cursos';
+import { registrarLog } from '~/server/academy/logs';
 
 type Ctx = { params: Promise<{ slug: string }> };
 
@@ -29,7 +31,11 @@ export async function GET(_request: NextRequest, { params }: Ctx) {
       'super-admin',
       'educador',
     ]);
-    return NextResponse.json({ cursos: await listarCursos(academia.id) });
+    const [cursos, totalEstudiantes] = await Promise.all([
+      listarCursos(academia.id),
+      totalEstudiantesInscritos(academia.id),
+    ]);
+    return NextResponse.json({ cursos, totalEstudiantes });
   } catch (error) {
     return respuestaDeError(error, 'cursos: listar');
   }
@@ -46,6 +52,7 @@ export async function POST(request: NextRequest, { params }: Ctx) {
     >;
     const datos = await validarCurso(academia.id, body);
     const nuevo = await crearCurso(academia.id, cuenta.userId, datos);
+    await registrarLog(academia.id, 'Curso creado', String(body.title ?? ''));
     return NextResponse.json({ ok: true, ...nuevo }, { status: 201 });
   } catch (error) {
     return respuestaDeError(error, 'cursos: crear');

@@ -2,14 +2,17 @@ import { NextResponse } from 'next/server';
 
 import { type Academia, ErrorAcademia } from './academias';
 import { respuestaDeError } from './autorizacion';
+import { registrarLog } from './logs';
 import {
   agregarUsuario,
+  cambiarEstado,
   cambiarRol,
   eliminarUsuario,
   esRolAcademia,
   listarUsuarios,
   membresia,
   reenviarAcceso,
+  renombrarUsuario,
 } from './usuarios';
 
 import 'server-only';
@@ -36,18 +39,27 @@ export async function agregar(academia: Academia, request: Request) {
       rol?: unknown;
     };
     if (!esRolAcademia(body.rol)) throw new ErrorAcademia('Rol inválido.');
+    const email = String(body.email ?? '');
     const resultado = await agregarUsuario(academia, {
-      email: String(body.email ?? ''),
+      email,
       nombre: String(body.nombre ?? ''),
       rol: body.rol,
     });
+    await registrarLog(
+      academia.id,
+      resultado.creado ? 'Cuenta creada' : 'Cuenta agregada',
+      `${email} (${body.rol})${resultado.correoEnviado ? ' · credenciales enviadas' : ''}`
+    );
     return NextResponse.json({ ok: true, ...resultado });
   } catch (error) {
     return respuestaDeError(error, 'agregar usuario');
   }
 }
 
-/** PATCH { userId, rol } */
+/**
+ * PATCH { userId, rol?, nombre? } — cambia el rol y/o el nombre de una cuenta.
+ * PATCH { userIds[], activo } — activa o desactiva varias cuentas.
+ */
 export async function cambiar(
   academia: Academia,
   request: Request,
@@ -56,17 +68,54 @@ export async function cambiar(
   try {
     const body = (await request.json().catch(() => ({}))) as {
       userId?: unknown;
+      userIds?: unknown;
       rol?: unknown;
+      nombre?: unknown;
+      activo?: unknown;
     };
-    const userId = String(body.userId ?? '');
-    if (!esRolAcademia(body.rol)) throw new ErrorAcademia('Rol inválido.');
-    if (userId === protegerUserId) {
-      throw new ErrorAcademia('No puedes cambiar tu propio rol.');
+
+    if (Array.isArray(body.userIds) && typeof body.activo === 'boolean') {
+      const userIds = body.userIds.filter(
+        (v): v is string => typeof v === 'string' && v !== protegerUserId
+      );
+      await cambiarEstado(academia.id, userIds, body.activo);
+      await registrarLog(
+        academia.id,
+        body.activo ? 'Cuentas activadas' : 'Cuentas desactivadas',
+        `${userIds.length} cuenta(s)`
+      );
+      return NextResponse.json({ ok: true, cambiadas: userIds.length });
     }
-    if (!(await membresia(academia.id, userId))) {
+
+    const userId = String(body.userId ?? '');
+    const cuenta = await membresia(academia.id, userId);
+    if (!cuenta) {
       throw new ErrorAcademia('La cuenta no es de esta academia.', 404);
     }
-    await cambiarRol(academia.id, userId, body.rol);
+    if (body.rol !== undefined && body.rol !== cuenta.role) {
+      if (!esRolAcademia(body.rol)) throw new ErrorAcademia('Rol inválido.');
+      if (userId === protegerUserId) {
+        throw new ErrorAcademia('No puedes cambiar tu propio rol.');
+      }
+      await cambiarRol(academia.id, userId, body.rol);
+      await registrarLog(
+        academia.id,
+        'Rol cambiado',
+        `${cuenta.email}: ${cuenta.role} → ${body.rol}`
+      );
+    }
+    if (typeof body.nombre === 'string') {
+      const nombre = body.nombre.trim();
+      if (!nombre) throw new ErrorAcademia('El nombre es obligatorio.');
+      if (nombre !== cuenta.name) {
+        await renombrarUsuario(academia.id, userId, nombre);
+        await registrarLog(
+          academia.id,
+          'Nombre cambiado',
+          `${cuenta.email}: ${nombre}`
+        );
+      }
+    }
     return NextResponse.json({ ok: true });
   } catch (error) {
     return respuestaDeError(error, 'cambiar rol');
@@ -79,7 +128,14 @@ export async function reenviar(academia: Academia, request: Request) {
     const body = (await request.json().catch(() => ({}))) as {
       userId?: unknown;
     };
-    const resultado = await reenviarAcceso(academia, String(body.userId ?? ''));
+    const userId = String(body.userId ?? '');
+    const resultado = await reenviarAcceso(academia, userId);
+    const cuenta = await membresia(academia.id, userId);
+    await registrarLog(
+      academia.id,
+      'Acceso reenviado',
+      `${cuenta?.email ?? userId}${resultado.correoEnviado ? ' · correo enviado' : ''}`
+    );
     return NextResponse.json({ ok: true, ...resultado });
   } catch (error) {
     return respuestaDeError(error, 'reenviar acceso');
@@ -100,7 +156,9 @@ export async function eliminar(
     if (userId === protegerUserId) {
       throw new ErrorAcademia('No puedes eliminar tu propia cuenta.');
     }
+    const cuenta = await membresia(academia.id, userId);
     const resultado = await eliminarUsuario(academia.id, userId);
+    await registrarLog(academia.id, 'Cuenta quitada', cuenta?.email ?? userId);
     return NextResponse.json({ ok: true, ...resultado });
   } catch (error) {
     return respuestaDeError(error, 'eliminar usuario');
