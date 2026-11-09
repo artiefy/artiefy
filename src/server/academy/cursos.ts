@@ -1,13 +1,17 @@
-import { and, desc, eq } from 'drizzle-orm';
+import { and, countDistinct, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   academyCategorias,
+  academyCourseInstructors,
   academyCourses,
+  academyEnrollments,
   academyEspacios,
   academyHorarios,
   academyModalidades,
   academyNiveles,
+  academyProgramaCursos,
+  academyProgramas,
   academyTiposCertificacion,
   academyUsers,
 } from '~/server/db/schema';
@@ -22,6 +26,92 @@ import 'server-only';
 // (categoryid, modalidadesid, nivelid, horario, espacios…), que se reutiliza.
 
 export async function listarCursos(academyId: number) {
+  const cursos = await listarCursosSinProgramas(academyId);
+  // Programas de cada curso, como en Artiefy (separa "Cursos Independientes"
+  // de "Cursos en Programas"). Si la tabla aún no existe, quedan sin programas.
+  const ids = cursos.map((c) => c.id);
+  const filas =
+    ids.length === 0
+      ? []
+      : await withRetry(() =>
+          db
+            .select({
+              courseId: academyProgramaCursos.courseId,
+              id: academyProgramas.id,
+              title: academyProgramas.title,
+            })
+            .from(academyProgramaCursos)
+            .innerJoin(
+              academyProgramas,
+              eq(academyProgramas.id, academyProgramaCursos.programaId)
+            )
+            .where(
+              and(
+                eq(academyProgramas.academyId, academyId),
+                inArray(academyProgramaCursos.courseId, ids)
+              )
+            )
+        ).catch(() => []);
+  const extras = await extrasDeCursos(academyId, ids);
+  return cursos.map((c) => ({
+    ...c,
+    ...extras(c.id, c.instructor),
+    programas: filas
+      .filter((f) => f.courseId === c.id)
+      .map(({ id, title }) => ({ id, title })),
+  }));
+}
+
+/**
+ * Instructores adicionales (academy_course_instructors) y rating de los
+ * cursos. Si el SQL academy_cursos_detalle.sql aún no se corrió, los cursos
+ * quedan con su instructor principal y rating 0.
+ */
+async function extrasDeCursos(academyId: number, ids: number[]) {
+  const [instructores, ratings] =
+    ids.length === 0
+      ? [[], []]
+      : await Promise.all([
+          withRetry(() =>
+            db
+              .select({
+                courseId: academyCourseInstructors.courseId,
+                userId: academyCourseInstructors.userId,
+              })
+              .from(academyCourseInstructors)
+              .where(inArray(academyCourseInstructors.courseId, ids))
+          ).catch(() => []),
+          withRetry(() =>
+            db.execute(
+              sql`select id, rating from academy_courses where academy_id = ${academyId}`
+            )
+          )
+            .then((r) => r.rows as { id: number; rating: number | null }[])
+            .catch(() => []),
+        ]);
+  return (id: number, principal: string | null) => ({
+    instructores: [
+      ...(principal ? [principal] : []),
+      ...instructores
+        .filter((f) => f.courseId === id && f.userId !== principal)
+        .map((f) => f.userId),
+    ],
+    rating: Number(ratings.find((r) => Number(r.id) === id)?.rating ?? 0),
+  });
+}
+
+/** Estudiantes distintos matriculados en algún curso de la academia. */
+export async function totalEstudiantesInscritos(academyId: number) {
+  const [fila] = await withRetry(() =>
+    db
+      .select({ total: countDistinct(academyEnrollments.userId) })
+      .from(academyEnrollments)
+      .where(eq(academyEnrollments.academyId, academyId))
+  );
+  return fila?.total ?? 0;
+}
+
+function listarCursosSinProgramas(academyId: number) {
   return withRetry(() =>
     db
       .select({
@@ -120,7 +210,9 @@ export async function obtenerCurso(academyId: number, id: number) {
       )
       .limit(1)
   );
-  return curso ?? null;
+  if (!curso) return null;
+  const extras = await extrasDeCursos(academyId, [curso.id]);
+  return { ...curso, ...extras(curso.id, curso.instructor) };
 }
 
 export type CursoDetalle = NonNullable<
@@ -143,6 +235,9 @@ export interface DatosCurso {
   individualPrice: number | null;
   isActive: boolean;
   visibility: boolean;
+  // Fuera de academy_courses (ver guardarExtras).
+  instructores: string[];
+  rating: number;
 }
 
 const texto = (v: unknown) =>
@@ -188,14 +283,27 @@ export async function validarCurso(
     horarioId: entero(body.horario),
     espacioId: entero(body.espacios),
     tipoCertificacionId: entero(body.certificationTypeId),
-    instructor: texto(body.instructor),
+    instructor: null,
     individualPrice:
       typeof body.individualPrice === 'number' && body.individualPrice >= 0
         ? Math.round(body.individualPrice)
         : null,
     isActive: body.isActive !== false,
     visibility: body.visibility !== false,
+    // Como Artiefy: varios instructores; el primero es el principal.
+    instructores: [
+      ...new Set(
+        (Array.isArray(body.instructors) ? body.instructors : [body.instructor])
+          .map(texto)
+          .filter((v): v is string => v !== null)
+      ),
+    ],
+    rating:
+      typeof body.rating === 'number' && body.rating >= 0 && body.rating <= 5
+        ? body.rating
+        : 0,
   };
+  datos.instructor = datos.instructores[0] ?? null;
 
   if (!datos.categoriaId || !datos.modalidadId || !datos.nivelId) {
     throw new ErrorAcademia('Categoría, modalidad y nivel son obligatorios.');
@@ -212,19 +320,18 @@ export async function validarCurso(
     if (!fila) throw new ErrorAcademia(`${nombre} no es de esta academia.`);
   }
 
-  if (datos.instructor) {
-    const [cuenta] = await db
-      .select({ id: academyUsers.id })
+  if (datos.instructores.length > 0) {
+    const cuentas = await db
+      .select({ userId: academyUsers.userId })
       .from(academyUsers)
       .where(
         and(
-          eq(academyUsers.userId, datos.instructor),
+          inArray(academyUsers.userId, datos.instructores),
           eq(academyUsers.academyId, academyId)
         )
-      )
-      .limit(1);
-    if (!cuenta) {
-      throw new ErrorAcademia('El instructor no es de esta academia.');
+      );
+    if (cuentas.length !== datos.instructores.length) {
+      throw new ErrorAcademia('Algún instructor no es de esta academia.');
     }
   }
   return datos;
@@ -235,10 +342,12 @@ export async function crearCurso(
   creatorId: string,
   datos: DatosCurso
 ) {
+  const { instructores, rating, ...columnas } = datos;
   const [nuevo] = await db
     .insert(academyCourses)
-    .values({ ...datos, academyId, creatorId })
+    .values({ ...columnas, academyId, creatorId })
     .returning({ id: academyCourses.id });
+  await guardarExtras(nuevo!.id, instructores, rating);
   return nuevo!;
 }
 
@@ -247,9 +356,10 @@ export async function actualizarCurso(
   id: number,
   datos: DatosCurso
 ) {
+  const { instructores, rating, ...columnas } = datos;
   const actualizados = await db
     .update(academyCourses)
-    .set({ ...datos, updatedAt: new Date() })
+    .set({ ...columnas, updatedAt: new Date() })
     .where(
       and(eq(academyCourses.id, id), eq(academyCourses.academyId, academyId))
     )
@@ -257,6 +367,90 @@ export async function actualizarCurso(
   if (actualizados.length === 0) {
     throw new ErrorAcademia('Curso no encontrado.', 404);
   }
+  await guardarExtras(id, instructores, rating);
+}
+
+/**
+ * Rating e instructores adicionales. El rating se escribe aparte (columna del
+ * SQL academy_cursos_detalle.sql) para que, sin ese SQL, el curso igual se
+ * guarde. Con instructores adicionales el SQL sí es necesario: sin la tabla,
+ * el error (42P01) llega a la pantalla como "falta correr el SQL".
+ */
+async function guardarExtras(
+  courseId: number,
+  instructores: string[],
+  rating: number
+) {
+  await db
+    .execute(
+      sql`update academy_courses set rating = ${rating} where id = ${courseId}`
+    )
+    .catch(() => undefined);
+  await guardarAdicionales(courseId, instructores);
+}
+
+async function guardarAdicionales(courseId: number, instructores: string[]) {
+  const adicionales = instructores.slice(1);
+  const reemplazar = async () => {
+    await db
+      .delete(academyCourseInstructors)
+      .where(eq(academyCourseInstructors.courseId, courseId));
+    if (adicionales.length > 0) {
+      await db
+        .insert(academyCourseInstructors)
+        .values(adicionales.map((userId) => ({ courseId, userId })));
+    }
+  };
+  if (adicionales.length > 0) await reemplazar();
+  else await reemplazar().catch(() => undefined);
+}
+
+/**
+ * Cambia solo los instructores del curso (chips del detalle). El primero
+ * queda como principal; debe quedar al menos uno, como en Artiefy.
+ */
+export async function actualizarInstructores(
+  academyId: number,
+  courseId: number,
+  body: unknown
+) {
+  const lista = (
+    Array.isArray((body as { instructors?: unknown })?.instructors)
+      ? (body as { instructors: unknown[] }).instructors
+      : []
+  )
+    .map(texto)
+    .filter((v): v is string => v !== null);
+  const instructores = [...new Set(lista)];
+  if (instructores.length === 0) {
+    throw new ErrorAcademia('Debe haber al menos un instructor');
+  }
+  const cuentas = await db
+    .select({ userId: academyUsers.userId })
+    .from(academyUsers)
+    .where(
+      and(
+        inArray(academyUsers.userId, instructores),
+        eq(academyUsers.academyId, academyId)
+      )
+    );
+  if (cuentas.length !== instructores.length) {
+    throw new ErrorAcademia('Algún instructor no es de esta academia.');
+  }
+  const actualizados = await db
+    .update(academyCourses)
+    .set({ instructor: instructores[0]!, updatedAt: new Date() })
+    .where(
+      and(
+        eq(academyCourses.id, courseId),
+        eq(academyCourses.academyId, academyId)
+      )
+    )
+    .returning({ id: academyCourses.id });
+  if (actualizados.length === 0) {
+    throw new ErrorAcademia('Curso no encontrado.', 404);
+  }
+  await guardarAdicionales(courseId, instructores);
 }
 
 export async function eliminarCurso(academyId: number, id: number) {

@@ -23,6 +23,10 @@ export default function DashboardAcademiaPage({ params }: Props) {
 async function Redireccion({ params }: Props) {
   const sesion = await sesionEnAcademia((await params).slug);
   if (!sesion) notFound();
-  if (!sesion.cuenta) return <SinAcceso academia={sesion.academia} />;
+  if (!sesion.cuenta) {
+    return (
+      <SinAcceso academia={sesion.academia} desactivada={sesion.desactivada} />
+    );
+  }
   redirect(RUTA_DASHBOARD[sesion.cuenta.role] as Route);
 }

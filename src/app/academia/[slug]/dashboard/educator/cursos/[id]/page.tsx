@@ -40,7 +40,7 @@ async function Detalle({
   params: Props['params'];
 }) {
   const curso = await obtenerCurso(academyId, Number((await params).id));
-  if (curso?.instructor !== userId) notFound();
+  if (!curso?.instructores.includes(userId)) notFound();
   return (
     <DetalleCursoAcademia
       curso={curso}

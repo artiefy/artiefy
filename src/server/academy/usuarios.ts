@@ -1,5 +1,5 @@
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import { env } from '~/env';
@@ -306,6 +306,44 @@ export async function cambiarRol(
       and(
         eq(academyUsers.academyId, academyId),
         eq(academyUsers.userId, userId)
+      )
+    );
+}
+
+/** Nombre de la cuenta dentro de la academia ("Editar" en Usuarios). */
+export async function renombrarUsuario(
+  academyId: number,
+  userId: string,
+  nombre: string
+) {
+  await db
+    .update(academyUsers)
+    .set({ name: nombre })
+    .where(
+      and(
+        eq(academyUsers.academyId, academyId),
+        eq(academyUsers.userId, userId)
+      )
+    );
+}
+
+/**
+ * Activa o desactiva cuentas ("Activar / Desactivar" de Artiefy). Una cuenta
+ * desactivada no puede entrar a la academia.
+ */
+export async function cambiarEstado(
+  academyId: number,
+  userIds: string[],
+  activo: boolean
+) {
+  if (userIds.length === 0) return;
+  await db
+    .update(academyUsers)
+    .set({ activo })
+    .where(
+      and(
+        eq(academyUsers.academyId, academyId),
+        inArray(academyUsers.userId, userIds)
       )
     );
 }

@@ -30,8 +30,8 @@ async function MisCursos({
   academyId: number;
   userId: string;
 }) {
-  const cursos = (await listarCursos(academyId)).filter(
-    (c) => c.instructor === userId
+  const cursos = (await listarCursos(academyId)).filter((c) =>
+    c.instructores.includes(userId)
   );
   return (
     <section id="cursos" className="space-y-4">

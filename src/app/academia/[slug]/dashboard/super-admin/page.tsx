@@ -1,20 +1,23 @@
 import { Suspense } from 'react';
 
-import { GestorUsuarios } from '~/components/academy/GestorUsuarios';
-import { listarUsuarios } from '~/server/academy/usuarios';
-import { ACADEMY_ROLES, type AcademyRole } from '~/server/db/schema';
+import {
+  type EstadisticasAcademia,
+  InicioSuperAdminAcademia,
+} from '~/components/academy/InicioSuperAdminAcademia';
+import { type Academia } from '~/server/academy/academias';
+import { ETIQUETA_ROL, listarUsuarios } from '~/server/academy/usuarios';
 
 import { PanelDeRol } from '../_components/PanelDeRol';
 
-// <slug>.artiefy.com/dashboard/super-admin
+// <slug>.artiefy.com/dashboard/super-admin — Inicio: Estadísticas y
+// Configuraciones de la academia.
 
 type Props = { params: Promise<{ slug: string }> };
 
-const PLURAL: Record<AcademyRole, string> = {
-  'super-admin': 'Super-admins',
-  educador: 'Educadores',
-  estudiante: 'Estudiantes',
-};
+const SEMANA_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Inicio de la ventana de "nuevos" (últimos 7 días).
+const haceUnaSemana = () => Date.now() - SEMANA_MS;
 
 export default function SuperAdminAcademiaPage({ params }: Props) {
   return (
@@ -22,37 +25,47 @@ export default function SuperAdminAcademiaPage({ params }: Props) {
       <PanelDeRol
         params={params}
         rol="super-admin"
-        render={({ academia, cuenta }) => (
-          <div className="space-y-6">
-            <Resumen academyId={academia.id} />
-            <div id="usuarios" className="scroll-mt-16">
-              <GestorUsuarios
-                apiBase={`/api/academia/${academia.slug}/usuarios`}
-                yoUserId={cuenta.userId}
-              />
-            </div>
-          </div>
-        )}
+        saludo={false}
+        render={({ academia }) => <Inicio academia={academia} />}
       />
     </Suspense>
   );
 }
 
-async function Resumen({ academyId }: { academyId: number }) {
-  const usuarios = await listarUsuarios(academyId);
+async function Inicio({ academia }: { academia: Academia }) {
+  const usuarios = await listarUsuarios(academia.id);
+  const desde = haceUnaSemana();
+  const nuevos = usuarios
+    .filter((u) => u.createdAt.getTime() >= desde)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const estadisticas: EstadisticasAcademia = {
+    usuarios: nuevos.length,
+    estudiantes: nuevos.filter((u) => u.role === 'estudiante').length,
+    educadores: nuevos.filter((u) => u.role === 'educador').length,
+    recientes: nuevos.slice(0, 10).map((u) => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      rol: ETIQUETA_ROL[u.role],
+      fecha: u.createdAt.toISOString(),
+    })),
+  };
+
   return (
-    <div className="grid grid-cols-3 gap-3">
-      {ACADEMY_ROLES.map((rol) => (
-        <div
-          key={rol}
-          className="rounded-2xl border border-[var(--ac-borde)] bg-[var(--ac-superficie)] p-4"
-        >
-          <p className="text-2xl font-bold text-[var(--ac-primario)] sm:text-3xl">
-            {usuarios.filter((u) => u.role === rol).length}
-          </p>
-          <p className="text-xs text-white/60 sm:text-sm">{PLURAL[rol]}</p>
-        </div>
-      ))}
-    </div>
+    <InicioSuperAdminAcademia
+      academia={{
+        slug: academia.slug,
+        nombre: academia.nombre,
+        acronimo: academia.acronimo,
+        tipo: academia.tipo,
+        documentoTipo: academia.documentoTipo,
+        documentoNumero: academia.documentoNumero,
+        esArtiefy: academia.esArtiefy,
+        colorPrimario: academia.colorPrimario,
+        colorFondo: academia.colorFondo,
+      }}
+      estadisticas={estadisticas}
+    />
   );
 }

@@ -28,6 +28,9 @@ interface LessonsFormProps {
   isEditing?: boolean;
   modalClassName?: string; // Use a single, consistent name
   onUpdateSuccess?: () => void;
+  // Academias: guarda en /api/academia/[slug] y no hay transcripción ni
+  // indexado después de subir.
+  academiaSlug?: string;
   editingLesson?: {
     id?: number;
     title?: string;
@@ -118,6 +121,7 @@ const ModalFormLessons = ({
   editingLesson,
   modalClassName, // Use the same name as in interface
   onUpdateSuccess,
+  academiaSlug,
 }: LessonsFormProps) => {
   const [formData, setFormData] = useState({
     title: '',
@@ -643,8 +647,18 @@ const ModalFormLessons = ({
         coverImageKey = result.key;
       }
 
-      const method = isEditing ? 'PUT' : 'POST';
-      const endpoint = '/api/educadores/lessons';
+      const method = academiaSlug
+        ? isEditing
+          ? 'PATCH'
+          : 'POST'
+        : isEditing
+          ? 'PUT'
+          : 'POST';
+      const endpoint = academiaSlug
+        ? isEditing
+          ? `/api/academia/${academiaSlug}/lecciones/${editingLesson?.id}`
+          : `/api/academia/${academiaSlug}/cursos/${courseId}/lecciones`
+        : '/api/educadores/lessons';
 
       const requestBody = {
         ...(isEditing && { lessonId: editingLesson?.id }),
@@ -667,6 +681,7 @@ const ModalFormLessons = ({
 
       const responseData = (await response.json()) as {
         message?: string;
+        error?: string;
         id?: number;
       };
 
@@ -675,7 +690,7 @@ const ModalFormLessons = ({
         // el VPS y el curso se reindexa. Consultar el estado es ademas lo que
         // hace avanzar la transcripcion cuando el cron no corre.
         const idClase = isEditing ? editingLesson?.id : responseData.id;
-        if (idClase) {
+        if (idClase && !academiaSlug) {
           setProcesamiento({
             lessonId: Number(idClase),
             transcripcion: coverVideoKey === 'none' ? 'sin-video' : 'none',
@@ -689,7 +704,11 @@ const ModalFormLessons = ({
           onUpdateSuccess();
         }
       } else {
-        throw new Error(responseData.message ?? 'Error al guardar la lección');
+        throw new Error(
+          responseData.message ??
+            responseData.error ??
+            'Error al guardar la lección'
+        );
       }
     } catch (error) {
       console.error('Error en handleSubmit:', error);

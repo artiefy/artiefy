@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
 import {
+  Building2,
   Check,
   Edit,
   Eye,
@@ -25,6 +26,7 @@ import SunEditorCDN from '~/components/SunEditorCDN';
 import { AssignStudentsModal } from '~/components/super-admin/AssignStudentsModal';
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import { FotoBiometricaModal } from '~/components/super-admin/FotoBiometricaModal';
+import { ModalEnviarAcademia } from '~/components/super-admin/modals/ModalEnviarAcademia';
 import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
 import BulkUploadUsers from './components/BulkUploadUsers';
@@ -245,6 +247,8 @@ export default function AdminDashboard() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  // "Enviar a academia": los seleccionados pasan a una academia.
+  const [enviandoAcademia, setEnviandoAcademia] = useState(false);
 
   const [creatingUser, setCreatingUser] = useState(false);
   const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
@@ -1875,6 +1879,34 @@ export default function AdminDashboard() {
           </button>
 
           <button
+            onClick={() => setEnviandoAcademia(true)}
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length === 0
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                    border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]
+                    hover:bg-[#22C4D3]/20
+                  `
+              }
+            `}
+            disabled={selectedUsers.length === 0}
+            title="Agrega los usuarios seleccionados a una academia"
+          >
+            <span className="relative z-10 font-medium">Enviar a academia</span>
+            <Building2
+              className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+            />
+          </button>
+
+          <button
             onClick={handleMassDeleteUsers}
             className={`
               group/button relative inline-flex items-center justify-center
@@ -2593,6 +2625,20 @@ export default function AdminDashboard() {
         </div>
       </div>
       {/* ...existing modals and dialogs... */}
+      {enviandoAcademia && (
+        <ModalEnviarAcademia
+          envio={{
+            tipo: 'usuarios',
+            usuarios: users
+              .filter((u) => selectedUsers.includes(u.id) && u.email)
+              .map((u) => ({
+                email: u.email,
+                nombre: `${u.firstName} ${u.lastName}`.trim(),
+              })),
+          }}
+          onClose={() => setEnviandoAcademia(false)}
+        />
+      )}
       {showCreateForm && (
         <div
           className="

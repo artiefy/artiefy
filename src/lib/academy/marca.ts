@@ -28,12 +28,34 @@ function ajustar(hex: string, factor: number): string {
   return `#${canal(n >> 16)}${canal((n >> 8) & 255)}${canal(n & 255)}`;
 }
 
-/** Texto legible (oscuro o claro) sobre el color primario. */
-function textoSobre(hex: string): string {
+/** Luminosidad percibida de un color hex (0 oscuro … 255 claro). */
+function luminosidad(hex: string): number {
   const n = Number.parseInt(hex.slice(1), 16);
   const [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255];
-  return 0.299 * r + 0.587 * g + 0.114 * b > 150 ? '#04101F' : '#FFFFFF';
+  return 0.299 * r + 0.587 * g + 0.114 * b;
 }
+
+/** Texto legible (oscuro o claro) sobre el color primario. */
+function textoSobre(hex: string): string {
+  return luminosidad(hex) > 150 ? '#04101F' : '#FFFFFF';
+}
+
+/**
+ * Modo de la academia según su color secundario (fondo): claro si el fondo es
+ * claro, oscuro si no. No se guarda aparte: siempre se deduce del color.
+ */
+export function modoDeFondo(colorFondo: string): 'claro' | 'oscuro' {
+  return luminosidad(colorFondo) > 150 ? 'claro' : 'oscuro';
+}
+
+/** Fondos de los botones "Claro" / "Oscuro" de Configuraciones. */
+export const FONDOS_POR_MODO = {
+  claro: '#FFFFFF',
+  oscuro: COLORES_POR_DEFECTO.fondo,
+} as const;
+
+// Texto principal en modo claro (reemplaza al blanco del tema).
+const TEXTO_MODO_CLARO = '#0B1726';
 
 /**
  * Variables CSS de la marca. Sobrescribe los tokens del tema de Artiefy
@@ -45,9 +67,14 @@ export function variablesDeMarca(
   colorPrimario: string,
   colorFondo: string
 ): CSSProperties {
-  const superficie = ajustar(colorFondo, 0.06);
-  const borde = ajustar(colorFondo, 0.16);
+  const claro = modoDeFondo(colorFondo) === 'claro';
+  // En modo claro las superficies se oscurecen un poco en vez de aclararse.
+  const superficie = ajustar(colorFondo, claro ? -0.04 : 0.06);
+  const borde = ajustar(colorFondo, claro ? -0.14 : 0.16);
   return {
+    // Modo claro: el "blanco" del tema (text-white, text-white/60, bg-white/5…)
+    // pasa a ser el color de texto oscuro, así todo el texto sigue legible.
+    '--color-white': claro ? TEXTO_MODO_CLARO : '#FFFFFF',
     // Tokens del tema de Artiefy.
     '--color-primary': colorPrimario,
     '--color-background': colorFondo,
@@ -57,7 +84,7 @@ export function variablesDeMarca(
     '--color-border': borde,
     '--color-input': borde,
     '--color-holo-surface': superficie,
-    '--color-holo-surface2': ajustar(colorFondo, 0.1),
+    '--color-holo-surface2': ajustar(colorFondo, claro ? -0.08 : 0.1),
     // Alias propios.
     '--ac-primario': colorPrimario,
     '--ac-primario-texto': textoSobre(colorPrimario),
@@ -78,5 +105,7 @@ export function cssDeMarca(colorPrimario: string, colorFondo: string): string {
   const reglas = Object.entries(variablesDeMarca(colorPrimario, colorFondo))
     .map(([k, v]) => `${k}:${String(v)}`)
     .join(';');
-  return `:root{${reglas}}`;
+  // color-scheme: controles nativos (selects, fechas, scroll) del modo.
+  const esquema = modoDeFondo(colorFondo) === 'claro' ? 'light' : 'dark';
+  return `:root{${reglas};color-scheme:${esquema}}`;
 }

@@ -16,6 +16,7 @@ import {
   eliminarCurso,
   validarCurso,
 } from '~/server/academy/cursos';
+import { registrarLog } from '~/server/academy/logs';
 
 type Ctx = { params: Promise<{ slug: string; id: string }> };
 
@@ -29,6 +30,7 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
     >;
     const datos = await validarCurso(academia.id, body);
     await actualizarCurso(academia.id, Number(id), datos);
+    await registrarLog(academia.id, 'Curso editado', String(body.title ?? id));
     return NextResponse.json({ ok: true });
   } catch (error) {
     return respuestaDeError(error, 'cursos: editar');
@@ -40,6 +42,7 @@ export async function DELETE(_request: NextRequest, { params }: Ctx) {
     const { slug, id } = await params;
     const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
     await eliminarCurso(academia.id, Number(id));
+    await registrarLog(academia.id, 'Curso eliminado', `Curso #${id}`);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return respuestaDeError(error, 'cursos: eliminar');

@@ -115,6 +115,9 @@ export default function Page() {
     { id: number; name: string; description: string | null }[]
   >([]);
 
+  // Sube al duplicar un curso (menú ⋯) para volver a cargar la lista.
+  const [recargas, setRecargas] = useState(0);
+
   // ✅ Obtener cursos, totales y categorías con lazy loading
   useEffect(() => {
     async function fetchData() {
@@ -181,7 +184,7 @@ export default function Page() {
       }
     }
     void fetchData();
-  }, []); // Only run on mount
+  }, [recargas]); // Al montar y tras duplicar un curso
 
   useEffect(() => {
     const loadEducators = async () => {
@@ -812,6 +815,7 @@ export default function Page() {
       {/* Course List with Loading Indicator */}
       <CourseListAdmin
         courses={displayedCourses}
+        onDuplicated={() => setRecargas((n) => n + 1)}
         onEditCourse={async (course) => {
           if (course) {
             try {

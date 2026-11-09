@@ -1,7 +1,12 @@
+'use client';
+
+import { useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { ArrowRightIcon, StarIcon } from '@heroicons/react/24/solid';
+import { Building2, MoreVertical } from 'lucide-react';
 
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
 import { Badge } from '~/components/educators/ui/badge';
@@ -14,6 +19,10 @@ import {
 } from '~/components/educators/ui/card';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Checkbox } from '~/components/estudiantes/ui/checkbox';
+import {
+  type EnvioAcademia,
+  ModalEnviarAcademia,
+} from '~/components/super-admin/modals/ModalEnviarAcademia';
 
 export interface Program {
   id: number;
@@ -51,6 +60,10 @@ export default function ProgramListAdmin({
   onPageChange,
   itemsPerPage = 6,
 }: ProgramListAdminProps) {
+  // Menú ⋯ de la tarjeta: "Enviar a academia".
+  const [menuAbierto, setMenuAbierto] = useState<number | null>(null);
+  const [envio, setEnvio] = useState<EnvioAcademia | null>(null);
+
   const getCategoryName = (categoryId: number) => {
     const category = categories.find((c) => c.id === categoryId);
     return category?.name ?? 'Sin categoría';
@@ -77,6 +90,43 @@ export default function ProgramListAdmin({
               onCheckedChange={() => onToggleSelection(program.id)}
               className="absolute top-2 right-2 z-10"
             />
+            <div className="absolute top-2 left-2 z-20">
+              <button
+                type="button"
+                aria-label="Más opciones"
+                onClick={() =>
+                  setMenuAbierto(menuAbierto === program.id ? null : program.id)
+                }
+                className="flex size-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm transition hover:bg-black/70"
+              >
+                <MoreVertical className="size-4" />
+              </button>
+              {menuAbierto === program.id && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setMenuAbierto(null)}
+                  />
+                  <div className="absolute left-0 z-20 mt-1 w-48 overflow-hidden rounded-xl border border-white/10 bg-[#0b1f3d] py-1 shadow-2xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMenuAbierto(null);
+                        setEnvio({
+                          tipo: 'programa',
+                          programaId: program.id,
+                          titulo: program.title,
+                        });
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-white/10"
+                    >
+                      <Building2 className="size-4 text-[#22C4D3]" />
+                      Enviar a academia
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <div
               className="
                 absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
@@ -87,9 +137,9 @@ export default function ProgramListAdmin({
             />
             <Card
               className="
-                zoom-in relative flex h-full flex-col justify-between
-                overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
-                transition-transform duration-300 ease-in-out
+                relative flex h-full flex-col justify-between overflow-hidden
+                border-0 bg-gray-800 px-2 pt-2 text-white transition-transform
+                duration-300 ease-in-out zoom-in
                 hover:scale-[1.02]
               "
             >
@@ -219,6 +269,9 @@ export default function ProgramListAdmin({
             Siguiente
           </Button>
         </div>
+      )}
+      {envio && (
+        <ModalEnviarAcademia envio={envio} onClose={() => setEnvio(null)} />
       )}
     </div>
   );
