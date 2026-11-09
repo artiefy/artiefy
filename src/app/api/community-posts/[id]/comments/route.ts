@@ -57,7 +57,6 @@ interface CommentRow {
   updatedAt: Date;
   authorId: string;
   authorName: string | null;
-  authorEmail: string;
   authorProfileImageKey: string | null;
 }
 
@@ -76,7 +75,8 @@ const toNode = (row: CommentRow): CommunityPostComment => {
       ? null
       : {
           id: row.authorId,
-          name: row.authorName?.trim() || row.authorEmail,
+          // Never fall back to the email: the feed is visible to other users.
+          name: row.authorName?.trim() || 'Estudiante',
           avatarUrl: toAvatarUrl(row.authorProfileImageKey),
         },
     replies: [],
@@ -204,7 +204,6 @@ export async function GET(
         updatedAt: communityPostComments.updatedAt,
         authorId: users.id,
         authorName: users.name,
-        authorEmail: users.email,
         authorProfileImageKey: users.profileImageKey,
       })
       .from(communityPostComments)
@@ -317,7 +316,6 @@ export async function POST(
       .select({
         id: users.id,
         name: users.name,
-        email: users.email,
         profileImageKey: users.profileImageKey,
       })
       .from(users)
@@ -333,7 +331,7 @@ export async function POST(
       isDeleted: false,
       author: {
         id: author?.id ?? session.userId,
-        name: author?.name?.trim() || author?.email || 'Usuario',
+        name: author?.name?.trim() || 'Estudiante',
         avatarUrl: toAvatarUrl(author?.profileImageKey),
       },
       replies: [],

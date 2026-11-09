@@ -138,7 +138,6 @@ export async function POST(req: Request) {
       hasExistingAccount: false,
       accountCreated: true,
       credentialsEmailSent: true,
-      temporaryPassword,
     });
   } catch (error) {
     console.error('❌ prepareBuyerAccount error:', error);

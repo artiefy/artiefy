@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
+import { getSafeRedirectPath } from '~/utils/safeRedirect';
 
 export default function Page() {
   const router = useRouter();
@@ -40,15 +41,17 @@ export default function Page() {
   // Construir redirectUrl final con plan_id si existe
   const finalRedirectUrl = (() => {
     const storedRedirectUrl = getStoredRedirectUrl();
-    let url =
+    let url = getSafeRedirectPath(
       isWeakRedirect(redirectUrl) &&
-      isCourseAutoEnrollRedirect(storedRedirectUrl)
-        ? storedRedirectUrl!
-        : (redirectUrl ?? storedRedirectUrl ?? '/estudiantes');
+        isCourseAutoEnrollRedirect(storedRedirectUrl)
+        ? storedRedirectUrl
+        : (redirectUrl ?? storedRedirectUrl),
+      '/estudiantes'
+    );
 
     if (planId && !url.includes('plan_id=')) {
       const separator = url.includes('?') ? '&' : '?';
-      url = `${url}${separator}plan_id=${planId}`;
+      url = `${url}${separator}plan_id=${encodeURIComponent(planId)}`;
     }
     return url;
   })();

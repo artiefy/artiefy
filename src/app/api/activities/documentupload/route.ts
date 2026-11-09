@@ -1,7 +1,10 @@
 import { S3Client } from '@aws-sdk/client-s3';
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { v4 as uuidv4 } from 'uuid';
+
+import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -12,7 +15,8 @@ interface RequestBody {
   filename: string;
   contentType: string;
   activityId: number;
-  userId: string;
+  /** Ignored: identity always comes from the session. */
+  userId?: string;
 }
 
 interface DocumentMetadata {
@@ -72,25 +76,32 @@ const resolveContentType = (
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return Response.json(
+        { error: 'Debes iniciar sesión para subir archivos' },
+        { status: 401 }
+      );
+    }
+    const { success } = await ratelimit.limit(`documentupload:user:${userId}`);
+    if (!success) {
+      return Response.json(
+        { error: 'Demasiadas solicitudes. Intenta de nuevo en un momento.' },
+        { status: 429 }
+      );
+    }
+
     // Parse and validate request body
     const body = (await request.json()) as RequestBody;
-    const { filename, contentType, activityId, userId } = body;
-    const resolvedContentType = resolveContentType(filename, contentType);
+    const { filename, contentType, activityId } = body;
 
-    console.info('[documentupload] Request received', {
-      activityId,
-      userId,
-      filename,
-      contentType,
-      resolvedContentType,
-    });
-
-    if (!filename || !activityId || !userId) {
+    if (typeof filename !== 'string' || !filename || !activityId) {
       return Response.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
+    const resolvedContentType = resolveContentType(filename, contentType);
 
     // Initialize S3 client with credentials
     const client = new S3Client({
@@ -104,11 +115,6 @@ export async function POST(request: Request) {
     // Generate unique key for the file (sanitize filename for S3 URL safety)
     const safeFilename = sanitizeFilename(filename);
     const key = `documents/${activityId}/${userId}/${uuidv4()}-${safeFilename}`;
-    console.info('[documentupload] Creating presigned post', {
-      activityId,
-      userId,
-      key,
-    });
 
     // Create presigned post data
     const { url, fields } = await createPresignedPost(client, {
@@ -136,12 +142,6 @@ export async function POST(request: Request) {
 
     // Always update the metadata for the document, allowing resubmissions
     await redis.set(documentKey, metadata);
-    console.info('[documentupload] Metadata stored in Redis', {
-      activityId,
-      userId,
-      documentKey,
-      key,
-    });
 
     // Return presigned URL and fields
     return Response.json({
@@ -151,7 +151,14 @@ export async function POST(request: Request) {
       fileUrl: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`,
     });
   } catch (error) {
-    console.error('[documentupload] Document upload error:', error);
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    return Response.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Error al preparar la subida',
+      },
+      { status: 500 }
+    );
   }
 }

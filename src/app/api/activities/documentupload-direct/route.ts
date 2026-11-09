@@ -1,6 +1,9 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { v4 as uuidv4 } from 'uuid';
+
+import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -67,10 +70,29 @@ const resolveContentType = (
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return Response.json(
+        { success: false, error: 'Debes iniciar sesión para subir archivos' },
+        { status: 401 }
+      );
+    }
+    const { success } = await ratelimit.limit(
+      `documentupload-direct:user:${userId}`
+    );
+    if (!success) {
+      return Response.json(
+        {
+          success: false,
+          error: 'Demasiadas solicitudes. Intenta de nuevo en un momento.',
+        },
+        { status: 429 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file');
     const activityIdRaw = formData.get('activityId');
-    const userIdRaw = formData.get('userId');
 
     if (!(file instanceof File)) {
       return Response.json(
@@ -79,19 +101,18 @@ export async function POST(request: Request) {
       );
     }
 
-    if (typeof activityIdRaw !== 'string' || typeof userIdRaw !== 'string') {
+    if (typeof activityIdRaw !== 'string') {
       return Response.json(
-        { success: false, error: 'Missing activityId or userId' },
+        { success: false, error: 'Missing activityId' },
         { status: 400 }
       );
     }
 
     const activityId = Number.parseInt(activityIdRaw, 10);
-    const userId = userIdRaw.trim();
 
-    if (Number.isNaN(activityId) || !userId) {
+    if (Number.isNaN(activityId)) {
       return Response.json(
-        { success: false, error: 'Invalid activityId or userId' },
+        { success: false, error: 'Invalid activityId' },
         { status: 400 }
       );
     }
@@ -116,14 +137,6 @@ export async function POST(request: Request) {
     const key = `documents/${activityId}/${userId}/${uuidv4()}-${safeFilename}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-    console.info('[documentupload-direct] Uploading file through server', {
-      activityId,
-      userId,
-      key,
-      contentType,
-      size: file.size,
-    });
-
     await client.send(
       new PutObjectCommand({
         Bucket: process.env.AWS_BUCKET_NAME!,
@@ -145,22 +158,17 @@ export async function POST(request: Request) {
     const documentKey = `document:${activityId}:${userId}`;
     await redis.set(documentKey, metadata);
 
-    console.info('[documentupload-direct] Upload completed', {
-      activityId,
-      userId,
-      key,
-      documentKey,
-    });
-
     return Response.json({
       success: true,
       key,
       fileUrl,
     });
   } catch (error) {
-    console.error('[documentupload-direct] Upload error:', error);
     return Response.json(
-      { success: false, error: (error as Error).message },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Error al subir',
+      },
       { status: 500 }
     );
   }

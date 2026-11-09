@@ -11,6 +11,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { getSafeRedirectPath } from '~/utils/safeRedirect';
 
 import '../../../styles/mini-login-uiverse.css';
 
@@ -297,14 +298,10 @@ export default function MiniLoginModal({
 
       // Solo redirigir manualmente si NO es OAuth (OAuth ya redirige automáticamente)
       if (redirectUrl !== '/' && redirectUrl !== '') {
-        const targetUrl = redirectUrl.startsWith('http')
-          ? redirectUrl
-          : `${window.location.origin}${redirectUrl}`;
-        console.log(
-          '🔄 Redirigiendo después de login email/password a:',
-          targetUrl
-        );
-        window.location.href = targetUrl;
+        window.location.href = new URL(
+          getSafeRedirectPath(redirectUrl, '/'),
+          window.location.origin
+        ).href;
       }
     }
   }, [isSignedIn, handleModalClose, onLoginSuccess, redirectUrl, isOpen]);
@@ -406,17 +403,7 @@ export default function MiniLoginModal({
 
     const completePath =
       redirectUrl && redirectUrl.trim() !== ''
-        ? redirectUrl.startsWith('http')
-          ? (() => {
-              try {
-                const target = new URL(redirectUrl);
-                if (target.origin !== window.location.origin) return '/';
-                return `${target.pathname}${target.search}`;
-              } catch {
-                return '/';
-              }
-            })()
-          : redirectUrl
+        ? getSafeRedirectPath(redirectUrl, '/')
         : `${window.location.pathname}${window.location.search}`;
 
     try {
@@ -749,14 +736,14 @@ export default function MiniLoginModal({
         <div
           role="dialog"
           className="
-            data-[state=open]:animate-in
-            data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-            data-[state=open]:fade-in-0
-            data-[state=closed]:zoom-out-95
-            data-[state=open]:zoom-in-95
-            relative z-50 grid max-h-[calc(100dvh-2rem)] w-full max-w-lg gap-4
-            overflow-y-auto rounded-[32px] border border-border/50
-            bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200
+            relative
+            z-50 grid
+            max-h-[calc(100dvh-2rem)]
+            w-full
+            max-w-lg
+            gap-4 overflow-y-auto rounded-[32px] border border-border/50 bg-background/95 p-8
+            shadow-lg backdrop-blur-xl duration-200 data-[state=closed]:animate-out
+            data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95
             sm:max-w-md
           "
           tabIndex={-1}
