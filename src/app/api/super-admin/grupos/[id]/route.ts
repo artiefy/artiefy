@@ -497,6 +497,8 @@ export async function GET(
       rootNombre,
       hojas,
       canAdminister: esAdministradorDeGrupos(session.role),
+      // Solo super-admin: "Limpiar asistencia" de la hoja.
+      isSuperAdmin: session.role === 'super-admin',
       cursosDisponibles: cursosVisibles,
       programas: programasVisibles.map((p) => p.title),
       programasOpciones: programasVisibles,
