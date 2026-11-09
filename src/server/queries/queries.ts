@@ -551,7 +551,8 @@ export async function updateUserInfo(
   firstName: string,
   lastName: string
 ) {
-  await requireRole(USER_ADMIN_ROLES);
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  await assertCanManageUser(caller.role, id);
 
   try {
     const client = await clerkClient();
@@ -691,7 +692,8 @@ export async function createUser(
 }
 
 export async function updateUserStatus(id: string, status: string) {
-  await requireRole(USER_ADMIN_ROLES);
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  await assertCanManageUser(caller.role, id);
 
   try {
     // Update in Clerk
@@ -733,7 +735,10 @@ export async function updateMultipleUserStatus(
   userIds: string[],
   status: string
 ) {
-  await requireRole(USER_ADMIN_ROLES);
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  for (const userId of userIds) {
+    await assertCanManageUser(caller.role, userId);
+  }
 
   try {
     const client = await clerkClient();

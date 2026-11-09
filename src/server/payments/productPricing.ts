@@ -1,7 +1,12 @@
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses, courseTypes, guidedProjects } from '~/server/db/schema';
+import {
+  courseCourseTypes,
+  courses,
+  courseTypes,
+  guidedProjects,
+} from '~/server/db/schema';
 
 /**
  * Server-side source of truth for what a course or guided project costs.
@@ -41,10 +46,27 @@ export async function getCourseSale(
 
   if (!row) return null;
 
-  // Course type 4 is this repo's "pago unitario" type; the flag on the joined
-  // course type covers any other type marked purchasable on its own.
+  // A course can have several types: the primary `course_type_id` plus rows in
+  // `course_course_types` (the course page offers "Comprar" when ANY of them
+  // is purchasable on its own), so both are checked.
+  const linkedTypes = await db
+    .select({
+      courseTypeId: courseCourseTypes.courseTypeId,
+      isPurchasableIndividually: courseTypes.isPurchasableIndividually,
+    })
+    .from(courseCourseTypes)
+    .leftJoin(courseTypes, eq(courseCourseTypes.courseTypeId, courseTypes.id))
+    .where(eq(courseCourseTypes.courseId, courseId));
+
+  // Course type 4 is this repo's "pago unitario" type; the flag on a course
+  // type covers any other type marked purchasable on its own.
   const soldAlone =
-    row.courseTypeId === 4 || row.isPurchasableIndividually === true;
+    row.courseTypeId === 4 ||
+    row.isPurchasableIndividually === true ||
+    linkedTypes.some(
+      (type) =>
+        type.courseTypeId === 4 || type.isPurchasableIndividually === true
+    );
   const amount = row.individualPrice ?? row.typePrice ?? 0;
 
   return {

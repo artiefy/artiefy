@@ -59,7 +59,14 @@ export function getSafeRedirectPath(
   try {
     const resolved = new URL(candidate, origin);
     if (resolved.origin !== origin) return fallback;
-    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+    const path = `${resolved.pathname}${resolved.search}${resolved.hash}`;
+    // Dot segments are collapsed while parsing, so `/.//evil.tld` or
+    // `/%2e//evil.tld` come out as `//evil.tld`, a protocol-relative URL to
+    // another host. Re-check the normalized result.
+    if (path.startsWith('//') || path.startsWith(`/${BACKSLASH}`)) {
+      return fallback;
+    }
+    return path;
   } catch {
     return fallback;
   }
