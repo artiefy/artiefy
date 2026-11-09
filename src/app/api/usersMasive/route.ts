@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import { db } from '~/server/db';
 import { userCredentials, users } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 // Runtime configuration
 export const maxDuration = 300;
@@ -373,6 +374,14 @@ function isCreateUserResponse(result: unknown): result is CreateUserResponse {
 }
 
 export async function POST(request: Request) {
+  const authz = await authorizeRole(['admin', 'super-admin']);
+  if (!authz.ok) {
+    return NextResponse.json(
+      { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+      { status: authz.status }
+    );
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file');
@@ -529,6 +538,16 @@ export async function POST(request: Request) {
           email,
           estado: 'ERROR',
           detalle: `Rol inválido: ${role}. Roles válidos: ${validRoles.join(', ')}`,
+        });
+        continue;
+      }
+
+      if (role === 'super-admin' && authz.role !== 'super-admin') {
+        resultados.push({
+          email,
+          estado: 'ERROR',
+          detalle:
+            'Solo un super-admin puede crear usuarios con rol super-admin',
         });
         continue;
       }

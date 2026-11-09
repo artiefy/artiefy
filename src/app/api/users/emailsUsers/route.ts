@@ -10,6 +10,7 @@ import {
   emailLogs,
   userCredentials,
 } from '~/server/db/schema';
+import { authorizeRole } from '~/server/utils/apiAuth';
 import { generarPasswordSegura } from '~/utils/generatePassword';
 
 // Interfaces and types
@@ -118,6 +119,14 @@ async function logCredentialsDelivery(data: {
 
 // API Route Handler
 export async function POST(request: Request) {
+  const authz = await authorizeRole(['admin', 'super-admin']);
+  if (!authz.ok) {
+    return NextResponse.json(
+      { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+      { status: authz.status }
+    );
+  }
+
   try {
     const body = (await request.json()) as { userIds: string[] };
     const { userIds } = body;

@@ -127,7 +127,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
       try {
         setLoading(true);
         const res = await fetch(
-          `/api/users?email=${encodeURIComponent(maybeEmail)}`
+          `/api/users/search?email=${encodeURIComponent(maybeEmail)}`
         );
         if (!mounted) return;
         if (!res.ok) {
