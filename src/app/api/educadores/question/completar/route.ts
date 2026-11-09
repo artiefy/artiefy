@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
 
+import { authorizeStaff } from '~/server/utils/apiAuth';
+
 import type { Completado } from '~/types/typesActi';
 
 const redis = new Redis({
@@ -10,6 +12,16 @@ const redis = new Redis({
 });
 
 export async function GET(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const activityId = searchParams.get('activityId');
@@ -32,6 +44,16 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { activityId, questionsACompletar } = (await request.json()) as {
       activityId: string;
@@ -65,6 +87,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { activityId, questionsACompletar } = (await request.json()) as {
       activityId: string;
@@ -100,6 +132,16 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const activityId = searchParams.get('activityId');

@@ -1,125 +1,87 @@
 'use server';
 
-import { Redis } from '@upstash/redis';
+import { eq } from 'drizzle-orm';
 
 import { getRelatedActivities } from '~/server/actions/estudiantes/activities/getRelatedActivities';
+import { canAccessCourseActivities } from '~/server/activities/courseAccess';
+import { toPublicQuestion } from '~/server/activities/gradeAnswers';
+import { loadActivityQuestionBank } from '~/server/activities/questionBank';
+import { db } from '~/server/db';
+import { lessons } from '~/server/db/schema';
+import { getApiSession } from '~/server/utils/apiAuth';
 
 import { getUserActivityProgress } from './getUserActivityProgress';
 
 import type { Activity, Question } from '~/types';
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+/**
+ * Activities of a lesson, with their questions, for the signed-in user.
+ *
+ * Security best practice: this is a server action callable from the browser,
+ * so the user is taken from the session (never from a parameter), access to
+ * the lesson's course is checked, and answer keys are stripped from every
+ * question (grading happens server-side in `/api/activities/saveAnswers`).
+ * Callers without access get an empty list, like a lesson without activities.
+ */
+const getActivityContent = async (lessonId: number): Promise<Activity[]> => {
+  if (!Number.isFinite(lessonId)) return [];
 
-const getActivityContent = async (
-  lessonId: number,
-  userId: string
-): Promise<Activity[]> => {
-  try {
-    console.log(`Fetching related activities for lesson ${lessonId}`);
-    const dbActivities = await getRelatedActivities(lessonId);
+  const session = await getApiSession();
+  const userId = session.userId;
+  if (!userId) return [];
 
-    console.log('Related activities:', dbActivities);
+  const lesson = await db.query.lessons.findFirst({
+    where: eq(lessons.id, lessonId),
+    columns: { courseId: true },
+  });
+  if (!lesson) return [];
 
-    if (dbActivities.length === 0) {
-      console.log(`No related activities found for lesson ${lessonId}`);
-      return [];
-    }
+  const hasAccess = await canAccessCourseActivities(session, lesson.courseId);
+  if (!hasAccess) return [];
 
-    // Map database activities to Activity interface with default values for missing fields
-    const relatedActivities: Activity[] = dbActivities.map((dbActivity) => ({
-      ...dbActivity,
-      isCompleted: false,
-      userProgress: 0,
-      attemptLimit: 0,
-      currentAttempts: 0,
-    }));
+  const dbActivities = await getRelatedActivities(lessonId);
+  if (dbActivities.length === 0) return [];
 
-    const userProgress = await getUserActivityProgress(userId);
+  // Map database activities to Activity interface with default values for missing fields
+  const relatedActivities: Activity[] = dbActivities.map((dbActivity) => ({
+    ...dbActivity,
+    isCompleted: false,
+    userProgress: 0,
+    attemptLimit: 0,
+    currentAttempts: 0,
+  }));
 
-    const activitiesWithContent = await Promise.all(
-      relatedActivities.map(async (activity: Activity, index: number) => {
-        let allQuestions: Question[] = [];
+  const userProgress = await getUserActivityProgress(userId);
 
-        // Para actividades tipo documento no se consultan bancos de preguntas.
-        if (activity.typeid !== 1) {
-          const questionTypes = ['VOF', 'OM', 'ACompletar'] as const;
+  return Promise.all(
+    relatedActivities.map(async (activity: Activity, index: number) => {
+      // Para actividades tipo documento no se consultan bancos de preguntas.
+      const questions: Question[] =
+        activity.typeid === 1
+          ? []
+          : (await loadActivityQuestionBank(activity.id).catch(() => [])).map(
+              toPublicQuestion
+            );
 
-          for (const type of questionTypes) {
-            // --- CAMBIO: Buscar ambos keys para ACompletar ---
-            let contentKeys: string[] = [];
-            if (type === 'ACompletar') {
-              contentKeys = [
-                `activity:${activity.id}:questionsACompletar`,
-                `activity:${activity.id}:questionsACompletar2`,
-              ];
-            } else {
-              contentKeys = [`activity:${activity.id}:questions${type}`];
-            }
+      const activityProgress = userProgress.find(
+        (progress: (typeof userProgress)[number]) =>
+          progress.activityId === activity.id
+      );
 
-            for (const contentKey of contentKeys) {
-              console.log(`Fetching ${type} questions with key: ${contentKey}`);
-              try {
-                const content = await redis.get(contentKey);
-                if (content) {
-                  const parsedQuestions = (
-                    typeof content === 'string' ? JSON.parse(content) : content
-                  ) as Omit<Question, 'type'>[];
+      const isLastActivityInLesson = index === relatedActivities.length - 1;
 
-                  const questionsWithType = parsedQuestions.map(
-                    (q) =>
-                      ({
-                        ...q,
-                        type:
-                          type === 'VOF'
-                            ? 'VOF'
-                            : type === 'OM'
-                              ? 'OM'
-                              : 'COMPLETAR',
-                      }) as Question
-                  );
-
-                  allQuestions = [...allQuestions, ...questionsWithType];
-                }
-              } catch (error) {
-                console.error(`Error fetching ${type} questions:`, error);
-              }
-            }
-          }
-        }
-
-        const activityProgress = userProgress.find(
-          (progress: (typeof userProgress)[number]) =>
-            progress.activityId === activity.id
-        );
-
-        const isLastActivityInLesson = index === relatedActivities.length - 1;
-
-        return {
-          ...activity,
-          content: {
-            questions: allQuestions,
-          },
-          isCompleted: activityProgress?.isCompleted ?? false,
-          userProgress: activityProgress?.progress ?? 0,
-          createdAt: activity.lastUpdated,
-          isLastInLesson: isLastActivityInLesson, // Add this flag
-        } as unknown as Activity;
-      })
-    );
-
-    const validActivities = activitiesWithContent.filter(
-      (activity): activity is Activity => activity !== null
-    );
-
-    console.log('Final activities with content:', validActivities);
-    return validActivities;
-  } catch (error) {
-    console.error('Error in getActivityContent:', error);
-    throw error;
-  }
+      return {
+        ...activity,
+        content: {
+          questions,
+        },
+        isCompleted: activityProgress?.isCompleted ?? false,
+        userProgress: activityProgress?.progress ?? 0,
+        createdAt: activity.lastUpdated,
+        isLastInLesson: isLastActivityInLesson,
+      } as unknown as Activity;
+    })
+  );
 };
 
 export { getActivityContent };

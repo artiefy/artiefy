@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
 
+import { authorizeStaff } from '~/server/utils/apiAuth';
+
 import type { QuestionFilesSubida } from '~/types/typesActi';
 
 const redis = new Redis({
@@ -11,6 +13,16 @@ const redis = new Redis({
 
 // ✅ GET - Obtener preguntas con archivos
 export async function GET(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const activityId = searchParams.get('activityId');
@@ -48,6 +60,16 @@ export async function GET(request: NextRequest) {
 
 // ✅ POST - Guardar nueva pregunta con archivos
 export async function POST(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { activityId, questionsFilesSubida } = (await request.json()) as {
       activityId: string;
@@ -85,6 +107,16 @@ export async function POST(request: NextRequest) {
 
 // ✅ PUT - Actualizar una pregunta existente
 export async function PUT(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { activityId, questionsFilesSubida } = (await request.json()) as {
       activityId: string;
@@ -118,6 +150,16 @@ export async function PUT(request: NextRequest) {
 
 // ✅ DELETE - Eliminar una pregunta
 export async function DELETE(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const activityId = searchParams.get('activityId');

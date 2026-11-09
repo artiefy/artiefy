@@ -211,7 +211,7 @@ async function LessonContent({
         true,
     };
 
-    const activityContent = await getActivityContent(lessonId, userId);
+    const activityContent = await getActivityContent(lessonId);
     const activitiesWithProgress = (activityContent ?? []).map((activity) => ({
       ...activity,
       isCompleted: activity.isCompleted ?? false,

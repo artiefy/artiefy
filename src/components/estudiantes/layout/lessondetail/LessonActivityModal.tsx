@@ -39,7 +39,6 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
-import { formatScoreNumber } from '~/utils/formatScore';
 import { useMediaQuery } from '~/utils/useMediaQuery'; // <-- crea este hook util
 
 import { FileUploadForm } from './FileUploadForm';
@@ -74,7 +73,18 @@ interface ActivityModalProps {
 interface UserAnswer {
   questionId: string;
   answer: string;
+  // Set by the server after grading; false until the attempt is submitted.
   isCorrect: boolean;
+  // Answer key of a wrong answer, only sent by the server when the attempt
+  // passed.
+  correctAnswer?: string;
+}
+
+interface SaveAnswersResponse {
+  score?: number;
+  answers?: Record<string, UserAnswer>;
+  message?: string;
+  error?: string;
 }
 
 interface AttemptsResponse {
@@ -600,40 +610,17 @@ export function LessonActivityModal({
 
   const submissionWindowStatus = getSubmissionWindowStatus(now);
 
-  const calculateScore = () => {
-    const answers = Object.values(userAnswers);
-    const correctAnswers = answers.filter((a) => a.isCorrect).length;
-    return formatScoreNumber((correctAnswers / answers.length) * 5);
-  };
-
-  const checkAnswer = (questionId: string, answer: string) => {
-    const question = questions.find((q) => q.id === questionId);
-    if (!question) return false;
-
-    switch (question.type) {
-      case 'VOF':
-      case 'OM':
-        return answer === question.correctOptionId;
-      case 'COMPLETAR':
-        return (
-          answer.toLowerCase().trim() ===
-          question.correctAnswer?.toLowerCase().trim()
-        );
-      default:
-        return false;
-    }
-  };
-
+  // Answers are graded on the server (`/api/activities/saveAnswers`): the
+  // browser no longer receives the answer key, so it only records the choice.
   const handleAnswer = (answer: string) => {
     if (!currentQuestion) return;
 
-    const isCorrect = checkAnswer(currentQuestion.id, answer);
     setUserAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: {
         questionId: currentQuestion.id,
         answer,
-        isCorrect,
+        isCorrect: false,
       },
     }));
   };
@@ -659,21 +646,52 @@ export function LessonActivityModal({
       return;
     }
 
+    const allQuestionsAnswered =
+      Object.keys(userAnswers).length === (questions?.length ?? 0);
+
+    if (!allQuestionsAnswered) {
+      toast.error('Debes responder todas las preguntas');
+      return;
+    }
+
     try {
       setIsSavingResults(true);
       setIsResultsLoaded(false);
       setAnswersDetailMissing(false);
-      const score = calculateScore();
-      setFinalScore(score);
-      setShowResults(true);
 
-      const allQuestionsAnswered =
-        Object.keys(userAnswers).length === (questions?.length ?? 0);
+      // Only the chosen option / typed text is sent: the server grades the
+      // attempt against the stored answer key and returns the result.
+      const submittedAnswers = Object.fromEntries(
+        Object.values(userAnswers).map(({ questionId, answer }) => [
+          questionId,
+          { questionId, answer },
+        ])
+      );
 
-      if (!allQuestionsAnswered) {
-        toast.error('Debes responder todas las preguntas');
+      const saveResponse = await fetch('/api/activities/saveAnswers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activityId: activity.id,
+          userId,
+          answers: submittedAnswers,
+        }),
+      });
+      const saveData = (await saveResponse.json()) as SaveAnswersResponse;
+
+      if (!saveResponse.ok || typeof saveData.score !== 'number') {
+        toast.error(
+          saveData.message ??
+            saveData.error ??
+            'Error al guardar las respuestas'
+        );
         return;
       }
+
+      const score = saveData.score;
+      setFinalScore(score);
+      setUserAnswers(saveData.answers ?? {});
+      setShowResults(true);
 
       // For non-revisada activities, only need passing score
       // For revisada activities, need passing score or exhausted attempts
@@ -685,19 +703,6 @@ export function LessonActivityModal({
       );
 
       const hasPassingScore = score >= 3;
-
-      await fetch('/api/activities/saveAnswers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          activityId: activity.id,
-          userId,
-          answers: userAnswers,
-          score,
-          allQuestionsAnswered,
-          passed: hasPassingScore,
-        }),
-      });
 
       if (!hasPassingScore) {
         toast.error('Debes obtener al menos 3 puntos para aprobar');
@@ -712,8 +717,8 @@ export function LessonActivityModal({
           const attemptsData =
             (await attemptsResponse.json()) as AttemptsResponse;
           setAttemptsLeft(Math.max(0, 3 - (attemptsData.attempts ?? 0)));
-        } catch (attemptError) {
-          console.error('Error checking attempts:', attemptError);
+        } catch {
+          // Keep the attempts count already shown.
         }
       }
 
@@ -721,7 +726,8 @@ export function LessonActivityModal({
       setIsResultsLoaded(true);
 
       if (isLastActivity) {
-        // Update grades in database
+        // Propagate the grade the server just recorded (the route reads it
+        // from the database; no grade is sent from the browser).
         const response = await fetch('/api/grades/updateGrades', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -729,7 +735,6 @@ export function LessonActivityModal({
             courseId,
             userId,
             activityId: activity.id,
-            finalGrade: score,
           }),
         });
 
@@ -739,8 +744,7 @@ export function LessonActivityModal({
           );
         }
       }
-    } catch (error) {
-      console.error('Error saving answers:', error);
+    } catch {
       toast.error('Error al guardar las respuestas');
     } finally {
       setIsSavingResults(false);
@@ -802,28 +806,26 @@ export function LessonActivityModal({
     return displayAnswer;
   };
 
-  const getDisplayCorrectAnswer = (question: Question): string => {
-    let correctAnswer = '';
+  // The answer key comes from the graded attempt (the server attaches it to
+  // wrong answers only when the attempt passed); questions never carry it.
+  // Returns '' when it is not available, and then nothing is shown.
+  const getDisplayCorrectAnswer = (
+    question: Question,
+    userAnswer: UserAnswer | undefined
+  ): string => {
+    const key = userAnswer?.correctAnswer;
+    if (!key) return '';
 
     switch (question.type) {
-      case 'VOF': {
-        correctAnswer =
-          question.correctOptionId === 'true' ? 'Verdadero' : 'Falso';
-        break;
-      }
+      case 'VOF':
+        return key === 'true' ? 'Verdadero' : 'Falso';
       case 'OM': {
-        const correctOption = question.options?.find(
-          (opt) => opt.id === question.correctOptionId
-        );
-        correctAnswer = correctOption?.text ?? question.correctOptionId ?? '';
-        break;
+        const correctOption = question.options?.find((opt) => opt.id === key);
+        return correctOption?.text ?? key;
       }
-      case 'COMPLETAR': {
-        correctAnswer = question.correctAnswer ?? '';
-        break;
-      }
+      default:
+        return key;
     }
-    return correctAnswer;
   };
 
   const renderQuestion = () => {
@@ -1447,6 +1449,10 @@ export function LessonActivityModal({
                       const displayAnswer = userAnswer
                         ? getDisplayAnswer(userAnswer, question)
                         : '';
+                      const displayCorrectAnswer = getDisplayCorrectAnswer(
+                        question,
+                        userAnswer
+                      );
 
                       return (
                         <div
@@ -1491,20 +1497,22 @@ export function LessonActivityModal({
                               </p>
                             </div>
                             {/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
-                            {!isCorrect && finalScore >= 3 && (
-                              <div
-                                className="
+                            {!isCorrect &&
+                              finalScore >= 3 &&
+                              displayCorrectAnswer && (
+                                <div
+                                  className="
                                 rounded-md bg-gray-50 p-2 text-sm text-gray-900
                               "
-                              >
-                                <span className="font-bold">
-                                  Respuesta correcta:
-                                </span>{' '}
-                                <span className="font-bold">
-                                  {getDisplayCorrectAnswer(question)}
-                                </span>
-                              </div>
-                            )}
+                                >
+                                  <span className="font-bold">
+                                    Respuesta correcta:
+                                  </span>{' '}
+                                  <span className="font-bold">
+                                    {displayCorrectAnswer}
+                                  </span>
+                                </div>
+                              )}
                           </div>
                         </div>
                       );

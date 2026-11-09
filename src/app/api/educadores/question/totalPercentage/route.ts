@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
 
+import { authorizeStaff } from '~/server/utils/apiAuth';
+
 import type { Completado, Question, VerdaderoOFlaso } from '~/types/typesActi';
 
 const redis = new Redis({
@@ -24,6 +26,16 @@ function safeParse<T>(data: unknown): T {
 }
 
 export async function GET(request: NextRequest) {
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+      },
+      { status: authz.status }
+    );
+  }
   try {
     const { searchParams } = new URL(request.url);
     const activityId = searchParams.get('activityId');
