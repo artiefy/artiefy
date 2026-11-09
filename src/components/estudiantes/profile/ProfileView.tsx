@@ -25,6 +25,7 @@ import MyCoursesContent, {
   type Program,
 } from '~/components/estudiantes/layout/MyCoursesContent';
 import { ProjectWorkspaceCard } from '~/components/estudiantes/proyectos/subcomponents/ProjectWorkspaceCard';
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import {
   coverKeyToUrl,
   MAX_COVER_SIZE,
@@ -107,6 +108,7 @@ export function ProfileView({
   postsCount?: number;
 }) {
   const router = useRouter();
+  const { confirm, confirmDialog } = useConfirm();
   const [activeTab, setActiveTab] = useState<TabKey>('cursos');
   const [isEditing, setIsEditing] = useState(false);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -159,9 +161,9 @@ export function ProfileView({
   const handleDeleteProject = async (item: ProjectSocialItem) => {
     // Irreversible, and it takes the project's objectives, activities and
     // feedback with it, so confirm before calling the endpoint.
-    const confirmed = window.confirm(
-      `¿Eliminar "${item.title}"? Se borrarán también sus objetivos, actividades y retroalimentación. Esta acción no se puede deshacer.`
-    );
+    const confirmed = await confirm({
+      message: `¿Eliminar "${item.title}"? Se borrarán también sus objetivos, actividades y retroalimentación. Esta acción no se puede deshacer.`,
+    });
     if (!confirmed) return;
 
     try {
@@ -250,6 +252,7 @@ export function ProfileView({
               ref={coverInputRef}
               type="file"
               accept="image/*"
+              aria-label="Seleccionar imagen de portada"
               className="hidden"
               onChange={handleCoverPick}
             />
@@ -528,6 +531,7 @@ export function ProfileView({
           }}
         />
       ) : null}
+      {confirmDialog}
     </main>
   );
 }

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
 import { ProjectModeChooser } from '~/components/projects/Modals/ProjectModeChooser';
 import { openCoachChatForNewProject } from '~/lib/agents/agentChatBus';
@@ -86,6 +87,7 @@ export function ProjectsSocialView({
   collaboratorItems,
   communityPosts,
 }: ProjectsSocialViewProps) {
+  const { confirm, confirmDialog } = useConfirm();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeStage, setActiveStage] = useState<string>('all');
@@ -331,9 +333,9 @@ export function ProjectsSocialView({
   const handleDeleteProject = async (item: ProjectSocialItem) => {
     // Deleting a project also removes its objectives, activities, feedback and
     // collaborators, so make the owner confirm before anything leaves.
-    const confirmed = window.confirm(
-      `¿Eliminar "${item.title}"? Se borrarán también sus objetivos, actividades y retroalimentación. Esta acción no se puede deshacer.`
-    );
+    const confirmed = await confirm({
+      message: `¿Eliminar "${item.title}"? Se borrarán también sus objetivos, actividades y retroalimentación. Esta acción no se puede deshacer.`,
+    });
     if (!confirmed) return;
 
     try {
@@ -853,6 +855,7 @@ export function ProjectsSocialView({
           }
         }
       `}</style>
+      {confirmDialog}
     </div>
   );
 }

@@ -293,7 +293,7 @@ export default function StudentCategories({
             >
               <button
                 type="button"
-                className="mt-2 mr-2 size-4 -translate-y-2 transform text-white"
+                className="mt-2 mr-1 inline-flex size-6 -translate-y-2 transform items-center justify-center text-white"
                 aria-label="Buscar cursos"
                 onClick={() => {
                   if (showMobileSearch) {
@@ -371,6 +371,7 @@ export default function StudentCategories({
                 </button>
                 <input
                   placeholder="Buscar Cursos..."
+                  aria-label="Buscar cursos"
                   className="student-searchbar__input"
                   name="text"
                   type="text"
@@ -400,6 +401,7 @@ export default function StudentCategories({
               >
                 <input
                   placeholder="Buscar Cursos..."
+                  aria-label="Buscar cursos"
                   className="student-searchbar__input"
                   name="text"
                   type="text"

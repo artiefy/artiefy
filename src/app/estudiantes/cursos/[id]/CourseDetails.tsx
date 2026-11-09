@@ -1522,13 +1522,12 @@ export default function CourseDetails({
     );
   };
 
-  const staticCourseRating = clampRating(Number(course.rating ?? 0));
-  const usesDynamicCourseRating =
-    courseRatingSummary.count >= MIN_DYNAMIC_RATING_COUNT;
-  const displayedCourseRating = usesDynamicCourseRating
-    ? clampRating(courseRatingSummary.average)
-    : staticCourseRating;
-  const hasCourseRating = displayedCourseRating > 0;
+  // The stored `course.rating` column is only an initial value, so the rating
+  // figure is shown only once the course has enough real student reviews.
+  const hasCourseRating =
+    courseRatingSummary.count >= MIN_DYNAMIC_RATING_COUNT &&
+    clampRating(courseRatingSummary.average) > 0;
+  const displayedCourseRating = clampRating(courseRatingSummary.average);
   const shouldShowStudentCount =
     typeof totalStudents === 'number' && totalStudents > 15;
   const courseTypeLabel = course.typeCourse?.type?.trim();
@@ -1852,7 +1851,9 @@ export default function CourseDetails({
                             >
                               {includedPlans.includes('Premium') &&
                               includedPlans.includes('Pro')
-                                ? 'Incluido en tu plan Premium y Pro'
+                                ? isSignedIn
+                                  ? 'Incluido en tu plan Premium y Pro'
+                                  : 'Incluido en los planes Premium y Pro'
                                 : userIncludedPlanLabel
                                   ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
                                   : `Incluido en ${
@@ -2084,9 +2085,7 @@ export default function CourseDetails({
                                 />
                                 <span className="text-[#94A3B8]">
                                   {displayedCourseRating.toFixed(1)}{' '}
-                                  {usesDynamicCourseRating
-                                    ? `(${courseRatingSummary.count} opiniones)`
-                                    : '(rating inicial)'}
+                                  {`(${courseRatingSummary.count} opiniones)`}
                                 </span>
                               </div>
                             )}
@@ -2408,7 +2407,9 @@ export default function CourseDetails({
                                     >
                                       {includedPlans.includes('Premium') &&
                                       includedPlans.includes('Pro')
-                                        ? 'Incluido en tu plan Premium y Pro'
+                                        ? isSignedIn
+                                          ? 'Incluido en tu plan Premium y Pro'
+                                          : 'Incluido en los planes Premium y Pro'
                                         : userIncludedPlanLabel
                                           ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
                                           : `Incluido en ${
@@ -3236,7 +3237,9 @@ export default function CourseDetails({
                                 >
                                   {includedPlans.includes('Premium') &&
                                   includedPlans.includes('Pro')
-                                    ? 'Incluido en tu plan Premium y Pro'
+                                    ? isSignedIn
+                                      ? 'Incluido en tu plan Premium y Pro'
+                                      : 'Incluido en los planes Premium y Pro'
                                     : userIncludedPlanLabel
                                       ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
                                       : `Incluido en ${

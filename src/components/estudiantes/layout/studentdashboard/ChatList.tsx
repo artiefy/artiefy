@@ -9,6 +9,7 @@ import { BsRobot } from 'react-icons/bs';
 import { IoChatboxEllipses } from 'react-icons/io5';
 import { toast } from 'sonner';
 
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import { useStudentChats } from '~/hooks/useStudentChats';
 import { getUserOpenTicket } from '~/server/actions/estudiantes/chats/suportChatBot';
 
@@ -56,6 +57,7 @@ export const ChatList = ({
   setShowChatList,
   activeType = 'chatia',
 }: ChatListProps) => {
+  const { confirm, confirmDialog } = useConfirm();
   const [loadingChatId, setLoadingChatId] = useState<number | null>(null);
   const [isCreatingTicket, setIsCreatingTicket] = useState(false);
   const [isCreatingChat, setIsCreatingChat] = useState(false);
@@ -334,10 +336,10 @@ export const ChatList = ({
 
   const handleDeleteSelected = async () => {
     if (selectedChats.length === 0) return;
-    const confirm = window.confirm(
-      `¿Eliminar ${selectedChats.length} chat(s) seleccionado(s)? Esta acción no se puede deshacer.`
-    );
-    if (!confirm) return;
+    const confirmed = await confirm({
+      message: `¿Eliminar ${selectedChats.length} chat(s) seleccionado(s)? Esta acción no se puede deshacer.`,
+    });
+    if (!confirmed) return;
 
     setIsDeleting(true);
     try {
@@ -690,6 +692,7 @@ export const ChatList = ({
           ))}
         </ul>
       )}
+      {confirmDialog}
     </div>
   );
 };

@@ -9,6 +9,7 @@ import { useUser } from '@clerk/nextjs';
 import { BsPersonCircle } from 'react-icons/bs';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import { useKeyboardViewport } from '~/hooks/useKeyboardViewport';
 import {
   getConversationById,
@@ -102,6 +103,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
   compactWelcome,
   isDesktop = false, // Nueva prop con valor por defecto
 }) => {
+  const { confirm, confirmDialog } = useConfirm();
   // Hook para detectar la altura real del teclado en móviles
   // Cuando el teclado está abierto ajustamos el padding inferior del área de mensajes
   const { keyboardHeight: _keyboardHeight, isKeyboardOpen } =
@@ -543,12 +545,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
           type="button"
           onClick={() => {
             if (!onDeleteHistory) return;
-            const ok = window.confirm(
-              '¿Deseas eliminar todo el historial de esta conversación? Esta acción no se puede deshacer.'
-            );
-            if (ok) {
-              onDeleteHistory();
-            }
+            void confirm({
+              message:
+                '¿Deseas eliminar todo el historial de esta conversación? Esta acción no se puede deshacer.',
+            }).then((ok) => {
+              if (ok) {
+                onDeleteHistory();
+              }
+            });
           }}
           className="
             rounded px-3 py-1 text-sm font-semibold text-red-400 transition
@@ -732,6 +736,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={'Escribe un mensaje...'}
+              aria-label="Escribe un mensaje"
               className="
                 min-h-10 flex-1 rounded-lg border border-gray-600 bg-gray-900
                 px-3 py-2 text-base text-white placeholder-gray-400
@@ -744,6 +749,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
             <button
               type="submit"
               disabled={isLoading}
+              aria-label="Enviar mensaje"
               className="
                 group relative flex size-10 flex-shrink-0 items-center
                 justify-center rounded-lg bg-secondary transition-all
@@ -754,7 +760,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
             >
               <Image
                 src="/send-svgrepo-com.svg"
-                alt="Send message"
+                alt=""
                 width={24}
                 height={24}
                 className="
@@ -767,6 +773,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
           </div>
         </form>
       </div>
+      {confirmDialog}
     </div>
   );
 };

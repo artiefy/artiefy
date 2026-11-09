@@ -364,6 +364,22 @@ body.no-chrome {
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
+
+  /* Fallback keyboard focus ring. `:where()` keeps specificity at zero, so any
+     component that defines its own focus style (utilities, rings, custom
+     CSS) still wins. */
+  :where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex]
+  ):focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
 }
 
 /* Utilities */

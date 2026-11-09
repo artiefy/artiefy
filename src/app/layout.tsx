@@ -11,6 +11,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import { SoloArtiefy } from '~/components/academy/SoloArtiefy';
 import { GlobalAgentChat } from '~/components/agents/GlobalAgentChat';
 import { SiteHeader } from '~/components/estudiantes/layout/SiteHeader';
+import { SkipToContentLink } from '~/components/estudiantes/layout/SkipToContentLink';
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { ServiceWorkerRegister } from '~/components/pwa/ServiceWorkerRegister';
@@ -129,6 +130,7 @@ export default function RootLayout({
             <ServiceWorkerRegister />
             {/* Las academias tienen su propia interfaz (src/app/academia). */}
             <SoloArtiefy>
+              <SkipToContentLink />
               <TourManager />
               <NotificationSubscription />
               <SiteHeader />

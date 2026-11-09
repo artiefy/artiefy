@@ -29,6 +29,7 @@ import { FaRegFileImage } from 'react-icons/fa6';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import {
   Dialog,
   DialogContent,
@@ -260,6 +261,7 @@ export function LessonActivityModal({
   isContentLoading = false,
 }: ActivityModalProps) {
   const router = useRouter();
+  const { confirm, confirmDialog } = useConfirm();
 
   // Añade id para el título y descripción accesibles
   const modalTitleId = 'activity-modal-title';
@@ -1941,22 +1943,30 @@ export function LessonActivityModal({
                   <div className="mb-4 flex flex-col gap-2">
                     <Button
                       onClick={() => {
+                        const resetUpload = () => {
+                          setUploadedFileInfo(null);
+                          setSelectedFile(null);
+                          setFilePreview(null);
+                          setUploadProgress(0);
+                          setShowResults(false);
+                          setDriveUrl('');
+                          setIsUrlValid(false);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        };
                         if (uploadedFileInfo.status === 'reviewed') {
-                          const confirmed = window.confirm(
-                            'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
-                          );
-                          if (!confirmed) return;
+                          void confirm({
+                            message:
+                              'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?',
+                            confirmLabel: 'Continuar',
+                            destructive: false,
+                          }).then((confirmed) => {
+                            if (confirmed) resetUpload();
+                          });
+                          return;
                         }
-                        setUploadedFileInfo(null);
-                        setSelectedFile(null);
-                        setFilePreview(null);
-                        setUploadProgress(0);
-                        setShowResults(false);
-                        setDriveUrl('');
-                        setIsUrlValid(false);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
+                        resetUpload();
                       }}
                       className="
                         w-full bg-yellow-500 text-white
@@ -2495,22 +2505,23 @@ export function LessonActivityModal({
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          handleRequestClose();
-        }
-      }}
-    >
-      <DialogPortal>
-        <DialogOverlay className="z-[100003]" />
-        <DialogPrimitive.Content
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={modalTitleId}
-          aria-describedby={modalDescId}
-          className={`
+    <>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleRequestClose();
+          }
+        }}
+      >
+        <DialogPortal>
+          <DialogOverlay className="z-[100003]" />
+          <DialogPrimitive.Content
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={modalTitleId}
+            aria-describedby={modalDescId}
+            className={`
             fixed z-[100004]
             flex
             flex-col gap-4
@@ -2532,114 +2543,116 @@ export function LessonActivityModal({
                 `
             }
           `}
-        >
-          {/* Hidden title for accessibility */}
-          <DialogPrimitive.Title className="sr-only">
-            Actividad del curso
-          </DialogPrimitive.Title>
-          {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
-          <button
-            type="button"
-            aria-label="Cerrar modal"
-            onClick={handleRequestClose}
-            className="
+          >
+            {/* Hidden title for accessibility */}
+            <DialogPrimitive.Title className="sr-only">
+              Actividad del curso
+            </DialogPrimitive.Title>
+            {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
+            <button
+              type="button"
+              aria-label="Cerrar modal"
+              onClick={handleRequestClose}
+              className="
               absolute top-4 right-4 z-50 rounded-full p-2 transition-colors
               hover:bg-gray-800
             "
-          >
-            <div className="flex items-center justify-center">
-              <XMarkIcon className="size-6 text-white" aria-hidden="true" />
-            </div>
-          </button>
-          <DialogHeader className="sticky top-0 z-40 bg-background">
-            <DialogTitle
-              id={modalTitleId}
-              className="text-center text-3xl font-bold"
-              tabIndex={0}
             >
-              {activity.content?.questionsFilesSubida?.[0] != null
-                ? 'SUBIDA DE DOCUMENTO'
-                : 'ACTIVIDAD'}
-            </DialogTitle>
-            <div
-              id={modalDescId}
-              className="sr-only"
-              aria-live="polite"
-              tabIndex={0}
-            >
-              {activity.description ?? 'Actividad del curso'}
-            </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            {renderSubmissionWindowNotice()}
-            {isSavingResults ? (
-              <>
-                <div aria-live="assertive" className="sr-only">
-                  Cargando Resultados...
-                </div>
-                {renderLoadingState('Cargando Resultados...')}
-              </>
-            ) : activity.typeid === 1 ? (
-              renderContent()
-            ) : (
-              <div className="space-y-6">
-                {showResults ? (
-                  renderResults()
-                ) : (
-                  <div>
-                    <div
-                      className="
+              <div className="flex items-center justify-center">
+                <XMarkIcon className="size-6 text-white" aria-hidden="true" />
+              </div>
+            </button>
+            <DialogHeader className="sticky top-0 z-40 bg-background">
+              <DialogTitle
+                id={modalTitleId}
+                className="text-center text-3xl font-bold"
+                tabIndex={0}
+              >
+                {activity.content?.questionsFilesSubida?.[0] != null
+                  ? 'SUBIDA DE DOCUMENTO'
+                  : 'ACTIVIDAD'}
+              </DialogTitle>
+              <div
+                id={modalDescId}
+                className="sr-only"
+                aria-live="polite"
+                tabIndex={0}
+              >
+                {activity.description ?? 'Actividad del curso'}
+              </div>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              {renderSubmissionWindowNotice()}
+              {isSavingResults ? (
+                <>
+                  <div aria-live="assertive" className="sr-only">
+                    Cargando Resultados...
+                  </div>
+                  {renderLoadingState('Cargando Resultados...')}
+                </>
+              ) : activity.typeid === 1 ? (
+                renderContent()
+              ) : (
+                <div className="space-y-6">
+                  {showResults ? (
+                    renderResults()
+                  ) : (
+                    <div>
+                      <div
+                        className="
                         mb-8 flex flex-col items-center justify-center
                         text-center
                       "
-                    >
-                      <span className="text-2xl font-bold text-primary">
-                        {getQuestionTypeLabel(currentQuestion?.type ?? '')}
-                      </span>
-                      <span className="mt-2 text-sm text-gray-500">
-                        {/* Corrige el contador para mostrar "1 de N" */}
-                        {questions.length > 0
-                          ? `${currentQuestionIndex + 1} de ${questions.length}`
-                          : 'Sin preguntas'}
-                      </span>
-                    </div>
-                    {renderQuestion()}
-                    <div className="mt-6 flex justify-between">
-                      <button
-                        className="btn-arrow btn-arrow-prev"
-                        disabled={currentQuestionIndex === 0}
-                        onClick={() =>
-                          setCurrentQuestionIndex((prev) => prev - 1)
-                        }
                       >
-                        <ChevronRightIcon />
-                        <span>Anterior</span>
-                      </button>
-                      <button
-                        className={`
+                        <span className="text-2xl font-bold text-primary">
+                          {getQuestionTypeLabel(currentQuestion?.type ?? '')}
+                        </span>
+                        <span className="mt-2 text-sm text-gray-500">
+                          {/* Corrige el contador para mostrar "1 de N" */}
+                          {questions.length > 0
+                            ? `${currentQuestionIndex + 1} de ${questions.length}`
+                            : 'Sin preguntas'}
+                        </span>
+                      </div>
+                      {renderQuestion()}
+                      <div className="mt-6 flex justify-between">
+                        <button
+                          className="btn-arrow btn-arrow-prev"
+                          disabled={currentQuestionIndex === 0}
+                          onClick={() =>
+                            setCurrentQuestionIndex((prev) => prev - 1)
+                          }
+                        >
+                          <ChevronRightIcon />
+                          <span>Anterior</span>
+                        </button>
+                        <button
+                          className={`
                           btn-arrow
                           ${isLastQuestion ? 'btn-arrow-success' : ''}
                         `}
-                        disabled={
-                          !canProceedToNext ||
-                          (isLastQuestion && !submissionWindowStatus.isOpen)
-                        }
-                        onClick={isLastQuestion ? handleFinish : handleNext}
-                      >
-                        <span>
-                          {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
-                        </span>
-                        <ChevronRightIcon />
-                      </button>
+                          disabled={
+                            !canProceedToNext ||
+                            (isLastQuestion && !submissionWindowStatus.isOpen)
+                          }
+                          onClick={isLastQuestion ? handleFinish : handleNext}
+                        >
+                          <span>
+                            {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
+                          </span>
+                          <ChevronRightIcon />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DialogPrimitive.Content>
-      </DialogPortal>
-    </Dialog>
+                  )}
+                </div>
+              )}
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
+      {confirmDialog}
+    </>
   );
 }
 

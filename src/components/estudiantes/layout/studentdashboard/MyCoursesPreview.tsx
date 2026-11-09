@@ -314,7 +314,7 @@ export default function MyCoursesPreview() {
                         border-border bg-[#061C37] p-4
                       "
                     >
-                      <h4
+                      <h2
                         className="
                           mb-1 line-clamp-2 min-h-[38px] text-sm leading-snug
                           font-semibold text-white
@@ -322,7 +322,7 @@ export default function MyCoursesPreview() {
                         title={course.title}
                       >
                         {course.title}
-                      </h4>
+                      </h2>
 
                       <p
                         className={`

@@ -676,6 +676,7 @@ export default function StudentDetails({
                     ${searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''}
                   `}
                   name="search"
+                  aria-label="Buscar cursos"
                   placeholder={
                     searchBarDisabled ? 'Procesando consulta...' : _text
                   }
@@ -1089,7 +1090,7 @@ export default function StudentDetails({
                                       py-3
                                     "
                                   >
-                                    <h3
+                                    <h2
                                       className={`
                                         line-clamp-2 text-[13px] font-semibold
                                         text-foreground
@@ -1104,7 +1105,7 @@ export default function StudentDetails({
                                       }}
                                     >
                                       {course.title}
-                                    </h3>
+                                    </h2>
                                     <p
                                       className={`
                                         ${instructorSpacingClass}

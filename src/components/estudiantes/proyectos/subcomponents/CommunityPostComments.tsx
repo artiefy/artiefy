@@ -9,6 +9,7 @@ import { MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import { getUserRole } from '~/utils/roles';
 
 import type { CommunityPostComment } from '../types';
@@ -508,6 +509,7 @@ export function CommunityPostComments({
   postId,
   onCountChange,
 }: CommunityPostCommentsProps) {
+  const { confirm, confirmDialog } = useConfirm();
   const { user, isSignedIn } = useUser();
   const viewerId = user?.id;
   const viewerRole = getUserRole(user?.publicMetadata?.role);
@@ -647,13 +649,14 @@ export function CommunityPostComments({
 
   const handleDelete = (commentId: number) => {
     if (deletingId !== null) return;
-    const confirmed = window.confirm(
-      '¿Eliminar este comentario? Sus respuestas seguirán visibles.'
-    );
-    if (!confirmed) return;
 
-    setDeletingId(commentId);
     void (async () => {
+      const confirmed = await confirm({
+        message: '¿Eliminar este comentario? Sus respuestas seguirán visibles.',
+      });
+      if (!confirmed) return;
+
+      setDeletingId(commentId);
       try {
         const res = await fetch(`${commentsUrl}/${commentId}`, {
           method: 'DELETE',
@@ -766,6 +769,7 @@ export function CommunityPostComments({
           ))}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

@@ -81,7 +81,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
       </div>
 
       <div className="relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4">
-        <h3
+        <h2
           className="
             line-clamp-2 text-base leading-snug font-bold text-foreground
             transition-colors duration-200
@@ -90,7 +90,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
           title={program.title}
         >
           {program.title}
-        </h3>
+        </h2>
 
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
