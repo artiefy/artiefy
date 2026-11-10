@@ -11,8 +11,6 @@ import {
   BarChart3,
   CheckCircle2,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   CodeXml,
   FileBox,
@@ -314,16 +312,13 @@ export function GuidedProjectDetails({
       label: 'Recursos',
       icon: <FileBox className="size-4 shrink-0" />,
     },
-    // Only projects with a linked repository get the tab.
-    ...(project.repositoryUrl
-      ? [
-          {
-            key: 'repositorio' as const,
-            label: 'Repositorio',
-            icon: <FaGithub className="size-4 shrink-0" />,
-          },
-        ]
-      : []),
+    // Every project shows its repository tab, with an empty state when no
+    // repository is linked yet.
+    {
+      key: 'repositorio',
+      label: 'Repositorio',
+      icon: <FaGithub className="size-4 shrink-0" />,
+    },
     {
       key: 'foro',
       label: 'Foro',
@@ -364,15 +359,6 @@ export function GuidedProjectDetails({
     carouselRef.current
       ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
       [nextIndex]?.focus();
-  };
-
-  const scrollNav = (direction: 'left' | 'right') => {
-    const node = carouselRef.current;
-    if (!node) return;
-    node.scrollBy({
-      left: direction === 'left' ? -200 : 200,
-      behavior: 'smooth',
-    });
   };
 
   const handleStartNow = useCallback(async () => {
@@ -1521,66 +1507,49 @@ export function GuidedProjectDetails({
                   )}
                 </div>
 
-                {/* Tabs (carousel nav, Lovable style) */}
-                <div className="group relative mt-6">
-                  <button
-                    type="button"
-                    aria-label="Anterior"
-                    onClick={() => scrollNav('left')}
-                    className="absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card md:hidden"
-                  >
-                    <ChevronLeft className="size-4" />
-                  </button>
-                  <nav
-                    ref={carouselRef}
-                    role="tablist"
-                    aria-label="Secciones del proyecto guiado"
-                    className="
-                      flex [scrollbar-width:none] items-center gap-2
-                      overflow-x-auto px-10
-                      md:flex-wrap md:gap-2.5 md:overflow-visible md:px-0
+                {/* Tabs: same sticky pill menu as every other project detail */}
+                <div className="group sticky top-20 z-30 mt-6 w-fit max-w-full">
+                  <div className="liquid-glass relative rounded-full p-1">
+                    <nav
+                      ref={carouselRef}
+                      role="tablist"
+                      aria-label="Secciones del proyecto guiado"
+                      className="
+                      flex w-max max-w-full [scrollbar-width:none] items-center
+                      gap-1 overflow-x-auto
                     "
-                  >
-                    {navItems.map((item, index) => {
-                      const isActive = activePill === item.key;
-                      const tabId = `guided-project-${project.id}-${item.key}-tab`;
-                      const panelId = `guided-project-${project.id}-${item.key}-panel`;
-                      return (
-                        <button
-                          key={item.key}
-                          id={tabId}
-                          type="button"
-                          role="tab"
-                          onClick={() => handlePillClick(item.key)}
-                          onKeyDown={(event) => handleTabKeyDown(event, index)}
-                          aria-selected={isActive}
-                          aria-controls={panelId}
-                          tabIndex={isActive ? 0 : -1}
-                          className={cn(
-                            'relative flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-200 md:px-5',
-                            isActive
-                              ? 'border border-border/50 bg-card text-foreground shadow-sm'
-                              : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'
-                          )}
-                        >
-                          {item.icon}
-                          <span
-                            className={isActive ? 'inline' : 'hidden md:inline'}
+                    >
+                      {navItems.map((item, index) => {
+                        const isActive = activePill === item.key;
+                        const tabId = `guided-project-${project.id}-${item.key}-tab`;
+                        const panelId = `guided-project-${project.id}-${item.key}-panel`;
+                        return (
+                          <button
+                            key={item.key}
+                            id={tabId}
+                            type="button"
+                            role="tab"
+                            onClick={() => handlePillClick(item.key)}
+                            onKeyDown={(event) =>
+                              handleTabKeyDown(event, index)
+                            }
+                            aria-selected={isActive}
+                            aria-controls={panelId}
+                            tabIndex={isActive ? 0 : -1}
+                            className={cn(
+                              'relative flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors motion-reduce:transition-none',
+                              isActive
+                                ? 'bg-background text-foreground shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            )}
                           >
-                            {item.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </nav>
-                  <button
-                    type="button"
-                    aria-label="Siguiente"
-                    onClick={() => scrollNav('right')}
-                    className="absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2 scale-90 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground opacity-0 shadow-lg backdrop-blur-sm transition-all duration-200 group-hover:scale-100 group-hover:opacity-100 hover:bg-card md:hidden"
-                  >
-                    <ChevronRight className="size-4" />
-                  </button>
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </nav>
+                  </div>
                 </div>
 
                 {/* Main Content Render */}
@@ -1618,27 +1587,29 @@ export function GuidedProjectDetails({
                   >
                     {renderResources()}
                   </div>
-                  {project.repositoryUrl ? (
-                    <div
-                      id={`guided-project-${project.id}-repositorio-panel`}
-                      role="tabpanel"
-                      aria-labelledby={`guided-project-${project.id}-repositorio-tab`}
-                      hidden={activePill !== 'repositorio'}
-                      tabIndex={0}
-                    >
-                      {!canAccessContent ? (
-                        renderComingSoon(
-                          'Inscríbete en el proyecto para ver su repositorio.'
-                        )
-                      ) : repoTabOpened ? (
-                        <RepositoryExplorer
-                          source="guided"
-                          projectId={project.id}
-                          repositoryUrl={project.repositoryUrl}
-                        />
-                      ) : null}
-                    </div>
-                  ) : null}
+                  <div
+                    id={`guided-project-${project.id}-repositorio-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-repositorio-tab`}
+                    hidden={activePill !== 'repositorio'}
+                    tabIndex={0}
+                  >
+                    {!project.repositoryUrl ? (
+                      renderComingSoon(
+                        'Este proyecto todavía no tiene un repositorio de GitHub.'
+                      )
+                    ) : !canAccessContent ? (
+                      renderComingSoon(
+                        'Inscríbete en el proyecto para ver su repositorio.'
+                      )
+                    ) : repoTabOpened ? (
+                      <RepositoryExplorer
+                        source="guided"
+                        projectId={project.id}
+                        repositoryUrl={project.repositoryUrl}
+                      />
+                    ) : null}
+                  </div>
                   <div
                     id={`guided-project-${project.id}-foro-panel`}
                     role="tabpanel"
