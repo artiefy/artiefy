@@ -4,6 +4,7 @@ import { type Metadata } from 'next';
 import { notFound, redirect, unstable_rethrow } from 'next/navigation';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton';
@@ -12,6 +13,8 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
+import { db } from '~/server/db';
+import { enrollments } from '~/server/db/schema';
 import { isCourseOwnedByEducator } from '~/server/queries/educatorCourseAccess';
 import { sortLessons } from '~/utils/lessonSorting';
 import { getDashboardRouteByRole, getUserRole } from '~/utils/roles';
@@ -134,6 +137,33 @@ async function LessonContent({
       ...(course.courseType ? [course.courseType] : []),
       ...(Array.isArray(course.courseTypes) ? course.courseTypes : []),
     ];
+    // A course sold individually (and not also free) is opened by its purchase,
+    // not by a plan. The client checked this only after the lesson had been
+    // sent, so the rule is enforced here, the same way the client reads it.
+    const isIndividualCourse =
+      !courseTypes.some(
+        (type) => (type.requiredSubscriptionLevel ?? 'none') === 'none'
+      ) &&
+      courseTypes.some(
+        (type) => (type.name ?? '').toLowerCase() === 'individual'
+      );
+    if (!isPrivileged && isIndividualCourse) {
+      const [purchase] = await db
+        .select({ id: enrollments.id })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.userId, userId),
+            eq(enrollments.courseId, lessonData.courseId),
+            eq(enrollments.isPermanent, true)
+          )
+        )
+        .limit(1);
+      if (!purchase) {
+        redirect(`/estudiantes/cursos/${lessonData.courseId}`);
+      }
+    }
+
     const requiresSubscription =
       courseTypes.length === 0
         ? course.requiresSubscription === true
@@ -159,6 +189,7 @@ async function LessonContent({
 
     if (
       !isPrivileged &&
+      !isIndividualCourse &&
       (hasExpiredSubscription ||
         (requiresSubscription && !hasActiveSubscription))
     ) {

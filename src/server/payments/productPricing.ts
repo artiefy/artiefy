@@ -7,6 +7,7 @@ import {
   courseTypes,
   guidedProjects,
 } from '~/server/db/schema';
+import { products } from '~/utils/paygateway/products';
 
 /**
  * Server-side source of truth for what a course or guided project costs.
@@ -100,6 +101,27 @@ export async function getGuidedProjectSale(
     amount,
     isPurchasable: row.isActive !== false && amount > 0,
   };
+}
+
+export type PlanTier = 'Pro' | 'Premium' | 'Enterprise';
+
+/**
+ * Plan tier carried by a PayU reference code. Plan references are built from
+ * the product name (`plan_pro_Pro_<ts>`, `plan_premium_<ts>`, …), so the tier
+ * is the only product identity a plan confirmation has.
+ */
+export function getPlanTierFromReference(reference: string): PlanTier {
+  if (reference.includes('pro')) return 'Pro';
+  if (reference.includes('premium')) return 'Premium';
+  if (reference.includes('enterprise')) return 'Enterprise';
+  return 'Pro';
+}
+
+/** Price in COP of a plan tier, from the same catalog the checkout charges. */
+export function getPlanPrice(tier: PlanTier): number | null {
+  const product = products.find((item) => item.name.endsWith(`_${tier}`));
+  const amount = Number(product?.amount);
+  return Number.isFinite(amount) && amount > 0 ? amount : null;
 }
 
 /** True when a PayU `value` and `currency` match the expected sale. */

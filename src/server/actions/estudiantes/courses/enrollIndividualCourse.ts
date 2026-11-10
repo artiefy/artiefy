@@ -203,7 +203,16 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
     });
 
     if (existingEnrollment) {
-      console.log('ℹ️ User already enrolled:', { userEmail, courseId });
+      // A subscription enrollment already exists: the purchase upgrades it to
+      // permanent, so the paid access survives the subscription expiring and
+      // the class page (which opens individual courses by purchase) lets the
+      // buyer in.
+      if (!existingEnrollment.isPermanent) {
+        await db
+          .update(enrollments)
+          .set({ isPermanent: true })
+          .where(eq(enrollments.id, existingEnrollment.id));
+      }
       return { success: true, message: 'Usuario ya inscrito' };
     }
 

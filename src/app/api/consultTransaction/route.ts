@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import axios, { AxiosError } from 'axios';
 
+import { authorizeStaff } from '~/server/utils/apiAuth';
+
 // Constants
 const PAYU_API_URL =
   'https://sandbox.api.payulatam.com/reports-api/4.0/service.cgi';
@@ -70,6 +72,16 @@ const getRequestBody = (body: RequestBody, auth: PayUAuth): PayURequestBody => {
 };
 
 export async function POST(req: NextRequest) {
+  // Looks up orders with the merchant's PayU credentials, so it is a support
+  // tool for staff, not something a visitor can query.
+  const authz = await authorizeStaff();
+  if (!authz.ok) {
+    return NextResponse.json(
+      { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+      { status: authz.status }
+    );
+  }
+
   try {
     // Validate environment variables
     const apiLogin = process.env.API_LOGIN;

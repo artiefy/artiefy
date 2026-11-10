@@ -391,6 +391,12 @@ export async function isUserEnrolled(
   courseId: number,
   userId: string
 ): Promise<boolean> {
+  // This is a server action, callable from the browser with any userId. Only
+  // the signed-in user may ask about their own enrollment; anything else would
+  // reveal who is enrolled where.
+  const { userId: sessionUserId } = await auth();
+  if (!sessionUserId || sessionUserId !== userId) return false;
+
   try {
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(

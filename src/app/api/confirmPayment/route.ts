@@ -1,6 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
+import {
+  getPlanPrice,
+  getPlanTierFromReference,
+  paidAmountMatches,
+} from '~/server/payments/productPricing';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
 interface PaymentData {
@@ -26,8 +31,6 @@ export async function POST(req: NextRequest) {
       sign: formData.get('sign') as string,
     };
 
-    console.log('💳 Plan subscription payment data:', paymentData);
-
     if (!verifySignature(paymentData)) {
       console.error('❌ Invalid signature for plan payment');
       return NextResponse.json(
@@ -37,7 +40,27 @@ export async function POST(req: NextRequest) {
     }
 
     if (paymentData.state_pol === '4') {
-      console.log('✅ Plan payment approved, processing plan update...');
+      // The signature only proves PayU sent these values; the amount itself
+      // came from the checkout, so it is checked against the plan price here.
+      const tier = getPlanTierFromReference(paymentData.reference_sale ?? '');
+      const expectedAmount = getPlanPrice(tier);
+      if (
+        expectedAmount === null ||
+        !paidAmountMatches(
+          paymentData.value,
+          paymentData.currency,
+          expectedAmount
+        )
+      ) {
+        console.warn(
+          'Plan payment rejected: paid value does not match the plan price',
+          { tier, currency: paymentData.currency }
+        );
+        return NextResponse.json(
+          { error: 'Payment amount mismatch' },
+          { status: 400 }
+        );
+      }
 
       // Agregar headers para evitar caché
       const headers = new Headers({
@@ -63,7 +86,10 @@ export async function POST(req: NextRequest) {
       status: paymentData.state_pol,
     });
   } catch (error) {
-    console.error('❌ Error in plan payment confirmation:', error);
+    console.error(
+      '❌ Error in plan payment confirmation:',
+      error instanceof Error ? error.message : 'unknown error'
+    );
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
