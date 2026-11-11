@@ -409,6 +409,71 @@ body.no-chrome {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }
 
+/* Project workspace section menu: each tab is its own raised pill (soft drop
+   shadow plus a light top edge), and the active one is a solid cyan pill with
+   dark text. Values mirror the workspace design tokens. */
+/* Height of the fixed site header (h-16, md:h-14) plus the subscription
+   banner. Routes without the header (e.g. /estudiantes/proyectos/**) keep 0,
+   so the section menu sticks right at the top of the viewport. */
+:root:has([data-site-header]) {
+  --site-header-offset: calc(var(--subscription-banner-height, 0px) + 4rem);
+}
+
+@media (min-width: 768px) {
+  :root:has([data-site-header]) {
+    --site-header-offset: calc(var(--subscription-banner-height, 0px) + 3.5rem);
+  }
+}
+
+.workspace-section-navigation {
+  top: calc(var(--site-header-offset, 0px) + 12px);
+}
+
+.workspace-back-button {
+  box-shadow:
+    0 12px 32px -12px hsl(222 47% 6% / 0.65),
+    inset 0 1px 0 hsl(210 40% 98% / 0.08);
+}
+
+.workspace-menu-shell {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.workspace-menu .workspace-menu-item {
+  border-width: 0;
+}
+
+/* Nearly opaque so the page text never shows through the floating pills. */
+.workspace-menu .workspace-menu-item[data-state='inactive'],
+.workspace-progress-chip {
+  background: hsl(217 33% 15% / 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 2px 5px hsl(222 47% 6% / 0.25),
+    inset 0 1px hsl(210 40% 98% / 0.06);
+}
+
+.workspace-menu .workspace-menu-item[data-state='inactive']:hover {
+  background: hsl(217 33% 19% / 0.95);
+}
+
+.workspace-menu .workspace-menu-item[data-state='active'] {
+  background: hsl(185 85% 64%);
+  color: hsl(222 47% 6%);
+  box-shadow:
+    0 2px 8px hsl(222 47% 6% / 0.2),
+    inset 0 1px 0 hsl(210 40% 98% / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-menu .workspace-menu-item {
+    transition: none;
+  }
+}
+
 .mobile-header-floating-control {
   border-color: rgba(255, 255, 255, 0.16);
 }
