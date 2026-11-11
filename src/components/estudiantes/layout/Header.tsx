@@ -776,6 +776,7 @@ export function Header({
   return (
     <>
       <nav
+        data-site-header=""
         className={`
           fixed inset-x-0 z-[100] mb-0 w-full border-b border-transparent
           bg-transparent transition-[background-color,border-color] duration-300

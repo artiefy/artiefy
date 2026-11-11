@@ -28,6 +28,11 @@ import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 
 import { ProjectRepositoryPanel } from '~/components/estudiantes/proyectos/ProjectRepositoryPanel';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '~/components/estudiantes/ui/tooltip';
 import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
 import {
   Tabs,
@@ -46,20 +51,31 @@ import ProjectPostsTab from './ProjectPostsTab';
 import type { Project } from '~/types/project';
 
 const BACK_BUTTON_CLASS = `
-  liquid-glass inline-flex size-10 shrink-0 items-center justify-center
-  rounded-full text-foreground transition-colors
+  workspace-back-button liquid-glass inline-flex size-10 shrink-0 items-center
+  justify-center rounded-full text-foreground transition-colors
   hover:bg-accent hover:text-accent-foreground
   focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
 `;
 
+// Colors, shadows and the active state come from `.workspace-menu-item` in
+// globals.css (raised pill per tab, solid cyan when selected).
 const TAB_TRIGGER_CLASS = `
-  relative h-8 gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap
-  text-muted-foreground
+  workspace-menu-item relative h-8 flex-none gap-1.5 rounded-full px-3 py-1.5 text-xs
+  font-medium whitespace-nowrap text-muted-foreground
   hover:text-foreground
-  data-[state=active]:bg-background data-[state=active]:text-foreground
-  data-[state=active]:shadow-sm
   motion-reduce:transition-none
 `;
+
+const TAB_ICON_CLASS = 'size-3 shrink-0';
+
+/** Today's date in Bogotá as a UTC-midnight Date, like the timeline dates. */
+const getBogotaToday = () => {
+  const key = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+  }).format(new Date());
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(Date.UTC(year ?? 1970, (month ?? 1) - 1, day ?? 1));
+};
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -310,6 +326,13 @@ export default function ProjectDetailView({
   useEffect(() => {
     setActivityLinkOverrides({});
   }, [project?.id]);
+
+  // Read the clock after mount: with Cache Components, reading the time during
+  // a client render aborts prerendering.
+  const [today, setToday] = useState<Date | null>(null);
+  useEffect(() => {
+    setToday(getBogotaToday());
+  }, []);
 
   useEffect(() => {
     if (!project?.id) {
@@ -1106,6 +1129,27 @@ export default function ProjectDetailView({
       .map(({ orderIndex, ...row }) => row);
   };
 
+  // Weekly goal: share of scheduled activities whose end date falls on or
+  // before the end of the current week (Monday–Sunday, Bogotá time), i.e. the
+  // work that should be finished by this week. Null without dated activities.
+  const weeklyGoal = (() => {
+    if (!today) return null;
+    const scheduled = getTimelineRows().filter(
+      (row) => row.startDate && row.endDate
+    );
+    if (scheduled.length === 0) return null;
+    const daysToSunday = (7 - today.getUTCDay()) % 7;
+    const weekEnd = addDaysUTC(today, daysToSunday);
+    const dueByWeekEnd = scheduled.filter(
+      (row) => row.endDate && row.endDate <= weekEnd
+    ).length;
+    return Math.round((dueByWeekEnd / scheduled.length) * 100);
+  })();
+  const progressChipLabel =
+    weeklyGoal === null
+      ? `Progreso del proyecto: ${progressPercentage}%`
+      : `Progreso del proyecto: ${progressPercentage}%. Meta de la semana: ${weeklyGoal}%`;
+
   // Proyecto iniciado: al menos un campo está lleno
   return (
     <section className="space-y-6">
@@ -1160,42 +1204,82 @@ export default function ProjectDetailView({
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <div className="sticky top-20 z-30 w-fit max-w-full">
-          <div className="liquid-glass overflow-x-auto rounded-full p-1">
+        <div className="workspace-section-navigation sticky z-30 w-fit max-w-full">
+          <div className="workspace-menu-shell flex items-center gap-1 overflow-x-auto p-1">
             <TabsList
               aria-label="Secciones del proyecto"
               className="
-                flex h-auto w-max justify-start gap-1 rounded-full
-                bg-transparent p-0 text-muted-foreground
+                workspace-menu flex h-auto w-max items-center justify-start
+                gap-1 rounded-full bg-transparent p-0 text-muted-foreground
               "
             >
               <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
-                <FileText className="size-3.5" />
+                <FileText className={TAB_ICON_CLASS} aria-hidden="true" />
                 Resumen
               </TabsTrigger>
               <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
-                <Upload className="size-3.5" />
+                <Upload className={TAB_ICON_CLASS} aria-hidden="true" />
                 Entregas
               </TabsTrigger>
               <TabsTrigger value="feedback" className={TAB_TRIGGER_CLASS}>
-                <MessageSquare className="size-3.5" />
+                <MessageSquare className={TAB_ICON_CLASS} aria-hidden="true" />
                 Retroalimentación
               </TabsTrigger>
               <TabsTrigger value="timeline" className={TAB_TRIGGER_CLASS}>
-                <Calendar className="size-3.5" />
+                <Calendar className={TAB_ICON_CLASS} aria-hidden="true" />
                 Cronograma
               </TabsTrigger>
               <TabsTrigger value="posts" className={TAB_TRIGGER_CLASS}>
-                <Zap className="size-3.5" />
+                <Zap className={TAB_ICON_CLASS} aria-hidden="true" />
                 Posts
               </TabsTrigger>
               {showRepositoryTab && (
                 <TabsTrigger value="repository" className={TAB_TRIGGER_CLASS}>
-                  <GitBranch className="size-3.5" />
+                  <GitBranch className={TAB_ICON_CLASS} aria-hidden="true" />
                   Repositorio
                 </TabsTrigger>
               )}
             </TabsList>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div
+                  role="status"
+                  aria-label={progressChipLabel}
+                  className="
+                    workspace-progress-chip flex h-8 shrink-0 items-center
+                    gap-2 rounded-full px-3
+                  "
+                >
+                  <span className="text-xs font-semibold text-foreground tabular-nums">
+                    {progressPercentage}%
+                  </span>
+                  <span className="relative block h-1 w-14 overflow-visible rounded-full bg-background/60">
+                    <span
+                      className="
+                        absolute inset-y-0 left-0 rounded-full bg-[#22c4d3]
+                        transition-[width] duration-700 ease-out
+                        motion-reduce:transition-none
+                      "
+                      style={{ width: `${progressPercentage}%` }}
+                    />
+                    {weeklyGoal !== null ? (
+                      <span
+                        className="
+                          absolute -inset-y-1 w-[2px] -translate-x-1/2
+                          rounded-full bg-amber-400
+                        "
+                        style={{ left: `${weeklyGoal}%` }}
+                      />
+                    ) : null}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {weeklyGoal === null
+                  ? 'Sin actividades con fechas para calcular la meta de la semana'
+                  : `Meta de la semana: ${weeklyGoal}%`}
+              </TooltipContent>
+            </Tooltip>
           </div>
         </div>
 

@@ -1508,15 +1508,15 @@ export function GuidedProjectDetails({
                 </div>
 
                 {/* Tabs: same sticky pill menu as every other project detail */}
-                <div className="group sticky top-20 z-30 mt-6 w-fit max-w-full">
-                  <div className="liquid-glass relative rounded-full p-1">
+                <div className="workspace-section-navigation sticky z-30 mt-6 w-fit max-w-full">
+                  <div className="workspace-menu-shell relative p-1">
                     <nav
                       ref={carouselRef}
                       role="tablist"
                       aria-label="Secciones del proyecto guiado"
                       className="
-                      flex w-max max-w-full [scrollbar-width:none] items-center
-                      gap-1 overflow-x-auto
+                      workspace-menu flex w-max max-w-full
+                      [scrollbar-width:none] items-center gap-1 overflow-x-auto
                     "
                     >
                       {navItems.map((item, index) => {
@@ -1536,11 +1536,11 @@ export function GuidedProjectDetails({
                             aria-selected={isActive}
                             aria-controls={panelId}
                             tabIndex={isActive ? 0 : -1}
+                            data-state={isActive ? 'active' : 'inactive'}
                             className={cn(
-                              'relative flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors motion-reduce:transition-none',
-                              isActive
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
+                              'workspace-menu-item relative flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap transition-colors motion-reduce:transition-none [&_svg]:size-3 [&_svg]:shrink-0',
+                              !isActive &&
+                                'text-muted-foreground hover:text-foreground'
                             )}
                           >
                             {item.icon}
