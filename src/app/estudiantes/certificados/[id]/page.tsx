@@ -7,6 +7,7 @@ import { and, eq, sql } from 'drizzle-orm';
 
 import { CertificationStudent } from '~/components/estudiantes/layout/certification/CertificationStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
+import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
@@ -33,6 +34,16 @@ export default async function CertificatePage({ params }: PageProps) {
   }
 
   const courseId = Number(resolvedParams.id);
+  if (!Number.isInteger(courseId) || courseId <= 0) {
+    notFound();
+  }
+
+  // Security best practice: only students enrolled in the course can obtain
+  // or view its certificate (same rule as the program certificate page).
+  const isEnrolled = await isUserEnrolled(courseId, userId);
+  if (!isEnrolled) {
+    notFound();
+  }
 
   // Buscar certificado existente
   let certificate = await db.query.certificates.findFirst({

@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import Link from 'next/link';
+
 import { useUser } from '@clerk/nextjs';
 import {
+  ArrowLeft,
   Calendar,
   ChevronDown,
   CircleCheckBig,
@@ -42,6 +45,22 @@ import ProjectPostsTab from './ProjectPostsTab';
 
 import type { Project } from '~/types/project';
 
+const BACK_BUTTON_CLASS = `
+  liquid-glass inline-flex size-10 shrink-0 items-center justify-center
+  rounded-full text-foreground transition-colors
+  hover:bg-accent hover:text-accent-foreground
+  focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
+`;
+
+const TAB_TRIGGER_CLASS = `
+  relative h-8 gap-1.5 rounded-full px-3 text-xs font-medium whitespace-nowrap
+  text-muted-foreground
+  hover:text-foreground
+  data-[state=active]:bg-background data-[state=active]:text-foreground
+  data-[state=active]:shadow-sm
+  motion-reduce:transition-none
+`;
+
 interface ProjectDetailViewProps {
   project: Project;
   onEditSection?: (
@@ -58,6 +77,11 @@ interface ProjectDetailViewProps {
    * panel: ahí el aviso no aplica y solo estorba.
    */
   hideVisitorBanner?: boolean;
+  /** Destination of the round back button next to the title. */
+  backHref?: string;
+  /** Back action when the detail is shown in place of a list. */
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export default function ProjectDetailView({
@@ -66,6 +90,9 @@ export default function ProjectDetailView({
   addedSections: initialAddedSections = {},
   onAddedSectionsChange,
   hideVisitorBanner = false,
+  backHref,
+  onBack,
+  backLabel = 'Volver a proyectos',
 }: ProjectDetailViewProps) {
   const { mutate } = useSWRConfig();
   const totalSections = 7;
@@ -122,7 +149,9 @@ export default function ProjectDetailView({
     user?.id && project.userId && user.id === project.userId
   );
   // Visitors only get the tab once there is a repository to browse.
-  const showRepositoryTab = canEditProject || Boolean(project.repositoryUrl);
+  // Every project shows its repository tab; without a linked repository the
+  // tab says so (or, for whoever can edit, offers to link one).
+  const showRepositoryTab = true;
 
   // Estado para verificar si el usuario es invitado
   const [isInvited, setIsInvited] = useState(false);
@@ -1095,303 +1124,286 @@ export default function ProjectDetailView({
         </div>
       ) : null}
 
-      {/* Header del proyecto */}
-      <div
-        className="
-          rounded-xl border border-border/50 bg-card/50 p-4
-          sm:p-6
-        "
-      >
-        <div
+      {/* Título: sin tarjeta de encabezado, el menú queda justo debajo */}
+      <div className="flex items-center gap-3">
+        {backHref || onBack ? (
+          backHref ? (
+            <Link
+              href={backHref}
+              aria-label={backLabel}
+              title={backLabel}
+              className={BACK_BUTTON_CLASS}
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={onBack}
+              aria-label={backLabel}
+              title={backLabel}
+              className={BACK_BUTTON_CLASS}
+            >
+              <ArrowLeft className="size-4" />
+            </button>
+          )
+        ) : null}
+        <h1
           className="
-            mb-6 flex flex-col gap-4
-            md:flex-row md:items-start md:justify-between
+            min-w-0 text-lg font-semibold break-words text-foreground
+            md:text-xl
           "
         >
-          <div className="flex-1">
-            {/* Badges de Estado, Tipo y Categoría */}
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              {/* Badge de Estado */}
-              {isProjectComplete ? (
-                <div
-                  className="
-                    inline-flex items-center rounded-full border
-                    border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs
-                    font-semibold text-green-400 transition-colors
-                    hover:bg-primary/80
-                    focus:ring-2 focus:ring-ring focus:ring-offset-2
-                    focus:outline-none
-                  "
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mr-1 size-3"
-                  >
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <path d="m9 12 2 2 4-4"></path>
-                  </svg>
-                  Completado
-                </div>
-              ) : (
-                <div
-                  className="
-                    inline-flex items-center rounded-full border
-                    border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
-                    font-semibold text-blue-400 transition-colors
-                    focus:ring-2 focus:ring-ring focus:ring-offset-2
-                    focus:outline-none
-                  "
-                >
-                  <Clock className="mr-1 size-3" />
-                  En progreso
-                </div>
-              )}
-              {/* Badge de Tipo de Proyecto */}
-              <div
-                className="
-                  inline-flex items-center rounded-full border px-2.5 py-0.5
-                  text-xs font-semibold text-foreground transition-colors
-                  focus:ring-2 focus:ring-ring focus:ring-offset-2
-                  focus:outline-none
-                "
-              >
-                {project.type_project}
-              </div>
-              {/* Badge de Categoría */}
-              {project.categoryName && (
-                <div
-                  className="
-                    inline-flex items-center rounded-full border px-2.5 py-0.5
-                    text-xs font-semibold text-foreground transition-colors
-                    focus:ring-2 focus:ring-ring focus:ring-offset-2
-                    focus:outline-none
-                  "
-                >
-                  {project.categoryName}
-                </div>
-              )}
-            </div>
-
-            {/* Colaboradores */}
-            <div
-              className="
-                mb-2 flex items-center gap-1.5 text-sm text-muted-foreground
-              "
-            >
-              <Users className="size-4" />
-              <span>
-                {collaboratorsLoading
-                  ? '... colaboradores'
-                  : `${collaboratorsCount} colaboradores`}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowCollaboratorsModal(true)}
-                className="
-                  inline-flex h-7 items-center justify-center rounded-md px-2
-                  text-xs font-semibold text-muted-foreground transition-colors
-                  hover:bg-accent hover:text-black
-                  focus-visible:ring-2 focus-visible:ring-ring
-                  focus-visible:ring-offset-2 focus-visible:outline-none
-                "
-              >
-                Ver
-              </button>
-              {showEditControls && (
-                <button
-                  type="button"
-                  onClick={() => onEditSection?.(1, addedSections)}
-                  className="
-                    ml-auto inline-flex h-8 items-center justify-center gap-2
-                    rounded-md px-3 text-xs font-semibold text-muted-foreground
-                    transition-colors
-                    hover:bg-accent hover:text-black
-                    focus-visible:ring-2 focus-visible:ring-ring
-                    focus-visible:ring-offset-2 focus-visible:outline-none
-                    disabled:pointer-events-none disabled:opacity-50
-                    sm:hidden
-                  "
-                >
-                  <Pencil className="size-3.5" />
-                </button>
-              )}
-            </div>
-            <div
-              className="
-                mb-3 flex items-center gap-2 text-sm text-muted-foreground
-              "
-            >
-              <Calendar className="size-4" />
-              <span>Entrega: {formatDate(project.createdAt)}</span>
-            </div>
-
-            <h2
-              className="
-                mb-3 text-xl font-bold text-foreground
-                md:text-2xl
-              "
-            >
-              {project.name}
-            </h2>
-            {project.description?.trim() ? (
-              renderLimitedText(
-                project.description,
-                'project-description',
-                'text-muted-foreground'
-              )
-            ) : (
-              <p className="text-muted-foreground">
-                No hay descripcion definida aun.
-              </p>
-            )}
-          </div>
-          <div
-            className="
-              flex w-full shrink-0 flex-col items-start gap-2
-              sm:w-auto sm:items-end
-            "
-          >
-            {showEditControls && (
-              <button
-                type="button"
-                onClick={() => onEditSection?.(1, addedSections)}
-                className="
-                  hidden h-8 items-center justify-center gap-2 rounded-md px-3
-                  text-xs font-semibold text-muted-foreground transition-colors
-                  hover:bg-accent hover:text-black
-                  focus-visible:ring-2 focus-visible:ring-ring
-                  focus-visible:ring-offset-2 focus-visible:outline-none
-                  disabled:pointer-events-none disabled:opacity-50
-                  sm:inline-flex
-                "
-              >
-                <Pencil className="size-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Barra de progreso */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progreso del proyecto</span>
-            <span className="font-medium" style={{ color: '#22c4d3' }}>
-              {progressPercentage}%
-            </span>
-          </div>
-          <div
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progressPercentage}
-            className="relative h-2 w-full overflow-hidden rounded-full"
-            style={{ backgroundColor: '#1a2333' }}
-          >
-            <div
-              className="h-full flex-1 transition-all"
-              style={{
-                width: `${progressPercentage}%`,
-                backgroundColor: '#22c4d3',
-              }}
-            />
-          </div>
-        </div>
+          {project.name}
+        </h1>
       </div>
+
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList
-          className="
-            flex h-auto w-full flex-wrap items-center justify-start gap-1
-            rounded-md border border-border/50 bg-card/50 p-1
-            text-muted-foreground
-            sm:w-auto sm:flex-nowrap sm:justify-center
-          "
-        >
-          <TabsTrigger
-            value="overview"
-            className="
-              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
-              text-muted-foreground
-              data-[state=active]:bg-accent data-[state=active]:text-background
-              data-[state=active]:shadow-sm
-            "
-          >
-            <FileText className="size-3.5" />
-            Resumen
-          </TabsTrigger>
-          <TabsTrigger
-            value="submissions"
-            className="
-              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
-              text-muted-foreground
-              data-[state=active]:bg-accent data-[state=active]:text-background
-              data-[state=active]:shadow-sm
-            "
-          >
-            <Upload className="size-3.5" />
-            Entregas
-          </TabsTrigger>
-          <TabsTrigger
-            value="feedback"
-            className="
-              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
-              text-muted-foreground
-              data-[state=active]:bg-accent data-[state=active]:text-background
-              data-[state=active]:shadow-sm
-            "
-          >
-            <MessageSquare className="size-3.5" />
-            Retroalimentación
-          </TabsTrigger>
-          <TabsTrigger
-            value="timeline"
-            className="
-              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
-              text-muted-foreground
-              data-[state=active]:bg-accent data-[state=active]:text-background
-              data-[state=active]:shadow-sm
-            "
-          >
-            <Calendar className="size-3.5" />
-            Cronograma
-          </TabsTrigger>
-          <TabsTrigger
-            value="posts"
-            className="
-              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
-              text-muted-foreground
-              data-[state=active]:bg-accent data-[state=active]:text-background
-              data-[state=active]:shadow-sm
-            "
-          >
-            <Zap className="size-3.5" />
-            Posts
-          </TabsTrigger>
-          {showRepositoryTab && (
-            <TabsTrigger
-              value="repository"
+        <div className="sticky top-20 z-30 w-fit max-w-full">
+          <div className="liquid-glass overflow-x-auto rounded-full p-1">
+            <TabsList
+              aria-label="Secciones del proyecto"
               className="
-                gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
-                text-muted-foreground
-                data-[state=active]:bg-accent data-[state=active]:text-background
-                data-[state=active]:shadow-sm
+                flex h-auto w-max justify-start gap-1 rounded-full
+                bg-transparent p-0 text-muted-foreground
               "
             >
-              <GitBranch className="size-3.5" />
-              Repositorio
-            </TabsTrigger>
-          )}
-        </TabsList>
+              <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
+                <FileText className="size-3.5" />
+                Resumen
+              </TabsTrigger>
+              <TabsTrigger value="submissions" className={TAB_TRIGGER_CLASS}>
+                <Upload className="size-3.5" />
+                Entregas
+              </TabsTrigger>
+              <TabsTrigger value="feedback" className={TAB_TRIGGER_CLASS}>
+                <MessageSquare className="size-3.5" />
+                Retroalimentación
+              </TabsTrigger>
+              <TabsTrigger value="timeline" className={TAB_TRIGGER_CLASS}>
+                <Calendar className="size-3.5" />
+                Cronograma
+              </TabsTrigger>
+              <TabsTrigger value="posts" className={TAB_TRIGGER_CLASS}>
+                <Zap className="size-3.5" />
+                Posts
+              </TabsTrigger>
+              {showRepositoryTab && (
+                <TabsTrigger value="repository" className={TAB_TRIGGER_CLASS}>
+                  <GitBranch className="size-3.5" />
+                  Repositorio
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
+        </div>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Estado y progreso del proyecto */}
+          <div
+            className="
+              rounded-xl border border-border/50 bg-card/50 p-4
+              sm:p-6
+            "
+          >
+            <div
+              className="
+                mb-6 flex flex-col gap-4
+                md:flex-row md:items-start md:justify-between
+              "
+            >
+              <div className="flex-1">
+                {/* Badges de Estado, Tipo y Categoría */}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  {/* Badge de Estado */}
+                  {isProjectComplete ? (
+                    <div
+                      className="
+                        inline-flex items-center rounded-full border
+                        border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs
+                        font-semibold text-green-400 transition-colors
+                        hover:bg-primary/80
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      "
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-1 size-3"
+                      >
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="m9 12 2 2 4-4"></path>
+                      </svg>
+                      Completado
+                    </div>
+                  ) : (
+                    <div
+                      className="
+                        inline-flex items-center rounded-full border
+                        border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
+                        font-semibold text-blue-400 transition-colors
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      "
+                    >
+                      <Clock className="mr-1 size-3" />
+                      En progreso
+                    </div>
+                  )}
+                  {/* Badge de Tipo de Proyecto */}
+                  <div
+                    className="
+                      inline-flex items-center rounded-full border px-2.5 py-0.5
+                      text-xs font-semibold text-foreground transition-colors
+                      focus:ring-2 focus:ring-ring focus:ring-offset-2
+                      focus:outline-none
+                    "
+                  >
+                    {project.type_project}
+                  </div>
+                  {/* Badge de Categoría */}
+                  {project.categoryName && (
+                    <div
+                      className="
+                        inline-flex items-center rounded-full border px-2.5 py-0.5
+                        text-xs font-semibold text-foreground transition-colors
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      "
+                    >
+                      {project.categoryName}
+                    </div>
+                  )}
+                </div>
+
+                {/* Colaboradores */}
+                <div
+                  className="
+                    mb-2 flex items-center gap-1.5 text-sm text-muted-foreground
+                  "
+                >
+                  <Users className="size-4" />
+                  <span>
+                    {collaboratorsLoading
+                      ? '... colaboradores'
+                      : `${collaboratorsCount} colaboradores`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowCollaboratorsModal(true)}
+                    className="
+                      inline-flex h-7 items-center justify-center rounded-md px-2
+                      text-xs font-semibold text-muted-foreground transition-colors
+                      hover:bg-accent hover:text-black
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                    "
+                  >
+                    Ver
+                  </button>
+                  {showEditControls && (
+                    <button
+                      type="button"
+                      onClick={() => onEditSection?.(1, addedSections)}
+                      className="
+                        ml-auto inline-flex h-8 items-center justify-center gap-2
+                        rounded-md px-3 text-xs font-semibold text-muted-foreground
+                        transition-colors
+                        hover:bg-accent hover:text-black
+                        focus-visible:ring-2 focus-visible:ring-ring
+                        focus-visible:ring-offset-2 focus-visible:outline-none
+                        disabled:pointer-events-none disabled:opacity-50
+                        sm:hidden
+                      "
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div
+                  className="
+                    mb-3 flex items-center gap-2 text-sm text-muted-foreground
+                  "
+                >
+                  <Calendar className="size-4" />
+                  <span>Entrega: {formatDate(project.createdAt)}</span>
+                </div>
+
+                {project.description?.trim() ? (
+                  renderLimitedText(
+                    project.description,
+                    'project-description',
+                    'text-muted-foreground'
+                  )
+                ) : (
+                  <p className="text-muted-foreground">
+                    No hay descripcion definida aun.
+                  </p>
+                )}
+              </div>
+              <div
+                className="
+                  flex w-full shrink-0 flex-col items-start gap-2
+                  sm:w-auto sm:items-end
+                "
+              >
+                {showEditControls && (
+                  <button
+                    type="button"
+                    onClick={() => onEditSection?.(1, addedSections)}
+                    className="
+                      hidden h-8 items-center justify-center gap-2 rounded-md px-3
+                      text-xs font-semibold text-muted-foreground transition-colors
+                      hover:bg-accent hover:text-black
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      sm:inline-flex
+                    "
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Barra de progreso */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  Progreso del proyecto
+                </span>
+                <span className="font-medium" style={{ color: '#22c4d3' }}>
+                  {progressPercentage}%
+                </span>
+              </div>
+              <div
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={progressPercentage}
+                className="relative h-2 w-full overflow-hidden rounded-full"
+                style={{ backgroundColor: '#1a2333' }}
+              >
+                <div
+                  className="h-full flex-1 transition-all"
+                  style={{
+                    width: `${progressPercentage}%`,
+                    backgroundColor: '#22c4d3',
+                  }}
+                />
+              </div>
+            </div>
+          </div>
           {/* Botón Agregar Sección */}
           <div className="flex justify-end">
             {showEditControls && (
@@ -4272,12 +4284,24 @@ export default function ProjectDetailView({
 
         {showRepositoryTab && (
           <TabsContent value="repository" className="space-y-4">
-            <ProjectRepositoryPanel
-              projectId={project.id}
-              repositoryUrl={project.repositoryUrl ?? null}
-              canEdit={canEditProject}
-              showHeading={false}
-            />
+            {canEditProject || project.repositoryUrl ? (
+              <ProjectRepositoryPanel
+                projectId={project.id}
+                repositoryUrl={project.repositoryUrl ?? null}
+                canEdit={canEditProject}
+                showHeading={false}
+              />
+            ) : (
+              <div
+                className="
+                  flex items-center gap-3 rounded-xl border border-border/50
+                  bg-card/50 p-4 text-sm text-muted-foreground
+                "
+              >
+                <GitBranch className="size-4 shrink-0" />
+                <p>Este proyecto todavía no tiene un repositorio de GitHub.</p>
+              </div>
+            )}
           </TabsContent>
         )}
       </Tabs>

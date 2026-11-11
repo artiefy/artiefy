@@ -1,6 +1,7 @@
 'use server';
 
-import { eq } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { chat_messages, conversations } from '~/server/db/schema';
@@ -16,19 +17,27 @@ interface MessageToSave {
 }
 
 export async function saveMessages(
-  senderId: string,
+  _senderId: string,
   conversationOrCursoId: number | null,
   messages: MessageToSave[]
 ) {
+  const { userId: senderId } = await auth();
+  if (!senderId) throw new Error('No autorizado');
+
   // Primero intentar interpretar el parámetro como conversation.id
   let conversation: typeof conversations.$inferSelect | undefined = undefined;
 
   if (conversationOrCursoId !== null && conversationOrCursoId !== undefined) {
-    // Intentar buscar una conversación con este id
+    // Solo conversaciones del usuario autenticado
     conversation = await db
       .select()
       .from(conversations)
-      .where(eq(conversations.id, conversationOrCursoId))
+      .where(
+        and(
+          eq(conversations.id, conversationOrCursoId),
+          eq(conversations.senderId, senderId)
+        )
+      )
       .limit(1)
       .then((rows) => rows[0]);
   }
@@ -41,10 +50,7 @@ export async function saveMessages(
   // a `curso_id` en la BD. Para evitar colisiones y que varios
   // chats compartan la misma conversación, creamos una nueva
   // conversación explícita asociada al `senderId` y con `curso_id` = null.
-  conversation ??= await getOrCreateConversation({
-    senderId,
-    cursoId: null,
-  });
+  conversation ??= await getOrCreateConversation({ cursoId: null });
 
   for (const msg of messages) {
     const insertObj: {
@@ -55,8 +61,9 @@ export async function saveMessages(
       courses_data?: { id: number; title: string }[];
     } = {
       conversation_id: conversation.id,
-      sender: msg.sender,
-      senderId: msg.sender_id,
+      // Only the bot or the session user can author a message in the chat.
+      sender: msg.sender === 'bot' ? 'bot' : 'user',
+      senderId: msg.sender === 'bot' ? 'bot' : senderId,
       message: msg.text,
     };
     if (msg.coursesData && msg.coursesData.length > 0) {

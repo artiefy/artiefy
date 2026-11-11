@@ -23,6 +23,7 @@ import { IoShieldCheckmark } from 'react-icons/io5';
 import { MdOutlineForum } from 'react-icons/md';
 import useSWR from 'swr';
 
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import { cn } from '~/lib/utils';
 
 import type { Roles } from '~/types/globals';
@@ -121,6 +122,7 @@ type CourseForumProps =
 export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
   const { isSignedIn } = useAuth();
   const { user } = useUser();
+  const { confirm, confirmDialog } = useConfirm();
   const [newPost, setNewPost] = useState('');
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({});
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -423,7 +425,12 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
   };
 
   const handleDeletePost = async (postId: number) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este post?')) return;
+    if (
+      !(await confirm({
+        message: '¿Estás seguro de que quieres eliminar este post?',
+      }))
+    )
+      return;
     try {
       const res = await fetch(
         `/api/estudiantes/forums/${forum?.id}/posts/${postId}`,
@@ -466,7 +473,11 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
   };
 
   const handleDeleteReply = async (replyId: number) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar esta respuesta?'))
+    if (
+      !(await confirm({
+        message: '¿Estás seguro de que quieres eliminar esta respuesta?',
+      }))
+    )
       return;
     try {
       const res = await fetch(`/api/forums/posts/postReplay/${replyId}`, {
@@ -1464,6 +1475,7 @@ export function CourseForum({ courseId, guidedProjectId }: CourseForumProps) {
             Aún no hay discusiones. ¡Sé el primero en comentar!
           </div>
         )}
+        {confirmDialog}
       </div>
     </div>
   );

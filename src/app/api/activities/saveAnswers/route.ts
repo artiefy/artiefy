@@ -1,22 +1,27 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
+import { canAccessCourseActivities } from '~/server/activities/courseAccess';
+import {
+  gradeSubmission,
+  PASSING_SCORE,
+} from '~/server/activities/gradeAnswers';
+import { loadActivityQuestionBank } from '~/server/activities/questionBank';
 import { db } from '~/server/db';
 import { activities, userActivitiesProgress } from '~/server/db/schema';
 import { getActivitySubmissionWindow } from '~/server/utils/activitySubmissionWindow';
-import { formatScoreNumber } from '~/utils/formatScore';
+import { getApiSession } from '~/server/utils/apiAuth';
 
-import type { ActivityResults, SavedAnswer } from '~/types';
+import type { ActivityResults } from '~/types';
 
 interface SaveAnswersRequest {
   activityId: number;
   userId: string;
-  answers: Record<string, SavedAnswer>;
-  score: number;
-  allQuestionsAnswered: boolean;
+  // Only `answers[questionId].answer` is read. Any client `isCorrect`,
+  // `pesoPregunta` or `score` is ignored: the grade is computed here.
+  answers: unknown;
 }
 
 interface ActivityData {
@@ -34,7 +39,8 @@ export async function POST(request: NextRequest) {
   try {
     // Security best practice: authenticate and bind the write to the caller so a
     // user cannot save answers/grades under another student's userId.
-    const { userId: sessionUserId } = await auth();
+    const session = await getApiSession();
+    const sessionUserId = session.userId;
     if (!sessionUserId) {
       return NextResponse.json(
         { success: false, error: 'No autorizado' },
@@ -43,9 +49,44 @@ export async function POST(request: NextRequest) {
     }
 
     const data = (await request.json()) as SaveAnswersRequest;
-    const { activityId, userId, answers } = data;
+    const { userId, answers: submittedAnswers } = data;
+    const activityId = Number(data.activityId);
 
     if (userId !== sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Acceso denegado' },
+        { status: 403 }
+      );
+    }
+
+    if (!Number.isInteger(activityId) || activityId <= 0) {
+      return NextResponse.json(
+        { success: false, error: 'Actividad inválida' },
+        { status: 400 }
+      );
+    }
+
+    // Get activity to ensure we have the correct revisada value
+    const dbActivity = await db.query.activities.findFirst({
+      where: eq(activities.id, activityId),
+      with: { lesson: { columns: { courseId: true } } },
+    });
+
+    if (!dbActivity) {
+      return NextResponse.json(
+        { error: 'Activity not found' },
+        { status: 404 }
+      );
+    }
+
+    // Only students enrolled in the course (or staff with access to it) can
+    // submit, so the grading feedback cannot be used as an answer-key oracle
+    // for arbitrary activities.
+    const hasAccess = await canAccessCourseActivities(
+      session,
+      dbActivity.lesson.courseId
+    );
+    if (!hasAccess) {
       return NextResponse.json(
         { success: false, error: 'Acceso denegado' },
         { status: 403 }
@@ -79,15 +120,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get activity to ensure we have the correct revisada value
-    const dbActivity = await db.query.activities.findFirst({
-      where: eq(activities.id, activityId),
-    });
-
-    if (!dbActivity) {
+    // A passed attempt reveals the correct answers, so it cannot be followed
+    // by a new attempt (the modal never offers a retry after passing).
+    if (
+      currentAttempts > 0 &&
+      (currentProgress?.finalGrade ?? 0) >= PASSING_SCORE
+    ) {
       return NextResponse.json(
-        { error: 'Activity not found' },
-        { status: 404 }
+        {
+          success: false,
+          canClose: true,
+          message: 'Ya aprobaste esta actividad',
+          alreadyPassed: true,
+          finalGrade: currentProgress?.finalGrade ?? 0,
+        },
+        { status: 409 }
       );
     }
 
@@ -109,13 +156,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate score
-    const weightedScore = calculateWeightedScore(answers);
-    const passed = weightedScore >= 3;
+    // Grade against the stored answer key, never against client data.
+    const questionBank = await loadActivityQuestionBank(activityId);
+    const graded = gradeSubmission(questionBank, submittedAnswers);
+    if (graded.totalQuestions === 0) {
+      return NextResponse.json(
+        { success: false, error: 'La actividad no tiene preguntas' },
+        { status: 400 }
+      );
+    }
+
+    const weightedScore = graded.score;
+    const passed = graded.passed;
 
     // Prepare results for Redis
     const results: ActivityResults = {
-      answers,
+      answers: graded.answers,
       score: weightedScore,
       passed,
       submittedAt: new Date().toISOString(),
@@ -172,6 +228,7 @@ export async function POST(request: NextRequest) {
           ? 'Actividad completada correctamente'
           : 'Actividad guardada. Puedes intentarlo nuevamente hasta aprobar.',
         score: weightedScore,
+        answers: graded.answers,
         attemptCount: newAttemptCount,
         isCompleted,
       });
@@ -202,6 +259,7 @@ export async function POST(request: NextRequest) {
         ? 'Actividad completada correctamente'
         : `Intento ${newAttemptCount}/3 completado`,
       score: weightedScore,
+      answers: graded.answers,
       attemptsRemaining: Math.max(0, 3 - newAttemptCount),
       attemptCount: newAttemptCount,
       isCompleted,
@@ -212,17 +270,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function calculateWeightedScore(answers: Record<string, SavedAnswer>): number {
-  let totalWeight = 0;
-  let weightedSum = 0;
-
-  Object.values(answers).forEach((answer) => {
-    const weight = answer.pesoPregunta ?? 1;
-    totalWeight += weight;
-    weightedSum += answer.isCorrect ? weight : 0;
-  });
-
-  return formatScoreNumber((weightedSum / totalWeight) * 5);
 }

@@ -466,6 +466,8 @@ export default function CourseComments({
                 <button
                   type="button"
                   onClick={() => setRating(1)}
+                  aria-label="Calificar con 1 estrella"
+                  aria-pressed={rating === 1}
                   className="
                     relative cursor-pointer transition-all duration-300
                     hover:scale-125
@@ -504,6 +506,8 @@ export default function CourseComments({
                 <button
                   type="button"
                   onClick={() => setRating(2)}
+                  aria-label="Calificar con 2 estrellas"
+                  aria-pressed={rating === 2}
                   className="
                     relative cursor-pointer transition-all duration-300
                     hover:scale-125
@@ -542,6 +546,8 @@ export default function CourseComments({
                 <button
                   type="button"
                   onClick={() => setRating(3)}
+                  aria-label="Calificar con 3 estrellas"
+                  aria-pressed={rating === 3}
                   className="
                     relative cursor-pointer transition-all duration-300
                     hover:scale-125
@@ -580,6 +586,8 @@ export default function CourseComments({
                 <button
                   type="button"
                   onClick={() => setRating(4)}
+                  aria-label="Calificar con 4 estrellas"
+                  aria-pressed={rating === 4}
                   className="
                     relative cursor-pointer transition-all duration-300
                     hover:scale-125
@@ -618,6 +626,8 @@ export default function CourseComments({
                 <button
                   type="button"
                   onClick={() => setRating(5)}
+                  aria-label="Calificar con 5 estrellas"
+                  aria-pressed={rating === 5}
                   className="
                     relative cursor-pointer transition-all duration-300
                     hover:scale-125

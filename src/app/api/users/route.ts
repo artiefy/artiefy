@@ -20,6 +20,21 @@ import {
   updateUserStatus,
 } from '~/server/queries/queries';
 import { updateEnrollmentStatus } from '~/server/queries/queriesSuperAdmin';
+import { authorizeRole } from '~/server/utils/apiAuth';
+
+// Security best practice: the Clerk middleware does not protect `/api`, so
+// every method here authorizes on its own. Listing users and user CRUD are
+// for admin/super-admin; creating or promoting to super-admin is for
+// super-admin only (prevents privilege escalation by an admin).
+const USER_ADMIN_ROLES = ['admin', 'super-admin'] as const;
+const PRIVILEGED_ROLES: ReadonlySet<string> = new Set(['super-admin']);
+
+function authErrorResponse(status: 401 | 403) {
+  return NextResponse.json(
+    { error: status === 401 ? 'No autorizado' : 'Acceso denegado' },
+    { status }
+  );
+}
 
 // 📌 Configuración de S3
 const s3Client = new S3Client({
@@ -99,8 +114,6 @@ async function sendWelcomeEmail(
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    console.log('[sendWelcomeEmail] Contraseña original:', password);
-    console.log('[sendWelcomeEmail] Contraseña escapada:', safePassword);
 
     const mailOptions = {
       from: `"Artiefy" <${process.env.EMAIL_USER}>`,
@@ -146,12 +159,12 @@ async function sendWelcomeEmail(
 
 export async function GET(request: Request) {
   try {
+    const authz = await authorizeRole(USER_ADMIN_ROLES);
+    if (!authz.ok) return authErrorResponse(authz.status);
+
     const { searchParams } = new URL(request.url);
     const query = searchParams.get('search') ?? '';
     const users = await getAdminUsers(query);
-    console.table(
-      users.map((u) => ({ id: u.id, email: u.email, phone: u.phone || '' }))
-    );
 
     // 🔹 Recuperar el tiempo desde localStorage en el servidor no es posible directamente.
     // 🔹 Lo manejaremos desde el frontend.
@@ -175,6 +188,9 @@ type AllowedRole = 'estudiante' | 'educador' | 'admin' | 'super-admin';
 
 export async function POST(request: Request) {
   try {
+    const authz = await authorizeRole(USER_ADMIN_ROLES);
+    if (!authz.ok) return authErrorResponse(authz.status);
+
     interface RequestBody {
       firstName: string;
       lastName: string;
@@ -187,7 +203,6 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as RequestBody;
-    console.log('🔍 [POST /api/users] Body recibido:', JSON.stringify(body));
 
     const {
       firstName,
@@ -216,9 +231,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Crear usuario en Clerk
-    console.log('🔍 [POST /api/users] Llamando a createUser...');
+    // Only a super-admin may create super-admin accounts.
+    if (PRIVILEGED_ROLES.has(role) && authz.role !== 'super-admin') {
+      return NextResponse.json(
+        {
+          error: 'Solo un super-admin puede crear usuarios con rol super-admin',
+        },
+        { status: 403 }
+      );
+    }
 
+    // 2. Crear usuario en Clerk
     const result = await createUser(firstName, lastName, email, role);
     if (!result) {
       return NextResponse.json(
@@ -229,33 +252,17 @@ export async function POST(request: Request) {
     const { user, generatedPassword } = result;
 
     // 3. Guardar usuario en la base de datos con Drizzle
-    console.log('🔍 [POST /api/users] Insertando usuario en BD:', user.id);
-
     // Si es educador y hay imagen, subirla a S3
     let profileImageKey: string | null = null;
     if (role === 'educador' && profileImage) {
-      console.log('📸 [Backend] Iniciando subida de imagen a S3...');
       try {
         profileImageKey = await uploadImageToS3(profileImage, user.id);
-        console.log(
-          '✅ [Backend] Imagen de perfil subida exitosamente:',
-          profileImageKey
-        );
-        console.log(
-          '🔗 [Backend] URL completa:',
-          `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${profileImageKey}`
-        );
       } catch (uploadError) {
         console.error(
           '❌ [Backend] Error subiendo imagen de perfil:',
           uploadError
         );
       }
-    } else {
-      console.log('ℹ️ [Backend] No se subirá imagen:', {
-        esEducador: role === 'educador',
-        tieneImagen: !!profileImage,
-      });
     }
 
     await db
@@ -288,7 +295,6 @@ export async function POST(request: Request) {
         },
       });
 
-    console.log('✅ Usuario guardado en la BD correctamente');
     // 🔹 Enviar correo con credenciales
 
     const safeUser = {
@@ -332,7 +338,6 @@ export async function POST(request: Request) {
     if (body.phone?.trim()) {
       try {
         const phoneNumber = body.phone.trim();
-        console.log(`📱 Enviando plantilla WhatsApp a: ${phoneNumber}`);
 
         const waResponse = await fetch(
           `${request.url.split('/api')[0]}/api/super-admin/whatsapp`,
@@ -349,16 +354,9 @@ export async function POST(request: Request) {
           }
         );
 
-        if (waResponse.ok) {
-          console.log(
-            `✅ Plantilla WhatsApp enviada exitosamente a ${phoneNumber}`
-          );
-        } else {
-          const errorData = await waResponse.json();
-          console.error(
-            `❌ Error enviando WhatsApp a ${phoneNumber}:`,
-            errorData
-          );
+        if (!waResponse.ok) {
+          const errorData: unknown = await waResponse.json();
+          console.error('❌ Error enviando WhatsApp de bienvenida:', errorData);
         }
       } catch (waError) {
         console.error('❌ Error crítico enviando WhatsApp:', waError);
@@ -387,6 +385,9 @@ export async function POST(request: Request) {
 // DELETE /api/users?id=xxx (para eliminar usuario)
 export async function DELETE(request: Request) {
   try {
+    const authz = await authorizeRole(USER_ADMIN_ROLES);
+    if (!authz.ok) return authErrorResponse(authz.status);
+
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('id');
     if (!userId) {
@@ -408,6 +409,9 @@ export async function DELETE(request: Request) {
 // PATCH /api/users (para actualizar algo: rol, nombre, etc.)
 export async function PATCH(request: Request) {
   try {
+    const authz = await authorizeRole(USER_ADMIN_ROLES);
+    if (!authz.ok) return authErrorResponse(authz.status);
+
     interface RequestBody {
       action: string;
       id: string;
@@ -427,6 +431,10 @@ export async function PATCH(request: Request) {
           { error: 'Role is required' },
           { status: 400 }
         );
+      }
+      // Only a super-admin may grant super-admin.
+      if (PRIVILEGED_ROLES.has(role) && authz.role !== 'super-admin') {
+        return authErrorResponse(403);
       }
       await setRoleWrapper({ id, role });
       return NextResponse.json({ success: true });

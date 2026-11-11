@@ -1,6 +1,30 @@
-import { NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+
+import { auth } from '@clerk/nextjs/server';
 
 import { env } from '~/env';
+import {
+  consumeAgentQuota,
+  refundAgentQuota,
+} from '~/server/agents/agentChatQuota';
+import { ratelimit } from '~/server/ratelimit/ratelimit';
+
+/** Same anonymous-visitor cookie used by `/api/agents/chat`. */
+const ANON_COOKIE = 'artiefy_agent_anon';
+const ANON_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+const MAX_SYSTEM_PROMPT_CHARS = 4000;
+const MAX_PROMPT_CHARS = 2000;
+const MAX_HISTORY_MESSAGES = 10;
+const MAX_HISTORY_TEXT_CHARS = 2000;
+
+function getClientIp(req: NextRequest): string {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const first = forwarded?.split(',')[0]?.trim();
+  return first ?? req.headers.get('x-real-ip') ?? 'unknown';
+}
 
 interface ReqBody {
   assistantId?: string; // kept for backward compatibility but no longer used
@@ -66,13 +90,86 @@ function classifyReason(msg: string): string {
   return 'otros';
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  let refundKey: string | null = null;
   try {
+    const { userId } = await auth();
+
+    // Anonymous visitors (the sales chat) share the agent chat's anonymous
+    // allowance, tracked with the same cookie; signed-in users are only rate
+    // limited here.
+    const existingAnonId = req.cookies.get(ANON_COOKIE)?.value;
+    const anonId = userId
+      ? null
+      : existingAnonId && UUID_PATTERN.test(existingAnonId)
+        ? existingAnonId
+        : crypto.randomUUID();
+
+    const withAnonCookie = (response: NextResponse) => {
+      if (anonId) {
+        response.cookies.set(ANON_COOKIE, anonId, {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: req.nextUrl.protocol === 'https:',
+          path: '/',
+          maxAge: ANON_COOKIE_MAX_AGE,
+        });
+      }
+      return response;
+    };
+
+    const limitKey = userId
+      ? `openai-assistant:user:${userId}`
+      : `openai-assistant:ip:${getClientIp(req)}`;
+    const { success } = await ratelimit.limit(limitKey);
+    if (!success) {
+      return withAnonCookie(
+        NextResponse.json(
+          { error: 'Demasiadas solicitudes. Intenta de nuevo en un momento.' },
+          { status: 429 }
+        )
+      );
+    }
+
+    if (anonId) {
+      const quota = await consumeAgentQuota('anon', anonId);
+      if (!quota.allowed) {
+        return withAnonCookie(
+          NextResponse.json(
+            {
+              error:
+                'Alcanzaste el límite de mensajes. Inicia sesión para seguir conversando.',
+            },
+            { status: 429 }
+          )
+        );
+      }
+      refundKey = quota.key;
+    }
+
+    const releaseQuota = async () => {
+      if (refundKey) await refundAgentQuota(refundKey);
+    };
+
     const body = (await req.json()) as ReqBody;
-    const { prompt, messageHistory, systemPrompt } = body;
+    const { messageHistory } = body;
+    const prompt = body.prompt;
+    const systemPrompt =
+      typeof body.systemPrompt === 'string'
+        ? body.systemPrompt.slice(0, MAX_SYSTEM_PROMPT_CHARS)
+        : undefined;
 
     if (!prompt || typeof prompt !== 'string') {
-      return NextResponse.json({ error: 'Missing prompt' }, { status: 400 });
+      await releaseQuota();
+      return withAnonCookie(
+        NextResponse.json({ error: 'Missing prompt' }, { status: 400 })
+      );
+    }
+    if (prompt.length > MAX_PROMPT_CHARS) {
+      await releaseQuota();
+      return withAnonCookie(
+        NextResponse.json({ error: 'Prompt too long' }, { status: 413 })
+      );
     }
 
     // Construir mensajes para Chat Completions
@@ -86,13 +183,16 @@ export async function POST(req: Request) {
 
     // Limitar historial a los últimos 10 relevantes
     const historySlice = Array.isArray(messageHistory)
-      ? messageHistory.slice(-10)
+      ? messageHistory.slice(-MAX_HISTORY_MESSAGES)
       : [];
     for (const m of historySlice) {
       if (!m || typeof m.text !== 'string') continue;
       const role =
         m.role === 'assistant' || m.role === 'bot' ? 'assistant' : 'user';
-      messages.push({ role, content: m.text });
+      messages.push({
+        role,
+        content: m.text.slice(0, MAX_HISTORY_TEXT_CHARS),
+      });
     }
 
     // Mensaje actual del usuario
@@ -113,11 +213,6 @@ export async function POST(req: Request) {
       tool_choice: 'auto' as const,
     };
 
-    console.log('Calling Chat Completions with:', {
-      messageCount: messages.length,
-      hasSystemPrompt: !!systemPrompt,
-    });
-
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -128,8 +223,6 @@ export async function POST(req: Request) {
     });
 
     if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.error('Chat Completions error:', res.status, txt);
       // Fallback muy simple sin tools
       const fallbackUrl = 'https://api.openai.com/v1/responses';
       const fallbackPrompt = systemPrompt
@@ -149,10 +242,9 @@ export async function POST(req: Request) {
         body: JSON.stringify(fallbackPayload),
       });
       if (!fb.ok) {
-        const fbTxt = await fb.text().catch(() => '');
-        return NextResponse.json(
-          { error: 'Fallback error', detail: fbTxt },
-          { status: 502 }
+        await releaseQuota();
+        return withAnonCookie(
+          NextResponse.json({ error: 'Fallback error' }, { status: 502 })
         );
       }
       const fbData = await fb.json();
@@ -172,9 +264,11 @@ export async function POST(req: Request) {
       }
       if (!fbText && isRecord(fbData) && typeof fbData.output_text === 'string')
         fbText = fbData.output_text as string;
-      return NextResponse.json({
-        response: fbText || 'No response (fallback)',
-      });
+      return withAnonCookie(
+        NextResponse.json({
+          response: fbText || 'No response (fallback)',
+        })
+      );
     }
 
     const data: unknown = await res.json();
@@ -187,11 +281,9 @@ export async function POST(req: Request) {
     ) {
       const choices = (data as Record<string, unknown>).choices as unknown[];
       const firstChoice = (choices[0] ?? undefined) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       const message = firstChoice?.message as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       const toolCalls = message?.tool_calls as unknown[] | undefined;
       if (Array.isArray(toolCalls) && toolCalls.length) {
         const tc = toolCalls.find(
@@ -222,19 +314,21 @@ export async function POST(req: Request) {
         const encodedMessage = encodeURIComponent(
           `Hola, necesito ayuda (${reason}): ${userMessage}`
         );
-        return NextResponse.json({
-          response: '¿Prefieres hablar directo con nuestro equipo?',
-          whatsapp_action: {
-            type: 'whatsapp_contact',
-            phone: '573241149554',
-            message: userMessage,
-            reason,
-            url: `https://wa.me/573241149554?text=${encodedMessage}`,
-            button_text: 'WhatsApp 🚀',
-          },
-        });
-      } catch (e) {
-        console.error('Error parsing function arguments', e);
+        return withAnonCookie(
+          NextResponse.json({
+            response: '¿Prefieres hablar directo con nuestro equipo?',
+            whatsapp_action: {
+              type: 'whatsapp_contact',
+              phone: '573241149554',
+              message: userMessage,
+              reason,
+              url: `https://wa.me/573241149554?text=${encodedMessage}`,
+              button_text: 'WhatsApp 🚀',
+            },
+          })
+        );
+      } catch {
+        // Malformed tool arguments: fall through to the plain text answer.
       }
     }
 
@@ -246,11 +340,9 @@ export async function POST(req: Request) {
     ) {
       const choices = (data as Record<string, unknown>).choices as unknown[];
       const firstChoice = (choices[0] ?? undefined) as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       const message = firstChoice?.message as
-        | Record<string, unknown>
-        | undefined;
+        Record<string, unknown> | undefined;
       if (message && typeof message.content === 'string')
         assistantText = message.content as string;
       // Algunos modelos pueden devolver array de content parts
@@ -268,14 +360,13 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
-      response: assistantText || 'No response from model',
-    });
-  } catch (err) {
-    console.error('Error in /api/openai-assistant', err);
-    return NextResponse.json(
-      { error: 'Internal error', detail: String(err) },
-      { status: 500 }
+    return withAnonCookie(
+      NextResponse.json({
+        response: assistantText || 'No response from model',
+      })
     );
+  } catch {
+    if (refundKey) await refundAgentQuota(refundKey);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

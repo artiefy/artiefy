@@ -3,14 +3,12 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { env } from '~/env';
 import { updateUserSubscription } from '~/server/actions/estudiantes/confirmation/updateUserSubscription';
 import { enrollUserInCourse } from '~/server/actions/estudiantes/courses/enrollIndividualCourse';
-import { db } from '~/server/db';
-import { courses, courseTypes } from '~/server/db/schema';
+import { getCourseSale } from '~/server/payments/productPricing';
 import { getAuthConfig } from '~/utils/paygateway/auth';
 import { getProductById } from '~/utils/paygateway/products';
 import {
@@ -92,32 +90,12 @@ async function resolveCoursePurchase(
   courseId: number,
   timestamp: number
 ): Promise<ResolvedPurchase | null> {
-  const [row] = await db
-    .select({
-      title: courses.title,
-      courseTypeId: courses.courseTypeId,
-      individualPrice: courses.individualPrice,
-      typePrice: courseTypes.price,
-      isPurchasableIndividually: courseTypes.isPurchasableIndividually,
-    })
-    .from(courses)
-    .leftJoin(courseTypes, eq(courses.courseTypeId, courseTypes.id))
-    .where(eq(courses.id, courseId))
-    .limit(1);
-
-  if (!row) return null;
-
-  // Course type 4 is this repo's "pago unitario" type; the flag on the joined
-  // course type covers any other type marked purchasable on its own.
-  const isPurchasable =
-    row.courseTypeId === 4 || row.isPurchasableIndividually === true;
-  const amount = row.individualPrice ?? row.typePrice ?? 0;
-
-  if (!isPurchasable || amount <= 0) return null;
+  const sale = await getCourseSale(courseId);
+  if (!sale?.isPurchasable) return null;
 
   return {
-    amount,
-    description: row.title,
+    amount: sale.amount,
+    description: sale.title,
     // `confirmCoursePayment` parses this exact shape to find the course, so a
     // tokenized sale and a WebCheckout sale confirm through the same webhook.
     referenceCode: `C${courseId}T${timestamp}`,

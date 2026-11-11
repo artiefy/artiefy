@@ -1,6 +1,10 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { enrollUserInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollUserInGuidedProject';
+import {
+  getGuidedProjectSale,
+  paidAmountMatches,
+} from '~/server/payments/productPricing';
 import { GUIDED_PROJECT_REFERENCE_PREFIX } from '~/utils/paygateway/form';
 import { verifySignature } from '~/utils/paygateway/verifySignature';
 
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest) {
     const sign = formData.get('sign');
 
     if (!sign || typeof sign !== 'string') {
-      console.error('❌ Error: No signature received');
+      console.error('Payment confirmation without signature');
       return NextResponse.json(
         { message: 'Missing signature' },
         { status: 400 }
@@ -49,10 +53,8 @@ export async function POST(req: NextRequest) {
       sign: sign,
     };
 
-    console.log('🧩 Guided project payment data:', paymentData);
-
     if (!verifySignature(paymentData)) {
-      console.error('❌ Invalid signature for guided project payment');
+      console.error('Payment confirmation with invalid signature');
       return NextResponse.json(
         { message: 'Invalid signature' },
         { status: 400 }
@@ -63,10 +65,7 @@ export async function POST(req: NextRequest) {
     if (paymentData.state_pol === '4') {
       const match = REFERENCE_PATTERN.exec(paymentData.reference_sale);
       if (!match) {
-        console.error(
-          '❌ Invalid reference format:',
-          paymentData.reference_sale
-        );
+        console.error('Payment confirmation with invalid reference format');
         return NextResponse.json(
           { error: 'Invalid reference format' },
           { status: 400 }
@@ -76,15 +75,25 @@ export async function POST(req: NextRequest) {
       const guidedProjectId = parseInt(match[1], 10);
       const email = paymentData.email_buyer?.trim().toLowerCase();
 
-      console.log('✅ Processing guided project enrollment:', {
-        guidedProjectId,
-        email,
-      });
-
       if (!email || !guidedProjectId) {
-        console.error('❌ Missing email or guidedProjectId for enrollment');
+        console.error('Payment confirmation without buyer email or product id');
         return NextResponse.json(
           { error: 'Missing email or guidedProjectId' },
+          { status: 400 }
+        );
+      }
+
+      const sale = await getGuidedProjectSale(guidedProjectId);
+      if (
+        !sale ||
+        !paidAmountMatches(paymentData.value, paymentData.currency, sale.amount)
+      ) {
+        console.warn(
+          'Payment confirmation rejected: paid value does not match the price',
+          { guidedProjectId, currency: paymentData.currency }
+        );
+        return NextResponse.json(
+          { error: 'Payment amount mismatch' },
           { status: 400 }
         );
       }
@@ -99,7 +108,10 @@ export async function POST(req: NextRequest) {
           result,
         });
       } catch (enrollError) {
-        console.error('❌ Enrollment failed:', enrollError);
+        console.error(
+          'Enrollment failed after approved payment:',
+          enrollError instanceof Error ? enrollError.message : 'unknown error'
+        );
         return NextResponse.json(
           {
             error: 'Enrollment failed',
@@ -118,7 +130,10 @@ export async function POST(req: NextRequest) {
       status: paymentData.state_pol,
     });
   } catch (error) {
-    console.error('❌ Error in guided project payment confirmation:', error);
+    console.error(
+      'Error in guided project payment confirmation:',
+      error instanceof Error ? error.message : 'unknown error'
+    );
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

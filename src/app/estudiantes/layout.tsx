@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { STUDENT_CONTENT_ID } from '~/components/estudiantes/layout/SkipToContentLink';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 
@@ -27,7 +28,10 @@ export default function StudentLayout({
 }) {
   return (
     <div className="relative min-h-screen">
-      {children}
+      {/* Target of the skip link rendered by the root layout. */}
+      <div id={STUDENT_CONTENT_ID} tabIndex={-1} className="outline-none">
+        {children}
+      </div>
       <TourComponent />
       <TicketSupportChatbot />
     </div>

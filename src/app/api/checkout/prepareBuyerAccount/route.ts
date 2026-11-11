@@ -1,11 +1,26 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 import { EmailTemplateNewAccount } from '~/components/estudiantes/layout/EmailTemplateNewAccount';
+import { env } from '~/env';
 import { sendTicketEmail } from '~/lib/emails/ticketEmails';
 import { grantSignupTrial } from '~/server/actions/estudiantes/subscriptions/grantSignupTrial';
 import { generarPasswordSegura } from '~/utils/generatePassword';
+
+// Anyone can call this before paying: it says whether an email has an account
+// and creates accounts that send mail. A per-IP limit keeps it usable for a
+// real checkout while stopping account enumeration and mail flooding.
+const ratelimit = new Ratelimit({
+  redis: new Redis({
+    url: env.UPSTASH_REDIS_REST_URL,
+    token: env.UPSTASH_REDIS_REST_TOKEN,
+  }),
+  limiter: Ratelimit.slidingWindow(10, '10 m'),
+  prefix: 'checkout:prepare-account',
+});
 
 type RequestBody = {
   email?: string;
@@ -36,6 +51,19 @@ function buildNames(email: string, firstName?: string, lastName?: string) {
 
 export async function POST(req: Request) {
   try {
+    const forwardedFor = req.headers.get('x-forwarded-for') ?? '';
+    const ipAddress = forwardedFor.split(',')[0]?.trim() || 'unknown';
+    const { success } = await ratelimit.limit(ipAddress);
+    if (!success) {
+      return NextResponse.json(
+        {
+          error:
+            'Demasiados intentos. Espera unos minutos antes de volver a intentar.',
+        },
+        { status: 429 }
+      );
+    }
+
     const body = (await req.json()) as RequestBody;
     const normalizedEmail = body.email?.trim().toLowerCase() ?? '';
 
@@ -138,7 +166,6 @@ export async function POST(req: Request) {
       hasExistingAccount: false,
       accountCreated: true,
       credentialsEmailSent: true,
-      temporaryPassword,
     });
   } catch (error) {
     console.error('❌ prepareBuyerAccount error:', error);

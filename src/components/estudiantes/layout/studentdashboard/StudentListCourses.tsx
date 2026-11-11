@@ -500,9 +500,9 @@ export default function StudentListCourses({
               </div>
 
               <div className="relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4">
-                <h3 className="line-clamp-2 text-base leading-snug font-bold text-foreground transition-colors duration-200 group-hover:text-primary">
+                <h2 className="line-clamp-2 text-base leading-snug font-bold text-foreground transition-colors duration-200 group-hover:text-primary">
                   {item.title}
-                </h3>
+                </h2>
                 <div className="flex items-center justify-between gap-2">
                   <p className="min-w-0 truncate text-xs text-muted-foreground">
                     Por{' '}

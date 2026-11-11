@@ -448,6 +448,9 @@ export interface SavedAnswer {
   answer: string;
   isCorrect: boolean;
   pesoPregunta: number;
+  // Answer key of a wrong answer, set by the server only when the attempt
+  // passed (the modal shows "Respuesta correcta" only in that case).
+  correctAnswer?: string;
 }
 
 export interface ActivityResults {

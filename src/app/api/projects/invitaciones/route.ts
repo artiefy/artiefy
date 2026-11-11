@@ -9,6 +9,21 @@ import { sendTicketEmail } from '~/lib/emails/ticketEmails';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { projectInvitations, projects, users } from '~/server/db/schema';
+import { getApiSession } from '~/server/utils/apiAuth';
+
+const unauthorized = () =>
+  NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+const forbidden = () =>
+  NextResponse.json({ error: 'Acceso denegado' }, { status: 403 });
+
+async function getProjectOwnerId(projectId: number) {
+  const rows = await db
+    .select({ userId: projects.userId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+  return rows[0]?.userId ?? null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,18 +34,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const session = await getApiSession();
+    if (!session.userId) return unauthorized();
+
     const body = await req.json();
-    console.log('Invitacion body:', body);
 
-    const { invitedUserId, projectId, invitedByUserId, invitationMessage } =
-      body;
+    const { invitedUserId, projectId, invitationMessage } = body;
 
-    if (!invitedUserId || !projectId || !invitedByUserId) {
-      console.error('Faltan parámetros:', {
-        invitedUserId,
-        projectId,
-        invitedByUserId,
-      });
+    // The inviter is always the signed-in user; any client value is ignored.
+    const invitedByUserId = session.userId;
+
+    if (!invitedUserId || !projectId) {
       return NextResponse.json(
         { error: 'Faltan parámetros obligatorios' },
         { status: 400 }
@@ -42,16 +56,21 @@ export async function POST(req: NextRequest) {
     const invitedByUserIdStr = String(invitedByUserId);
 
     if (!invitedUserIdStr || !invitedByUserIdStr || isNaN(projectIdNum)) {
-      console.error('Parámetros inválidos:', {
-        invitedUserIdStr,
-        projectIdNum,
-        invitedByUserIdStr,
-      });
       return NextResponse.json(
         { error: 'Parámetros inválidos' },
         { status: 400 }
       );
     }
+
+    // Only the project owner may invite people to it.
+    const ownerId = await getProjectOwnerId(projectIdNum);
+    if (!ownerId) {
+      return NextResponse.json(
+        { error: 'Proyecto no encontrado' },
+        { status: 404 }
+      );
+    }
+    if (ownerId !== invitedByUserIdStr) return forbidden();
 
     const ensureUserExists = async (userIdToEnsure: string) => {
       const existingUser = await db
@@ -98,8 +117,7 @@ export async function POST(req: NextRequest) {
     try {
       await ensureUserExists(invitedUserIdStr);
       await ensureUserExists(invitedByUserIdStr);
-    } catch (error) {
-      console.error('Error verificando usuarios:', error);
+    } catch {
       return NextResponse.json(
         { error: 'No se pudo validar el usuario invitado' },
         { status: 400 }
@@ -118,10 +136,7 @@ export async function POST(req: NextRequest) {
         )
       );
 
-    console.log('Invitaciones existentes:', existing);
-
     if (existing.length > 0) {
-      console.warn('Ya existe invitación pendiente:', existing);
       return NextResponse.json(
         { error: 'Ya existe una invitación pendiente para este usuario' },
         { status: 409 }
@@ -137,17 +152,12 @@ export async function POST(req: NextRequest) {
         typeof invitationMessage === 'string' ? invitationMessage : undefined,
       status: 'pending' as const,
     };
-    console.log('Insertando invitación:', insertData);
-
     const result = await db
       .insert(projectInvitations)
       .values(insertData)
       .returning();
 
-    console.log('Invitación creada:', result);
-
     if (!result || result.length === 0) {
-      console.error('No se pudo crear la invitación');
       return NextResponse.json(
         { error: 'No se pudo crear la invitación' },
         { status: 500 }
@@ -229,11 +239,8 @@ export async function POST(req: NextRequest) {
             },
           ],
         });
-
-        console.log('✅ Email de invitación enviado a:', invitedUserEmail);
       }
-    } catch (emailError) {
-      console.error('❌ Error al enviar email de invitación:', emailError);
+    } catch {
       // No falla el endpoint si el email falla
     }
 
@@ -242,7 +249,6 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (_err) {
-    console.error('Error al crear la invitación:', _err);
     return NextResponse.json(
       { error: 'Error al crear la invitación' },
       { status: 500 }
@@ -251,6 +257,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const session = await getApiSession();
+  if (!session.userId) return unauthorized();
+
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
   const projectId = searchParams.get('projectId');
@@ -261,6 +270,9 @@ export async function GET(req: NextRequest) {
       { status: 400 }
     );
   }
+
+  // A user may only list their own received invitations.
+  if (userId && userId !== session.userId) return forbidden();
 
   try {
     if (userId) {
@@ -295,6 +307,11 @@ export async function GET(req: NextRequest) {
           { status: 400 }
         );
       }
+      // Invitations of a project are visible to its owner (or staff) only.
+      const projectOwnerId = await getProjectOwnerId(projectIdNum);
+      if (projectOwnerId !== session.userId && !session.isStaff) {
+        return forbidden();
+      }
       const invitaciones = await db
         .select()
         .from(projectInvitations)
@@ -318,6 +335,9 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const session = await getApiSession();
+    if (!session.userId) return unauthorized();
+
     const body = await req.json();
     const { id, status } = body;
     const statusStr = String(status);
@@ -329,8 +349,14 @@ export async function PATCH(req: NextRequest) {
     }
     const updated = await db
       .update(projectInvitations)
-      .set({ status })
-      .where(eq(projectInvitations.id, Number(id))) // Asegura tipo number
+      .set({ status: statusStr as 'accepted' | 'rejected' })
+      .where(
+        and(
+          eq(projectInvitations.id, Number(id)),
+          // Only the invited user can accept or reject an invitation.
+          eq(projectInvitations.invitedUserId, session.userId)
+        )
+      )
       .returning();
     if (!updated || updated.length === 0) {
       return NextResponse.json(
@@ -349,15 +375,62 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const session = await getApiSession();
+  if (!session.userId) return unauthorized();
+
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
   if (!userId) {
-    return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+    // Single invitation by id (JSON body): allowed to its invited user, its
+    // inviter, the project owner or staff.
+    const body = (await req.json().catch(() => null)) as {
+      id?: unknown;
+    } | null;
+    const invitationId = Number(body?.id);
+    if (!Number.isInteger(invitationId)) {
+      return NextResponse.json({ error: 'Falta userId' }, { status: 400 });
+    }
+    try {
+      const found = await db
+        .select({
+          invitedUserId: projectInvitations.invitedUserId,
+          invitedByUserId: projectInvitations.invitedByUserId,
+          projectId: projectInvitations.projectId,
+        })
+        .from(projectInvitations)
+        .where(eq(projectInvitations.id, invitationId))
+        .limit(1);
+      const invitation = found[0];
+      if (!invitation) {
+        return NextResponse.json(
+          { error: 'No se encontró la invitación' },
+          { status: 404 }
+        );
+      }
+      const projectOwnerId = await getProjectOwnerId(invitation.projectId);
+      const allowed =
+        session.isStaff ||
+        invitation.invitedUserId === session.userId ||
+        invitation.invitedByUserId === session.userId ||
+        projectOwnerId === session.userId;
+      if (!allowed) return forbidden();
+      await db
+        .delete(projectInvitations)
+        .where(eq(projectInvitations.id, invitationId));
+      return NextResponse.json({ success: true });
+    } catch (_err) {
+      return NextResponse.json(
+        { error: 'Error al eliminar invitaciones' },
+        { status: 500 }
+      );
+    }
   }
+  // Bulk delete: a user may only clear their own received invitations.
+  if (String(userId) !== session.userId) return forbidden();
   try {
     await db
       .delete(projectInvitations)
-      .where(eq(projectInvitations.invitedUserId, String(userId))); // Asegura tipo string
+      .where(eq(projectInvitations.invitedUserId, session.userId));
     return NextResponse.json({ success: true });
   } catch (_err) {
     return NextResponse.json(

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { auth as clerkAuth } from '@clerk/nextjs/server';
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 import * as XLSX from 'xlsx';
@@ -14,6 +13,7 @@ import {
 } from '~/server/db/schema';
 import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 import { createUser, updateUserInClerk } from '~/server/queries/queries';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -1008,16 +1008,12 @@ function autoDetectMappings(detectedColumns: string[]): ColumnMapping[] {
 }
 export async function POST(request: NextRequest) {
   try {
-    // auth robusto (tipado con Clerk)
-    const authData = await clerkAuth();
-    const userId: string | null = authData?.userId ?? null;
-
-    // fallback DEV
-    const headerUserId = request.headers.get('x-user-id');
-    const effectiveUserId = userId ?? headerUserId ?? null;
-
-    if (!effectiveUserId) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
+    const authz = await authorizeRole(['admin', 'super-admin']);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
     }
 
     const form = await request.formData();

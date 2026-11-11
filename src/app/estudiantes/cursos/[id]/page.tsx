@@ -18,11 +18,12 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 import { getCourseTypeCounts } from '~/server/actions/estudiantes/courses/getCourseTypeCounts';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import { isCourseOwnedByEducator } from '~/server/queries/educatorCourseAccess';
-import { getDashboardRouteByRole, getUserRole } from '~/utils/roles';
+import { getApiSession } from '~/server/utils/apiAuth';
+import { getDashboardRouteByRole } from '~/utils/roles';
 
 import CourseDetails from './CourseDetails';
 
-import type { Course } from '~/types';
+import type { ClassMeeting, Course, Enrollment } from '~/types';
 
 // TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
 // See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
@@ -169,7 +170,7 @@ async function CourseContent({ id }: { id: string }) {
       notFound();
     }
 
-    const { userId, sessionClaims } = await auth();
+    const { userId } = await auth();
     const course = await getCourseById(courseId, userId);
 
     if (!course) {
@@ -178,7 +179,7 @@ async function CourseContent({ id }: { id: string }) {
 
     // Un educador solo puede ver las rutas [id] de SUS cursos (instructor,
     // creador o co-instructor). El super-admin pasa sin restricción.
-    const role = getUserRole(sessionClaims?.metadata?.role);
+    const { role } = await getApiSession();
     if (role === 'educador') {
       const ownsCourse = userId
         ? await isCourseOwnedByEducator(courseId, userId)
@@ -191,8 +192,27 @@ async function CourseContent({ id }: { id: string }) {
     // Asegura que userId es string (no null)
     const safeUserId = userId ?? '';
 
+    // Todos los estudiantes inscritos del curso; solo se usa en el servidor.
+    const allEnrollments: Enrollment[] = Array.isArray(course.enrollments)
+      ? course.enrollments
+      : [];
+    const ownEnrollments = userId
+      ? allEnrollments.filter((enrollment) => enrollment.userId === userId)
+      : [];
+
+    // SEG-03: el contenido privado (claves S3 de videos y recursos, enlaces de
+    // clases en vivo y grabaciones) solo se serializa para quien tiene derecho:
+    // sesion iniciada Y (inscrito en este curso O personal; el educador ya fue
+    // validado como dueno arriba).
+    const hasPrivateAccess =
+      Boolean(userId) &&
+      (ownEnrollments.length > 0 ||
+        role === 'admin' ||
+        role === 'super-admin' ||
+        role === 'educador');
+
     // Obtener lecciones sincronizadas con progreso real del usuario
-    const lessons =
+    const rawLessons =
       (await getLessonsByCourseId(courseId, safeUserId))?.map((lesson) => ({
         ...lesson,
         isLocked: false,
@@ -206,22 +226,69 @@ async function CourseContent({ id }: { id: string }) {
     const rawClassMeetings = await getClassMeetingsByCourseId(courseId);
 
     // Convert Date fields to ISO strings for type compatibility
-    const classMeetings = rawClassMeetings.map((meeting) => ({
-      ...meeting,
-      startDateTime: meeting.startDateTime
-        ? new Date(meeting.startDateTime).toISOString()
-        : '',
-      endDateTime: meeting.endDateTime
-        ? new Date(meeting.endDateTime).toISOString()
-        : '',
-      createdAt: meeting.createdAt
-        ? new Date(meeting.createdAt).toISOString()
-        : null,
-    }));
+    const allClassMeetings: ClassMeeting[] = rawClassMeetings.map(
+      (meeting) => ({
+        ...meeting,
+        startDateTime: meeting.startDateTime
+          ? new Date(meeting.startDateTime).toISOString()
+          : '',
+        endDateTime: meeting.endDateTime
+          ? new Date(meeting.endDateTime).toISOString()
+          : '',
+        createdAt: meeting.createdAt
+          ? new Date(meeting.createdAt).toISOString()
+          : null,
+      })
+    );
+
+    // Counts shown on the public tabs; computed before any redaction so the
+    // page keeps rendering the same numbers for visitors without access.
+    const publicCounts = {
+      resources: rawLessons.filter(
+        (lesson) => lesson.resourceKey && lesson.resourceKey.trim() !== ''
+      ).length,
+      recordings: allClassMeetings.filter(
+        (meeting) => !!meeting.video_key || !!meeting.videoUrlExt?.trim()
+      ).length,
+    };
+
+    const lessons = hasPrivateAccess
+      ? rawLessons
+      : rawLessons.map((lesson) => ({
+          ...lesson,
+          coverImageKey: '',
+          coverVideoKey: '',
+          resourceKey: '',
+          resourceNames: [],
+        }));
+
+    // Visitors without access only get the upcoming/live sessions (titles and
+    // dates), never join links, recording keys or external recording URLs.
+    const classMeetings: ClassMeeting[] = hasPrivateAccess
+      ? allClassMeetings
+      : allClassMeetings
+          .filter(
+            (meeting) => !meeting.video_key && !meeting.videoUrlExt?.trim()
+          )
+          .map((meeting) => ({
+            id: meeting.id,
+            courseId: meeting.courseId,
+            title: meeting.title,
+            startDateTime: meeting.startDateTime,
+            endDateTime: meeting.endDateTime,
+            weekNumber: meeting.weekNumber,
+            createdAt: meeting.createdAt,
+            meetingId: '',
+            joinUrl: null,
+            video_key: null,
+            video_key_2: null,
+            videoUrlExt: null,
+            progress: null,
+          }));
 
     const courseForDetails: Course = {
       ...course,
-      totalStudents: course.enrollments?.length ?? 0,
+      totalStudents: allEnrollments.length,
       lessons,
       category: course.category
         ? {
@@ -236,7 +303,8 @@ async function CourseContent({ id }: { id: string }) {
             name: course.modalidad.name,
           }
         : undefined,
-      enrollments: course.enrollments,
+      // Never ship other students' ids to the browser: only the viewer's own.
+      enrollments: ownEnrollments,
     };
 
     courseDetailsProps = {
@@ -244,6 +312,7 @@ async function CourseContent({ id }: { id: string }) {
       classMeetings,
       courseTypeCounts,
       isSignedInOnServer: Boolean(userId),
+      publicCounts,
     };
   } catch (error) {
     throw error;

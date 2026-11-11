@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
+
 import { CommunityPostComments } from './CommunityPostComments';
 
 import type { CommunityFeedPost, CommunityPostKind } from '../types';
@@ -87,6 +89,7 @@ export function CommunityPostCard({
   onEdit,
   onDeleted,
 }: CommunityPostCardProps) {
+  const { confirm, confirmDialog } = useConfirm();
   const router = useRouter();
   const { user } = useUser();
   const isAuthor = user?.id === post.author.id;
@@ -140,9 +143,9 @@ export function CommunityPostCard({
 
   const handleDelete = async () => {
     if (isDeleting) return;
-    const confirmed = window.confirm(
-      '¿Eliminar esta publicación? Esta acción no se puede deshacer.'
-    );
+    const confirmed = await confirm({
+      message: '¿Eliminar esta publicación? Esta acción no se puede deshacer.',
+    });
     if (!confirmed) return;
 
     setIsDeleting(true);
@@ -515,6 +518,7 @@ export function CommunityPostCard({
           />
         </div>
       ) : null}
+      {confirmDialog}
     </article>
   );
 }

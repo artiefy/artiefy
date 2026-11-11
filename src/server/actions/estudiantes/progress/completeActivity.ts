@@ -1,8 +1,8 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
@@ -23,11 +23,17 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
 
-export const completeActivity = async (activityId: number, userId: string) => {
+// Security best practice: this server action is callable from the browser, so
+// it always acts on the signed-in user. The second parameter is kept only so
+// existing callers do not change; its value is ignored.
+export const completeActivity = async (
+  activityId: number,
+  _requestedUserId?: string
+) => {
   try {
     // Verificar usuario autenticado
-    const user = await currentUser();
-    if (!user) {
+    const { userId } = await auth();
+    if (!userId) {
       throw new Error('Usuario no autenticado');
     }
 
@@ -56,7 +62,7 @@ export const completeActivity = async (activityId: number, userId: string) => {
       // Verificar si ya está completada en la base de datos
       const existingProgress = await db.query.userActivitiesProgress.findFirst({
         where: (progress) =>
-          eq(progress.activityId, activityId) && eq(progress.userId, userId),
+          and(eq(progress.activityId, activityId), eq(progress.userId, userId)),
       });
 
       if (existingProgress?.isCompleted) {
@@ -138,7 +144,6 @@ export const completeActivity = async (activityId: number, userId: string) => {
       const currentFinalGrade = Number(
         gradeSummary.rows[0]?.final_grade ?? rawData.finalGrade
       );
-      console.log('Course final grade:', currentFinalGrade);
 
       // Update materia grades with course final grade
       if (activity.lesson?.course?.id) {
@@ -184,7 +189,6 @@ export const completeActivity = async (activityId: number, userId: string) => {
 
     return { success: true, message: 'Actividad completada exitosamente' };
   } catch (error) {
-    console.error('Error completing activity:', error);
     return {
       success: false,
       message:

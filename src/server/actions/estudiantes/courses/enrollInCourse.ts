@@ -28,19 +28,13 @@ type EnrollmentClientAuthHint = {
   subscriptionEndDate?: string | null;
 };
 
-type PlanType = 'none' | 'Pro' | 'Premium' | 'Enterprise';
-const VALID_PLAN_TYPES = new Set<PlanType>([
-  'none',
-  'Pro',
-  'Premium',
-  'Enterprise',
-]);
-
-const normalizePlanType = (value?: string | null): PlanType | undefined =>
-  value && VALID_PLAN_TYPES.has(value as PlanType)
-    ? (value as PlanType)
-    : undefined;
-
+/**
+ * Enrolls the signed-in user in a course.
+ *
+ * Identity and plan data always come from the server session (Clerk) and the
+ * database. `clientAuthHint` is kept so callers do not change, but it is
+ * ignored: anything the browser sends could be forged.
+ */
 export async function enrollInCourse(
   courseId: number,
   clientAuthHint?: EnrollmentClientAuthHint
@@ -54,29 +48,14 @@ export async function enrollInCourse(
   try {
     const user = await currentUser();
     const { userId: authUserId } = await auth();
-    const hintedUserId = clientAuthHint?.userId?.trim();
 
-    if (authUserId && hintedUserId && authUserId !== hintedUserId) {
-      return {
-        success: false,
-        message:
-          'No se pudo validar tu sesión actual. Recarga la página e inténtalo de nuevo.',
-      };
-    }
-
-    const userId = user?.id ?? authUserId ?? hintedUserId;
+    const userId = authUserId ?? user?.id;
 
     if (!userId) {
       return {
         success: false,
         message: 'Usuario no autenticado',
       };
-    }
-
-    if (!authUserId && hintedUserId && hintedUserId === userId) {
-      console.warn(
-        '[enrollInCourse] Usando fallback de userId desde cliente por auth() vacío'
-      );
     }
 
     // Get course information first
@@ -126,9 +105,6 @@ export async function enrollInCourse(
         ? 'pro'
         : (course.courseType?.requiredSubscriptionLevel ?? 'none');
 
-    // Determine subscription status based on course type
-    const shouldBeActive = effectiveRequiredLevel !== 'none';
-
     // Check if user exists
     let dbUser = await db.query.users.findFirst({
       where: eq(users.id, userId),
@@ -138,8 +114,7 @@ export async function enrollInCourse(
       const primaryEmail = user?.emailAddresses.find(
         (email) => email.id === user.primaryEmailAddressId
       );
-      const emailToUse =
-        primaryEmail?.emailAddress ?? clientAuthHint?.email?.trim() ?? null;
+      const emailToUse = primaryEmail?.emailAddress ?? null;
 
       if (!emailToUse) {
         return {
@@ -148,22 +123,10 @@ export async function enrollInCourse(
         };
       }
 
-      const fallbackName =
-        clientAuthHint?.fullName?.trim() ||
-        `${clientAuthHint?.firstName ?? ''} ${clientAuthHint?.lastName ?? ''}`.trim() ||
-        clientAuthHint?.firstName?.trim() ||
-        'Usuario';
-
       const nameToUse =
         user?.firstName && user.lastName
           ? `${user.firstName} ${user.lastName}`
-          : (user?.firstName ?? fallbackName);
-
-      const hintedPlanType = normalizePlanType(clientAuthHint?.planType);
-      const hintedSubscriptionStatus = clientAuthHint?.subscriptionStatus;
-      const hintedSubscriptionEndDate = clientAuthHint?.subscriptionEndDate
-        ? new Date(clientAuthHint.subscriptionEndDate)
-        : null;
+          : (user?.firstName ?? 'Usuario');
 
       try {
         await db.insert(users).values({
@@ -171,11 +134,9 @@ export async function enrollInCourse(
           name: nameToUse,
           email: emailToUse,
           role: 'estudiante',
-          subscriptionStatus:
-            hintedSubscriptionStatus ??
-            (shouldBeActive ? 'active' : 'inactive'),
-          subscriptionEndDate: hintedSubscriptionEndDate,
-          planType: hintedPlanType,
+          // A fresh row never carries a plan: paid access is granted by the
+          // payment flow and read back from Clerk metadata below.
+          subscriptionStatus: 'inactive',
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -215,22 +176,17 @@ export async function enrollInCourse(
     // Verify subscription level requirements
     const userPlanType =
       (user?.publicMetadata?.planType as string | undefined) ??
-      clientAuthHint?.planType ??
       dbUser?.planType ??
       undefined;
     const normalizedPlan = (userPlanType ?? '').toLowerCase();
     const subscriptionStatus =
       (user?.publicMetadata?.subscriptionStatus as string | undefined) ??
-      clientAuthHint?.subscriptionStatus ??
       dbUser?.subscriptionStatus ??
       undefined;
 
     const rawSubscriptionEndDate =
       (user?.publicMetadata?.subscriptionEndDate as
-        | string
-        | null
-        | undefined) ??
-      clientAuthHint?.subscriptionEndDate ??
+        string | null | undefined) ??
       (dbUser?.subscriptionEndDate
         ? new Date(dbUser.subscriptionEndDate).toISOString()
         : null);
@@ -435,6 +391,12 @@ export async function isUserEnrolled(
   courseId: number,
   userId: string
 ): Promise<boolean> {
+  // This is a server action, callable from the browser with any userId. Only
+  // the signed-in user may ask about their own enrollment; anything else would
+  // reveal who is enrolled where.
+  const { userId: sessionUserId } = await auth();
+  if (!sessionUserId || sessionUserId !== userId) return false;
+
   try {
     const existingEnrollment = await db.query.enrollments.findFirst({
       where: and(

@@ -29,6 +29,7 @@ import { FaRegFileImage } from 'react-icons/fa6';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/estudiantes/ui/button';
+import { useConfirm } from '~/components/estudiantes/ui/confirm-dialog';
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,6 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
-import { formatScoreNumber } from '~/utils/formatScore';
 import { useMediaQuery } from '~/utils/useMediaQuery'; // <-- crea este hook util
 
 import { FileUploadForm } from './FileUploadForm';
@@ -74,7 +74,18 @@ interface ActivityModalProps {
 interface UserAnswer {
   questionId: string;
   answer: string;
+  // Set by the server after grading; false until the attempt is submitted.
   isCorrect: boolean;
+  // Answer key of a wrong answer, only sent by the server when the attempt
+  // passed.
+  correctAnswer?: string;
+}
+
+interface SaveAnswersResponse {
+  score?: number;
+  answers?: Record<string, UserAnswer>;
+  message?: string;
+  error?: string;
 }
 
 interface AttemptsResponse {
@@ -250,6 +261,7 @@ export function LessonActivityModal({
   isContentLoading = false,
 }: ActivityModalProps) {
   const router = useRouter();
+  const { confirm, confirmDialog } = useConfirm();
 
   // Añade id para el título y descripción accesibles
   const modalTitleId = 'activity-modal-title';
@@ -600,40 +612,17 @@ export function LessonActivityModal({
 
   const submissionWindowStatus = getSubmissionWindowStatus(now);
 
-  const calculateScore = () => {
-    const answers = Object.values(userAnswers);
-    const correctAnswers = answers.filter((a) => a.isCorrect).length;
-    return formatScoreNumber((correctAnswers / answers.length) * 5);
-  };
-
-  const checkAnswer = (questionId: string, answer: string) => {
-    const question = questions.find((q) => q.id === questionId);
-    if (!question) return false;
-
-    switch (question.type) {
-      case 'VOF':
-      case 'OM':
-        return answer === question.correctOptionId;
-      case 'COMPLETAR':
-        return (
-          answer.toLowerCase().trim() ===
-          question.correctAnswer?.toLowerCase().trim()
-        );
-      default:
-        return false;
-    }
-  };
-
+  // Answers are graded on the server (`/api/activities/saveAnswers`): the
+  // browser no longer receives the answer key, so it only records the choice.
   const handleAnswer = (answer: string) => {
     if (!currentQuestion) return;
 
-    const isCorrect = checkAnswer(currentQuestion.id, answer);
     setUserAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: {
         questionId: currentQuestion.id,
         answer,
-        isCorrect,
+        isCorrect: false,
       },
     }));
   };
@@ -659,21 +648,52 @@ export function LessonActivityModal({
       return;
     }
 
+    const allQuestionsAnswered =
+      Object.keys(userAnswers).length === (questions?.length ?? 0);
+
+    if (!allQuestionsAnswered) {
+      toast.error('Debes responder todas las preguntas');
+      return;
+    }
+
     try {
       setIsSavingResults(true);
       setIsResultsLoaded(false);
       setAnswersDetailMissing(false);
-      const score = calculateScore();
-      setFinalScore(score);
-      setShowResults(true);
 
-      const allQuestionsAnswered =
-        Object.keys(userAnswers).length === (questions?.length ?? 0);
+      // Only the chosen option / typed text is sent: the server grades the
+      // attempt against the stored answer key and returns the result.
+      const submittedAnswers = Object.fromEntries(
+        Object.values(userAnswers).map(({ questionId, answer }) => [
+          questionId,
+          { questionId, answer },
+        ])
+      );
 
-      if (!allQuestionsAnswered) {
-        toast.error('Debes responder todas las preguntas');
+      const saveResponse = await fetch('/api/activities/saveAnswers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activityId: activity.id,
+          userId,
+          answers: submittedAnswers,
+        }),
+      });
+      const saveData = (await saveResponse.json()) as SaveAnswersResponse;
+
+      if (!saveResponse.ok || typeof saveData.score !== 'number') {
+        toast.error(
+          saveData.message ??
+            saveData.error ??
+            'Error al guardar las respuestas'
+        );
         return;
       }
+
+      const score = saveData.score;
+      setFinalScore(score);
+      setUserAnswers(saveData.answers ?? {});
+      setShowResults(true);
 
       // For non-revisada activities, only need passing score
       // For revisada activities, need passing score or exhausted attempts
@@ -685,19 +705,6 @@ export function LessonActivityModal({
       );
 
       const hasPassingScore = score >= 3;
-
-      await fetch('/api/activities/saveAnswers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          activityId: activity.id,
-          userId,
-          answers: userAnswers,
-          score,
-          allQuestionsAnswered,
-          passed: hasPassingScore,
-        }),
-      });
 
       if (!hasPassingScore) {
         toast.error('Debes obtener al menos 3 puntos para aprobar');
@@ -712,8 +719,8 @@ export function LessonActivityModal({
           const attemptsData =
             (await attemptsResponse.json()) as AttemptsResponse;
           setAttemptsLeft(Math.max(0, 3 - (attemptsData.attempts ?? 0)));
-        } catch (attemptError) {
-          console.error('Error checking attempts:', attemptError);
+        } catch {
+          // Keep the attempts count already shown.
         }
       }
 
@@ -721,7 +728,8 @@ export function LessonActivityModal({
       setIsResultsLoaded(true);
 
       if (isLastActivity) {
-        // Update grades in database
+        // Propagate the grade the server just recorded (the route reads it
+        // from the database; no grade is sent from the browser).
         const response = await fetch('/api/grades/updateGrades', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -729,7 +737,6 @@ export function LessonActivityModal({
             courseId,
             userId,
             activityId: activity.id,
-            finalGrade: score,
           }),
         });
 
@@ -739,8 +746,7 @@ export function LessonActivityModal({
           );
         }
       }
-    } catch (error) {
-      console.error('Error saving answers:', error);
+    } catch {
       toast.error('Error al guardar las respuestas');
     } finally {
       setIsSavingResults(false);
@@ -802,28 +808,26 @@ export function LessonActivityModal({
     return displayAnswer;
   };
 
-  const getDisplayCorrectAnswer = (question: Question): string => {
-    let correctAnswer = '';
+  // The answer key comes from the graded attempt (the server attaches it to
+  // wrong answers only when the attempt passed); questions never carry it.
+  // Returns '' when it is not available, and then nothing is shown.
+  const getDisplayCorrectAnswer = (
+    question: Question,
+    userAnswer: UserAnswer | undefined
+  ): string => {
+    const key = userAnswer?.correctAnswer;
+    if (!key) return '';
 
     switch (question.type) {
-      case 'VOF': {
-        correctAnswer =
-          question.correctOptionId === 'true' ? 'Verdadero' : 'Falso';
-        break;
-      }
+      case 'VOF':
+        return key === 'true' ? 'Verdadero' : 'Falso';
       case 'OM': {
-        const correctOption = question.options?.find(
-          (opt) => opt.id === question.correctOptionId
-        );
-        correctAnswer = correctOption?.text ?? question.correctOptionId ?? '';
-        break;
+        const correctOption = question.options?.find((opt) => opt.id === key);
+        return correctOption?.text ?? key;
       }
-      case 'COMPLETAR': {
-        correctAnswer = question.correctAnswer ?? '';
-        break;
-      }
+      default:
+        return key;
     }
-    return correctAnswer;
   };
 
   const renderQuestion = () => {
@@ -1447,6 +1451,10 @@ export function LessonActivityModal({
                       const displayAnswer = userAnswer
                         ? getDisplayAnswer(userAnswer, question)
                         : '';
+                      const displayCorrectAnswer = getDisplayCorrectAnswer(
+                        question,
+                        userAnswer
+                      );
 
                       return (
                         <div
@@ -1491,20 +1499,22 @@ export function LessonActivityModal({
                               </p>
                             </div>
                             {/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
-                            {!isCorrect && finalScore >= 3 && (
-                              <div
-                                className="
+                            {!isCorrect &&
+                              finalScore >= 3 &&
+                              displayCorrectAnswer && (
+                                <div
+                                  className="
                                 rounded-md bg-gray-50 p-2 text-sm text-gray-900
                               "
-                              >
-                                <span className="font-bold">
-                                  Respuesta correcta:
-                                </span>{' '}
-                                <span className="font-bold">
-                                  {getDisplayCorrectAnswer(question)}
-                                </span>
-                              </div>
-                            )}
+                                >
+                                  <span className="font-bold">
+                                    Respuesta correcta:
+                                  </span>{' '}
+                                  <span className="font-bold">
+                                    {displayCorrectAnswer}
+                                  </span>
+                                </div>
+                              )}
                           </div>
                         </div>
                       );
@@ -1933,22 +1943,30 @@ export function LessonActivityModal({
                   <div className="mb-4 flex flex-col gap-2">
                     <Button
                       onClick={() => {
+                        const resetUpload = () => {
+                          setUploadedFileInfo(null);
+                          setSelectedFile(null);
+                          setFilePreview(null);
+                          setUploadProgress(0);
+                          setShowResults(false);
+                          setDriveUrl('');
+                          setIsUrlValid(false);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        };
                         if (uploadedFileInfo.status === 'reviewed') {
-                          const confirmed = window.confirm(
-                            'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?'
-                          );
-                          if (!confirmed) return;
+                          void confirm({
+                            message:
+                              'Al subir un nuevo documento o URL, se reiniciará la calificación a 0.0 y el estado a pendiente. ¿Deseas continuar?',
+                            confirmLabel: 'Continuar',
+                            destructive: false,
+                          }).then((confirmed) => {
+                            if (confirmed) resetUpload();
+                          });
+                          return;
                         }
-                        setUploadedFileInfo(null);
-                        setSelectedFile(null);
-                        setFilePreview(null);
-                        setUploadProgress(0);
-                        setShowResults(false);
-                        setDriveUrl('');
-                        setIsUrlValid(false);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
+                        resetUpload();
                       }}
                       className="
                         w-full bg-yellow-500 text-white
@@ -2487,22 +2505,23 @@ export function LessonActivityModal({
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          handleRequestClose();
-        }
-      }}
-    >
-      <DialogPortal>
-        <DialogOverlay className="z-[100003]" />
-        <DialogPrimitive.Content
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={modalTitleId}
-          aria-describedby={modalDescId}
-          className={`
+    <>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleRequestClose();
+          }
+        }}
+      >
+        <DialogPortal>
+          <DialogOverlay className="z-[100003]" />
+          <DialogPrimitive.Content
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={modalTitleId}
+            aria-describedby={modalDescId}
+            className={`
             fixed z-[100004]
             flex
             flex-col gap-4
@@ -2524,114 +2543,116 @@ export function LessonActivityModal({
                 `
             }
           `}
-        >
-          {/* Hidden title for accessibility */}
-          <DialogPrimitive.Title className="sr-only">
-            Actividad del curso
-          </DialogPrimitive.Title>
-          {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
-          <button
-            type="button"
-            aria-label="Cerrar modal"
-            onClick={handleRequestClose}
-            className="
+          >
+            {/* Hidden title for accessibility */}
+            <DialogPrimitive.Title className="sr-only">
+              Actividad del curso
+            </DialogPrimitive.Title>
+            {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
+            <button
+              type="button"
+              aria-label="Cerrar modal"
+              onClick={handleRequestClose}
+              className="
               absolute top-4 right-4 z-50 rounded-full p-2 transition-colors
               hover:bg-gray-800
             "
-          >
-            <div className="flex items-center justify-center">
-              <XMarkIcon className="size-6 text-white" aria-hidden="true" />
-            </div>
-          </button>
-          <DialogHeader className="sticky top-0 z-40 bg-background">
-            <DialogTitle
-              id={modalTitleId}
-              className="text-center text-3xl font-bold"
-              tabIndex={0}
             >
-              {activity.content?.questionsFilesSubida?.[0] != null
-                ? 'SUBIDA DE DOCUMENTO'
-                : 'ACTIVIDAD'}
-            </DialogTitle>
-            <div
-              id={modalDescId}
-              className="sr-only"
-              aria-live="polite"
-              tabIndex={0}
-            >
-              {activity.description ?? 'Actividad del curso'}
-            </div>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto">
-            {renderSubmissionWindowNotice()}
-            {isSavingResults ? (
-              <>
-                <div aria-live="assertive" className="sr-only">
-                  Cargando Resultados...
-                </div>
-                {renderLoadingState('Cargando Resultados...')}
-              </>
-            ) : activity.typeid === 1 ? (
-              renderContent()
-            ) : (
-              <div className="space-y-6">
-                {showResults ? (
-                  renderResults()
-                ) : (
-                  <div>
-                    <div
-                      className="
+              <div className="flex items-center justify-center">
+                <XMarkIcon className="size-6 text-white" aria-hidden="true" />
+              </div>
+            </button>
+            <DialogHeader className="sticky top-0 z-40 bg-background">
+              <DialogTitle
+                id={modalTitleId}
+                className="text-center text-3xl font-bold"
+                tabIndex={0}
+              >
+                {activity.content?.questionsFilesSubida?.[0] != null
+                  ? 'SUBIDA DE DOCUMENTO'
+                  : 'ACTIVIDAD'}
+              </DialogTitle>
+              <div
+                id={modalDescId}
+                className="sr-only"
+                aria-live="polite"
+                tabIndex={0}
+              >
+                {activity.description ?? 'Actividad del curso'}
+              </div>
+            </DialogHeader>
+            <div className="flex-1 overflow-y-auto">
+              {renderSubmissionWindowNotice()}
+              {isSavingResults ? (
+                <>
+                  <div aria-live="assertive" className="sr-only">
+                    Cargando Resultados...
+                  </div>
+                  {renderLoadingState('Cargando Resultados...')}
+                </>
+              ) : activity.typeid === 1 ? (
+                renderContent()
+              ) : (
+                <div className="space-y-6">
+                  {showResults ? (
+                    renderResults()
+                  ) : (
+                    <div>
+                      <div
+                        className="
                         mb-8 flex flex-col items-center justify-center
                         text-center
                       "
-                    >
-                      <span className="text-2xl font-bold text-primary">
-                        {getQuestionTypeLabel(currentQuestion?.type ?? '')}
-                      </span>
-                      <span className="mt-2 text-sm text-gray-500">
-                        {/* Corrige el contador para mostrar "1 de N" */}
-                        {questions.length > 0
-                          ? `${currentQuestionIndex + 1} de ${questions.length}`
-                          : 'Sin preguntas'}
-                      </span>
-                    </div>
-                    {renderQuestion()}
-                    <div className="mt-6 flex justify-between">
-                      <button
-                        className="btn-arrow btn-arrow-prev"
-                        disabled={currentQuestionIndex === 0}
-                        onClick={() =>
-                          setCurrentQuestionIndex((prev) => prev - 1)
-                        }
                       >
-                        <ChevronRightIcon />
-                        <span>Anterior</span>
-                      </button>
-                      <button
-                        className={`
+                        <span className="text-2xl font-bold text-primary">
+                          {getQuestionTypeLabel(currentQuestion?.type ?? '')}
+                        </span>
+                        <span className="mt-2 text-sm text-gray-500">
+                          {/* Corrige el contador para mostrar "1 de N" */}
+                          {questions.length > 0
+                            ? `${currentQuestionIndex + 1} de ${questions.length}`
+                            : 'Sin preguntas'}
+                        </span>
+                      </div>
+                      {renderQuestion()}
+                      <div className="mt-6 flex justify-between">
+                        <button
+                          className="btn-arrow btn-arrow-prev"
+                          disabled={currentQuestionIndex === 0}
+                          onClick={() =>
+                            setCurrentQuestionIndex((prev) => prev - 1)
+                          }
+                        >
+                          <ChevronRightIcon />
+                          <span>Anterior</span>
+                        </button>
+                        <button
+                          className={`
                           btn-arrow
                           ${isLastQuestion ? 'btn-arrow-success' : ''}
                         `}
-                        disabled={
-                          !canProceedToNext ||
-                          (isLastQuestion && !submissionWindowStatus.isOpen)
-                        }
-                        onClick={isLastQuestion ? handleFinish : handleNext}
-                      >
-                        <span>
-                          {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
-                        </span>
-                        <ChevronRightIcon />
-                      </button>
+                          disabled={
+                            !canProceedToNext ||
+                            (isLastQuestion && !submissionWindowStatus.isOpen)
+                          }
+                          onClick={isLastQuestion ? handleFinish : handleNext}
+                        >
+                          <span>
+                            {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
+                          </span>
+                          <ChevronRightIcon />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DialogPrimitive.Content>
-      </DialogPortal>
-    </Dialog>
+                  )}
+                </div>
+              )}
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPortal>
+      </Dialog>
+      {confirmDialog}
+    </>
   );
 }
 

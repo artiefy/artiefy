@@ -36,7 +36,7 @@ type PublicProjectRecord = {
   coverVideoKey?: string | null;
   courseId?: number | null;
   userId?: string | null;
-  user?: { id?: string; name?: string | null; email?: string | null };
+  user?: { id?: string; name?: string | null };
   category?: { id?: number; name?: string | null };
   objetivosEsp?: string[] | null;
   fecha_inicio?: string | null;
@@ -61,7 +61,6 @@ type UserProjectRow = {
   categoryId: number;
   categoryName: string | null;
   ownerName: string | null;
-  ownerEmail: string;
   fecha_inicio: string | null;
   fecha_fin: string | null;
 };
@@ -151,7 +150,6 @@ const mapToSocialItem = (
     viewerId?: string | null;
     ownerId?: string | null;
     ownerName?: string | null;
-    ownerEmail?: string | null;
     isCollaborator?: boolean;
   }
 ): ProjectSocialItem => {
@@ -165,7 +163,6 @@ const mapToSocialItem = (
     opts?.ownerId ?? project.user?.id ?? project.userId ?? undefined;
   const ownerName =
     opts?.ownerName ?? project.user?.name ?? 'Comunidad Artiefy';
-  const ownerEmail = opts?.ownerEmail ?? project.user?.email ?? undefined;
   const progressPercentage = estimateProgress(project);
 
   return {
@@ -186,7 +183,6 @@ const mapToSocialItem = (
     author: {
       id: ownerId,
       name: ownerName?.trim() || 'Comunidad Artiefy',
-      email: ownerEmail ?? undefined,
     },
     isPublic: Boolean(project.isPublic),
     needsCollaborators: Boolean(project.needsCollaborators),
@@ -370,7 +366,6 @@ export async function getCommunityPostsFeedPage({
       createdAt: communityPosts.createdAt,
       authorId: users.id,
       authorName: users.name,
-      authorEmail: users.email,
       authorProfileImageKey: users.profileImageKey,
       projectId: projects.id,
       projectName: projects.name,
@@ -422,7 +417,7 @@ export async function getCommunityPostsFeedPage({
     createdAt: toDateString(row.createdAt),
     author: {
       id: row.authorId,
-      name: row.authorName?.trim() || row.authorEmail,
+      name: row.authorName?.trim() || 'Estudiante',
       avatarUrl: toAvatarUrl(row.authorProfileImageKey),
     },
     project:
@@ -592,7 +587,6 @@ export async function getViewerProjects(viewerId: string): Promise<{
       categoryId: projects.categoryId,
       categoryName: categories.name,
       ownerName: users.name,
-      ownerEmail: users.email,
       fecha_inicio: projects.fecha_inicio,
       fecha_fin: projects.fecha_fin,
     })
@@ -620,7 +614,6 @@ export async function getViewerProjects(viewerId: string): Promise<{
       categoryId: projects.categoryId,
       categoryName: categories.name,
       ownerName: users.name,
-      ownerEmail: users.email,
       fecha_inicio: projects.fecha_inicio,
       fecha_fin: projects.fecha_fin,
     })
@@ -638,7 +631,6 @@ export async function getViewerProjects(viewerId: string): Promise<{
       viewerId,
       ownerId: row.userId,
       ownerName: row.ownerName,
-      ownerEmail: row.ownerEmail,
     })
   );
 
@@ -652,7 +644,6 @@ export async function getViewerProjects(viewerId: string): Promise<{
           viewerId,
           ownerId: row.userId,
           ownerName: row.ownerName,
-          ownerEmail: row.ownerEmail,
           isCollaborator: true,
         })
       );
@@ -689,7 +680,6 @@ export async function getPublicProjectsByOwner(
       categoryId: projects.categoryId,
       categoryName: categories.name,
       ownerName: users.name,
-      ownerEmail: users.email,
       fecha_inicio: projects.fecha_inicio,
       fecha_fin: projects.fecha_fin,
     })
@@ -707,7 +697,6 @@ export async function getPublicProjectsByOwner(
     mapToSocialItem(mapUserRowToRecord(row), {
       ownerId: row.userId,
       ownerName: row.ownerName,
-      ownerEmail: row.ownerEmail,
     })
   );
 }
@@ -765,7 +754,7 @@ export async function getProjectSocialById(
   // fell back to "Comunidad Artiefy" as its author.
   const owner = await db.query.users.findFirst({
     where: eq(users.id, project.userId),
-    columns: { name: true, email: true },
+    columns: { name: true },
   });
 
   return mapToSocialItem({
@@ -788,7 +777,6 @@ export async function getProjectSocialById(
     user: {
       id: project.userId,
       name: owner?.name ?? undefined,
-      email: owner?.email ?? undefined,
     },
     category: {
       id: project.categoryId,

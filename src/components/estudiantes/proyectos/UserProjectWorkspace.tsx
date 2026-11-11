@@ -2,10 +2,7 @@
 
 import { useState } from 'react';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-import { FaArrowLeft } from 'react-icons/fa';
 
 import ProjectDetailView from '~/components/estudiantes/projects/ProjectDetailView';
 import ModalResumen from '~/components/projects/Modals/ModalResumen';
@@ -117,25 +114,9 @@ export function UserProjectWorkspace({
         lg:px-8
       "
     >
-      <Link
-        href="/proyectos"
-        className="
-          -ml-2 inline-flex h-10 w-full items-center justify-center gap-2
-          rounded-md px-4 py-2 text-sm font-medium text-muted-foreground
-          ring-offset-background transition-colors
-          hover:bg-accent hover:text-black
-          focus-visible:ring-2 focus-visible:ring-ring
-          focus-visible:ring-offset-2 focus-visible:outline-none
-          disabled:pointer-events-none disabled:opacity-50
-          sm:w-auto sm:whitespace-nowrap
-        "
-      >
-        <FaArrowLeft className="mr-2 size-4" />
-        Volver a proyectos
-      </Link>
-
       <ProjectDetailView
         project={project}
+        backHref="/proyectos"
         onEditSection={canEdit ? handleEditSection : undefined}
         addedSections={addedSections}
         onAddedSectionsChange={setAddedSections}

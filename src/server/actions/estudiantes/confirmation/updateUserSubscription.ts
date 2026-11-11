@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
+import { getPlanTierFromReference } from '~/server/payments/productPricing';
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SUBSCRIPTION_DURATION = 30 * DAY_IN_MS; // 30 días en milisegundos
@@ -21,8 +22,6 @@ interface PaymentData {
 
 export async function updateUserSubscription(paymentData: PaymentData) {
   const { email_buyer, state_pol, reference_sale } = paymentData;
-  console.log('📩 Recibido pago de:', email_buyer, 'con estado:', state_pol);
-
   if (state_pol !== '4') {
     console.warn(
       `⚠️ Pago con estado ${state_pol}, no se actualizó la suscripción.`
@@ -30,14 +29,8 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     return;
   }
 
-  // Extraer el tipo de plan del reference_sale
-  const planType = reference_sale.includes('pro')
-    ? 'Pro'
-    : reference_sale.includes('premium')
-      ? 'Premium'
-      : reference_sale.includes('enterprise')
-        ? 'Enterprise'
-        : 'Pro';
+  // Same tier rule the confirmation webhook uses to check the paid price.
+  const planType = getPlanTierFromReference(reference_sale);
 
   // Obtener la fecha actual en Bogotá
   const now = new Date();
@@ -51,7 +44,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     });
 
     if (clerkUsers.totalCount === 0) {
-      console.warn(`⚠️ Usuario no encontrado en Clerk: ${email_buyer}`);
+      console.warn('⚠️ Plan payment for an email with no Clerk account');
       return;
     }
 
@@ -93,9 +86,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      console.log(
-        `✅ Usuario estudiante creado en la base de datos con ID de Clerk: ${email_buyer}`
-      );
+      console.log(`✅ Student created with an active plan: ${clerkUserId}`);
     } else {
       // Actualizar usuario existente (estudiante)
       await db
@@ -108,9 +99,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
           updatedAt: new Date(),
         })
         .where(and(eq(users.email, email_buyer), eq(users.role, 'estudiante')));
-      console.log(
-        `✅ Usuario estudiante existente actualizado a activo: ${email_buyer}`
-      );
+      console.log(`✅ Student plan activated: ${clerkUserId}`);
     }
 
     // Actualizar metadata en Clerk
@@ -125,15 +114,9 @@ export async function updateUserSubscription(paymentData: PaymentData) {
       isTrial: false,
     });
 
-    console.log(`✅ Clerk metadata actualizado para ${email_buyer}`);
-
-    // Logs de depuración
-    console.log(`📅 Inicio suscripción (Bogotá): ${bogotaNow}`);
-    console.log(`📅 Fin suscripción (Bogotá): ${subscriptionEndBogota}`);
     console.log(
-      `🎁 Días de regalo aplicados: ${bonusDays} (plan ${planType}, primera compra: ${isFirstPurchase})`
+      `📅 Plan ${planType} (${clerkUserId}): ${bogotaNow} → ${subscriptionEndBogota}, bonus days ${bonusDays}`
     );
-    console.log(`👤 Usuario ID utilizado: ${clerkUserId}`);
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';

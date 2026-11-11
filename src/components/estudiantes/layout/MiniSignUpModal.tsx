@@ -11,6 +11,7 @@ import { Check, X } from 'lucide-react';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { ensureCurrentUserStudentRole } from '~/utils/roles';
+import { getSafeRedirectPath } from '~/utils/safeRedirect';
 
 import '../../../styles/mini-login-uiverse.css';
 
@@ -416,15 +417,13 @@ export default function MiniSignUpModal({
         // completed.
         const target =
           redirectUrl && redirectUrl !== '/'
-            ? redirectUrl
+            ? getSafeRedirectPath(redirectUrl, '/estudiantes')
             : isPageVariant
               ? '/estudiantes'
               : '';
 
         if (target) {
-          window.location.href = target.startsWith('http')
-            ? target
-            : `${window.location.origin}${target}`;
+          window.location.href = new URL(target, window.location.origin).href;
         }
       })();
     }
@@ -475,7 +474,7 @@ export default function MiniSignUpModal({
         signIn.sso({
           strategy,
           redirectCallbackUrl: '/sign-up/sso-callback',
-          redirectUrl: redirectUrl || '/',
+          redirectUrl: getSafeRedirectPath(redirectUrl || '/', '/'),
           ...(strategy === 'oauth_google'
             ? { oidcPrompt: 'select_account' }
             : {}),
@@ -1209,7 +1208,7 @@ export default function MiniSignUpModal({
   const hidesSignUpForms = !isAuthReady || hasActiveSession;
   const sessionRedirectTarget =
     redirectUrl && redirectUrl !== '/'
-      ? redirectUrl
+      ? getSafeRedirectPath(redirectUrl, '/estudiantes')
       : isPageVariant
         ? '/estudiantes'
         : '/';

@@ -1,6 +1,6 @@
 'use server';
 
-import { auth, clerkClient } from '@clerk/nextjs/server'; // Clerk Client
+import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
 import { desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -48,7 +48,64 @@ import {
   users,
   userTimeTracking,
 } from '~/server/db/schema';
+import { authorizeRole } from '~/server/utils/apiAuth';
 import { generarPasswordSegura } from '~/utils/generatePassword';
+import { getUserRole } from '~/utils/roles';
+
+import type { Roles } from '~/types/globals';
+
+// Security best practice: every export of this 'use server' module that a
+// client component imports is a public Server Action (the Clerk middleware
+// does not guard them), so the user/role mutations authorize the caller
+// themselves. `createUser` is left out on purpose: only server route handlers
+// import it (inscription form, group enrollment, bulk upload, /api/users) and
+// some run without an admin session, so those routes must guard the call.
+const USER_ADMIN_ROLES: readonly Roles[] = ['admin', 'super-admin'];
+const PRIVILEGED_ROLES: ReadonlySet<string> = new Set(['super-admin']);
+
+async function requireRole(allowed: readonly Roles[]) {
+  const authz = await authorizeRole(allowed);
+  if (!authz.ok) throw new Error('No autorizado');
+  return authz;
+}
+
+function isClerkNotFound(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status: unknown }).status === 404
+  );
+}
+
+// True when Clerk metadata or the DB row marks the user as super-admin.
+// Fails closed: a Clerk error other than "user not found" is rethrown.
+async function isPrivilegedUser(userId: string): Promise<boolean> {
+  const roles: unknown[] = [];
+  try {
+    const client = await clerkClient();
+    const target = await client.users.getUser(userId);
+    roles.push(target.publicMetadata.role);
+  } catch (error) {
+    if (!isClerkNotFound(error)) throw error;
+  }
+  const [row] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  roles.push(row?.role);
+  return roles.some((r) => typeof r === 'string' && PRIVILEGED_ROLES.has(r));
+}
+
+// Only a super-admin may change, strip or delete a super-admin account.
+async function assertCanManageUser(
+  callerRole: Roles | undefined,
+  targetId: string
+): Promise<void> {
+  if (callerRole === 'super-admin') return;
+  if (await isPrivilegedUser(targetId)) throw new Error('No autorizado');
+}
 
 export async function deleteUserWithRelations(userId: string) {
   try {
@@ -245,6 +302,7 @@ interface GetCoursesOptions {
 }
 
 export async function getAdminUsers(query?: string) {
+  await requireRole(USER_ADMIN_ROLES);
   const client = await clerkClient();
 
   const allUsers: {
@@ -362,10 +420,6 @@ export async function getAdminUsers(query?: string) {
       )
     : simplified;
 
-  console.table(
-    filtered.map((u) => ({ id: u.id, email: u.email, phone: u.phone || '' }))
-  );
-
   return filtered;
 }
 
@@ -377,8 +431,16 @@ export async function setRoleWrapper({
   id: string;
   role: string;
 }) {
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  if (!getUserRole(role)) throw new Error('Rol no válido');
+  // Only a super-admin may grant super-admin.
+  if (caller.role !== 'super-admin' && PRIVILEGED_ROLES.has(role)) {
+    throw new Error('No autorizado');
+  }
+  await assertCanManageUser(caller.role, id);
+
   try {
-    const { userId: adminId } = await auth();
+    const adminId = caller.userId;
 
     // Rol actual antes de actualizar, para el log de auditoría
     const [currentUser] = await db
@@ -419,7 +481,7 @@ export async function setRoleWrapper({
       .where(eq(users.id, id));
 
     console.log(
-      `[ROLE_CHANGE] admin=${adminId ?? 'desconocido'} target=${id} (${targetEmail}) oldRole=${oldRole} newRole=${role} source=dashboard/super-admin setRoleWrapper at=${new Date().toISOString()}`
+      `[ROLE_CHANGE] admin=${adminId} target=${id} (${targetEmail}) oldRole=${oldRole} newRole=${role} source=dashboard/super-admin setRoleWrapper at=${new Date().toISOString()}`
     );
   } catch (error) {
     console.error('Error al actualizar el rol:', error);
@@ -429,6 +491,9 @@ export async function setRoleWrapper({
 
 // ✅ Función para eliminar el rol de un usuario
 export async function removeRole(id: string) {
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  await assertCanManageUser(caller.role, id);
+
   try {
     const client = await clerkClient();
     await client.users.updateUser(id, {
@@ -442,6 +507,9 @@ export async function removeRole(id: string) {
 }
 
 export async function deleteUser(id: string) {
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  await assertCanManageUser(caller.role, id);
+
   try {
     // Primero eliminar las credenciales
     await db.delete(userCredentials).where(eq(userCredentials.userId, id));
@@ -483,6 +551,9 @@ export async function updateUserInfo(
   firstName: string,
   lastName: string
 ) {
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  await assertCanManageUser(caller.role, id);
+
   try {
     const client = await clerkClient();
     await client.users.updateUser(id, { firstName, lastName });
@@ -621,6 +692,9 @@ export async function createUser(
 }
 
 export async function updateUserStatus(id: string, status: string) {
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  await assertCanManageUser(caller.role, id);
+
   try {
     // Update in Clerk
     const client = await clerkClient();
@@ -661,6 +735,11 @@ export async function updateMultipleUserStatus(
   userIds: string[],
   status: string
 ) {
+  const caller = await requireRole(USER_ADMIN_ROLES);
+  for (const userId of userIds) {
+    await assertCanManageUser(caller.role, userId);
+  }
+
   try {
     const client = await clerkClient();
 
@@ -949,6 +1028,10 @@ export async function createCourse(courseData: CourseData) {
 
 // ✅ Función corregida con `courseId: number`
 export async function updateCourse(courseId: number, courseData: CourseData) {
+  // Imported by the admin/super-admin course pages, so it is a public Server
+  // Action: without this check anyone could rewrite any course.
+  await requireRole(USER_ADMIN_ROLES);
+
   try {
     console.log('==== 🟦 INICIANDO updateCourse ====');
     console.log('courseId:', courseId);

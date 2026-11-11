@@ -36,7 +36,6 @@ export default async function getPublicProjects() {
         ? {
             id: project.user.id,
             name: project.user.name ?? '',
-            email: project.user.email ?? '',
           }
         : undefined,
       category: project.category

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { useSignIn, useUser } from '@clerk/nextjs';
+import { useUser } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { toast } from 'sonner';
 
@@ -62,7 +62,6 @@ type PrepareBuyerAccountResponse = {
   hasExistingAccount: boolean;
   accountCreated?: boolean;
   credentialsEmailSent?: boolean;
-  temporaryPassword?: string;
 };
 
 export interface CheckoutModalCourse {
@@ -101,7 +100,6 @@ export default function CheckoutModal({
   onApproved,
 }: CheckoutModalProps) {
   const { user, isSignedIn } = useUser();
-  const { signIn } = useSignIn();
 
   const unitItem = useMemo<CheckoutItem | null>(() => {
     const amount = course.individualPrice ?? 0;
@@ -153,11 +151,11 @@ export default function CheckoutModal({
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [temporaryPassword, setTemporaryPassword] = useState<string | null>(
-    null
-  );
   const [result, setResult] = useState<TokenizedPaymentResult | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginInfoMessage, setLoginInfoMessage] = useState(
+    'Ya tienes una cuenta en Artiefy. Ingresa para continuar con tu compra.'
+  );
 
   // Course type 4 sells on its own, so it opens on "Compra unitaria"; anything
   // else can only be unlocked with a plan.
@@ -239,29 +237,6 @@ export default function CheckoutModal({
     setStep(3);
   }, [paymentMethod, goToWebCheckout]);
 
-  const signInWithTemporaryPassword = async (
-    emailAddress: string,
-    password: string
-  ) => {
-    if (!signIn) {
-      throw new Error('No se pudo iniciar sesión automáticamente.');
-    }
-
-    const { error: signInError } = await signIn.password({
-      emailAddress,
-      password,
-    });
-
-    if (signInError) throw signInError;
-
-    if (signIn.status === 'complete') {
-      await signIn.finalize();
-      return;
-    }
-
-    throw new Error('No se pudo completar el inicio de sesión automático.');
-  };
-
   const handleDetailsSubmit = async () => {
     if (loading) return;
 
@@ -310,32 +285,24 @@ export default function CheckoutModal({
 
       // Already registered: the buyer signs in, then the flow resumes.
       if (payload.hasExistingAccount) {
+        setLoginInfoMessage(
+          'Ya tienes una cuenta en Artiefy. Ingresa para continuar con tu compra.'
+        );
         setShowLoginModal(true);
         return;
       }
 
-      if (!payload.temporaryPassword) {
-        throw new Error(
-          'Creamos tu cuenta pero no pudimos iniciar sesión. Revisa tu correo e ingresa manualmente.'
-        );
-      }
-
-      // Kept in memory only so step 4 can offer an immediate password change.
-      setTemporaryPassword(payload.temporaryPassword);
-      await signInWithTemporaryPassword(
-        normalizedEmail,
-        payload.temporaryPassword
-      );
-
-      // The account is created silently in the middle of the purchase, so say
-      // so here: otherwise the credentials email arrives with no explanation
-      // and reads like a phishing attempt.
+      // The account is created silently in the middle of the purchase and the
+      // password only travels by email, so the buyer signs in with it and the
+      // flow resumes from `handleLoginSuccess`.
       toast.success('Creamos tu cuenta en Artiefy', {
-        description: `Enviamos tu contraseña a ${normalizedEmail}. Puedes cambiarla al terminar la compra.`,
+        description: `Enviamos tu contraseña temporal a ${normalizedEmail}. Revisa tu correo (también el spam) e ingresa para continuar con tu compra.`,
         duration: 8000,
       });
-
-      await continueToPayment();
+      setLoginInfoMessage(
+        `Creamos tu cuenta en Artiefy. Revisa tu correo (${normalizedEmail}): te enviamos una contraseña temporal para ingresar y continuar con tu compra.`
+      );
+      setShowLoginModal(true);
     } catch (prepareError) {
       const message = isClerkAPIResponseError(prepareError)
         ? (prepareError.errors[0]?.longMessage ??
@@ -468,7 +435,7 @@ export default function CheckoutModal({
             {step === 4 && result ? (
               <ResultStep
                 result={result}
-                temporaryPassword={temporaryPassword}
+                temporaryPassword={null}
                 buyerEmail={buyer.email.trim().toLowerCase()}
                 onRetry={() => {
                   setResult(null);
@@ -487,7 +454,7 @@ export default function CheckoutModal({
         onClose={() => setShowLoginModal(false)}
         onLoginSuccess={handleLoginSuccess}
         initialEmail={buyer.email}
-        infoMessage="Ya tienes una cuenta en Artiefy. Ingresa para continuar con tu compra."
+        infoMessage={loginInfoMessage}
       />
     </>
   );

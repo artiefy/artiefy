@@ -1,19 +1,64 @@
+import { auth } from '@clerk/nextjs/server';
+
+import { ratelimit } from '~/server/ratelimit/ratelimit';
+
+const MAX_PROMPT_CHARS = 2000;
+const MAX_HISTORY_MESSAGES = 20;
+const MAX_HISTORY_TEXT_CHARS = 2000;
+const MAX_CONVERSATION_ID_CHARS = 100;
+
+function jsonError(error: string, status: number) {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 export async function POST(req: Request) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return jsonError('Debes iniciar sesión para usar el asistente', 401);
+    }
+
+    const { success } = await ratelimit.limit(`ia-cursos:user:${userId}`);
+    if (!success) {
+      return jsonError(
+        'Demasiadas solicitudes. Intenta de nuevo en un momento.',
+        429
+      );
+    }
+
     const { prompt, conversationId, messageHistory } = (await req.json()) as {
       prompt: string;
       conversationId?: number | string;
       messageHistory?: { sender: string; text: string }[];
     };
 
-    console.log('📨 Recibido en /api/ia-cursos:', { prompt, conversationId });
-
-    if (!prompt) {
-      return new Response(JSON.stringify({ error: 'Prompt requerido' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+    if (!prompt || typeof prompt !== 'string') {
+      return jsonError('Prompt requerido', 400);
     }
+    if (prompt.length > MAX_PROMPT_CHARS) {
+      return jsonError('El mensaje es demasiado largo', 413);
+    }
+
+    // The n8n memory key is bound to the caller so nobody can address another
+    // user's conversation by guessing a conversation id.
+    const clientConversationId =
+      conversationId !== undefined && String(conversationId).trim() !== ''
+        ? String(conversationId).slice(0, MAX_CONVERSATION_ID_CHARS)
+        : `session-${Date.now()}`;
+    const sessionId = `${userId}:${clientConversationId}`;
+
+    const safeHistory = Array.isArray(messageHistory)
+      ? messageHistory
+          .slice(-MAX_HISTORY_MESSAGES)
+          .flatMap((m) =>
+            m && typeof m.text === 'string'
+              ? [{ ...m, text: m.text.slice(0, MAX_HISTORY_TEXT_CHARS) }]
+              : []
+          )
+      : undefined;
 
     // NUEVO: Buscar cursos reales de la BD usando la API de búsqueda
     let availableCourses: {
@@ -43,8 +88,8 @@ export async function POST(req: Request) {
         };
         availableCourses = searchData.courses || [];
       }
-    } catch (dbError) {
-      console.warn('Error buscando cursos en BD:', dbError);
+    } catch {
+      // Course search is optional context; the chat continues without it.
     }
 
     // NUEVO: Detectar entorno y usar webhook correspondiente
@@ -55,52 +100,13 @@ export async function POST(req: Request) {
     let n8nWebhookUrl: string;
     if (isLocal) {
       n8nWebhookUrl = process.env.N8N_WEBHOOK_LOCAL ?? '';
-      console.log('🔧 Usando webhook local de n8n');
     } else {
       n8nWebhookUrl = process.env.N8N_WEBHOOK_PROD ?? '';
-      console.log('🚀 Usando webhook de producción de n8n');
     }
 
     if (!n8nWebhookUrl) {
-      console.error(
-        '❌ Webhook de n8n no configurado para el entorno:',
-        isLocal ? 'local' : 'producción'
-      );
-      console.error('Variables disponibles:', {
-        N8N_WEBHOOK_LOCAL: process.env.N8N_WEBHOOK_LOCAL ? '✅' : '❌',
-        N8N_WEBHOOK_PROD: process.env.N8N_WEBHOOK_PROD ? '✅' : '❌',
-        NODE_ENV: process.env.NODE_ENV,
-        BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
-      });
-      return new Response(
-        JSON.stringify({ error: 'Config webhook n8n faltante' }),
-        {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return jsonError('Config webhook n8n faltante', 500);
     }
-
-    console.log('📡 Enviando a n8n:', {
-      url: n8nWebhookUrl,
-      prompt,
-      cursosEncontrados: availableCourses.length,
-      payload: {
-        chatInput: prompt,
-        sessionId:
-          conversationId && String(conversationId).trim() !== ''
-            ? String(conversationId)
-            : `session-${Date.now()}`,
-        // NUEVO: Debug del tipo de sessionId
-        sessionIdType: typeof conversationId,
-        sessionIdValue: conversationId,
-        messageHistory: messageHistory?.length ?? 0,
-        availableCourses: availableCourses.map((c) => ({
-          id: c.id,
-          title: c.title,
-        })),
-      },
-    });
 
     let n8nRes: Response;
     try {
@@ -109,16 +115,12 @@ export async function POST(req: Request) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           chatInput: prompt,
-          sessionId:
-            conversationId && String(conversationId).trim() !== ''
-              ? String(conversationId)
-              : `session-${Date.now()}`, // <-- Generar un ID único si no existe
-          messageHistory,
+          sessionId,
+          messageHistory: safeHistory,
           availableCourses,
         }),
       });
     } catch (err) {
-      console.error('?? Error de red al llamar a n8n:', err);
       return new Response(
         JSON.stringify({
           prompt,
@@ -137,37 +139,10 @@ export async function POST(req: Request) {
       );
     }
 
-    console.log('📨 Respuesta de n8n:', {
-      status: n8nRes.status,
-      ok: n8nRes.ok,
-      url: n8nWebhookUrl, // NUEVO: Log del URL para debug
-      headers: Object.fromEntries(n8nRes.headers.entries()),
-    });
-
     if (!n8nRes.ok) {
       const errText = await n8nRes.text().catch(() => '');
-      console.error('❌ Error en n8n:', {
-        status: n8nRes.status,
-        statusText: n8nRes.statusText,
-        body: errText,
-        url: n8nWebhookUrl, // NUEVO: Log del URL en error
-      });
-
       // NUEVO: Instrucciones más detalladas para activar n8n
       if (n8nRes.status === 404 && errText.includes('not registered')) {
-        console.error('🔧 PASOS PARA ACTIVAR N8N:');
-        console.error('1. Abre http://localhost:5678 en tu navegador');
-        console.error('2. Busca el workflow "My workflow 9"');
-        console.error('3. Haz clic en el workflow para abrirlo');
-        console.error(
-          '4. Verifica que el nodo Webhook esté configurado correctamente'
-        );
-        console.error('5. Activa el workflow (toggle debe estar en ON/verde)');
-        console.error(
-          '6. Haz clic en "Execute Workflow" o "Save" para registrar el webhook'
-        );
-        console.error('7. Intenta de nuevo en el chatbot');
-
         return new Response(
           JSON.stringify({
             error: 'Workflow de n8n no está activo',
@@ -180,7 +155,6 @@ export async function POST(req: Request) {
               '4. Haz clic en "Execute Workflow"',
               '5. Intenta de nuevo',
             ],
-            webhookUrl: n8nWebhookUrl,
           }),
           {
             status: 500,
@@ -197,7 +171,7 @@ export async function POST(req: Request) {
             mensaje:
               'Estamos teniendo problemas para conectar con el motor IA. Inténtalo de nuevo en unos minutos o contacta al soporte si el problema continúa.',
             courses: [],
-            error: `${n8nRes.status}: ${errText}`,
+            error: `n8n_status_${n8nRes.status}`,
           },
         }),
         {
@@ -208,14 +182,6 @@ export async function POST(req: Request) {
     }
 
     const raw: unknown = await n8nRes.json();
-    console.log('✅ Datos recibidos de n8n:', raw);
-
-    // NUEVO: Log más detallado para ver estructura exacta
-    try {
-      console.log('Estructura de datos n8n:', JSON.stringify(raw, null, 2));
-    } catch (e) {
-      console.log('No se pudo stringificar la estructura completa', e);
-    }
 
     interface CourseData {
       id: number;
@@ -478,18 +444,12 @@ export async function POST(req: Request) {
       }
     }
 
-    console.log('📤 Enviando respuesta normalizada:', {
-      prompt,
-      n8nData: normalized ?? {},
-    });
-
     // Siempre responde con objeto seguro
     return new Response(JSON.stringify({ prompt, n8nData: normalized ?? {} }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('💥 Error en ia-cursos:', err);
     return new Response(
       JSON.stringify({
         error: 'Error llamando a n8n',

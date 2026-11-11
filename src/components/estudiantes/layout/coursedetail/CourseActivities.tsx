@@ -222,7 +222,7 @@ export function CourseActivities({
     try {
       const cached = lessonActivitiesCache[lesson.id];
       const activitiesWithContent =
-        cached ?? (await getActivityContent(lesson.id, userId));
+        cached ?? (await getActivityContent(lesson.id));
 
       if (!cached) {
         setLessonActivitiesCache((prev) => ({
@@ -238,8 +238,8 @@ export function CourseActivities({
       if (fullActivity) {
         setSelectedActivity(fullActivity);
       }
-    } catch (error) {
-      console.error('Error cargando contenido de la actividad:', error);
+    } catch {
+      // No content: the modal shows the activity without questions.
     } finally {
       setIsLoadingContent(false);
     }

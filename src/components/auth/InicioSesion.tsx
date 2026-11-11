@@ -14,6 +14,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import Loading from '~/app/loading';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { getSafeRedirectPath } from '~/utils/safeRedirect';
 
 const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
   if (isClerkAPIResponseError(error)) {
@@ -211,24 +212,21 @@ export function InicioSesion({
     if (planId && !url.includes('plan_id=')) {
       // Añadir plan_id como query param
       const separator = url.includes('?') ? '&' : '?';
-      url = `${url}${separator}plan_id=${planId}`;
+      url = `${url}${separator}plan_id=${encodeURIComponent(planId)}`;
     }
     return url;
   })();
 
-  console.log('✅ Redirect URL detectada:', redirectUrl);
-
   useEffect(() => {
     if (isSignedIn) {
-      console.log('🔄 Usuario autenticado, redirigiendo a:', redirectUrl);
       try {
         window.sessionStorage.removeItem('mini_auth_redirect_url');
       } catch {
         // ignore storage failures
       }
-      router.replace(redirectUrl);
+      router.replace(getSafeRedirectPath(redirectUrl, destinoPorDefecto));
     }
-  }, [isSignedIn, router, redirectUrl]);
+  }, [isSignedIn, router, redirectUrl, destinoPorDefecto]);
 
   useEffect(() => {
     if (!loadingProvider) return;
@@ -310,7 +308,7 @@ export function InicioSesion({
           signIn.sso({
             strategy,
             redirectCallbackUrl: '/sign-in/sso-callback',
-            redirectUrl,
+            redirectUrl: getSafeRedirectPath(redirectUrl, destinoPorDefecto),
             ...(strategy === 'oauth_google'
               ? { oidcPrompt: 'select_account' }
               : {}),
@@ -340,7 +338,14 @@ export function InicioSesion({
         setErrors(toClerkApiErrors(err));
       }
     },
-    [fetchStatus, loadingProvider, redirectUrl, signIn, signOut]
+    [
+      destinoPorDefecto,
+      fetchStatus,
+      loadingProvider,
+      redirectUrl,
+      signIn,
+      signOut,
+    ]
   );
 
   if (!isLoaded) {
@@ -368,7 +373,7 @@ export function InicioSesion({
 
       if (signIn.status === 'complete') {
         await signIn.finalize();
-        router.replace(redirectUrl);
+        router.replace(getSafeRedirectPath(redirectUrl, destinoPorDefecto));
       } else if (signIn.status === 'needs_second_factor') {
         setSecondFactor(true);
         setErrors([
@@ -479,7 +484,7 @@ export function InicioSesion({
 
       if (signIn.status === 'complete') {
         await signIn.finalize();
-        router.replace(redirectUrl);
+        router.replace(getSafeRedirectPath(redirectUrl, destinoPorDefecto));
       } else if (signIn.status === 'needs_second_factor') {
         setSecondFactor(true);
         setErrors([

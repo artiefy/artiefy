@@ -149,9 +149,13 @@ export default function CourseDetails({
   classMeetings = [],
   courseTypeCounts = { premium: 0, pro: 0, free: 0, individual: 0 },
   isSignedInOnServer = true,
+  publicCounts,
 }: {
   course: Course;
   classMeetings?: ClassMeeting[];
+  /** Tab counts computed on the server before private media is redacted for
+   * visitors without access. */
+  publicCounts?: { resources: number; recordings: number };
   courseTypeCounts?: CourseTypeCounts;
   /** Whether the request had a session; anonymous visitors (and crawlers)
    * have no enrollment to check, so the detail renders on the server. */
@@ -163,6 +167,7 @@ export default function CourseDetails({
   const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [totalStudents, setTotalStudents] = useState(course.totalStudents);
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const entitlementRefreshedRef = useRef(false);
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
   const [courseRatingSummary, setCourseRatingSummary] = useState<RatingSummary>(
     {
@@ -398,16 +403,23 @@ export default function CourseDetails({
   // each list actually renders.
   const hasMeetingRecording = (m: ClassMeeting) =>
     !!m.video_key || !!getExternalClassLink(m.videoUrlExt);
-  const recordedCount = Array.isArray(classMeetings)
-    ? classMeetings.filter(hasMeetingRecording).length
-    : 0;
+  const recordedCount = Math.max(
+    Array.isArray(classMeetings)
+      ? classMeetings.filter(hasMeetingRecording).length
+      : 0,
+    publicCounts?.recordings ?? 0
+  );
   const _liveClassesCount = Array.isArray(classMeetings)
     ? classMeetings.filter((m) => !hasMeetingRecording(m)).length
     : 0;
-  const resourcesCount = Array.isArray(course.lessons)
-    ? course.lessons.filter((l) => l.resourceKey && l.resourceKey.trim() !== '')
-        .length
-    : 0;
+  const resourcesCount = Math.max(
+    Array.isArray(course.lessons)
+      ? course.lessons.filter(
+          (l) => l.resourceKey && l.resourceKey.trim() !== ''
+        ).length
+      : 0,
+    publicCounts?.resources ?? 0
+  );
   const totalLessons = useMemo(
     () => course.lessons?.length ?? 0,
     [course.lessons]
@@ -1130,6 +1142,9 @@ export default function CourseDetails({
         description: 'Ya tienes acceso al contenido del curso.',
       });
       setIsEnrolled(true);
+      // The server redacts private course media until the viewer is enrolled;
+      // re-render the route so the new entitlement reaches this component.
+      router.refresh();
       // Meet the learner right after they get access: the chat opens on this
       // course, so the first question already has the right context.
       openAgentChatFor({
@@ -1507,13 +1522,12 @@ export default function CourseDetails({
     );
   };
 
-  const staticCourseRating = clampRating(Number(course.rating ?? 0));
-  const usesDynamicCourseRating =
-    courseRatingSummary.count >= MIN_DYNAMIC_RATING_COUNT;
-  const displayedCourseRating = usesDynamicCourseRating
-    ? clampRating(courseRatingSummary.average)
-    : staticCourseRating;
-  const hasCourseRating = displayedCourseRating > 0;
+  // The stored `course.rating` column is only an initial value, so the rating
+  // figure is shown only once the course has enough real student reviews.
+  const hasCourseRating =
+    courseRatingSummary.count >= MIN_DYNAMIC_RATING_COUNT &&
+    clampRating(courseRatingSummary.average) > 0;
+  const displayedCourseRating = clampRating(courseRatingSummary.average);
   const shouldShowStudentCount =
     typeof totalStudents === 'number' && totalStudents > 15;
   const courseTypeLabel = course.typeCourse?.type?.trim();
@@ -1837,7 +1851,9 @@ export default function CourseDetails({
                             >
                               {includedPlans.includes('Premium') &&
                               includedPlans.includes('Pro')
-                                ? 'Incluido en tu plan Premium y Pro'
+                                ? isSignedIn
+                                  ? 'Incluido en tu plan Premium y Pro'
+                                  : 'Incluido en los planes Premium y Pro'
                                 : userIncludedPlanLabel
                                   ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
                                   : `Incluido en ${
@@ -2069,9 +2085,7 @@ export default function CourseDetails({
                                 />
                                 <span className="text-[#94A3B8]">
                                   {displayedCourseRating.toFixed(1)}{' '}
-                                  {usesDynamicCourseRating
-                                    ? `(${courseRatingSummary.count} opiniones)`
-                                    : '(rating inicial)'}
+                                  {`(${courseRatingSummary.count} opiniones)`}
                                 </span>
                               </div>
                             )}
@@ -2393,7 +2407,9 @@ export default function CourseDetails({
                                     >
                                       {includedPlans.includes('Premium') &&
                                       includedPlans.includes('Pro')
-                                        ? 'Incluido en tu plan Premium y Pro'
+                                        ? isSignedIn
+                                          ? 'Incluido en tu plan Premium y Pro'
+                                          : 'Incluido en los planes Premium y Pro'
                                         : userIncludedPlanLabel
                                           ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
                                           : `Incluido en ${
@@ -2987,9 +3003,17 @@ export default function CourseDetails({
                         <CourseComments
                           courseId={course.id}
                           isEnrolled={isEnrolled}
-                          onEnrollmentChange={(enrolled) =>
-                            setIsEnrolled(enrolled)
-                          }
+                          onEnrollmentChange={(enrolled) => {
+                            setIsEnrolled(enrolled);
+                            if (
+                              enrolled &&
+                              !initialIsEnrolledFromServer &&
+                              !entitlementRefreshedRef.current
+                            ) {
+                              entitlementRefreshedRef.current = true;
+                              router.refresh();
+                            }
+                          }}
                           onRatingSummaryChange={handleRatingSummaryChange}
                         />
                       </div>
@@ -3213,7 +3237,9 @@ export default function CourseDetails({
                                 >
                                   {includedPlans.includes('Premium') &&
                                   includedPlans.includes('Pro')
-                                    ? 'Incluido en tu plan Premium y Pro'
+                                    ? isSignedIn
+                                      ? 'Incluido en tu plan Premium y Pro'
+                                      : 'Incluido en los planes Premium y Pro'
                                     : userIncludedPlanLabel
                                       ? `Incluido en tu plan ${userIncludedPlanLabel.toUpperCase()}`
                                       : `Incluido en ${
