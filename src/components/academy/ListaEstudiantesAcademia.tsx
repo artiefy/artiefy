@@ -27,7 +27,12 @@ import * as XLSX from 'xlsx';
 
 import { type EstudianteAcademia } from '~/server/academy/estudiantes';
 
-import { enviar, Modal, useCursosAcademia } from './seccion/comun';
+import {
+  enviar,
+  Modal,
+  useCursosAcademia,
+  useDatosAcademia,
+} from './seccion/comun';
 
 // "Gestión de Estudiantes" de una academia: la misma pantalla que "Gestión de
 // Builders" de Artiefy (programs/enrolled_users): barra de acciones, chips de
@@ -305,6 +310,71 @@ export function ListaEstudiantesAcademia({
       await enviar(api, 'PATCH', { userIds, campo, valor });
     } catch (error) {
       toast.error((error as Error).message);
+      await mutate();
+    }
+  };
+
+  // Opciones de las celdas (grupos, programas y cursos de la academia).
+  const { data: gruposData } = useDatosAcademia<{
+    grupos: { id: number; nombre: string }[];
+  }>(`/api/academia/${slug}/grupos`);
+  const { data: programasData } = useDatosAcademia<{
+    programas: { id: number; title: string; cursos: { id: number }[] }[];
+  }>(`/api/academia/${slug}/programas`);
+  const cursosAcademia = useCursosAcademia(slug);
+  const opcionesCelda: OpcionesCelda = {
+    grupos: gruposData?.grupos ?? [],
+    programas: programasData?.programas ?? [],
+    cursos: cursosAcademia.map((c) => ({ id: c.id, title: c.title })),
+  };
+  const [cursosDe, setCursosDe] = useState<string | null>(null);
+
+  // Acción de una fila contra el API de estudiantes (grupos, correo).
+  const accionFila = async (cuerpo: Record<string, unknown>, ok: string) => {
+    try {
+      await enviar(api, 'PATCH', cuerpo);
+      toast.success(ok);
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      await mutate();
+    }
+  };
+
+  const matricularUno = async (userId: string, courseIds: number[]) => {
+    if (courseIds.length === 0) {
+      toast.error('El programa no tiene cursos');
+      return;
+    }
+    try {
+      let nuevas = 0;
+      for (const courseId of courseIds) {
+        const r = (await enviar(`/api/academia/${slug}/matriculas`, 'POST', {
+          courseId,
+          userIds: [userId],
+        })) as { matriculados?: number };
+        nuevas += r.matriculados ?? 0;
+      }
+      toast.success(
+        nuevas ? `Matriculado en ${nuevas} curso(s)` : 'Ya estaba matriculado'
+      );
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      await mutate();
+    }
+  };
+
+  const cambiarCuenta = async (userId: string, activo: boolean) => {
+    try {
+      await enviar(`/api/academia/${slug}/usuarios`, 'PATCH', {
+        userIds: [userId],
+        activo,
+      });
+      toast.success(activo ? 'Cuenta activada' : 'Cuenta desactivada');
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
       await mutate();
     }
   };
@@ -755,7 +825,7 @@ export function ListaEstudiantesAcademia({
                   return (
                     <tr
                       key={e.id}
-                      className={`h-9 text-white [&>td]:border-r [&>td]:border-b [&>td]:border-[var(--ac-borde)] ${
+                      className={`group h-9 text-white [&>td]:border-r [&>td]:border-b [&>td]:border-[var(--ac-borde)] ${
                         marcado
                           ? 'bg-[var(--ac-primario)]/10'
                           : 'hover:bg-white/[0.03]'
@@ -777,15 +847,39 @@ export function ListaEstudiantesAcademia({
                         />
                       </td>
                       {visibles.map((c) => (
-                        <td key={c.id} className="p-0">
+                        <td
+                          key={c.id}
+                          className="p-0 group-hover:bg-[var(--ac-primario)]/5"
+                        >
                           <Celda
                             estudiante={e}
                             columna={c}
-                            onGuardar={(valor) =>
-                              c.id === 'nombre'
-                                ? void renombrar(e.userId, valor)
-                                : void guardar([e.userId], c.id, valor)
-                            }
+                            opciones={opcionesCelda}
+                            acciones={{
+                              guardar: (valor) =>
+                                c.id === 'nombre'
+                                  ? void renombrar(e.userId, valor)
+                                  : void guardar([e.userId], c.id, valor),
+                              correo: (email) =>
+                                void accionFila(
+                                  { accion: 'correo', userId: e.userId, email },
+                                  'Correo actualizado'
+                                ),
+                              grupos: (grupoIds) =>
+                                void accionFila(
+                                  {
+                                    accion: 'grupos',
+                                    userId: e.userId,
+                                    grupoIds,
+                                  },
+                                  'Grupos actualizados'
+                                ),
+                              matricular: (courseIds) =>
+                                void matricularUno(e.userId, courseIds),
+                              cuenta: (activo) =>
+                                void cambiarCuenta(e.userId, activo),
+                              verCursos: () => setCursosDe(e.userId),
+                            }}
                           />
                         </td>
                       ))}
@@ -952,6 +1046,15 @@ export function ListaEstudiantesAcademia({
         />
       )}
 
+      {cursosDe && estudiantes.some((x) => x.userId === cursosDe) && (
+        <CursosEstudiante
+          slug={slug}
+          estudiante={estudiantes.find((x) => x.userId === cursosDe)!}
+          onClose={() => setCursosDe(null)}
+          onCambio={() => mutate()}
+        />
+      )}
+
       {modal === 'comentarios' && seleccionados[0] && (
         <Comentarios
           slug={slug}
@@ -965,24 +1068,253 @@ export function ListaEstudiantesAcademia({
 
 // --------------------------------------------------------------- Celda ---
 
-/** Celda editable (texto, fecha o lista) o de solo lectura (derivada). */
-function Celda({
-  estudiante,
-  columna,
+// Colores del estado de inscripción (los mismos de Builders).
+const COLOR_ESTADO: Record<string, string> = {
+  Nuevo: 'border-cyan-500/30 bg-cyan-500/15 text-cyan-400',
+  Estudiante: 'border-sky-500/30 bg-sky-500/15 text-sky-400',
+  Graduando: 'border-violet-500/30 bg-violet-500/15 text-violet-400',
+  Egresado: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
+  Aplaza: 'border-orange-500/30 bg-orange-500/15 text-orange-400',
+  Retirado: 'border-rose-500/30 bg-rose-500/15 text-rose-400',
+};
+
+const COLOR_CARTERA: Record<string, string> = {
+  'Al día': 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
+  'En cartera': 'bg-red-500/15 text-red-300 ring-red-500/30',
+  'No verificado': 'bg-gray-500/15 text-gray-300 ring-gray-500/30',
+};
+
+// Input de celda: siempre visible, sin borde hasta pasar o enfocar (Builders).
+const inputCelda =
+  'w-full min-w-28 rounded-lg border border-transparent bg-transparent px-1 py-0.5 text-[12px] text-white/90 transition-all duration-150 hover:border-white/10 hover:bg-white/5 focus:border-[var(--ac-primario)]/40 focus:bg-white/5 focus:outline-none [&>option]:bg-[var(--ac-superficie)]';
+const verMas =
+  'ml-2 inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-white';
+
+export interface OpcionesCelda {
+  grupos: { id: number; nombre: string }[];
+  programas: { id: number; title: string; cursos: { id: number }[] }[];
+  cursos: { id: number; title: string }[];
+}
+
+export interface AccionesCelda {
+  guardar: (valor: string) => void;
+  correo: (email: string) => void;
+  grupos: (ids: number[]) => void;
+  matricular: (courseIds: number[]) => void;
+  cuenta: (activo: boolean) => void;
+  verCursos: () => void;
+}
+
+/** Fecha: muestra la fecha larga; al hacer clic se edita (FechaCelda). */
+function FechaCelda({
+  valor,
   onGuardar,
+}: {
+  valor: string;
+  onGuardar: (v: string) => void;
+}) {
+  const [editando, setEditando] = useState(false);
+  if (editando) {
+    return (
+      <input
+        type="date"
+        autoFocus
+        defaultValue={valor.slice(0, 10)}
+        onBlur={(e) => {
+          setEditando(false);
+          if (e.target.value !== valor.slice(0, 10)) onGuardar(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') setEditando(false);
+        }}
+        className="w-full rounded-lg border border-[var(--ac-primario)]/40 bg-white/5 px-2 py-1 text-xs text-white/80 [color-scheme:dark] focus:outline-none"
+      />
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={() => setEditando(true)}
+      title="Editar fecha"
+      className="w-full rounded-md border border-transparent px-1 py-0.5 text-left text-[12px] whitespace-nowrap text-white/90 transition-all duration-150 hover:border-white/10 hover:bg-white/5"
+    >
+      {fmtFecha(valor) || '\u00a0'}
+    </button>
+  );
+}
+
+/** Grupos: etiquetas que se quitan con ✕ y un select para agregar. */
+function GruposCelda({
+  ids,
+  grupos,
+  onCambiar,
+}: {
+  ids: number[];
+  grupos: { id: number; nombre: string }[];
+  onCambiar: (ids: number[]) => void;
+}) {
+  const disponibles = grupos.filter((g) => !ids.includes(g.id));
+  return (
+    <div className="flex min-w-40 flex-wrap items-center gap-1 py-0.5">
+      {grupos
+        .filter((g) => ids.includes(g.id))
+        .map((g) => (
+          <span
+            key={g.id}
+            className="inline-flex items-center gap-1 rounded-full bg-[var(--ac-primario)]/15 px-2 py-0.5 text-[11px] text-[var(--ac-primario)]"
+          >
+            {g.nombre}
+            <button
+              type="button"
+              aria-label={`Quitar de ${g.nombre}`}
+              onClick={() => onCambiar(ids.filter((x) => x !== g.id))}
+              className="opacity-70 hover:opacity-100"
+            >
+              <X className="size-3" />
+            </button>
+          </span>
+        ))}
+      {disponibles.length > 0 && (
+        <select
+          value=""
+          onChange={(e) =>
+            e.target.value && onCambiar([...ids, Number(e.target.value)])
+          }
+          className="w-24 cursor-pointer rounded-md border border-transparent bg-transparent text-[11px] text-white/40 hover:border-white/10 focus:outline-none [&>option]:bg-[var(--ac-superficie)] [&>option]:text-white"
+        >
+          <option value="">+ Grupo</option>
+          {disponibles.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.nombre}
+            </option>
+          ))}
+        </select>
+      )}
+    </div>
+  );
+}
+
+/** Celda editable como en Builders (cada columna con su editor). */
+function Celda({
+  estudiante: e,
+  columna,
+  opciones,
+  acciones,
 }: {
   estudiante: EstudianteAcademia;
   columna: Columna;
-  onGuardar: (valor: string) => void;
+  opciones: OpcionesCelda;
+  acciones: AccionesCelda;
 }) {
-  const valor = valorDe(estudiante, columna.id);
-  const [editando, setEditando] = useState(false);
-  const base = 'block h-9 w-full min-w-28 px-3 text-left leading-9';
+  const valor = valorDe(e, columna.id);
+  const td = 'px-2 py-px align-middle';
 
-  if (columna.tipo === 'derivada') {
-    if (columna.id === 'en_curso') {
+  switch (columna.id) {
+    case 'correo':
+      return e.cuentaPropia ? (
+        <div className={td}>
+          <input
+            key={valor}
+            type="email"
+            defaultValue={valor}
+            onBlur={(ev) => {
+              const nuevo = ev.target.value.trim();
+              if (nuevo && nuevo !== valor) acciones.correo(nuevo);
+              else ev.target.value = valor;
+            }}
+            onKeyDown={(ev) => ev.key === 'Enter' && ev.currentTarget.blur()}
+            className={`${inputCelda} min-w-52`}
+          />
+        </div>
+      ) : (
+        <div
+          className={`${td} text-[12px] whitespace-nowrap text-white/70`}
+          title="Cuenta de Artiefy vinculada: su correo se cambia en Artiefy"
+        >
+          {valor}
+        </div>
+      );
+
+    case 'grupos':
       return (
-        <span className={base}>
+        <div className={td}>
+          <GruposCelda
+            ids={e.grupoIds}
+            grupos={opciones.grupos}
+            onCambiar={acciones.grupos}
+          />
+        </div>
+      );
+
+    case 'programa':
+      return (
+        <div className={`${td} flex items-center whitespace-nowrap`}>
+          <select
+            value={
+              opciones.programas.find((p) => e.programas.includes(p.title))
+                ?.id ?? ''
+            }
+            onChange={(ev) => {
+              const programa = opciones.programas.find(
+                (p) => p.id === Number(ev.target.value)
+              );
+              if (programa)
+                acciones.matricular(programa.cursos.map((c) => c.id));
+            }}
+            className={`${inputCelda} min-w-36`}
+            title="Matricular en todos los cursos del programa"
+          >
+            <option value="">-- Seleccionar --</option>
+            {opciones.programas.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.title}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={acciones.verCursos}
+            className={`${verMas} bg-blue-600 hover:bg-blue-700`}
+          >
+            Ver más
+          </button>
+        </div>
+      );
+
+    case 'ultimo_curso':
+    case 'cursos':
+      return (
+        <div className={`${td} flex items-center whitespace-nowrap`}>
+          <select
+            value={ultimoCurso(e)?.id ?? ''}
+            onChange={(ev) =>
+              ev.target.value && acciones.matricular([Number(ev.target.value)])
+            }
+            className={`${inputCelda} min-w-36`}
+            title="Matricular en el curso"
+          >
+            <option value="">-- Seleccionar --</option>
+            {opciones.cursos.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={acciones.verCursos}
+            className={`${verMas} bg-green-600 hover:bg-green-700`}
+          >
+            Ver más
+          </button>
+        </div>
+      );
+
+    case 'en_curso':
+      // Se calcula de las matrículas (como en Builders, no se edita).
+      return (
+        <div className={td}>
           <span
             className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${
               valor === 'Sí'
@@ -992,98 +1324,231 @@ function Celda({
           >
             {valor}
           </span>
-        </span>
+        </div>
       );
-    }
-    if (columna.id === 'cuenta') {
+
+    case 'cuenta':
       return (
-        <span className={base}>
-          <span
-            className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${
-              estudiante.activo
+        <div className={td}>
+          <select
+            value={e.activo ? 'activa' : 'desactivada'}
+            onChange={(ev) => acciones.cuenta(ev.target.value === 'activa')}
+            className={`field-sizing-content cursor-pointer appearance-none rounded-full border px-2 py-0.5 text-[11px] font-medium focus:outline-none [&>option]:bg-[var(--ac-superficie)] [&>option]:text-white ${
+              e.activo
                 ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
                 : 'border-red-500/30 bg-red-500/15 text-red-400'
             }`}
           >
-            {valor}
-          </span>
-        </span>
+            <option value="activa">Activa</option>
+            <option value="desactivada">Desactivada</option>
+          </select>
+        </div>
       );
-    }
-    return (
-      <span
-        className={`${base} max-w-72 truncate ${columna.id === 'correo' ? 'text-white/70' : ''}`}
-        title={valor}
-      >
-        {valor || (
-          <span className="text-white/30">
-            {columna.id === 'programa' || columna.id === 'ultimo_curso'
-              ? 'No inscrito en ningún curso'
-              : '—'}
-          </span>
-        )}
-      </span>
-    );
+
+    case 'estado':
+      return (
+        <div className={td}>
+          <select
+            value={valor}
+            onChange={(ev) => acciones.guardar(ev.target.value)}
+            className={`field-sizing-content cursor-pointer appearance-none rounded-full border px-2 py-0.5 text-[11px] font-medium focus:outline-none [&>option]:bg-[var(--ac-superficie)] [&>option]:text-white ${
+              COLOR_ESTADO[valor] ?? 'border-white/15 bg-white/5 text-white/70'
+            }`}
+          >
+            <option value="">-- Seleccionar --</option>
+            {ESTADOS_INSCRIPCION.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
+
+    case 'cartera':
+      return (
+        <div className={td}>
+          <select
+            value={valor}
+            onChange={(ev) => acciones.guardar(ev.target.value)}
+            className={`field-sizing-content cursor-pointer appearance-none rounded-full px-2.5 py-1 text-xs font-medium ring-1 focus:outline-none [&>option]:bg-[var(--ac-superficie)] [&>option]:text-white ${
+              COLOR_CARTERA[valor] ?? 'bg-white/5 text-white/50 ring-white/10'
+            }`}
+          >
+            <option value="">-- Seleccionar --</option>
+            {CARTERA.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
+        </div>
+      );
   }
 
   if (columna.tipo === 'lista') {
     return (
-      <select
-        value={valor}
-        onChange={(e) => onGuardar(e.target.value)}
-        className={`h-9 w-full min-w-32 cursor-pointer bg-transparent px-2 text-[12px] focus:outline-none [&>option]:bg-[var(--ac-superficie)] ${
-          valor ? 'text-white' : 'text-white/40'
-        } ${
-          columna.id === 'cartera' && valor === 'En cartera'
-            ? 'text-amber-300'
-            : ''
-        } ${columna.id === 'cartera' && valor === 'Al día' ? 'text-emerald-400' : ''}`}
-      >
-        <option value="">-- Seleccionar --</option>
-        {(columna.opciones ?? []).map((o) => (
-          <option key={o} value={o}>
-            {o}
-          </option>
-        ))}
-      </select>
+      <div className={td}>
+        <select
+          value={valor}
+          onChange={(ev) => acciones.guardar(ev.target.value)}
+          className={inputCelda}
+        >
+          <option value="">-- Seleccionar --</option>
+          {(columna.opciones ?? []).map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
+        </select>
+      </div>
     );
   }
 
-  if (editando) {
+  if (columna.tipo === 'fecha') {
     return (
-      <input
-        autoFocus
-        type={columna.tipo === 'fecha' ? 'date' : 'text'}
-        defaultValue={valor}
-        onBlur={(e) => {
-          setEditando(false);
-          const nuevo = e.target.value.trim();
-          if (nuevo !== valor && (columna.id !== 'nombre' || nuevo)) {
-            onGuardar(nuevo);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
-          if (e.key === 'Escape') setEditando(false);
-        }}
-        className="h-9 w-full min-w-28 border border-[var(--ac-primario)]/60 bg-[var(--ac-fondo)] px-3 text-[12px] text-white focus:outline-none"
-      />
+      <div className={td}>
+        <FechaCelda valor={valor} onGuardar={acciones.guardar} />
+      </div>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={() => setEditando(true)}
-      title={valor}
-      className={`${base} max-w-72 truncate hover:bg-white/5 ${
-        columna.id === 'nombre' ? 'font-medium' : ''
-      }`}
+    <div className={td}>
+      <input
+        key={valor}
+        type="text"
+        defaultValue={valor}
+        onBlur={(ev) => {
+          const nuevo = ev.target.value.trim();
+          if (nuevo === valor) return;
+          if (columna.id === 'nombre' && !nuevo) {
+            ev.target.value = valor;
+            return;
+          }
+          acciones.guardar(nuevo);
+        }}
+        onKeyDown={(ev) => ev.key === 'Enter' && ev.currentTarget.blur()}
+        className={`${inputCelda} ${columna.id === 'nombre' ? 'min-w-44 font-medium' : ''}`}
+      />
+    </div>
+  );
+}
+
+// ------------------------------------------- Ver más: cursos del alumno ---
+
+function CursosEstudiante({
+  slug,
+  estudiante,
+  onClose,
+  onCambio,
+}: {
+  slug: string;
+  estudiante: EstudianteAcademia;
+  onClose: () => void;
+  onCambio: () => Promise<unknown>;
+}) {
+  const [ocupado, setOcupado] = useState<number | null>(null);
+  const base = (id: number) => `/api/academia/${slug}/cursos/${id}/estudiantes`;
+
+  const accion = async (id: number, fn: () => Promise<unknown>, ok: string) => {
+    setOcupado(id);
+    try {
+      await fn();
+      toast.success(ok);
+      await onCambio();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setOcupado(null);
+    }
+  };
+
+  return (
+    <Modal
+      titulo={`Cursos · ${estudiante.name ?? estudiante.email}`}
+      onClose={onClose}
+      ancho="max-w-xl"
     >
-      {columna.tipo === 'fecha'
-        ? fmtFecha(valor) || <span className="text-white/30">--</span>
-        : valor || <span className="text-white/30">--</span>}
-    </button>
+      {estudiante.programas.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-1.5">
+          {estudiante.programas.map((p) => (
+            <span
+              key={p}
+              className="rounded-full border border-green-500/30 bg-green-500/10 px-2.5 py-1 text-xs text-green-400"
+            >
+              {p}
+            </span>
+          ))}
+        </div>
+      )}
+      {estudiante.cursos.length === 0 ? (
+        <p className="text-sm text-white/50">No inscrito en ningún curso.</p>
+      ) : (
+        <ul className="space-y-2">
+          {estudiante.cursos.map((c) => (
+            <li
+              key={c.id}
+              className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--ac-borde)] px-3 py-2"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">
+                  {c.title}
+                </p>
+                <p className="text-[11px] text-white/50">
+                  Matriculado {fmtFecha(c.enrolledAt)}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={ocupado === c.id}
+                onClick={() =>
+                  void accion(
+                    c.id,
+                    () =>
+                      enviar(base(c.id), 'PATCH', {
+                        userIds: [estudiante.userId],
+                        completed: !c.completed,
+                      }),
+                    c.completed ? 'Marcado en curso' : 'Marcado como completado'
+                  )
+                }
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                  c.completed
+                    ? 'bg-emerald-500/15 text-emerald-400'
+                    : 'bg-[var(--ac-primario)]/15 text-[var(--ac-primario)]'
+                }`}
+              >
+                {c.completed ? 'Completado' : 'En curso'}
+              </button>
+              <button
+                type="button"
+                disabled={ocupado === c.id}
+                title="Quitar del curso"
+                onClick={() =>
+                  void accion(
+                    c.id,
+                    () =>
+                      enviar(
+                        `${base(c.id)}?userId=${encodeURIComponent(estudiante.userId)}`,
+                        'DELETE'
+                      ),
+                    'Quitado del curso'
+                  )
+                }
+                className="rounded-md p-1 text-white/40 hover:bg-red-500/10 hover:text-red-400"
+              >
+                {ocupado === c.id ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Trash2 className="size-4" />
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Modal>
   );
 }
 

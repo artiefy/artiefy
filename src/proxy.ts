@@ -29,7 +29,9 @@ function isSuperAdminSharedDashboardPath(pathname: string): boolean {
     pathname.startsWith('/dashboard/subscription') ||
     // El super-admin puede entrar al panel de educadores para ver lo que ve
     // un educador. Sin esto, el redirect por rol lo devolvia a su dashboard.
-    pathname.startsWith('/dashboard/educadores')
+    pathname.startsWith('/dashboard/educadores') ||
+    // Finanzas › Historial de Transacciones (su API exige admin/super-admin).
+    pathname.startsWith('/dashboard/transaction-history')
   );
 }
 

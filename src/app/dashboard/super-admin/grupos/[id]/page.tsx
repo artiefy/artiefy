@@ -108,12 +108,14 @@ interface GrupoDetalle {
   programasOpciones: { id: number; title: string }[];
 }
 
-type Estado = 'presente' | 'ausente' | 'tarde';
+type Estado = 'presente' | 'ausente' | 'tarde' | 'excusa';
 
 const MARCA: Record<Estado, { letra: string; clase: string }> = {
-  presente: { letra: 'X', clase: 'bg-emerald-500/20 text-emerald-300' },
-  ausente: { letra: 'A', clase: 'bg-red-500/20 text-red-300' },
-  tarde: { letra: 'T', clase: 'bg-amber-500/20 text-amber-300' },
+  presente: { letra: 'X', clase: 'text-white' },
+  ausente: { letra: 'A', clase: 'text-red-400' },
+  tarde: { letra: 'T', clase: 'text-amber-300' },
+  // Falta con excusa (justificada).
+  excusa: { letra: 'E', clase: 'text-sky-300' },
 };
 
 // Escapa texto para insertarlo en el HTML de la ventana de impresión.
@@ -175,10 +177,9 @@ const fmtFechaCorta = (f: string | null) => {
   return m && d ? `${d} ${MESES[m - 1]}` : '';
 };
 
-// Fecha larga para las columnas de clases (verticales).
-const fmtFechaVert = (f: string | null) => {
-  return formatFechaLarga(f);
-};
+// Columnas de clases (verticales): día y mes, como la planilla impresa
+// ("24 OCTUBRE").
+const fmtFechaVert = (f: string | null) => fmtFechaCorta(f);
 
 function CampoCabecera({
   label,
@@ -2251,7 +2252,7 @@ export default function GrupoDetallePage({
                     />
                   )}
                   {nFechas === 0 && (
-                    <th className="h-[120px] border border-white/10" />
+                    <th className="h-[110px] border border-white/10" />
                   )}
                 </tr>
                 <tr className="text-left">
@@ -2426,7 +2427,7 @@ export default function GrupoDetallePage({
                           return (
                             <td
                               key={s.id}
-                              className="w-[42px] border border-white/10 px-2 py-1.5 text-center text-white/25"
+                              className="w-[34px] border border-white/10 p-1 text-center text-white/25"
                               title="La asistencia estará disponible cuando tenga una cuenta"
                             >
                               —
@@ -2435,19 +2436,21 @@ export default function GrupoDetallePage({
                         }
                         const estado = (asistencia[s.id]?.[m.id] ?? '') as
                           Estado | '';
-                        // X → A → T → vacío → X
+                        // X → A → T → E (excusa) → vacío → X
                         const siguiente: Estado | '' =
                           estado === 'presente'
                             ? 'ausente'
                             : estado === 'ausente'
                               ? 'tarde'
                               : estado === 'tarde'
-                                ? ''
-                                : 'presente';
+                                ? 'excusa'
+                                : estado === 'excusa'
+                                  ? ''
+                                  : 'presente';
                         return (
                           <td
                             key={s.id}
-                            className="w-[42px] border border-white/10 px-2 py-1.5 text-center"
+                            className="w-[34px] border border-white/10 p-1 text-center"
                           >
                             <button
                               type="button"
@@ -2457,10 +2460,8 @@ export default function GrupoDetallePage({
                                 e.preventDefault();
                                 if (estado) void marcar(s.id, m.id, '');
                               }}
-                              className={`inline-flex size-6 items-center justify-center rounded text-[11px] font-bold ${
-                                estado
-                                  ? MARCA[estado].clase
-                                  : 'bg-white/5 text-white/25'
+                              className={`inline-flex size-6 items-center justify-center rounded text-[13px] font-bold hover:bg-white/10 ${
+                                estado ? MARCA[estado].clase : 'text-white/15'
                               }`}
                               title={
                                 estado
@@ -3371,7 +3372,7 @@ function EncabezadoFecha({
 
   return (
     <th
-      className={`group/fecha relative h-[180px] w-[42px] border border-white/10 p-0 text-center ${
+      className={`group/fecha relative h-[110px] w-[34px] border border-white/10 p-0 text-center ${
         fecha ? '' : 'bg-[#22C4D3]/10'
       } ${ancla ? 'bg-[#22C4D3]/15' : ''}`}
       title={

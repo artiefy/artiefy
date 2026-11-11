@@ -74,7 +74,7 @@ const sesionPerteneceAGrupo = async (grupoId: number, sesionId: number) => {
   return Boolean(sesion);
 };
 
-const ESTADOS = ['presente', 'ausente', 'tarde'] as const;
+const ESTADOS = ['presente', 'ausente', 'tarde', 'excusa'] as const;
 type Estado = (typeof ESTADOS)[number];
 
 export async function POST(

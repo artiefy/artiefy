@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 import { type AcademyRole } from '~/server/db/schema';
 
 import { type Academia, academiaPorSlug, ErrorAcademia } from './academias';
-import { membresia, type UsuarioAcademia } from './usuarios';
+import { membresiaConArtiefy, type UsuarioAcademia } from './usuarios';
 
 import 'server-only';
 
@@ -25,11 +25,15 @@ export async function cuentaDeAcademia(
   slug: string,
   roles: readonly AcademyRole[]
 ): Promise<{ academia: Academia; cuenta: UsuarioAcademia }> {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
   if (!userId) throw new ErrorAcademia('No autorizado', 401);
   const academia = await academiaPorSlug(slug);
   if (!academia) throw new ErrorAcademia('Academia no encontrada', 404);
-  const cuenta = await membresia(academia.id, userId);
+  const cuenta = await membresiaConArtiefy(
+    academia,
+    userId,
+    sessionClaims?.metadata
+  );
   if (!cuenta || !roles.includes(cuenta.role)) {
     throw new ErrorAcademia('No autorizado', 403);
   }

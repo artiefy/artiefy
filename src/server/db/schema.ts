@@ -3215,8 +3215,9 @@ export const grupoAsistencia = pgTable(
     userId: text('user_id')
       .references(() => users.id, { onDelete: 'cascade' })
       .notNull(),
+    // excusa = falta justificada (E en la planilla).
     estado: text('estado', {
-      enum: ['presente', 'ausente', 'tarde'],
+      enum: ['presente', 'ausente', 'tarde', 'excusa'],
     })
       .default('presente')
       .notNull(),

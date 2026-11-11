@@ -247,6 +247,9 @@ function Panel({
               ...variablesDeMarca(form.colorPrimario, form.colorFondo),
               background: 'var(--ac-fondo)',
               borderColor: 'var(--ac-borde)',
+              // Texto según el fondo: oscuro sobre fondo claro, blanco sobre
+              // oscuro (variablesDeMarca ajusta --color-white).
+              color: 'var(--color-white)',
             }}
           >
             <div className="flex items-center gap-2">
@@ -256,6 +259,9 @@ function Panel({
               )}
               <span className="font-bold">{form.nombre}</span>
             </div>
+            <p className="mt-2 text-sm opacity-70">
+              Así se verán los textos de la academia.
+            </p>
             <span
               className="mt-3 inline-block rounded-full px-4 py-1.5 text-sm font-semibold"
               style={{

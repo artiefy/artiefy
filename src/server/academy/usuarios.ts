@@ -9,6 +9,7 @@ import {
   ACADEMY_ROLES,
   type AcademyRole,
   academyUsers,
+  users,
 } from '~/server/db/schema';
 import { withRetry } from '~/server/db/withRetry';
 import { generarPasswordSegura } from '~/utils/generatePassword';
@@ -26,6 +27,10 @@ import 'server-only';
 //    tabla users de Artiefy y el middleware la manda a su academia.
 //  - vinculada: una cuenta que ya existía (de Artiefy u otra academia). Entra
 //    con su misma contraseña; su metadata y su rol de Artiefy no se tocan.
+//
+// Academias "de Artiefy" (esArtiefy): comparten la sesión con Artiefy. Una
+// cuenta de Artiefy que entra se registra sola (membresiaConArtiefy) y las
+// cuentas que crea la academia son también de Artiefy (rol estudiante).
 
 export type UsuarioAcademia = typeof academyUsers.$inferSelect;
 
@@ -53,6 +58,60 @@ export async function listarUsuarios(academyId: number) {
       .where(eq(academyUsers.academyId, academyId))
       .orderBy(asc(academyUsers.role), asc(academyUsers.name))
   );
+}
+
+/** Rol en la academia para una cuenta de Artiefy (según su rol en Artiefy). */
+const rolDesdeArtiefy = (rol: string | undefined): AcademyRole =>
+  rol === 'super-admin' || rol === 'admin'
+    ? 'super-admin'
+    : rol === 'educador'
+      ? 'educador'
+      : 'estudiante';
+
+/**
+ * Cuenta de la sesión en la academia. En una academia "de Artiefy", una
+ * cuenta de Artiefy que aún no está se registra sola (vinculada, con el rol
+ * equivalente al de Artiefy), así la misma sesión sirve en ambas. Las cuentas
+ * propias de otra academia (academySlug sin rol de Artiefy) no entran.
+ */
+export async function membresiaConArtiefy(
+  academia: Academia,
+  userId: string,
+  metadata: { role?: string; academySlug?: string } | undefined
+): Promise<UsuarioAcademia | null> {
+  const fila = await membresia(academia.id, userId);
+  if (fila || !academia.esArtiefy) return fila;
+  const deOtraAcademia = Boolean(metadata?.academySlug) && !metadata?.role;
+  if (deOtraAcademia) return null;
+
+  let [cuenta] = await db
+    .select({ email: users.email, name: users.name })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  if (!cuenta) {
+    const clerk = await clerkClient();
+    const u = await clerk.users.getUser(userId).catch(() => null);
+    const email = u?.primaryEmailAddress?.emailAddress;
+    if (!email) return null;
+    cuenta = {
+      email,
+      name: [u?.firstName, u?.lastName].filter(Boolean).join(' ') || null,
+    };
+  }
+
+  await db
+    .insert(academyUsers)
+    .values({
+      academyId: academia.id,
+      userId,
+      email: cuenta.email.toLowerCase(),
+      name: cuenta.name ?? cuenta.email,
+      role: rolDesdeArtiefy(metadata?.role),
+      cuentaPropia: false,
+    })
+    .onConflictDoNothing();
+  return membresia(academia.id, userId);
 }
 
 /** Cuenta (y rol) del usuario dentro de la academia, o null si no es suya. */
@@ -295,11 +354,16 @@ export async function agregarUsuario(
     password,
     firstName,
     lastName: resto.join(' ') || undefined,
-    publicMetadata: {
-      academyId: academia.id,
-      academySlug: academia.slug,
-      mustChangePassword: true,
-    },
+    // Academia de Artiefy: la cuenta es también de Artiefy (estudiante); el
+    // webhook la registra en `users` y puede entrar a artiefy.com. Si no,
+    // queda aislada en su academia.
+    publicMetadata: academia.esArtiefy
+      ? { role: 'estudiante', mustChangePassword: true }
+      : {
+          academyId: academia.id,
+          academySlug: academia.slug,
+          mustChangePassword: true,
+        },
   });
 
   try {
@@ -309,6 +373,8 @@ export async function agregarUsuario(
       email: correo,
       name: nombreLimpio,
       role: rol,
+      // De Artiefy: no se borra de Clerk al quitarla de la academia.
+      cuentaPropia: !academia.esArtiefy,
     });
   } catch (error) {
     // Sin fila en academy_users la cuenta quedaría huérfana: se deshace.

@@ -645,8 +645,8 @@ export function InicioSesion({
           }}
         />
       ) : (
-        // El mismo fondo de Artiefy (degradado con brillo y líneas) dibujado
-        // con los colores del tema, para las academias.
+        // Fondo de las academias: degradado con brillo en los colores del
+        // tema (sin las líneas del fondo de Artiefy).
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-background"
@@ -654,22 +654,7 @@ export function InicioSesion({
             backgroundImage:
               'radial-gradient(ellipse 55% 70% at 88% 30%, color-mix(in oklab, var(--color-primary) 38%, transparent), transparent 70%), radial-gradient(ellipse 45% 55% at 80% 95%, color-mix(in oklab, var(--color-primary) 22%, transparent), transparent 70%)',
           }}
-        >
-          <svg
-            className="absolute inset-0 size-full"
-            viewBox="0 0 1600 900"
-            preserveAspectRatio="xMidYMid slice"
-            fill="none"
-            stroke="var(--color-primary)"
-            strokeOpacity="0.45"
-            strokeWidth="2"
-          >
-            <path d="M1150 0 L1390 460 L1600 460" />
-            <path d="M1300 0 L1520 420 L1600 300" />
-            <path d="M0 860 L200 600 L260 600 L420 900" />
-            <path d="M60 900 L240 660" />
-          </svg>
-        </div>
+        />
       )}
 
       <div

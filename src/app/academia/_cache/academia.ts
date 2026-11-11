@@ -5,7 +5,7 @@ import { cacheLife, cacheTag } from 'next/cache';
 import { auth } from '@clerk/nextjs/server';
 
 import { academiaPorSlug } from '~/server/academy/academias';
-import { membresia } from '~/server/academy/usuarios';
+import { membresiaConArtiefy } from '~/server/academy/usuarios';
 
 import 'server-only';
 
@@ -33,8 +33,10 @@ export async function academiaDeLaPagina(slug: string) {
 export const sesionEnAcademia = cache(async (slug: string) => {
   const academia = await academiaDeLaPagina(slug);
   if (!academia) return null;
-  const { userId } = await auth();
-  const fila = userId ? await membresia(academia.id, userId) : null;
+  const { userId, sessionClaims } = await auth();
+  const fila = userId
+    ? await membresiaConArtiefy(academia, userId, sessionClaims?.metadata)
+    : null;
   const desactivada = fila?.activo === false;
   return {
     academia,

@@ -1,3 +1,4 @@
+import { clerkClient } from '@clerk/nextjs/server';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -38,7 +39,11 @@ export interface EstudianteAcademia {
   // Datos editables (teléfono, documento, estado, cartera…, columnas propias).
   datos: Record<string, string>;
   grupos: string[];
+  grupoIds: number[];
   programas: string[];
+  // false: cuenta de Artiefy (u otra academia) vinculada; su correo no se
+  // cambia desde la academia.
+  cuentaPropia: boolean;
 }
 
 /**
@@ -97,6 +102,7 @@ export async function listarEstudiantes(
       db
         .select({
           userId: academyGrupoEstudiantes.userId,
+          grupoId: academyGrupos.id,
           nombre: academyGrupos.nombre,
         })
         .from(academyGrupoEstudiantes)
@@ -139,6 +145,8 @@ export async function listarEstudiantes(
     cursos: cursosPorUsuario.get(e.userId) ?? [],
     datos: datos.find((d) => d.userId === e.userId)?.datos ?? {},
     grupos: grupos.filter((g) => g.userId === e.userId).map((g) => g.nombre),
+    grupoIds: grupos.filter((g) => g.userId === e.userId).map((g) => g.grupoId),
+    cuentaPropia: e.cuentaPropia,
     programas: [
       ...new Set(
         (cursosPorUsuario.get(e.userId) ?? []).flatMap((c) =>
@@ -360,4 +368,115 @@ export async function matricularEstudiantes(
     .onConflictDoNothing()
     .returning({ id: academyEnrollments.id });
   return nuevas.length;
+}
+
+// ------------------------------------------- Celdas: grupos y correo ---
+
+/**
+ * Grupos del estudiante (celda "Grupos"): queda solo en los elegidos. Si un
+ * grupo tiene curso, se matricula en él (como al guardar el grupo).
+ */
+export async function cambiarGruposDeEstudiante(
+  academyId: number,
+  userId: string,
+  grupoIds: number[]
+) {
+  const [valido] = await estudiantesValidos(academyId, [userId]);
+  if (!valido) throw new ErrorAcademia('El estudiante no es de esta academia.');
+  const propios = await db
+    .select({ id: academyGrupos.id, courseId: academyGrupos.courseId })
+    .from(academyGrupos)
+    .where(eq(academyGrupos.academyId, academyId));
+  const idsAcademia = propios.map((g) => g.id);
+  const elegidos = propios.filter((g) => grupoIds.includes(g.id));
+
+  if (idsAcademia.length > 0) {
+    await db
+      .delete(academyGrupoEstudiantes)
+      .where(
+        and(
+          eq(academyGrupoEstudiantes.userId, userId),
+          inArray(academyGrupoEstudiantes.grupoId, idsAcademia)
+        )
+      );
+  }
+  if (elegidos.length > 0) {
+    await db
+      .insert(academyGrupoEstudiantes)
+      .values(elegidos.map((g) => ({ grupoId: g.id, userId })))
+      .onConflictDoNothing();
+    const cursos = elegidos
+      .map((g) => g.courseId)
+      .filter((id): id is number => id != null);
+    if (cursos.length > 0) {
+      await db
+        .insert(academyEnrollments)
+        .values(cursos.map((courseId) => ({ academyId, courseId, userId })))
+        .onConflictDoNothing();
+    }
+  }
+}
+
+/**
+ * Correo de la cuenta (celda "Correo"). Solo para cuentas creadas por la
+ * academia: el de una cuenta de Artiefy vinculada se cambia en Artiefy.
+ * Cambia el correo principal en Clerk y en la academia.
+ */
+export async function cambiarCorreo(
+  academyId: number,
+  userId: string,
+  email: string
+) {
+  const correo = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    throw new ErrorAcademia('El correo no es válido.');
+  }
+  const [cuenta] = await db
+    .select({
+      id: academyUsers.id,
+      email: academyUsers.email,
+      cuentaPropia: academyUsers.cuentaPropia,
+    })
+    .from(academyUsers)
+    .where(
+      and(
+        eq(academyUsers.academyId, academyId),
+        eq(academyUsers.userId, userId)
+      )
+    )
+    .limit(1);
+  if (!cuenta)
+    throw new ErrorAcademia('La cuenta no es de esta academia.', 404);
+  if (cuenta.email === correo) return;
+  if (!cuenta.cuentaPropia) {
+    throw new ErrorAcademia(
+      'Es una cuenta de Artiefy vinculada: su correo se cambia en Artiefy.'
+    );
+  }
+
+  const clerk = await clerkClient();
+  const { data: ocupado } = await clerk.users.getUserList({
+    emailAddress: [correo],
+  });
+  if (ocupado.some((u) => u.id !== userId)) {
+    throw new ErrorAcademia('Ese correo ya pertenece a otra cuenta.');
+  }
+  const usuario = await clerk.users.getUser(userId);
+  const nuevo = await clerk.emailAddresses.createEmailAddress({
+    userId,
+    emailAddress: correo,
+    verified: true,
+    primary: true,
+  });
+  for (const viejo of usuario.emailAddresses) {
+    if (viejo.id !== nuevo.id) {
+      await clerk.emailAddresses
+        .deleteEmailAddress(viejo.id)
+        .catch(() => undefined);
+    }
+  }
+  await db
+    .update(academyUsers)
+    .set({ email: correo })
+    .where(eq(academyUsers.id, cuenta.id));
 }

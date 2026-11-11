@@ -5,6 +5,8 @@
  *          columnas propias de la academia.
  * PATCH  — { userIds[], campo, valor } guarda un dato (celda o "Editar
  *          Masivamente"); valor vacío lo borra.
+ *          { accion: 'grupos', userId, grupoIds[] } grupos del estudiante.
+ *          { accion: 'correo', userId, email } correo de la cuenta.
  * POST   — { etiqueta, opciones[] } agrega una columna propia.
  * DELETE ?columna= — quita una columna propia.
  */
@@ -16,6 +18,8 @@ import {
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import {
+  cambiarCorreo,
+  cambiarGruposDeEstudiante,
   crearColumna,
   eliminarColumna,
   guardarDato,
@@ -46,10 +50,32 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
   try {
     const { academia } = await resolver(params);
     const body = (await request.json().catch(() => ({}))) as {
+      accion?: unknown;
+      userId?: unknown;
+      grupoIds?: unknown;
+      email?: unknown;
       userIds?: unknown;
       campo?: unknown;
       valor?: unknown;
     };
+    const userId = typeof body.userId === 'string' ? body.userId : '';
+    if (body.accion === 'grupos') {
+      const grupoIds = Array.isArray(body.grupoIds)
+        ? body.grupoIds.map(Number).filter(Number.isInteger)
+        : [];
+      await cambiarGruposDeEstudiante(academia.id, userId, grupoIds);
+      return NextResponse.json({ ok: true });
+    }
+    if (body.accion === 'correo') {
+      const email = typeof body.email === 'string' ? body.email : '';
+      await cambiarCorreo(academia.id, userId, email);
+      await registrarLog(
+        academia.id,
+        'Correo cambiado',
+        `${userId} → ${email}`
+      );
+      return NextResponse.json({ ok: true });
+    }
     const userIds = Array.isArray(body.userIds)
       ? body.userIds.filter((v): v is string => typeof v === 'string')
       : [];
