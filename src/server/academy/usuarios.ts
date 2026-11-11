@@ -1,8 +1,6 @@
 import { clerkClient } from '@clerk/nextjs/server';
 import { and, asc, eq, inArray } from 'drizzle-orm';
-import nodemailer from 'nodemailer';
 
-import { env } from '~/env';
 import { urlAcademia } from '~/lib/academy/host';
 import { db } from '~/server/db';
 import {
@@ -15,6 +13,7 @@ import { withRetry } from '~/server/db/withRetry';
 import { generarPasswordSegura } from '~/utils/generatePassword';
 
 import { type Academia, ErrorAcademia } from './academias';
+import { transporteDe } from './correo';
 
 import 'server-only';
 
@@ -157,11 +156,6 @@ async function usernameLibre(email: string): Promise<string> {
   return `${base}${Date.now()}`;
 }
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: 'direcciongeneral@artiefy.com', pass: env.PASS },
-});
-
 const escapar = (s: string) =>
   s.replace(
     /[&<>"]/g,
@@ -176,8 +170,9 @@ async function enviarCredenciales(
 ) {
   const entrar = urlAcademia(academia.slug, '/sign-in');
   const marca = escapar(academia.nombre);
-  await transporter.sendMail({
-    from: `"${academia.nombre.replace(/"/g, '')}" <direcciongeneral@artiefy.com>`,
+  const { transporte, from } = await transporteDe(academia);
+  await transporte.sendMail({
+    from,
     to: email,
     subject: `Bienvenido a ${academia.nombre} - Tus credenciales de acceso`,
     html: `
@@ -203,8 +198,9 @@ async function enviarAvisoDeAcceso(
 ) {
   const entrar = urlAcademia(academia.slug, '/sign-in');
   const marca = escapar(academia.nombre);
-  await transporter.sendMail({
-    from: `"${academia.nombre.replace(/"/g, '')}" <direcciongeneral@artiefy.com>`,
+  const { transporte, from } = await transporteDe(academia);
+  await transporte.sendMail({
+    from,
     to: email,
     subject: `Ya tienes acceso a ${academia.nombre}`,
     html: `
@@ -231,12 +227,13 @@ export async function enviarCorreoAcademia(
   const html = `<div style="font-family:sans-serif;white-space:pre-line">${escapar(
     mensaje
   )}</div>`;
+  const { transporte, from } = await transporteDe(academia);
   let enviados = 0;
   for (const to of destinos.slice(0, 200)) {
     const ok = await intentarCorreo(
-      transporter
+      transporte
         .sendMail({
-          from: `"${academia.nombre.replace(/"/g, '')}" <direcciongeneral@artiefy.com>`,
+          from,
           to,
           subject: asunto,
           html,

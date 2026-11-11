@@ -221,7 +221,13 @@ function manejarAcademia(
   if (isApiPath(pathname)) return NextResponse.next();
 
   const url = new URL(req.url);
-  if (pathname.startsWith('/dashboard') && !userId) {
+  // El formulario de inscripción (/dashboard/formulario) es público, como en
+  // Artiefy.
+  if (
+    pathname.startsWith('/dashboard') &&
+    !userId &&
+    !isPublicDashboardPath(pathname)
+  ) {
     const signIn = new URL('/sign-in', req.url);
     signIn.searchParams.set('redirect_url', url.pathname + url.search);
     return NextResponse.redirect(signIn);

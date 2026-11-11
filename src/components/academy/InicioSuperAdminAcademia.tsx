@@ -29,6 +29,9 @@ import {
   variablesDeMarca,
 } from '~/lib/academy/marca';
 
+import { AjustesFormularioAcademia } from './AjustesFormularioAcademia';
+import { CorreoAcademia } from './CorreoAcademia';
+
 // Inicio del super-admin de una academia: pestañas Estadísticas y
 // Configuraciones (datos y colores de la academia).
 
@@ -126,7 +129,11 @@ export function InicioSuperAdminAcademia({
       {pestana === 'estadisticas' ? (
         <Estadisticas e={estadisticas} />
       ) : (
-        <Configuraciones academia={academia} />
+        <>
+          <Configuraciones academia={academia} />
+          <CorreoAcademia slug={academia.slug} />
+          <AjustesFormularioAcademia slug={academia.slug} />
+        </>
       )}
     </div>
   );

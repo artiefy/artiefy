@@ -100,7 +100,7 @@ function FileBadge({
     <div
       className="
         mt-2 flex items-center gap-3 rounded border border-cyan-900/40
-        bg-[#0f1a38] p-2
+        bg-[var(--fm-campo2,#0f1a38)] p-2
       "
     >
       {isImg && url ? (
@@ -116,7 +116,7 @@ function FileBadge({
       ) : (
         <div
           className="
-            flex size-12 items-center justify-center rounded bg-[#101a35]
+            flex size-12 items-center justify-center rounded bg-[var(--fm-campo2,#101a35)]
             text-xs text-gray-300
           "
         >
@@ -279,10 +279,25 @@ interface ProgramsResponse {
   total?: number;
 }
 
+// Rutas del formulario. Por defecto las de Artiefy; una academia pasa las
+// suyas (/api/academia/[slug]/formulario…).
+export interface ApisFormulario {
+  opciones: string;
+  programas: string;
+  enviar: string;
+}
+
+const APIS_ARTIEFY: ApisFormulario = {
+  opciones: '/api/super-admin/form-inscription',
+  programas: '/api/super-admin/form-inscription/programs',
+  enviar: '/api/super-admin/form-inscription',
+};
+
 interface Props {
   isOpen: boolean;
   // <- serializable a ojos del checker
   onClose: unknown;
+  apis?: ApisFormulario;
 }
 
 function isFn(x: unknown): x is () => void {
@@ -328,7 +343,7 @@ function FieldFile({
         aria-required={required}
         aria-invalid={!!error}
         className={`
-          rounded bg-[#1C2541] p-2 text-sm text-white
+          rounded bg-[var(--fm-campo,#1C2541)] p-2 text-sm text-white
           focus:ring-2 focus:ring-cyan-500 focus:outline-none
           ${error ? 'border border-red-500' : ''}
         `}
@@ -377,7 +392,7 @@ function FieldSelect({
         disabled={disabled}
         aria-invalid={!!error}
         className={`
-          rounded bg-[#1C2541] p-2 text-sm text-white
+          rounded bg-[var(--fm-campo,#1C2541)] p-2 text-sm text-white
           focus:ring-2 focus:ring-cyan-500 focus:outline-none
           disabled:opacity-60
           ${error ? 'border border-red-500' : ''}
@@ -399,7 +414,11 @@ function FieldSelect({
   );
 }
 
-export default function FormModal({ isOpen, onClose }: Props) {
+export default function FormModal({
+  isOpen,
+  onClose,
+  apis = APIS_ARTIEFY,
+}: Props) {
   const handleClose = () => {
     if (isFn(onClose)) onClose(); // ejecuta si realmente es función
   };
@@ -579,7 +598,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch('/api/super-admin/form-inscription');
+        const res = await fetch(apis.opciones);
         const data: InscriptionConfig = await res.json();
         setDateOptions((data.dates ?? []).map((d) => d.startDate));
         setCommercialOptions((data.comercials ?? []).map((c) => c.contact));
@@ -593,7 +612,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       }
     };
     if (isOpen) load();
-  }, [isOpen]);
+  }, [isOpen, apis.opciones]);
 
   // Cargar programas
   useEffect(() => {
@@ -601,7 +620,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       try {
         setLoadingPrograms(true);
         setErrorPrograms(null);
-        const res = await fetch('/api/super-admin/form-inscription/programs');
+        const res = await fetch(apis.programas);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: ProgramsResponse = await res.json();
         setProgramTitles((data.programs ?? []).map((p) => p.title));
@@ -613,7 +632,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       }
     };
     if (isOpen) loadPrograms();
-  }, [isOpen]);
+  }, [isOpen, apis.programas]);
 
   // Normaliza según el campo: trim siempre; en textos colapsa espacios internos.
   function sanitizeValueByKey(key: keyof Fields, value: string) {
@@ -857,7 +876,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       console.log('[FORM] Enviando datos (archivos ya en S3)...');
 
       // Enviar formulario SIN archivos (solo JSON)
-      const res = await fetch('/api/super-admin/form-inscription', {
+      const res = await fetch(apis.enviar, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -926,7 +945,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
       <Dialog.Panel
         className="
           flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl
-          bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20
+          bg-[var(--fm-fondo,#0B132B)] text-white shadow-xl shadow-cyan-500/20
         "
       >
         {showSuccess ? (
@@ -940,7 +959,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
             <div
               className="
                 flex size-20 items-center justify-center rounded-full
-                bg-[#1C2541] shadow shadow-cyan-500/30
+                bg-[var(--fm-campo,#1C2541)] shadow shadow-cyan-500/30
               "
             >
               <svg
@@ -1002,7 +1021,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 type="button"
                 onClick={resetForm}
                 className="
-                  rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black
+                  rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-[var(--fm-sobre-primario,#000)]
                   shadow-md transition
                   hover:bg-cyan-400
                 "
@@ -1029,7 +1048,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
               {/* Header sticky */}
               <div
                 className="
-                  sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95
+                  sticky top-0 z-10 border-b border-cyan-900/30 bg-[var(--fm-fondo,#0B132B)]/95
                   px-6 py-4 backdrop-blur
                 "
               >
@@ -1380,7 +1399,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <div
                   className="
                     sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30
-                    bg-[#0B132B] py-4
+                    bg-[var(--fm-fondo,#0B132B)] py-4
                   "
                 >
                   <button
@@ -1398,7 +1417,7 @@ export default function FormModal({ isOpen, onClose }: Props) {
                     disabled={submitting || uploadingFiles}
                     className="
                       rounded bg-cyan-500 px-6 py-2 text-sm font-semibold
-                      text-black shadow-md transition
+                      text-[var(--fm-sobre-primario,#000)] shadow-md transition
                       hover:bg-cyan-400
                       disabled:opacity-60
                     "
@@ -1459,7 +1478,7 @@ function FieldInput({
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={!!error}
         className={`
-          rounded bg-[#1C2541] p-2 text-sm text-white placeholder-gray-400
+          rounded bg-[var(--fm-campo,#1C2541)] p-2 text-sm text-white placeholder-gray-400
           focus:ring-2 focus:ring-cyan-500 focus:outline-none
           ${error ? 'border border-red-500' : ''}
         `}

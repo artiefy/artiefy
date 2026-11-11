@@ -1,21 +1,26 @@
 import { Suspense } from 'react';
 
-import { FinanzasAcademia } from '~/components/academy/seccion/FinanzasAcademia';
+import { HistorialTransaccionesAcademia } from '~/components/academy/HistorialTransaccionesAcademia';
 
-import { SeccionAcademia } from '../../_components/SeccionAcademia';
+import { PanelDeRol } from '../../_components/PanelDeRol';
 
-// <slug>.artiefy.com/dashboard/super-admin/finanzas
+// <slug>.artiefy.com/dashboard/super-admin/finanzas — la misma pantalla que
+// Finanzas › Historial de Transacciones de Artiefy, con los pagos de la
+// academia.
 
 type Props = { params: Promise<{ slug: string }> };
 
 export default function FinanzasAcademiaPage({ params }: Props) {
   return (
     <Suspense>
-      <SeccionAcademia
+      <PanelDeRol
         params={params}
-        titulo="Finanzas"
-        descripcion="Pagos de los estudiantes de la academia."
-        render={({ academia }) => <FinanzasAcademia slug={academia.slug} />}
+        rol="super-admin"
+        saludo={false}
+        anchoCompleto
+        render={({ academia }) => (
+          <HistorialTransaccionesAcademia slug={academia.slug} />
+        )}
       />
     </Suspense>
   );

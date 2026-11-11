@@ -27,6 +27,7 @@ async function Formulario({ params }: Props) {
 
   return (
     <InicioSesion
+      conFacebook={false}
       fondoSrc={null}
       conRegistro={false}
       destinoPorDefecto="/dashboard"

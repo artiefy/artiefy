@@ -84,6 +84,8 @@ export interface MarcaInicioSesion {
   fondoSrc?: string | null;
   // false: sin "¿Aún no tienes cuenta?" (las cuentas las crea la academia).
   conRegistro?: boolean;
+  // false: sin el botón de Facebook (las academias no lo usan).
+  conFacebook?: boolean;
   destinoPorDefecto?: string;
 }
 
@@ -93,6 +95,7 @@ export function InicioSesion({
   logo,
   fondoSrc = '/login-fondo.webp',
   conRegistro = true,
+  conFacebook = true,
   destinoPorDefecto = '/estudiantes',
 }: MarcaInicioSesion = {}) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -972,19 +975,21 @@ export function InicioSesion({
                     <Icons.gitHub />
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => signInWith('oauth_facebook')}
-                  className={oauthButtonClassName}
-                  disabled={Boolean(loadingProvider)}
-                  aria-label="Iniciar sesión con Facebook"
-                >
-                  {loadingProvider === 'oauth_facebook' ? (
-                    <Icons.spinner className="size-5" />
-                  ) : (
-                    <Icons.facebook />
-                  )}
-                </button>
+                {conFacebook && (
+                  <button
+                    type="button"
+                    onClick={() => signInWith('oauth_facebook')}
+                    className={oauthButtonClassName}
+                    disabled={Boolean(loadingProvider)}
+                    aria-label="Iniciar sesión con Facebook"
+                  >
+                    {loadingProvider === 'oauth_facebook' ? (
+                      <Icons.spinner className="size-5" />
+                    ) : (
+                      <Icons.facebook />
+                    )}
+                  </button>
+                )}
               </div>
 
               {conRegistro && (

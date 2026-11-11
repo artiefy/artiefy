@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 import { academiaDeLaPagina } from '~/app/academia/_cache/academia';
 import { MarcaProvider } from '~/components/marca/MarcaProvider';
 import { cssDeMarca, urlLogo } from '~/lib/academy/marca';
+import { obtenerAjustes } from '~/server/academy/ajustes';
 
 import type { Metadata } from 'next';
 
@@ -25,12 +26,14 @@ export async function generateMetadata({
   const academia = await academiaDeLaPagina((await params).slug);
   // absolute: sin el " | Artiefy" que agrega el layout raíz.
   if (!academia) return { title: { absolute: 'Academia no encontrada' } };
-  const logo = urlLogo(academia.logoKey);
+  // Favicon: el de Configuraciones o, si no hay, el logo.
+  const { faviconKey } = await obtenerAjustes(academia.id);
+  const icono = urlLogo(faviconKey) ?? urlLogo(academia.logoKey);
   return {
     title: { absolute: academia.nombre, template: `%s · ${academia.nombre}` },
     description: academia.nombre,
     robots: { index: false },
-    ...(logo ? { icons: { icon: logo } } : {}),
+    ...(icono ? { icons: { icon: icono, apple: icono } } : {}),
   };
 }
 

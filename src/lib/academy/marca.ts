@@ -91,8 +91,36 @@ export function variablesDeMarca(
     '--ac-fondo': colorFondo,
     '--ac-superficie': superficie,
     '--ac-borde': borde,
+    // Modo claro: los grises claros de Tailwind (iconos y textos del menú,
+    // pensados para fondo oscuro) pasan a grises oscuros para que se lean.
+    // Modo oscuro: se ponen explícitos los de Tailwind, para que la vista
+    // previa (que cambia el modo en vivo) no se quede con los oscuros.
+    ...(claro ? GRISES_MODO_CLARO : GRISES_MODO_OSCURO),
   } as CSSProperties;
 }
+
+// Grises por defecto de Tailwind (los del tema oscuro de Artiefy).
+const GRISES_MODO_OSCURO = {
+  '--color-gray-100': '#f3f4f6',
+  '--color-gray-200': '#e5e7eb',
+  '--color-gray-300': '#d1d5db',
+  '--color-gray-400': '#9ca3af',
+  '--color-slate-100': '#f1f5f9',
+  '--color-slate-200': '#e2e8f0',
+  '--color-slate-300': '#cbd5e1',
+  '--color-slate-400': '#94a3b8',
+};
+
+const GRISES_MODO_CLARO = {
+  '--color-gray-100': '#111827',
+  '--color-gray-200': '#1f2937',
+  '--color-gray-300': '#1f2937',
+  '--color-gray-400': '#374151',
+  '--color-slate-100': '#0f172a',
+  '--color-slate-200': '#1e293b',
+  '--color-slate-300': '#1e293b',
+  '--color-slate-400': '#334155',
+};
 
 /**
  * Las mismas variables como regla `:root { … }`. Lo usa el layout de la

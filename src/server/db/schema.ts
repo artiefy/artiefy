@@ -3893,3 +3893,93 @@ export const academyComentarios = pgTable(
   },
   (t) => [index('academy_comentarios_usuario_idx').on(t.academyId, t.userId)]
 );
+
+// Correo propio de una academia ("Conectar correo" en Configuraciones): desde
+// él salen todos sus correos (credenciales, avisos, "Enviar correo"). La
+// contraseña va cifrada (AES-256-GCM con ACADEMY_MAIL_SECRET).
+// SQL: scripts/academy_correo.sql.
+export const academyCorreo = pgTable('academy_correo', {
+  id: serial('id').primaryKey(),
+  academyId: integer('academy_id')
+    .references(() => academies.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+  proveedor: text('proveedor').notNull(),
+  host: text('host').notNull(),
+  puerto: integer('puerto').notNull(),
+  seguro: boolean('seguro').default(true).notNull(),
+  usuario: text('usuario').notNull(),
+  claveCifrada: text('clave_cifrada').notNull(),
+  remitenteNombre: text('remitente_nombre'),
+  verificadoAt: timestamp('verificado_at', { withTimezone: true }),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// Ajustes de una academia (Configuraciones): favicon y formulario de
+// inscripción (logos de "Organiza", fechas de inicio y comerciales). Las
+// sedes y horarios del formulario salen de sus catálogos (espacios y
+// horarios). SQL: scripts/academy_ajustes.sql.
+export const academyAjustes = pgTable('academy_ajustes', {
+  id: serial('id').primaryKey(),
+  academyId: integer('academy_id')
+    .references(() => academies.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+  faviconKey: text('favicon_key'),
+  formularioLogos: text('formulario_logos')
+    .array()
+    .default(sql`'{}'::text[]`)
+    .notNull(),
+  formularioFechas: text('formulario_fechas')
+    .array()
+    .default(sql`'{}'::text[]`)
+    .notNull(),
+  formularioComerciales: text('formulario_comerciales')
+    .array()
+    .default(sql`'{}'::text[]`)
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// Comprobante y verificación de cada pago de una academia ("Historial de
+// Transacciones"). Aparte de academy_pagos para no tocar sus consultas.
+// SQL: scripts/academy_finanzas_verificacion.sql.
+export const academyPagoVerificacion = pgTable('academy_pago_verificacion', {
+  id: serial('id').primaryKey(),
+  pagoId: integer('pago_id')
+    .references(() => academyPagos.id, { onDelete: 'cascade' })
+    .notNull()
+    .unique(),
+  comprobanteKey: text('comprobante_key'),
+  comprobanteNombre: text('comprobante_nombre'),
+  comprobanteSubidoAt: timestamp('comprobante_subido_at', {
+    withTimezone: true,
+  }),
+  verificado: boolean('verificado').default(false).notNull(),
+  verificadoAt: timestamp('verificado_at', { withTimezone: true }),
+  verificadoPor: text('verificado_por'),
+});
+
+// Historial de verificaciones de un pago (quién, cuándo, notas, archivo).
+export const academyPagoHistorial = pgTable(
+  'academy_pago_historial',
+  {
+    id: serial('id').primaryKey(),
+    pagoId: integer('pago_id')
+      .references(() => academyPagos.id, { onDelete: 'cascade' })
+      .notNull(),
+    verificado: boolean('verificado').notNull(),
+    por: text('por'),
+    notas: text('notas'),
+    archivoKey: text('archivo_key'),
+    archivoNombre: text('archivo_nombre'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_pago_historial_pago_idx').on(t.pagoId)]
+);

@@ -267,7 +267,7 @@ export function FinanzasAcademia({ slug }: { slug: string }) {
   );
 }
 
-function RegistrarPago({
+export function RegistrarPago({
   api,
   estudiantes,
   onClose,
