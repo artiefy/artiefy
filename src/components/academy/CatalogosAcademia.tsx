@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import { useSearchParams } from 'next/navigation';
+
 import { Edit, Loader2, Plus, Trash2, X } from 'lucide-react';
 import {
   FiAward,
@@ -60,7 +62,16 @@ const campoClase = `
 `;
 
 export function CatalogosAcademia({ slug }: { slug: string }) {
-  const [tab, setTab] = useState<TabId>('categorias');
+  // ?tab=horarios / ?tab=espacios abre esa pestaña (enlaces del menú
+  // "Formulario"); al cambiar el enlace se sigue la URL.
+  const tabUrl = useSearchParams().get('tab');
+  const tabDeUrl = TABS.find((t) => t.id === tabUrl)?.id ?? 'categorias';
+  const [tab, setTab] = useState<TabId>(tabDeUrl);
+  const [tabUrlPrevia, setTabUrlPrevia] = useState(tabDeUrl);
+  if (tabUrlPrevia !== tabDeUrl) {
+    setTabUrlPrevia(tabDeUrl);
+    setTab(tabDeUrl);
+  }
   const actual = TABS.find((t) => t.id === tab) ?? TABS[0];
   const api = `/api/academia/${slug}/catalogos/${tab}`;
 

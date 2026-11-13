@@ -4,6 +4,7 @@ import { FaGraduationCap } from 'react-icons/fa';
 import {
   FiBook,
   FiBookOpen,
+  FiClipboard,
   FiCreditCard,
   FiFileText,
   FiHome,
@@ -70,11 +71,36 @@ const MENU: Record<AcademyRole, ItemMenu[]> = {
           link: '/dashboard/super-admin/estudiantes',
         },
         { title: 'Grupos', link: '/dashboard/super-admin/estudiantes/grupos' },
+        { title: 'Logs', link: '/dashboard/super-admin/estudiantes/logs' },
+      ],
+    },
+    // Igual que el grupo "Formulario" de Artiefy.
+    {
+      kind: 'group',
+      id: 'formulario',
+      icon: <FiClipboard size={18} />,
+      title: 'Formulario',
+      items: [
         {
-          title: 'Formulario',
+          title: 'Formulario de inscripción',
           link: '/dashboard/super-admin/estudiantes/formulario',
         },
-        { title: 'Logs', link: '/dashboard/super-admin/estudiantes/logs' },
+        {
+          title: 'Fechas inscritas',
+          link: '/dashboard/super-admin/estudiantes/formulario#fechas',
+        },
+        {
+          title: 'Comerciales registrados',
+          link: '/dashboard/super-admin/estudiantes/formulario#comerciales',
+        },
+        {
+          title: 'Horarios registrados',
+          link: '/dashboard/super-admin/cursos/configuraciones?tab=horarios',
+        },
+        {
+          title: 'Sedes',
+          link: '/dashboard/super-admin/cursos/configuraciones?tab=espacios',
+        },
       ],
     },
     {

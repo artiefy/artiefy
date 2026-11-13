@@ -280,7 +280,7 @@ export function AjustesFormularioAcademia({
         </div>
 
         {/* Fechas de inicio */}
-        <div className="space-y-2">
+        <div id="fechas" className="scroll-mt-24 space-y-2">
           <p className="text-sm font-medium text-white/80">Fechas de inicio</p>
           <div className="flex flex-wrap gap-2">
             {data.formularioFechas.map((f) => (
@@ -331,7 +331,7 @@ export function AjustesFormularioAcademia({
         </div>
 
         {/* Comerciales */}
-        <div className="space-y-2">
+        <div id="comerciales" className="scroll-mt-24 space-y-2">
           <p className="text-sm font-medium text-white/80">Comerciales</p>
           <div className="flex flex-wrap gap-2">
             {data.formularioComerciales.map((c) => (

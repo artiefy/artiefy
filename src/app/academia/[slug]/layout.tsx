@@ -57,11 +57,18 @@ async function Marco({ children, params }: Props) {
   await connection();
   const academia = await academiaDeLaPagina((await params).slug);
   if (!academia) notFound();
+  // Sin logo principal se usa el primero de "Organiza" o el favicon
+  // (Estudiantes › Formulario), para que el sidebar y el header lo muestren.
+  const ajustes = academia.logoKey ? null : await obtenerAjustes(academia.id);
+  const logoUrl =
+    urlLogo(academia.logoKey) ??
+    urlLogo(ajustes?.formularioLogos[0] ?? null) ??
+    urlLogo(ajustes?.faviconKey ?? null);
   return (
     <MarcaProvider
       marca={{
         nombre: academia.nombre,
-        logoUrl: urlLogo(academia.logoKey),
+        logoUrl,
         esAcademia: true,
         colorPrimario: academia.colorPrimario,
       }}
