@@ -44,6 +44,7 @@ const MAPA: [string, string][] = [
   ['acudienteEmail', 'acudiente_email'],
   ['modalidad', 'modalidad'],
   ['pagoInscripcion', 'pago_inscripcion'],
+  ['pagoCuota1', 'pago_cuota1'],
   ['numeroCuotas', 'numero_cuotas'],
   ['docIdentidadKey', 'doc_identidad'],
   ['actaGradoKey', 'doc_acta_grado'],
@@ -51,6 +52,19 @@ const MAPA: [string, string][] = [
   ['pagareKey', 'doc_pagare'],
   ['comprobanteInscripcionKey', 'doc_comprobante_inscripcion'],
 ];
+
+// Tipo de documento del formulario ("CC (Cédula de ciudadanía)") → sigla de
+// la columna "Tipo de documento" de la lista. Los demás se guardan tal cual.
+const SIGLAS_DOCUMENTO: [RegExp, string][] = [
+  [/^CC|c[ée]dula de ciudadan/i, 'CC'],
+  [/^TI|tarjeta de identidad/i, 'TI'],
+  [/c[ée]dula de extranjer/i, 'CE'],
+  [/^pasaporte/i, 'PA'],
+  [/protecci[óo]n temporal/i, 'PPT'],
+  [/^NIT|identificaci[óo]n tributaria/i, 'NIT'],
+];
+const siglaDocumento = (v: string) =>
+  SIGLAS_DOCUMENTO.find(([re]) => re.test(v))?.[1] ?? v;
 
 export async function inscribirDesdeFormulario(
   academia: Academia,
@@ -86,6 +100,9 @@ export async function inscribirDesdeFormulario(
   for (const [campo, columna] of MAPA) {
     const valor = texto(body[campo], 500);
     if (valor) datos[columna] = valor;
+  }
+  if (datos.tipo_documento) {
+    datos.tipo_documento = siglaDocumento(datos.tipo_documento);
   }
   datos.fecha_compra = new Date().toISOString().slice(0, 10);
   await db

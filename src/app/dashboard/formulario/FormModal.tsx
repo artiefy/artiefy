@@ -298,7 +298,11 @@ interface Props {
   // <- serializable a ojos del checker
   onClose: unknown;
   apis?: ApisFormulario;
+  // Sitio al que lleva la pantalla de gracias ("Ir a …"). Por defecto Artiefy.
+  destino?: { nombre: string; url: string };
 }
+
+const DESTINO_ARTIEFY = { nombre: 'Artiefy', url: 'https://artiefy.com/' };
 
 function isFn(x: unknown): x is () => void {
   return typeof x === 'function';
@@ -418,6 +422,7 @@ export default function FormModal({
   isOpen,
   onClose,
   apis = APIS_ARTIEFY,
+  destino = DESTINO_ARTIEFY,
 }: Props) {
   const handleClose = () => {
     if (isFn(onClose)) onClose(); // ejecuta si realmente es función
@@ -983,7 +988,10 @@ export default function FormModal({
               </h2>
               <p className="mt-2 text-gray-300">
                 Ya puedes disfrutar de{' '}
-                <span className="font-semibold text-cyan-400">Artiefy</span>.
+                <span className="font-semibold text-cyan-400">
+                  {destino.nombre}
+                </span>
+                .
               </p>
             </div>
 
@@ -1029,15 +1037,15 @@ export default function FormModal({
                 Llenar otro formulario
               </button>
               <a
-                href="https://artiefy.com/"
-                target="_blank"
+                href={destino.url}
+                target={destino.url.startsWith('http') ? '_blank' : undefined}
                 rel="noreferrer"
                 className="
                   rounded border border-gray-600 px-5 py-2 text-sm
                   hover:bg-gray-800
                 "
               >
-                Ir a Artiefy
+                Ir a {destino.nombre}
               </a>
             </div>
           </div>

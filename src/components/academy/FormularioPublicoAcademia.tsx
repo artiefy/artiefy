@@ -88,6 +88,7 @@ export function FormularioPublicoAcademia({
       <FormModal
         isOpen={abierto}
         onClose={() => setAbierto(false)}
+        destino={{ nombre, url: '/' }}
         apis={{
           opciones: base,
           programas: `${base}/programas`,

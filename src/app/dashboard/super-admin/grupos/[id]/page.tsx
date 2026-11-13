@@ -20,6 +20,7 @@ import {
   FileText,
   Filter,
   GraduationCap,
+  LayoutGrid,
   Link2,
   Loader2,
   Pencil,
@@ -627,6 +628,8 @@ export default function GrupoDetallePage({
   const [hojasImprimir, setHojasImprimir] = useState<number[] | null>(null);
   const [eliminando, setEliminando] = useState(false);
   const [renombrando, setRenombrando] = useState(false);
+  // Pestaña "Resumen" (la primera): cuadro de todas las hojas del grupo.
+  const [verResumen, setVerResumen] = useState(false);
   // Fila nueva estilo Excel para dar de alta un estudiante.
   const filaVacia = {
     identificacion: '',
@@ -1871,7 +1874,10 @@ export default function GrupoDetallePage({
             </span>
           </Link>
 
-          <div className="flex min-h-[61px] flex-wrap items-center gap-2 border-b border-white/10 py-2">
+          <div
+            hidden={verResumen}
+            className="flex min-h-[61px] flex-wrap items-center gap-2 border-b border-white/10 py-2"
+          >
             <input
               key={`${grupo.id}:${grupo.nombre}`}
               aria-label="Nombre de la hoja"
@@ -1987,8 +1993,19 @@ export default function GrupoDetallePage({
         </>
       )}
 
+      {verResumen && (
+        <ResumenHojas
+          hojas={hojas.filter((h) => !h.hojaArchivada)}
+          programasOpciones={programasOpciones}
+          onAbrir={(hojaId) => {
+            setActiveId(hojaId);
+            setVerResumen(false);
+          }}
+        />
+      )}
+
       {/* Planilla */}
-      <div key={grupo.id} className="w-full">
+      <div key={grupo.id} hidden={verResumen} className="w-full">
         <div className="border-b border-white/10 px-1 pt-5 pb-3">
           <h2 className="text-lg font-bold text-white uppercase">
             Planilla de asistencia — {tituloPlanilla}
@@ -2837,7 +2854,10 @@ export default function GrupoDetallePage({
         <div className="flex items-center gap-2 px-3 py-2">
           <button
             type="button"
-            onClick={() => void crearHojaDirecta()}
+            onClick={() => {
+              setVerResumen(false);
+              void crearHojaDirecta();
+            }}
             disabled={creandoHoja}
             hidden={!puedeAdministrar}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/15 text-white/60 hover:bg-white/5 disabled:opacity-50"
@@ -2846,12 +2866,27 @@ export default function GrupoDetallePage({
             <Plus className="size-4" />
           </button>
           <div className="scrollbar-marca flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+            {/* Primera pestaña: resumen de todas las hojas. */}
+            <button
+              type="button"
+              onClick={() => setVerResumen(true)}
+              title="Resumen de las hojas del grupo"
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap transition-colors ${
+                verResumen
+                  ? 'bg-[#22C4D3]/15 font-semibold text-[#22C4D3]'
+                  : 'text-white/60 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <LayoutGrid className="size-4" />
+              Resumen
+            </button>
+            <span className="mx-1 h-5 w-px shrink-0 bg-white/10" />
             {/* Activas primero; las archivadas al final, en rojo. */}
             {[
               ...hojas.filter((h) => !h.hojaArchivada),
               ...hojas.filter((h) => h.hojaArchivada),
             ].map((h) => {
-              const activa = h.id === activeId;
+              const activa = !verResumen && h.id === activeId;
               const esArchivada = h.hojaArchivada === true;
               if (activa && renombrando && !esArchivada) {
                 return (
@@ -2892,7 +2927,10 @@ export default function GrupoDetallePage({
                       if (activa) {
                         if (!esArchivada && puedeAdministrar)
                           setRenombrando(true);
-                      } else setActiveId(h.id);
+                      } else {
+                        setActiveId(h.id);
+                        setVerResumen(false);
+                      }
                     }}
                     title={
                       esArchivada
@@ -4267,6 +4305,125 @@ function ModalAgregar({
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Pestaña "Resumen": una fila por hoja (programas, estudiantes, educador,
+// salón y modalidad, módulo). Se calcula de las hojas del grupo, así que se
+// actualiza sola al crear, cambiar o borrar hojas.
+function ResumenHojas({
+  hojas,
+  programasOpciones,
+  onAbrir,
+}: {
+  hojas: Hoja[];
+  programasOpciones: { id: number; title: string }[];
+  onAbrir: (hojaId: number) => void;
+}) {
+  const filas = hojas.map((h) => {
+    const programas = h.programasIds
+      .map((i) => programasOpciones.find((p) => p.id === i)?.title)
+      .filter((t): t is string => !!t);
+    const educadores = h.cursoHoja?.educadores?.length
+      ? h.cursoHoja.educadores.map((e) => e.name)
+      : h.cursoHoja?.educador
+        ? [h.cursoHoja.educador]
+        : [];
+    const modalidades = [
+      ...new Set(
+        h.miembros.map((m) => m.modalidad).filter((m): m is string => !!m)
+      ),
+    ];
+    return {
+      id: h.id,
+      hoja: h.nombre,
+      programas: programas.length ? programas : h.programa ? [h.programa] : [],
+      estudiantes: h.miembros.filter((m) => !m.pendiente).length,
+      educadores,
+      salon: [
+        h.cursoHoja?.espacio,
+        modalidades.length === 1 ? modalidades[0] : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+      modulo: h.cursoHoja?.curso ?? '',
+    };
+  });
+  const total = filas.reduce((s, f) => s + f.estudiantes, 0);
+  const th =
+    'border border-white/10 bg-white/[0.06] px-3 py-2 text-left text-xs font-bold text-white/80 uppercase';
+  const td = 'border border-white/10 px-3 py-2 align-middle';
+
+  return (
+    <div className="w-full py-5">
+      <h2 className="mb-3 text-lg font-bold text-white uppercase">Resumen</h2>
+      <div className="overflow-x-auto rounded-lg">
+        <table className="w-full min-w-[900px] border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className={`${th} w-12 text-center`}>N°</th>
+              <th className={th}>Hoja</th>
+              <th className={th}>Programas</th>
+              <th className={`${th} text-center`}>Cantidad estudiantes</th>
+              <th className={th}>Educador</th>
+              <th className={th}>Salón y modalidad</th>
+              <th className={th}>Módulo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f, i) => (
+              <tr
+                key={f.id}
+                onClick={() => onAbrir(f.id)}
+                title={`Abrir ${f.hoja}`}
+                className="cursor-pointer hover:bg-white/[0.04]"
+              >
+                <td className={`${td} text-center text-white/60`}>{i + 1}</td>
+                <td className={`${td} font-semibold text-[#22C4D3]`}>
+                  {f.hoja}
+                </td>
+                <td className={td}>
+                  {f.programas.length ? (
+                    f.programas.join(', ')
+                  ) : (
+                    <span className="text-white/30">—</span>
+                  )}
+                </td>
+                <td className={`${td} text-center font-semibold`}>
+                  {f.estudiantes}
+                </td>
+                <td className={`${td} font-semibold uppercase`}>
+                  {f.educadores.length ? (
+                    f.educadores.join(', ')
+                  ) : (
+                    <span className="font-normal text-white/30 normal-case">
+                      Sin educador
+                    </span>
+                  )}
+                </td>
+                <td className={`${td} uppercase`}>
+                  {f.salon || <span className="text-white/30">—</span>}
+                </td>
+                <td className={`${td} font-semibold`}>
+                  {f.modulo || (
+                    <span className="font-normal text-white/30">Sin curso</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td className={`${td} text-right font-bold`} colSpan={3}>
+                Total
+              </td>
+              <td className={`${td} text-center font-bold`}>{total}</td>
+              <td className={td} colSpan={3} />
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
   );

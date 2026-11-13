@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import useSWR from 'swr';
 import * as XLSX from 'xlsx';
 
+import { urlLogo } from '~/lib/academy/marca';
 import { type EstudianteAcademia } from '~/server/academy/estudiantes';
 
 import {
@@ -46,7 +47,8 @@ interface ColumnaPropia {
   opciones: string[];
 }
 
-type Tipo = 'texto' | 'fecha' | 'lista' | 'derivada';
+// archivo: key de S3 (documentos del formulario), se muestra como enlace.
+type Tipo = 'texto' | 'fecha' | 'lista' | 'derivada' | 'archivo';
 
 interface Columna {
   id: string;
@@ -137,6 +139,85 @@ const COLUMNAS_BASE: Columna[] = [
   { id: 'comercial', label: 'Comercial', tipo: 'texto', porDefecto: true },
   { id: 'sede', label: 'Sede', tipo: 'texto', porDefecto: true },
   { id: 'horario', label: 'Horario', tipo: 'texto', porDefecto: true },
+  // Resto de datos del formulario de inscripción.
+  {
+    id: 'fecha_nacimiento',
+    label: 'Fecha de nacimiento',
+    tipo: 'fecha',
+    porDefecto: true,
+  },
+  { id: 'direccion', label: 'Dirección', tipo: 'texto', porDefecto: true },
+  { id: 'pais', label: 'País', tipo: 'texto', porDefecto: true },
+  { id: 'ciudad', label: 'Ciudad', tipo: 'texto', porDefecto: true },
+  {
+    id: 'nivel_educacion',
+    label: 'Nivel de educación',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  { id: 'modalidad', label: 'Modalidad', tipo: 'texto', porDefecto: true },
+  { id: 'acudiente', label: '¿Acudiente?', tipo: 'texto', porDefecto: true },
+  {
+    id: 'acudiente_nombre',
+    label: 'Nombre acudiente',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  {
+    id: 'acudiente_contacto',
+    label: 'Contacto acudiente',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  {
+    id: 'acudiente_email',
+    label: 'Correo acudiente',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  {
+    id: 'pago_inscripcion',
+    label: 'Pagó inscripción',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  {
+    id: 'pago_cuota1',
+    label: 'Pagó cuota 1',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  {
+    id: 'numero_cuotas',
+    label: 'N° de cuotas',
+    tipo: 'texto',
+    porDefecto: true,
+  },
+  {
+    id: 'doc_identidad',
+    label: 'Doc. identidad',
+    tipo: 'archivo',
+    porDefecto: true,
+  },
+  {
+    id: 'doc_acta_grado',
+    label: 'Acta de grado',
+    tipo: 'archivo',
+    porDefecto: true,
+  },
+  {
+    id: 'doc_recibo_servicio',
+    label: 'Recibo de servicio',
+    tipo: 'archivo',
+    porDefecto: true,
+  },
+  { id: 'doc_pagare', label: 'Pagaré', tipo: 'archivo', porDefecto: true },
+  {
+    id: 'doc_comprobante_inscripcion',
+    label: 'Comprobante inscripción',
+    tipo: 'archivo',
+    porDefecto: true,
+  },
   { id: 'cursos', label: 'Cursos', tipo: 'derivada', porDefecto: false },
   { id: 'cuenta', label: 'Cuenta', tipo: 'derivada', porDefecto: false },
 ];
@@ -712,7 +793,7 @@ export function ListaEstudiantesAcademia({
       {/* Tabla a pantalla completa */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div
-          className="min-h-0 w-full max-w-full flex-1 overflow-auto border border-[var(--ac-borde)] bg-[var(--ac-superficie)]/40"
+          className="scrollbar-academia min-h-0 w-full max-w-full flex-1 overflow-auto border border-[var(--ac-borde)] bg-[var(--ac-superficie)]/40"
           onScroll={(e) => {
             const el = e.currentTarget;
             if (
@@ -1395,12 +1476,38 @@ function Celda({
           className={inputCelda}
         >
           <option value="">-- Seleccionar --</option>
-          {(columna.opciones ?? []).map((o) => (
+          {/* Un valor fuera de la lista (p. ej. del formulario) también se ve. */}
+          {[
+            ...(columna.opciones ?? []),
+            ...(valor && !(columna.opciones ?? []).includes(valor)
+              ? [valor]
+              : []),
+          ].map((o) => (
             <option key={o} value={o}>
               {o}
             </option>
           ))}
         </select>
+      </div>
+    );
+  }
+
+  if (columna.tipo === 'archivo') {
+    const url = valor ? urlLogo(valor) : null;
+    return (
+      <div className={td}>
+        {url ? (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-medium text-[var(--ac-primario)] hover:underline"
+          >
+            Ver documento
+          </a>
+        ) : (
+          <span className="text-xs text-white/30">—</span>
+        )}
       </div>
     );
   }
@@ -1678,7 +1785,7 @@ function PanelColumnas({
             Por defecto
           </button>
         </div>
-        <div className="flex-1 space-y-1 overflow-y-auto px-5 py-3">
+        <div className="scrollbar-academia flex-1 space-y-1 overflow-y-auto px-5 py-3">
           {columnas.map((c) => {
             const activa = !ocultas.includes(c.id);
             const alternar = () =>
@@ -2139,7 +2246,7 @@ function MatricularACurso({
           placeholder="Buscar curso..."
           className={campo}
         />
-        <div className="max-h-64 space-y-1 overflow-y-auto">
+        <div className="scrollbar-academia max-h-64 space-y-1 overflow-y-auto">
           {visibles.map((c) => {
             const activo = elegidos.includes(c.id);
             return (
@@ -2257,7 +2364,7 @@ function Comentarios({
         ) : data.length === 0 ? (
           <p className="text-sm text-white/50">Sin comentarios todavía.</p>
         ) : (
-          <ul className="max-h-72 space-y-2 overflow-y-auto">
+          <ul className="scrollbar-academia max-h-72 space-y-2 overflow-y-auto">
             {data.map((c) => (
               <li
                 key={c.id}

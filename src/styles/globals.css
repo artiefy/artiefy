@@ -638,6 +638,48 @@ body.no-chrome {
   background-color: rgba(34, 196, 211, 0.65);
 }
 
+/* Igual que .scrollbar-marca, con el color principal de la academia. */
+.scrollbar-academia {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(
+      in srgb,
+      var(--ac-primario, #22c4d3) 45%,
+      transparent
+    )
+    transparent;
+}
+
+.scrollbar-academia::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-academia::-webkit-scrollbar-track,
+.scrollbar-academia::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.scrollbar-academia::-webkit-scrollbar-button {
+  display: none;
+}
+
+.scrollbar-academia::-webkit-scrollbar-thumb {
+  background-color: color-mix(
+    in srgb,
+    var(--ac-primario, #22c4d3) 40%,
+    transparent
+  );
+  border-radius: 9999px;
+}
+
+.scrollbar-academia::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--ac-primario, #22c4d3) 75%,
+    transparent
+  );
+}
+
 /* Reserve space for the fixed mobile bottom bar so it never covers content.
    Applied only on small screens and only while the bar is mounted. */
 @media (max-width: 767px) {
