@@ -1144,8 +1144,8 @@ export default function EnrolledUsersPage() {
       
       <div class="totales">
         <p><strong>PLAN / VALOR PROGRAMA:</strong> ${formatCOP(price)}</p>
-        <p><strong>VALOR PAGADO:</strong> ${formatCOP(carteraInfo?.totalPagado ?? 0)}</p>
-        <p style="grid-column: 1 / 2;"><strong>DEUDA RESTANTE:</strong> <span style="font-weight: bold; font-size: 13px;">${formatCOP(carteraInfo?.deuda ?? 0)}</span></p>
+        <p><strong>VALOR PAGADO:</strong> ${formatCOP(totalesFactura().pagado)}</p>
+        <p style="grid-column: 1 / 2;"><strong>DEUDA RESTANTE:</strong> <span style="font-weight: bold; font-size: 13px;">${formatCOP(totalesFactura().deuda)}</span></p>
       </div>
       
       <div class="footer">
@@ -1156,6 +1156,16 @@ export default function EnrolledUsersPage() {
     </html>
   `;
   };
+  // Totales de la factura: los mismos que muestra la tabla de cartera
+  // (cuotas 1-12 de las filas editables contra el valor del plan).
+  const totalesFactura = () => {
+    const pagado = editablePagos.slice(0, 12).reduce((sum, p) => {
+      const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
+      return sum + (Number.isFinite(v) ? v : 0);
+    }, 0);
+    return { pagado, deuda: Math.max(price - pagado, 0) };
+  };
+
   const generateTableRows = () => {
     let rows = '';
 
@@ -8865,12 +8875,12 @@ export default function EnrolledUsersPage() {
                     </p>
                     <p style={{ margin: '3px 0' }}>
                       <strong>VALOR PAGADO:</strong>{' '}
-                      {formatCOP(carteraInfo?.totalPagado ?? 0)}
+                      {formatCOP(totalesFactura().pagado)}
                     </p>
                     <p style={{ margin: '3px 0', gridColumn: '1 / 2' }}>
                       <strong>DEUDA RESTANTE:</strong>{' '}
                       <span style={{ fontWeight: 'bold', fontSize: '15px' }}>
-                        {formatCOP(carteraInfo?.deuda ?? 0)}
+                        {formatCOP(totalesFactura().deuda)}
                       </span>
                     </p>
                   </div>

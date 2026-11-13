@@ -44,7 +44,17 @@ const chip =
 const campo =
   'h-10 rounded-xl border border-[var(--ac-borde)] bg-[var(--ac-superficie)] px-3 text-sm text-white placeholder:text-white/30 focus:border-[var(--ac-primario)] focus:outline-none [color-scheme:inherit]';
 
-export function AjustesFormularioAcademia({ slug }: { slug: string }) {
+export function AjustesFormularioAcademia({
+  slug,
+  sinBorde = false,
+}: {
+  slug: string;
+  /** En su propia página (Estudiantes › Formulario), sin el separador. */
+  sinBorde?: boolean;
+}) {
+  const separador = sinBorde
+    ? ''
+    : 'mt-8 border-t border-[var(--ac-borde)] pt-8';
   const api = `/api/academia/${slug}/ajustes`;
   const { data, mutate } = useSWR(
     [api, 'ajustes'],
@@ -97,7 +107,7 @@ export function AjustesFormularioAcademia({ slug }: { slug: string }) {
 
   if (!data) {
     return (
-      <section className="mt-8 border-t border-[var(--ac-borde)] pt-8">
+      <section className={separador}>
         <Loader2 className="size-5 animate-spin text-white/50" />
       </section>
     );
@@ -106,7 +116,7 @@ export function AjustesFormularioAcademia({ slug }: { slug: string }) {
   const favicon = urlLogo(data.faviconKey);
 
   return (
-    <section className="mt-8 space-y-6 border-t border-[var(--ac-borde)] pt-8">
+    <section className={`space-y-6 ${separador}`}>
       <div>
         <h2 className="flex items-center gap-2 text-xl font-bold text-white">
           <ClipboardList className="size-5 text-[var(--ac-primario)]" />

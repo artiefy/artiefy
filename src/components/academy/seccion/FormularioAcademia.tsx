@@ -55,11 +55,13 @@ export function FormularioAcademia({ slug }: { slug: string }) {
   );
   const enlace = `${origen}/inscripcion`;
 
+  // Inscripciones del formulario corto (/inscripcion). Las del formulario
+  // completo (/dashboard/formulario) llegan a la lista de estudiantes.
   const cabecera = (
-    <div className={`${estilos.tarjeta} flex flex-wrap items-center gap-3`}>
+    <div className="flex flex-wrap items-center gap-3">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-white">
-          Formulario público de inscripción
+          Inscripciones del formulario corto
         </p>
         <p className="truncate text-sm text-[var(--ac-primario)]">{enlace}</p>
       </div>

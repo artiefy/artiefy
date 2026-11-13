@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 
+import { AjustesFormularioAcademia } from '~/components/academy/AjustesFormularioAcademia';
 import { FormularioAcademia } from '~/components/academy/seccion/FormularioAcademia';
 
 import { SeccionAcademia } from '../../../_components/SeccionAcademia';
@@ -14,8 +15,15 @@ export default function FormularioAcademiaPage({ params }: Props) {
       <SeccionAcademia
         params={params}
         titulo="Formulario"
-        descripcion="Inscripciones recibidas desde el formulario público de la academia."
-        render={({ academia }) => <FormularioAcademia slug={academia.slug} />}
+        descripcion="Formulario público de inscripción: fechas de inicio, comerciales, logos y favicon. Sus inscripciones llegan a la lista de estudiantes."
+        render={({ academia }) => (
+          <div className="space-y-10">
+            <AjustesFormularioAcademia slug={academia.slug} sinBorde />
+            <div className="border-t border-[var(--ac-borde)] pt-8">
+              <FormularioAcademia slug={academia.slug} />
+            </div>
+          </div>
+        )}
       />
     </Suspense>
   );

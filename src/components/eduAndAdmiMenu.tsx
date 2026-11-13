@@ -27,6 +27,7 @@ import {
 } from 'react-icons/fi';
 
 import { CambiarVistaAcademia } from '~/components/academy/CambiarVistaAcademia';
+import { useMarca } from '~/components/marca/MarcaProvider';
 import { TicketNotificationBell } from '~/components/TicketNotificationBell';
 import { useFinancialsSummary } from '~/hooks/useFinancialsSummary';
 import { useTicketsUnread } from '~/hooks/useTicketsUnread';
@@ -91,6 +92,9 @@ const ResponsiveSidebar = ({ children, menu }: ResponsiveSidebarProps) => {
     user?.primaryEmailAddress?.emailAddress ??
     'Usuario';
   const sidebarUserInitial = sidebarUserName.charAt(0).toUpperCase();
+  // En una academia, con el menú abierto se ve su logo en vez del nombre.
+  const marca = useMarca();
+  const logoAcademia = marca.esAcademia ? marca.logoUrl : null;
 
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -727,21 +731,30 @@ const ResponsiveSidebar = ({ children, menu }: ResponsiveSidebarProps) => {
                   {isOpen ? <FiX size={20} /> : <FiMenu size={20} />}
                 </button>
               )}
-              <div className="flex items-center gap-2 rounded-full">
-                <div
-                  className="
+              {shouldShowText && logoAcademia ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoAcademia}
+                  alt={marca.nombre}
+                  className="h-9 max-w-[200px] object-contain object-left"
+                />
+              ) : (
+                <div className="flex items-center gap-2 rounded-full">
+                  <div
+                    className="
                     flex size-8 shrink-0 items-center justify-center
                     rounded-full bg-primary text-sm font-bold text-black
                   "
-                >
-                  {sidebarUserInitial}
+                  >
+                    {sidebarUserInitial}
+                  </div>
+                  {shouldShowText && (
+                    <span className="truncate text-sm font-semibold text-white">
+                      {sidebarUserName}
+                    </span>
+                  )}
                 </div>
-                {shouldShowText && (
-                  <span className="truncate text-sm font-semibold text-white">
-                    {sidebarUserName}
-                  </span>
-                )}
-              </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <ModalError

@@ -217,14 +217,6 @@ function manejarAcademia(
   pathname: string,
   userId: string | null
 ) {
-  // El matcher omite los assets estáticos; interceptar este path explícito
-  // permite que el favicon genérico del navegador también sea el de la academia.
-  if (pathname === '/favicon.ico') {
-    return NextResponse.rewrite(
-      new URL(`/api/academia/${slug}/favicon`, req.url)
-    );
-  }
-
   // Las APIs se autentican y autorizan solas.
   if (isApiPath(pathname)) return NextResponse.next();
 
@@ -422,7 +414,6 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
-    '/favicon.ico',
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
     '/(api|trpc)(.*)',
   ],

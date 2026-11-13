@@ -22,6 +22,7 @@ import {
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
+import { TarjetaResumen } from '~/components/finanzas/TarjetaResumen';
 import { subirLogo } from '~/lib/academy/subir-logo';
 
 import { enviar, useEstudiantesAcademia } from './seccion/comun';
@@ -216,99 +217,58 @@ export function HistorialTransaccionesAcademia({ slug }: { slug: string }) {
         </div>
 
         {/* Resumen de Finanzas */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-green-500/20 bg-gradient-to-br from-green-500/10 to-green-500/5 p-6 backdrop-blur-md">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-semibold text-green-400 uppercase">
-                Total Recaudado
-              </span>
-              <div className="rounded-lg bg-green-500/20 p-2">
-                <CheckCircle2 className="size-4 text-green-400" />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <p className="mb-1 text-xs text-white/50">Total</p>
-                <p className="text-xl font-bold text-white">
-                  {formatCurrency(summary.totalRecaudado)}
-                </p>
-              </div>
-              <div className="border-t border-green-500/10 pt-3">
-                <p className="mb-1 text-xs text-white/50">Verificado</p>
-                <p className="text-sm font-semibold text-green-300">
-                  {formatCurrency(summary.totalRecaudadoVerificado)}
-                </p>
-              </div>
-              <div>
-                <p className="mb-1 text-xs text-white/50">No Verificado</p>
-                <p className="text-sm font-semibold text-yellow-300">
-                  {formatCurrency(summary.totalRecaudadoNoVerificado)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-[var(--ac-primario)]/20 bg-gradient-to-br from-[var(--ac-primario)]/10 to-[var(--ac-primario)]/5 p-6 backdrop-blur-md">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-semibold text-[var(--ac-primario)] uppercase">
-                Total Transacciones
-              </span>
-              <div className="rounded-lg bg-[var(--ac-primario)]/20 p-2">
-                <FileText className="size-4 text-[var(--ac-primario)]" />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <p className="mb-1 text-xs text-white/50">Total</p>
-                <p className="text-xl font-bold text-white">
-                  {summary.totalTransacciones}
-                </p>
-              </div>
-              <div className="border-t border-[var(--ac-primario)]/10 pt-3">
-                <p className="mb-1 text-xs text-white/50">Verificadas</p>
-                <p className="text-sm font-semibold text-green-300">
-                  {summary.totalVerificadas}
-                </p>
-              </div>
-              <div>
-                <p className="mb-1 text-xs text-white/50">No Verificadas</p>
-                <p className="text-sm font-semibold text-yellow-300">
-                  {summary.totalPendientes}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 p-6 backdrop-blur-md">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-xs font-semibold text-yellow-400 uppercase">
-                Resumen
-              </span>
-              <div className="rounded-lg bg-yellow-500/20 p-2">
-                <AlertCircle className="size-4 text-yellow-400" />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <p className="mb-1 text-xs text-white/50">Pendientes</p>
-                <p className="text-xl font-bold text-white">
-                  {summary.totalPendientes}
-                </p>
-              </div>
-              <div className="border-t border-yellow-500/10 pt-3">
-                <p className="mb-1 text-xs text-white/50">% Verificado</p>
-                <p className="text-sm font-semibold text-green-300">
-                  {summary.porcentajeVerificado}%
-                </p>
-              </div>
-              <div>
-                <p className="mb-1 text-xs text-white/50">Monto Pendiente</p>
-                <p className="text-sm font-semibold text-yellow-300">
-                  {formatCurrency(summary.totalRecaudadoNoVerificado)}
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <TarjetaResumen
+            titulo="Total Recaudado"
+            icono={CheckCircle2}
+            acento="text-green-400"
+            borde="border-green-500/20"
+            total={formatCurrency(summary.totalRecaudado)}
+            izquierda={{
+              label: 'Verificado',
+              valor: formatCurrency(summary.totalRecaudadoVerificado),
+              className: 'text-green-300',
+            }}
+            derecha={{
+              label: 'No Verificado',
+              valor: formatCurrency(summary.totalRecaudadoNoVerificado),
+              className: 'text-yellow-300',
+            }}
+          />
+          <TarjetaResumen
+            titulo="Total Transacciones"
+            icono={FileText}
+            acento="text-[var(--ac-primario)]"
+            borde="border-[var(--ac-primario)]/20"
+            total={summary.totalTransacciones}
+            izquierda={{
+              label: 'Verificadas',
+              valor: summary.totalVerificadas,
+              className: 'text-green-300',
+            }}
+            derecha={{
+              label: 'No Verificadas',
+              valor: summary.totalPendientes,
+              className: 'text-yellow-300',
+            }}
+          />
+          <TarjetaResumen
+            titulo="Pendientes"
+            icono={AlertCircle}
+            acento="text-yellow-400"
+            borde="border-yellow-500/20"
+            total={summary.totalPendientes}
+            izquierda={{
+              label: '% Verificado',
+              valor: `${summary.porcentajeVerificado}%`,
+              className: 'text-green-300',
+            }}
+            derecha={{
+              label: 'Monto Pendiente',
+              valor: formatCurrency(summary.totalRecaudadoNoVerificado),
+              className: 'text-yellow-300',
+            }}
+          />
         </div>
 
         {/* Filtros */}
