@@ -725,20 +725,23 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           }),
         });
       let res = await quitar(false);
-      // Siguen en una planilla de grupo con este curso: se avisa antes de
-      // desmatricular (en la planilla seguirían apareciendo sin acceso).
+      // Siguen en una planilla de grupo con este curso: ya se confirmó en el
+      // modal, así que se desmatricula igual y se avisa 4 s (en la planilla
+      // quedarán en rojo, "No está matriculado en el curso").
       if (res.status === 409) {
         const info = (await res.json()) as {
           enGrupos?: { nombre: string; hoja: string }[];
         };
         const lista = (info.enGrupos ?? [])
-          .map((g) => `• ${g.nombre} — planilla "${g.hoja}"`)
-          .join('\n');
-        const seguir = window.confirm(
-          `Estos estudiantes siguen en una planilla de grupo de este curso:\n\n${lista}\n\nSi los desmatriculas, seguirán apareciendo en la planilla pero sin acceso al curso. Lo correcto es quitarlos primero de la planilla.\n\n¿Desmatricular de todas formas?`
-        );
-        if (!seguir) return;
+          .map((g) => `${g.nombre} (planilla "${g.hoja}")`)
+          .join(', ');
         res = await quitar(true);
+        if (res.ok) {
+          toast.warning('Siguen en una planilla de grupo de este curso', {
+            description: `${lista}. Aparecerán en rojo en la planilla hasta que los quites de ella o los vuelvas a matricular.`,
+            duration: 4000,
+          });
+        }
       }
       if (!res.ok) throw new Error(await res.text());
       setSelectedIds((prev) => prev.filter((id) => !targetIds.includes(id)));
