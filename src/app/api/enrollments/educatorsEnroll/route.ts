@@ -10,6 +10,7 @@ import {
   users,
 } from '~/server/db/schema';
 import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { sortLessons } from '~/utils/lessonSorting';
 
 interface EnrollmentRequestBody {
@@ -145,6 +146,11 @@ export async function POST(req: Request) {
           enrolledAt: new Date(),
           completed: false,
         }))
+      );
+      await registrarMatriculas(
+        'matricula',
+        newEnrollments.map((userId) => ({ userId, courseId: parsedCourseId })),
+        'educador: matricular estudiantes'
       );
 
       // Insertar progreso de lecciones si aplica

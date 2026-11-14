@@ -58,6 +58,9 @@ interface Miembro {
   observaciones?: string | null;
   carteraStatus?: string | null;
   enrollmentStatus?: string | null;
+  // Está en la hoja pero no matriculado en el curso de la hoja (p. ej. lo
+  // quitaron desde la lista del curso): la fila se pinta y lo avisa.
+  sinMatricula?: boolean;
 }
 interface Sesion {
   id: number;
@@ -630,6 +633,8 @@ export default function GrupoDetallePage({
   const [renombrando, setRenombrando] = useState(false);
   // Pestaña "Resumen" (la primera): cuadro de todas las hojas del grupo.
   const [verResumen, setVerResumen] = useState(false);
+  // "Matricular N sin matrícula": en curso.
+  const [matriculandoSinCurso, setMatriculandoSinCurso] = useState(false);
   // Fila nueva estilo Excel para dar de alta un estudiante.
   const filaVacia = {
     identificacion: '',
@@ -644,7 +649,9 @@ export default function GrupoDetallePage({
   const [guardandoFila, setGuardandoFila] = useState(false);
   const [pegandoDesdeExcel, setPegandoDesdeExcel] = useState(false);
   const [avisoFila, setAvisoFila] = useState<string | null>(null);
-  const [sugerencias, setSugerencias] = useState<Miembro[]>([]);
+  const [sugerencias, setSugerencias] = useState<
+    (Miembro & { yaEnGrupo?: boolean })[]
+  >([]);
   // Fila (estudiante) a quitar de la hoja: se confirma antes de borrar.
   const [filaAQuitar, setFilaAQuitar] = useState<Miembro | null>(null);
   const [quitandoFila, setQuitandoFila] = useState(false);
@@ -701,8 +708,9 @@ export default function GrupoDetallePage({
         `/api/super-admin/grupos/${activeId}/miembros?q=${encodeURIComponent(q)}`
       )
         .then((r) => (r.ok ? r.json() : null))
-        .then((d: { estudiantes?: Miembro[] } | null) =>
-          setSugerencias(d?.estudiantes ?? [])
+        .then(
+          (d: { estudiantes?: (Miembro & { yaEnGrupo?: boolean })[] } | null) =>
+            setSugerencias(d?.estudiantes ?? [])
         )
         .catch(() => undefined);
     }, 300);
@@ -1847,6 +1855,42 @@ export default function GrupoDetallePage({
     }
   };
 
+  // Matricula en el curso de la hoja a un miembro que quedó sin matrícula.
+  const matricularSinCurso = async (userId: string, courseId: number) => {
+    const res = await fetch(`/api/super-admin/grupos/${activeId}/curso`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, courseId }),
+    });
+    setAvisoFila(
+      res.ok ? '✓ Estudiante matriculado en el curso' : 'No se pudo matricular'
+    );
+    if (res.ok) void cargar(activeId);
+  };
+
+  // Todos los de la hoja que no están matriculados en su curso.
+  const sinMatricula = miembros.filter((m) => m.sinMatricula && !m.pendiente);
+  const matricularTodosSinCurso = async () => {
+    if (!cursoHoja || sinMatricula.length === 0) return;
+    setMatriculandoSinCurso(true);
+    let ok = 0;
+    for (const m of sinMatricula) {
+      const res = await fetch(`/api/super-admin/grupos/${activeId}/curso`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: m.id, courseId: cursoHoja.courseId }),
+      }).catch(() => null);
+      if (res?.ok) ok++;
+    }
+    setMatriculandoSinCurso(false);
+    setAvisoFila(
+      ok === sinMatricula.length
+        ? `✓ ${ok} estudiante(s) matriculado(s) en ${cursoHoja.curso}`
+        : `Se matricularon ${ok} de ${sinMatricula.length}`
+    );
+    void cargar(activeId);
+  };
+
   return (
     <div
       // -mt/min-h van divididos entre el zoom (0.7) para cubrir de verdad los
@@ -1919,6 +1963,24 @@ export default function GrupoDetallePage({
                   programa={programaSel}
                   onDone={() => void cargar(activeId)}
                 />
+                {/* Solo aparece si hay estudiantes de la hoja sin matrícula
+                    en su curso (p. ej. los quitaron desde el curso). */}
+                {cursoHoja && sinMatricula.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void matricularTodosSinCurso()}
+                    disabled={matriculandoSinCurso}
+                    title={`Matricula en ${cursoHoja.curso} a los estudiantes de esta hoja que no lo están`}
+                    className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-red-500/50 bg-red-500/15 px-3 text-sm font-semibold text-red-200 hover:bg-red-500/25 disabled:opacity-50"
+                  >
+                    {matriculandoSinCurso ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <GraduationCap className="size-4" />
+                    )}
+                    Matricular {sinMatricula.length} sin matrícula
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setConfirmarArchivar(true)}
@@ -2323,7 +2385,19 @@ export default function GrupoDetallePage({
                 {miembros.map((m, i) => {
                   const { nombres, apellidos } = splitNombre(m.name);
                   return (
-                    <tr key={m.id} className="group/row hover:bg-white/[0.02]">
+                    <tr
+                      key={m.id}
+                      title={
+                        m.sinMatricula
+                          ? 'No está matriculado en el curso de esta hoja'
+                          : undefined
+                      }
+                      className={`group/row ${
+                        m.sinMatricula
+                          ? 'bg-red-500/15 hover:bg-red-500/20'
+                          : 'hover:bg-white/[0.02]'
+                      }`}
+                    >
                       <td className="relative border border-white/10 px-2 py-1.5 text-center text-white/50">
                         <span className="group-hover/row:opacity-0">
                           {i + 1}
@@ -2359,7 +2433,11 @@ export default function GrupoDetallePage({
                           className="w-full min-w-[110px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white/70 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
                         />
                       </td>
-                      <td className="sticky left-0 z-10 border border-white/10 bg-[#0a1a30] px-1 py-0.5 text-white">
+                      <td
+                        className={`sticky left-0 z-10 border border-white/10 px-1 py-0.5 text-white ${
+                          m.sinMatricula ? 'bg-[#3a1626]' : 'bg-[#0a1a30]'
+                        }`}
+                      >
                         <input
                           defaultValue={nombres}
                           readOnly={!puedeAdministrar}
@@ -2378,6 +2456,25 @@ export default function GrupoDetallePage({
                           }}
                           className="w-full min-w-[120px] rounded border border-transparent bg-transparent px-1 py-0.5 text-xs text-white placeholder:text-white/30 hover:border-white/15 focus:border-[#22C4D3] focus:outline-none"
                         />
+                        {m.sinMatricula && (
+                          <span className="mt-0.5 flex flex-wrap items-center gap-1.5 px-1 text-[10px] font-semibold text-red-300">
+                            No está matriculado en el curso
+                            {puedeAdministrar && cursoHoja && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void matricularSinCurso(
+                                    m.id,
+                                    cursoHoja.courseId
+                                  )
+                                }
+                                className="rounded bg-red-500/25 px-1.5 py-0.5 font-semibold text-red-100 hover:bg-red-500/40"
+                              >
+                                Matricular
+                              </button>
+                            )}
+                          </span>
+                        )}
                       </td>
                       <td className="border border-white/10 px-1 py-0.5 text-white/70">
                         <input
@@ -2812,6 +2909,28 @@ export default function GrupoDetallePage({
               >
                 {sugerencias.map((s) => {
                   const { nombres, apellidos } = splitNombre(s.name);
+                  if (s.yaEnGrupo) {
+                    return (
+                      <div
+                        key={s.id}
+                        className="block w-full cursor-not-allowed px-3 py-2 text-left opacity-60"
+                        title="Ya está en esta hoja"
+                      >
+                        <span className="flex items-center gap-2 text-xs text-white">
+                          <span className="truncate">{s.email}</span>
+                          <span className="shrink-0 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                            Ya está en esta hoja
+                          </span>
+                        </span>
+                        <span className="block truncate text-[11px] text-white/50">
+                          {s.name ?? '—'}
+                          {s.identificacionNumero
+                            ? ` · ${s.identificacionNumero}`
+                            : ''}
+                        </span>
+                      </div>
+                    );
+                  }
                   return (
                     <button
                       key={s.id}

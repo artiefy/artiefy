@@ -25,6 +25,7 @@ import {
   grupos,
   users,
 } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
 import { sincronizarEstudiantesAgregados } from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
@@ -137,6 +138,11 @@ export async function POST(
           enrolledAt: new Date(),
           completed: false,
         });
+        await registrarMatriculas(
+          'matricula',
+          [{ userId, courseId }],
+          'grupo: alta masiva'
+        );
       }
     }
   };

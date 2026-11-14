@@ -5,7 +5,16 @@
 import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { enrollments, lessons, userLessonsProgress } from '~/server/db/schema';
+import {
+  enrollments,
+  grupoCursos,
+  grupoEstudiantes,
+  grupos,
+  lessons,
+  userLessonsProgress,
+  users,
+} from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { authorizeStaff } from '~/server/utils/apiAuth';
 
 export async function DELETE(req: Request) {
@@ -22,6 +31,8 @@ export async function DELETE(req: Request) {
       userId?: string;
       userIds?: string[];
       courseId?: number;
+      // true: el operador ya vio la advertencia de planillas y confirma.
+      confirmarGrupos?: boolean;
     };
 
     const userIds = Array.isArray(body.userIds)
@@ -35,6 +46,43 @@ export async function DELETE(req: Request) {
     }
     const courseId = body.courseId;
 
+    // Advertencia: si alguno sigue en una planilla de grupo con este curso,
+    // al desmatricularlo seguiría en la planilla sin acceso al curso. Se
+    // devuelve la lista para que el operador confirme.
+    if (body.confirmarGrupos !== true) {
+      const enGrupos = await db
+        .select({
+          userId: grupoEstudiantes.userId,
+          nombre: users.name,
+          hoja: grupos.nombreHoja,
+          grupo: grupos.nombre,
+        })
+        .from(grupoEstudiantes)
+        .innerJoin(
+          grupoCursos,
+          and(
+            eq(grupoCursos.grupoId, grupoEstudiantes.grupoId),
+            eq(grupoCursos.courseId, courseId)
+          )
+        )
+        .innerJoin(grupos, eq(grupos.id, grupoEstudiantes.grupoId))
+        .leftJoin(users, eq(users.id, grupoEstudiantes.userId))
+        .where(inArray(grupoEstudiantes.userId, userIds));
+      if (enGrupos.length > 0) {
+        return Response.json(
+          {
+            advertencia: 'en_grupos',
+            enGrupos: enGrupos.map((g) => ({
+              userId: g.userId,
+              nombre: g.nombre ?? g.userId,
+              hoja: g.hoja ?? g.grupo,
+            })),
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const deleted = await db
       .delete(enrollments)
       .where(
@@ -44,6 +92,13 @@ export async function DELETE(req: Request) {
         )
       )
       .returning({ id: enrollments.id, userId: enrollments.userId });
+
+    await registrarMatriculas(
+      'desmatricula',
+      deleted.map((d) => ({ userId: d.userId, courseId })),
+      'curso: quitar estudiante',
+      body.confirmarGrupos ? 'confirmado aunque estaba en una planilla' : null
+    );
 
     if (deleted.length === 0) {
       return new Response(

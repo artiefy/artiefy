@@ -13,6 +13,7 @@ import {
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { sortLessons } from '~/utils/lessonSorting';
 
 import type { EnrollmentResponse } from '~/types';
@@ -237,6 +238,11 @@ export async function enrollInCourse(
       enrolledAt: new Date(),
       completed: false,
     });
+    await registrarMatriculas(
+      'matricula',
+      [{ userId, courseId }],
+      'estudiante: se inscribió al curso'
+    );
 
     // Create notification for course enrollment
     try {

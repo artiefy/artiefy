@@ -21,7 +21,6 @@ import { db } from '~/server/db';
 import {
   courses,
   credentialsDeliveryLogs,
-  enrollments,
   grupoCursos,
   grupoEstudiantes,
   grupoEstudiantesPendientes,
@@ -258,25 +257,12 @@ export async function POST(
         .onConflictDoNothing();
       await sincronizarEstudiantesAgregados(grupoId, [existingUserId]);
 
-      if (courseId != null) {
-        const existe = await db
-          .select({ id: enrollments.id })
-          .from(enrollments)
-          .where(
-            and(
-              eq(enrollments.userId, existingUserId),
-              eq(enrollments.courseId, courseId)
-            )
-          )
-          .limit(1);
-        if (existe.length === 0) {
-          await db.insert(enrollments).values({
-            userId: existingUserId,
-            courseId,
-            enrolledAt: new Date(),
-            completed: false,
-          });
-        }
+      // Matricula en TODOS los cursos de la hoja (como al crear un estudiante
+      // nuevo). Antes solo se usaba el primero de la lista, que podía ser el
+      // `grupos.course_id` legado y no el curso real de la hoja: el
+      // estudiante quedaba en la hoja sin matrícula en su curso.
+      for (const cursoId of courseIds) {
+        await matricularEnCurso(cursoId, [existingUserId]);
       }
 
       return NextResponse.json({

@@ -15,6 +15,7 @@ import {
   userCustomFields,
   users,
 } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 import type { BaseCourse, Program } from '~/types';
@@ -1136,6 +1137,11 @@ export async function updateFullUser(
           enrolledAt: new Date(),
           completed: false,
         });
+        await registrarMatriculas(
+          'matricula',
+          [{ userId, courseId }],
+          'estudiantes: editar ficha'
+        );
       }
 
       // 3) Actualiza en tu base de datos

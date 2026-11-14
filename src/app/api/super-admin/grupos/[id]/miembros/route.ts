@@ -1,7 +1,8 @@
 /**
  * /api/super-admin/grupos/[id]/miembros
  *
- * GET    ?q=  — busca estudiantes para agregar (que no estén ya en el grupo).
+ * GET    ?q=  — busca estudiantes para agregar; los que ya están en la hoja
+ *               vienen con yaEnGrupo: true (se muestran, no se agregan).
  * POST   { userId } — agrega un estudiante al grupo y, si la hoja tiene
  *                     curso, lo matricula en él.
  * DELETE ?userId=   — quita un estudiante del grupo.
@@ -10,7 +11,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, asc, eq, ilike, notInArray, or, sql } from 'drizzle-orm';
+import { and, asc, eq, ilike, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -54,7 +55,7 @@ export async function GET(
       .select({ userId: grupoEstudiantes.userId })
       .from(grupoEstudiantes)
       .where(eq(grupoEstudiantes.grupoId, grupoId));
-    const excluir = yaEnGrupo.map((m) => m.userId);
+    const enHoja = new Set(yaEnGrupo.map((m) => m.userId));
 
     // Las cédulas se guardan con o sin separadores (1.111.482.571,
     // 1.111482571...): se comparan solo letras y dígitos en ambos lados.
@@ -70,7 +71,6 @@ export async function GET(
           : undefined
       ),
     ];
-    if (excluir.length > 0) condiciones.push(notInArray(users.id, excluir));
 
     const estudiantes = await db
       .select({
@@ -87,7 +87,12 @@ export async function GET(
       .orderBy(asc(users.name))
       .limit(15);
 
-    return NextResponse.json({ estudiantes });
+    // Primero los que se pueden agregar; los de la hoja al final, marcados.
+    return NextResponse.json({
+      estudiantes: estudiantes
+        .map((e) => ({ ...e, yaEnGrupo: enHoja.has(e.id) }))
+        .sort((a, b) => Number(a.yaEnGrupo) - Number(b.yaEnGrupo)),
+    });
   } catch (error) {
     console.error('[GRUPOS] buscar miembros:', error);
     return NextResponse.json(

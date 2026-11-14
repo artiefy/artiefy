@@ -12,6 +12,7 @@ import {
   users,
 } from '~/server/db/schema';
 import { fusionarMetadatosPublicos } from '~/server/lib/clerk-metadata';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 function formatDateToClerk(date: Date): string {
@@ -238,6 +239,11 @@ export async function POST(request: Request) {
             enrolledAt: new Date(),
             completed: false,
           }))
+        );
+        await registrarMatriculas(
+          'matricula',
+          newUsers.map((userId) => ({ userId, courseId: parsedCourseId })),
+          'curso: matricular estudiantes'
         );
 
         // Obtener lecciones del curso

@@ -15,6 +15,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollments } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -55,6 +56,11 @@ export async function POST(
         enrolledAt: new Date(),
         completed: false,
       });
+      await registrarMatriculas(
+        'matricula',
+        [{ userId, courseId }],
+        'grupo: matricular persona'
+      );
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -79,11 +85,17 @@ export async function DELETE(
     return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
   }
   try {
-    await db
+    const borradas = await db
       .delete(enrollments)
       .where(
         and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId))
-      );
+      )
+      .returning({ userId: enrollments.userId });
+    await registrarMatriculas(
+      'desmatricula',
+      borradas.map((b) => ({ userId: b.userId, courseId })),
+      'grupo: desmatricular persona'
+    );
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[GRUPOS] desmatricular persona:', error);

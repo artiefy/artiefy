@@ -2,6 +2,7 @@ import { and, eq, inArray, ne } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { enrollments, grupoCursos, grupoEstudiantes } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 
 import 'server-only';
 
@@ -12,7 +13,9 @@ import 'server-only';
  */
 export const matricularEnCurso = async (
   courseId: number,
-  userIds: string[]
+  userIds: string[],
+  // Para el registro de matrículas: desde dónde se matricula.
+  origen = 'grupo: agregar a hoja'
 ): Promise<number> => {
   if (userIds.length === 0) return 0;
 
@@ -36,6 +39,11 @@ export const matricularEnCurso = async (
         enrolledAt: new Date(),
         completed: false,
       }))
+    );
+    await registrarMatriculas(
+      'matricula',
+      nuevos.map((userId) => ({ userId, courseId })),
+      origen
     );
   }
   return nuevos.length;
@@ -99,6 +107,12 @@ export const desmatricularDeCursoDeHoja = async (
         eq(enrollments.isPermanent, false)
       )
     )
-    .returning({ id: enrollments.id });
+    .returning({ userId: enrollments.userId });
+  await registrarMatriculas(
+    'desmatricula',
+    borradas.map((b) => ({ userId: b.userId, courseId })),
+    'grupo: curso quitado o cambiado en la hoja',
+    `hoja ${grupoId}`
+  );
   return borradas.length;
 };

@@ -18,6 +18,7 @@ import { db } from '~/server/db';
 import {
   courseInstructors,
   courses,
+  enrollments,
   grupoAsistencia,
   grupoCursos,
   grupoEstudiantes,
@@ -296,10 +297,43 @@ export async function GET(
     }
     const idPorTitulo = new Map(programasRows.map((p) => [p.title, p.id]));
 
+    // Matrícula de cada miembro en el curso de su hoja. Estar en la planilla
+    // no garantiza estar matriculado (lo pueden quitar desde el curso): la
+    // planilla marca a esos estudiantes para que se note.
+    const cursosPorHoja = new Map<number, number[]>();
+    for (const c of cursoRows) {
+      cursosPorHoja.set(c.grupoId, [
+        ...(cursosPorHoja.get(c.grupoId) ?? []),
+        c.courseId,
+      ]);
+    }
+    const idsMiembros = [...new Set(miembrosRows.map((m) => m.id))];
+    const idsCursos = [...new Set(cursoRows.map((c) => c.courseId))];
+    const matriculas = new Set(
+      idsMiembros.length > 0 && idsCursos.length > 0
+        ? (
+            await db
+              .select({
+                userId: enrollments.userId,
+                courseId: enrollments.courseId,
+              })
+              .from(enrollments)
+              .where(
+                and(
+                  inArray(enrollments.userId, idsMiembros),
+                  inArray(enrollments.courseId, idsCursos)
+                )
+              )
+          ).map((e) => `${e.userId}:${e.courseId}`)
+        : []
+    );
+
     // Agrupa por hoja (dedup por alumno, por si hay varias filas de cartera).
     type Miembro = Omit<(typeof miembrosRows)[number], 'grupoId'> & {
       pendingId?: number;
       pendiente?: boolean;
+      // true: está en la hoja pero no matriculado en el curso de la hoja.
+      sinMatricula?: boolean;
     };
     const miembrosPorHoja = new Map<number, Miembro[]>();
     const vistos = new Set<string>();
@@ -309,7 +343,13 @@ export async function GET(
       vistos.add(clave);
       const { grupoId: gid, ...m } = r;
       const lista = miembrosPorHoja.get(gid) ?? [];
-      lista.push(m);
+      const cursosHoja = cursosPorHoja.get(gid) ?? [];
+      lista.push({
+        ...m,
+        sinMatricula: cursosHoja.some(
+          (courseId) => !matriculas.has(`${m.id}:${courseId}`)
+        ),
+      });
       miembrosPorHoja.set(gid, lista);
     }
     for (const pendiente of pendientesRows) {

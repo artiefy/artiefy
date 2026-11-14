@@ -379,6 +379,31 @@ export const enrollments = pgTable('enrollments', {
   isPermanent: boolean('is_permanent').default(false).notNull(),
 });
 
+// Registro de matrículas y desmatrículas en cursos: quién, cuándo y desde
+// dónde. Sin llaves foráneas a propósito: el registro sobrevive aunque se
+// borre el usuario o el curso. (scripts/enrollment_logs.sql)
+export const enrollmentLogs = pgTable(
+  'enrollment_logs',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id').notNull(),
+    courseId: integer('course_id').notNull(),
+    accion: text('accion', { enum: ['matricula', 'desmatricula'] }).notNull(),
+    // Pantalla o flujo que lo hizo (p. ej. "curso: quitar estudiante").
+    origen: text('origen').notNull(),
+    // Cuenta que hizo el cambio (null: sistema / sin sesión).
+    actorId: text('actor_id'),
+    detalle: text('detalle'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index('enrollment_logs_user_idx').on(t.userId),
+    index('enrollment_logs_course_idx').on(t.courseId),
+  ]
+);
+
 // Tabla de preferencias
 export const preferences = pgTable('preferences', {
   id: serial('id').primaryKey(),

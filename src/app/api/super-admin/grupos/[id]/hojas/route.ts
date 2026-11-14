@@ -81,7 +81,8 @@ export async function POST(
       .where(eq(grupoEstudiantes.grupoId, grupoId));
     const matriculados = await matricularEnCurso(
       courseId,
-      miembros.map((m) => m.userId)
+      miembros.map((m) => m.userId),
+      'grupo: curso puesto en la hoja'
     );
 
     return NextResponse.json({ ok: true, matriculados });

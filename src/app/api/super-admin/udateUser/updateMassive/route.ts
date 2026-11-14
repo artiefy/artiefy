@@ -12,6 +12,7 @@ import {
   userCartera,
   users,
 } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { marcarMatriculasManuales } from '~/server/lib/grupos-programas-sync';
 
 const updateSchema = z.object({
@@ -417,6 +418,11 @@ export async function PATCH(req: Request) {
             enrolledAt: new Date(),
             completed: false,
           });
+          await registrarMatriculas(
+            'matricula',
+            [{ userId, courseId: parsedCourseId }],
+            'estudiantes: edición masiva'
+          );
           console.log(`    ✅ Usuario inscrito en curso ${parsedCourseId}`);
         } else {
           console.log(

@@ -6,6 +6,7 @@ import { and, eq, gt, or } from 'drizzle-orm';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { courses, enrollments, userLessonsProgress } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 
 type UnenrollClientAuthHint = {
   userId?: string | null;
@@ -56,6 +57,11 @@ export async function unenrollFromCourse(
       .where(
         and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId))
       );
+    await registrarMatriculas(
+      'desmatricula',
+      [{ userId, courseId }],
+      'estudiante: se desinscribió del curso'
+    );
 
     // Actualizar el progreso de las lecciones del curso
     await db

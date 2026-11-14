@@ -11,6 +11,7 @@ import {
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
+import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { generarPasswordSegura } from '~/utils/generatePassword';
 import { sortLessons } from '~/utils/lessonSorting';
 
@@ -224,6 +225,11 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
       completed: false,
       isPermanent: true,
     });
+    await registrarMatriculas(
+      'matricula',
+      [{ userId: user.id, courseId }],
+      'estudiante: compró el curso'
+    );
 
     // Obtener lecciones
     const courseLessons = await db.query.lessons.findMany({

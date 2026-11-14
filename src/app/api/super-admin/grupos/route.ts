@@ -239,7 +239,7 @@ export async function POST(request: NextRequest) {
         .insert(grupoCursos)
         .values({ grupoId: grupo.id, courseId: cursoId })
         .onConflictDoNothing();
-      await matricularEnCurso(cursoId, userIds);
+      await matricularEnCurso(cursoId, userIds, 'grupo: crear grupo');
     }
 
     // Genera las clases semanales entre fecha inicio y fin (mismo día).
