@@ -53,7 +53,6 @@ export const env = createEnv({
     PASS: z.string().min(1),
     // Cifra las contraseñas de correo que conecta cada academia
     // (src/server/academy/correo.ts). Mínimo 32 caracteres aleatorios.
-    ACADEMY_MAIL_SECRET: z.string().min(32).optional(),
 
     NODE_ENV: z
       .enum(['development', 'test', 'production'])
@@ -161,7 +160,6 @@ export const env = createEnv({
       process.env.CONFIRMATION_URL_GUIDED_PROJECTS,
 
     PASS: process.env.PASS,
-    ACADEMY_MAIL_SECRET: process.env.ACADEMY_MAIL_SECRET,
 
     NODE_ENV: process.env.NODE_ENV,
     CRON_SECRET: process.env.CRON_SECRET,

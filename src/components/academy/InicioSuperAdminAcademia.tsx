@@ -131,7 +131,10 @@ export function InicioSuperAdminAcademia({
       ) : (
         <>
           <Configuraciones academia={academia} />
-          <CorreoAcademia slug={academia.slug} />
+          <CorreoAcademia
+            slug={academia.slug}
+            nombreAcademia={academia.nombre}
+          />
           <AjustesFormularioAcademia slug={academia.slug} />
         </>
       )}

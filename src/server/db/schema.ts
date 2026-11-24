@@ -3965,6 +3965,10 @@ export const academyAjustes = pgTable('academy_ajustes', {
     .array()
     .default(sql`'{}'::text[]`)
     .notNull(),
+  // Correo de la academia: nombre del remitente y "Responder a" (los
+  // correos salen desde Artiefy, sin contraseña).
+  remitenteNombre: text('remitente_nombre'),
+  correoRespuesta: text('correo_respuesta'),
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow()
     .notNull(),

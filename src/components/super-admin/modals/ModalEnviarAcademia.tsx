@@ -62,9 +62,10 @@ export function ModalEnviarAcademia({
       return ((await res.json()) as { academias: AcademiaLista[] }).academias;
     }
   );
-  // Primero las academias de Artiefy.
+  // Primero las academias de Artiefy. Los usuarios de Artiefy solo se
+  // pueden enviar a academias marcadas "de Artiefy".
   const lista = [...(academias ?? [])]
-    .filter((a) => a.activa)
+    .filter((a) => a.activa && (envio.tipo !== 'usuarios' || a.esArtiefy))
     .sort((a, b) => Number(b.esArtiefy) - Number(a.esArtiefy));
 
   const [academiaId, setAcademiaId] = useState<number | null>(null);

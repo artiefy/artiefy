@@ -170,9 +170,10 @@ async function enviarCredenciales(
 ) {
   const entrar = urlAcademia(academia.slug, '/sign-in');
   const marca = escapar(academia.nombre);
-  const { transporte, from } = await transporteDe(academia);
+  const { transporte, from, replyTo } = await transporteDe(academia);
   await transporte.sendMail({
     from,
+    replyTo,
     to: email,
     subject: `Bienvenido a ${academia.nombre} - Tus credenciales de acceso`,
     html: `
@@ -198,9 +199,10 @@ async function enviarAvisoDeAcceso(
 ) {
   const entrar = urlAcademia(academia.slug, '/sign-in');
   const marca = escapar(academia.nombre);
-  const { transporte, from } = await transporteDe(academia);
+  const { transporte, from, replyTo } = await transporteDe(academia);
   await transporte.sendMail({
     from,
+    replyTo,
     to: email,
     subject: `Ya tienes acceso a ${academia.nombre}`,
     html: `
@@ -227,13 +229,14 @@ export async function enviarCorreoAcademia(
   const html = `<div style="font-family:sans-serif;white-space:pre-line">${escapar(
     mensaje
   )}</div>`;
-  const { transporte, from } = await transporteDe(academia);
+  const { transporte, from, replyTo } = await transporteDe(academia);
   let enviados = 0;
   for (const to of destinos.slice(0, 200)) {
     const ok = await intentarCorreo(
       transporte
         .sendMail({
           from,
+          replyTo,
           to,
           subject: asunto,
           html,

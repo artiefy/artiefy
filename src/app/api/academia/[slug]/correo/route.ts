@@ -1,12 +1,11 @@
 /**
  * /api/academia/[slug]/correo  (super-admin de esa academia)
  *
- * GET    — correo conectado (sin la contraseña) o null.
- * PUT    — { proveedor, usuario, clave?, host?, puerto?, remitenteNombre? }
- *          prueba la conexión y conecta el correo.
- * POST   — envía un correo de prueba al buzón conectado.
- * DELETE — desconecta (vuelven a salir desde el correo de Artiefy).
- * Límite: 10 intentos de conexión o prueba cada 10 minutos por academia.
+ * GET  — { remitenteNombre, correoRespuesta }.
+ * PUT  — { remitenteNombre?, correoRespuesta? }: los guarda (sin contraseña;
+ *        los correos salen desde Artiefy a nombre de la academia).
+ * POST — envía un correo de prueba al correo de respuesta.
+ * Límite: 10 pruebas cada 10 minutos por academia.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -21,9 +20,8 @@ import {
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import {
-  conectarCorreo,
-  desconectarCorreo,
   enviarPrueba,
+  guardarCorreo,
   obtenerCorreo,
 } from '~/server/academy/correo';
 import { registrarLog } from '~/server/academy/logs';
@@ -36,7 +34,7 @@ const limite = new Ratelimit({
     token: env.UPSTASH_REDIS_REST_TOKEN,
   }),
   limiter: Ratelimit.slidingWindow(10, '10 m'),
-  prefix: 'academia-conectar-correo',
+  prefix: 'academia-prueba-correo',
 });
 
 const resolver = async (params: Ctx['params']) =>
@@ -55,10 +53,7 @@ const limitar = async (academyId: number) => {
 export async function GET(_request: NextRequest, { params }: Ctx) {
   try {
     const { academia } = await resolver(params);
-    return NextResponse.json({
-      correo: await obtenerCorreo(academia.id),
-      disponible: Boolean(env.ACADEMY_MAIL_SECRET),
-    });
+    return NextResponse.json(await obtenerCorreo(academia.id));
   } catch (error) {
     return respuestaDeError(error, 'correo: ver');
   }
@@ -67,17 +62,19 @@ export async function GET(_request: NextRequest, { params }: Ctx) {
 export async function PUT(request: NextRequest, { params }: Ctx) {
   try {
     const { academia } = await resolver(params);
-    await limitar(academia.id);
     const body = (await request.json().catch(() => ({}))) as Record<
       string,
       unknown
     >;
-    await conectarCorreo(academia.id, body);
-    const correo = await obtenerCorreo(academia.id);
-    await registrarLog(academia.id, 'Correo conectado', correo?.usuario ?? '');
-    return NextResponse.json({ ok: true, correo });
+    const correo = await guardarCorreo(academia.id, body);
+    await registrarLog(
+      academia.id,
+      'Correo de la academia actualizado',
+      correo.correoRespuesta ?? 'sin correo de respuesta'
+    );
+    return NextResponse.json(correo);
   } catch (error) {
-    return respuestaDeError(error, 'correo: conectar');
+    return respuestaDeError(error, 'correo: guardar');
   }
 }
 
@@ -89,16 +86,5 @@ export async function POST(_request: NextRequest, { params }: Ctx) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     return respuestaDeError(error, 'correo: prueba');
-  }
-}
-
-export async function DELETE(_request: NextRequest, { params }: Ctx) {
-  try {
-    const { academia } = await resolver(params);
-    await desconectarCorreo(academia.id);
-    await registrarLog(academia.id, 'Correo desconectado', '');
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return respuestaDeError(error, 'correo: desconectar');
   }
 }

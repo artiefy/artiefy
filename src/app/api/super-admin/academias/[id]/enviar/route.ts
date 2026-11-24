@@ -40,6 +40,13 @@ export async function POST(request: NextRequest, { params }: Ctx) {
 
     if (body.tipo === 'usuarios') {
       if (!esRolAcademia(body.rol)) throw new ErrorAcademia('Rol inválido.');
+      // Los usuarios de Artiefy solo van a academias marcadas "de Artiefy".
+      if (!academia.esArtiefy) {
+        throw new ErrorAcademia(
+          'Esta academia no es de Artiefy: no puede recibir usuarios de Artiefy.',
+          403
+        );
+      }
       const usuarios = (Array.isArray(body.usuarios) ? body.usuarios : [])
         .map((u: { email?: unknown; nombre?: unknown }) => ({
           email: typeof u?.email === 'string' ? u.email : '',
