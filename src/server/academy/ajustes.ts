@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { asc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -89,14 +89,35 @@ export async function guardarAjustes(
   );
   if (comerciales) datos.formularioComerciales = comerciales;
 
-  await db
-    .insert(academyAjustes)
-    .values({ academyId, ...datos })
-    .onConflictDoUpdate({
-      target: academyAjustes.academyId,
-      set: { ...datos, updatedAt: new Date() },
-    });
+  // SQL directo con SOLO las columnas que cambian: un insert de Drizzle
+  // nombra todas las columnas de la tabla, y si falta alguna que no tiene que
+  // ver (p. ej. las del correo) fallaba también el guardado del favicon.
+  const entradas = Object.entries(datos) as [keyof AjustesAcademia, unknown][];
+  if (entradas.length === 0) return;
+  const columnas = entradas.map(([k]) => sql.identifier(COLUMNA[k]));
+  const valores = entradas.map(([, v]) =>
+    Array.isArray(v)
+      ? sql`ARRAY(SELECT jsonb_array_elements_text(${JSON.stringify(v)}::jsonb))`
+      : sql`${v}`
+  );
+  const actualizar = entradas.map(
+    ([k]) =>
+      sql`${sql.identifier(COLUMNA[k])} = EXCLUDED.${sql.identifier(COLUMNA[k])}`
+  );
+  await db.execute(sql`
+    INSERT INTO academy_ajustes (academy_id, ${sql.join(columnas, sql`, `)})
+    VALUES (${academyId}, ${sql.join(valores, sql`, `)})
+    ON CONFLICT (academy_id) DO UPDATE
+    SET ${sql.join(actualizar, sql`, `)}, updated_at = now()
+  `);
 }
+
+const COLUMNA: Record<keyof AjustesAcademia, string> = {
+  faviconKey: 'favicon_key',
+  formularioLogos: 'formulario_logos',
+  formularioFechas: 'formulario_fechas',
+  formularioComerciales: 'formulario_comerciales',
+};
 
 /**
  * Opciones del formulario público de inscripción de la academia, con la
