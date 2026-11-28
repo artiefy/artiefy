@@ -42,7 +42,7 @@ export async function PanelEstudiante({
   const previa = cuenta.role !== 'estudiante';
   return (
     <div className="min-h-dvh bg-background text-white">
-      <EncabezadoAula />
+      <EncabezadoAula slug={academia.slug} />
       {previa && (
         <div className="border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-center text-sm font-medium text-amber-600">
           Vista previa del estudiante: ves todos los cursos con las clases

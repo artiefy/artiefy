@@ -10,6 +10,8 @@ import { CambiarVistaAcademia } from '~/components/academy/CambiarVistaAcademia'
 import { useMarca } from '~/components/marca/MarcaProvider';
 import { cn } from '~/lib/utils';
 
+import { BuscadorAula, CampanaAula } from './BarraAula';
+
 import type { Route } from 'next';
 
 // Barra superior del estudiante de una academia, como el Header del
@@ -25,7 +27,7 @@ const NAV: { href: string; label: string; icon: typeof Home }[] = [
   { href: '/dashboard/student/perfil', label: 'Perfil', icon: UserRound },
 ];
 
-export function EncabezadoAula() {
+export function EncabezadoAula({ slug }: { slug: string }) {
   const marca = useMarca();
   const pathname = usePathname();
   return (
@@ -76,7 +78,11 @@ export function EncabezadoAula() {
             );
           })}
         </nav>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="hidden flex-1 justify-center md:flex">
+          <BuscadorAula slug={slug} />
+        </div>
+        <div className="ml-auto flex items-center gap-3 md:ml-0">
+          <CampanaAula slug={slug} />
           <CambiarVistaAcademia />
           <UserButton
             appearance={{
