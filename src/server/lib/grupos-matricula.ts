@@ -9,7 +9,9 @@ import 'server-only';
 /**
  * Matricula en un curso a los usuarios que aún no lo estén.
  * `enrollments` no tiene restricción única, así que se filtran los existentes
- * antes de insertar para no duplicar. Devuelve cuántos se matricularon.
+ * antes de insertar para no duplicar. Si ya estaban matriculados pero con el
+ * curso completado (al 100 %), vuelven a "actuales": al ponerlos en una hoja
+ * vuelven a cursarlo. Devuelve cuántos se matricularon nuevos.
  */
 export const matricularEnCurso = async (
   courseId: number,
@@ -20,7 +22,7 @@ export const matricularEnCurso = async (
   if (userIds.length === 0) return 0;
 
   const yaMatriculados = await db
-    .select({ userId: enrollments.userId })
+    .select({ userId: enrollments.userId, completed: enrollments.completed })
     .from(enrollments)
     .where(
       and(
@@ -30,6 +32,28 @@ export const matricularEnCurso = async (
     );
   const existentes = new Set(yaMatriculados.map((e) => e.userId));
   const nuevos = userIds.filter((id) => !existentes.has(id));
+
+  const completados = [
+    ...new Set(yaMatriculados.filter((e) => e.completed).map((e) => e.userId)),
+  ];
+  if (completados.length > 0) {
+    await db
+      .update(enrollments)
+      .set({ completed: false })
+      .where(
+        and(
+          eq(enrollments.courseId, courseId),
+          inArray(enrollments.userId, completados),
+          eq(enrollments.completed, true)
+        )
+      );
+    await registrarMatriculas(
+      'matricula',
+      completados.map((userId) => ({ userId, courseId })),
+      origen,
+      'volvió a actuales (estaba completado al 100 %)'
+    );
+  }
 
   if (nuevos.length > 0) {
     await db.insert(enrollments).values(

@@ -24,6 +24,9 @@ import {
   useEducadoresAcademia,
 } from './ModalCursoAcademia';
 import { PestanasCursoAcademia } from './PestanasCursoAcademia';
+import { usePanelAcademia } from './usePanelAcademia';
+
+import type { Route } from 'next';
 
 // Detalle de un curso para el super-admin de la academia, con la misma
 // estructura que el detalle de super-admin de Artiefy: migas, tarjeta con
@@ -65,6 +68,8 @@ export function DetalleCursoSuperAdminAcademia({
   curso: CursoDetalle;
 }) {
   const router = useRouter();
+  // Super-admin o educador (solo sus cursos, como en Artiefy).
+  const panel = usePanelAcademia();
   const [descripcionAbierta, setDescripcionAbierta] = useState(false);
   const tema = useSyncExternalStore(
     suscribirTema,
@@ -151,7 +156,7 @@ export function DetalleCursoSuperAdminAcademia({
       const j = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(j.error ?? 'No se pudo eliminar el curso');
       toast.success('Curso eliminado');
-      router.push('/dashboard/super-admin/cursos');
+      router.push(panel.cursos as Route);
     } catch (error) {
       toast.error((error as Error).message);
       setEliminando(false);
@@ -211,13 +216,15 @@ export function DetalleCursoSuperAdminAcademia({
         >
           Stats
         </button>
-        <button
-          type="button"
-          onClick={() => setConfirmarEliminar(true)}
-          className="col-span-2 w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
-        >
-          🗑️ Eliminar curso
-        </button>
+        {!panel.esEducador && (
+          <button
+            type="button"
+            onClick={() => setConfirmarEliminar(true)}
+            className="col-span-2 w-full rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+          >
+            🗑️ Eliminar curso
+          </button>
+        )}
       </div>
 
       <dl className="divide-y divide-[var(--ac-borde)] border-t border-[var(--ac-borde)]">
@@ -240,17 +247,17 @@ export function DetalleCursoSuperAdminAcademia({
     <div className="space-y-6">
       <nav className="flex flex-wrap items-center gap-2 text-sm">
         <Link
-          href="/dashboard/super-admin"
+          href={panel.inicio as Route}
           className="text-[var(--ac-primario)] hover:opacity-80"
         >
           Inicio
         </Link>
         <ChevronRight className="size-4 text-white/40" />
         <Link
-          href="/dashboard/super-admin/cursos"
+          href={panel.cursos as Route}
           className="text-[var(--ac-primario)] hover:opacity-80"
         >
-          Cursos
+          {panel.esEducador ? 'Mis cursos' : 'Cursos'}
         </Link>
         <ChevronRight className="size-4 text-white/40" />
         <span className="text-white/60">Detalles</span>
@@ -329,14 +336,16 @@ export function DetalleCursoSuperAdminAcademia({
                   className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--ac-primario)]/40 px-3 py-1.5 text-xs font-medium whitespace-nowrap text-white"
                 >
                   {nombreDe(id)}
-                  <button
-                    type="button"
-                    disabled={actualizando}
-                    onClick={() => quitar(id)}
-                    className="text-white/40 transition-colors hover:text-red-400 disabled:opacity-50"
-                  >
-                    ✕
-                  </button>
+                  {!panel.esEducador && (
+                    <button
+                      type="button"
+                      disabled={actualizando}
+                      onClick={() => quitar(id)}
+                      className="text-white/40 transition-colors hover:text-red-400 disabled:opacity-50"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </span>
               ))
             ) : (
@@ -344,14 +353,16 @@ export function DetalleCursoSuperAdminAcademia({
                 Sin instructores asignados
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => setAgregandoInstructor(true)}
-              disabled={actualizando}
-              className="shrink-0 rounded-full border border-[var(--ac-primario)]/40 bg-[var(--ac-primario)]/10 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[var(--ac-primario)] transition-colors hover:bg-[var(--ac-primario)]/20 disabled:opacity-50"
-            >
-              + Agregar instructor
-            </button>
+            {!panel.esEducador && (
+              <button
+                type="button"
+                onClick={() => setAgregandoInstructor(true)}
+                disabled={actualizando}
+                className="shrink-0 rounded-full border border-[var(--ac-primario)]/40 bg-[var(--ac-primario)]/10 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[var(--ac-primario)] transition-colors hover:bg-[var(--ac-primario)]/20 disabled:opacity-50"
+              >
+                + Agregar instructor
+              </button>
+            )}
           </div>
         </div>
 

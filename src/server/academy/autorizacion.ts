@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
+import { and, eq } from 'drizzle-orm';
 
-import { type AcademyRole } from '~/server/db/schema';
+import { db } from '~/server/db';
+import {
+  academyActivities,
+  academyClases,
+  academyCourseInstructors,
+  academyCourses,
+  academyLessons,
+  type AcademyRole,
+} from '~/server/db/schema';
 
 import { type Academia, academiaPorSlug, ErrorAcademia } from './academias';
 import { membresiaConArtiefy, type UsuarioAcademia } from './usuarios';
@@ -78,4 +87,104 @@ export function respuestaDeError(error: unknown, contexto: string) {
     { error: 'Ocurrió un error inesperado' },
     { status: 500 }
   );
+}
+
+// ------------------------------------------------- Acceso por curso ---
+
+type Recurso =
+  | { curso: number }
+  | { leccion: number }
+  | { actividad: number }
+  | { sesion: number };
+
+/** Curso al que pertenece una clase, actividad o sesión de la academia. */
+async function cursoDelRecurso(
+  academyId: number,
+  recurso: Recurso
+): Promise<number> {
+  let courseId: number | undefined;
+  if ('curso' in recurso) courseId = recurso.curso;
+  else if ('leccion' in recurso) {
+    const [f] = await db
+      .select({ c: academyLessons.courseId })
+      .from(academyLessons)
+      .where(
+        and(
+          eq(academyLessons.id, recurso.leccion),
+          eq(academyLessons.academyId, academyId)
+        )
+      )
+      .limit(1);
+    courseId = f?.c;
+  } else if ('actividad' in recurso) {
+    const [f] = await db
+      .select({ c: academyLessons.courseId })
+      .from(academyActivities)
+      .innerJoin(
+        academyLessons,
+        eq(academyLessons.id, academyActivities.lessonId)
+      )
+      .where(
+        and(
+          eq(academyActivities.id, recurso.actividad),
+          eq(academyActivities.academyId, academyId)
+        )
+      )
+      .limit(1);
+    courseId = f?.c;
+  } else {
+    const [f] = await db
+      .select({ c: academyClases.courseId })
+      .from(academyClases)
+      .where(
+        and(
+          eq(academyClases.id, recurso.sesion),
+          eq(academyClases.academyId, academyId)
+        )
+      )
+      .limit(1);
+    courseId = f?.c;
+  }
+  if (!courseId || !Number.isInteger(courseId)) {
+    throw new ErrorAcademia('No encontrado', 404);
+  }
+  return courseId;
+}
+
+/**
+ * Como en Artiefy: el super-admin gestiona cualquier curso de la academia y
+ * el educador solo los suyos (instructor principal o adicional). Recibe el
+ * curso o una clase / actividad / sesión de él.
+ */
+export async function cuentaDelCurso(slug: string, recurso: Recurso) {
+  const s = await cuentaDeAcademia(slug, ['super-admin', 'educador']);
+  const courseId = await cursoDelRecurso(s.academia.id, recurso);
+  if (s.cuenta.role === 'educador') {
+    const [principal] = await db
+      .select({ id: academyCourses.id })
+      .from(academyCourses)
+      .where(
+        and(
+          eq(academyCourses.id, courseId),
+          eq(academyCourses.academyId, s.academia.id),
+          eq(academyCourses.instructor, s.cuenta.userId)
+        )
+      )
+      .limit(1);
+    const [adicional] = principal
+      ? [principal]
+      : await db
+          .select({ id: academyCourseInstructors.id })
+          .from(academyCourseInstructors)
+          .where(
+            and(
+              eq(academyCourseInstructors.courseId, courseId),
+              eq(academyCourseInstructors.userId, s.cuenta.userId)
+            )
+          )
+          .limit(1)
+          .catch(() => []);
+    if (!adicional) throw new ErrorAcademia('No autorizado', 403);
+  }
+  return { ...s, courseId };
 }

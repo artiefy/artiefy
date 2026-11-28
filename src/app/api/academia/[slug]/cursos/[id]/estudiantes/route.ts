@@ -10,7 +10,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  cuentaDeAcademia,
+  cuentaDelCurso,
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import {
@@ -25,7 +25,8 @@ type Ctx = { params: Promise<{ slug: string; id: string }> };
 
 const resolver = async (params: Ctx['params']) => {
   const { slug, id } = await params;
-  const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+  // Super-admin, o el educador del curso (como en Artiefy).
+  const { academia } = await cuentaDelCurso(slug, { curso: Number(id) });
   return { academia, courseId: Number(id) };
 };
 

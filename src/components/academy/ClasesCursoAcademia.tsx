@@ -25,6 +25,7 @@ import {
   estilos,
   useDatosAcademia,
 } from './seccion/comun';
+import { usePanelAcademia } from './usePanelAcademia';
 
 import type { Route } from 'next';
 
@@ -57,6 +58,7 @@ export function ClasesCursoAcademia({
   // Color del "Tema Visual" del curso.
   tema: string;
 }) {
+  const panel = usePanelAcademia();
   const api = `/api/academia/${slug}/cursos/${courseId}/lecciones`;
   const { data, error, isLoading, sqlPendiente, mutate } = useDatosAcademia<{
     lecciones: Leccion[];
@@ -234,9 +236,7 @@ export function ClasesCursoAcademia({
                         </p>
                         <div className="flex flex-wrap gap-2">
                           <Link
-                            href={
-                              `/dashboard/super-admin/cursos/${courseId}/${l.id}` as Route
-                            }
+                            href={`${panel.curso(courseId)}/${l.id}` as Route}
                             className={estilos.boton}
                           >
                             Ver clase y actividades

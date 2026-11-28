@@ -6,12 +6,13 @@
  * sí mismo.
  */
 
-import { type NextRequest } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   cuentaDeAcademia,
   respuestaDeError,
 } from '~/server/academy/autorizacion';
+import { listarUsuarios } from '~/server/academy/usuarios';
 import * as usuarios from '~/server/academy/usuarios-http';
 
 type Ctx = { params: Promise<{ slug: string }> };
@@ -21,7 +22,25 @@ const resolver = async ({ params }: Ctx) =>
 
 export async function GET(_request: NextRequest, ctx: Ctx) {
   try {
-    const { academia } = await resolver(ctx);
+    // El educador también lista (para matricular en sus cursos), pero solo
+    // nombre, correo y rol de estudiantes y educadores.
+    const { academia, cuenta } = await cuentaDeAcademia(
+      (await ctx.params).slug,
+      ['super-admin', 'educador']
+    );
+    if (cuenta.role === 'educador') {
+      const lista = await listarUsuarios(academia.id);
+      return NextResponse.json({
+        usuarios: lista
+          .filter((u) => u.role !== 'super-admin' && u.activo)
+          .map((u) => ({
+            userId: u.userId,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+          })),
+      });
+    }
     return usuarios.listar(academia);
   } catch (error) {
     return respuestaDeError(error, 'academia: listar');

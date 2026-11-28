@@ -9,7 +9,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  cuentaDeAcademia,
+  cuentaDelCurso,
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import { crearActividad } from '~/server/academy/contenido';
@@ -20,7 +20,9 @@ type Ctx = { params: Promise<{ slug: string; lessonId: string }> };
 export async function POST(request: NextRequest, { params }: Ctx) {
   try {
     const { slug, lessonId } = await params;
-    const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+    const { academia } = await cuentaDelCurso(slug, {
+      leccion: Number(lessonId),
+    });
     const body = (await request.json().catch(() => ({}))) as Record<
       string,
       unknown

@@ -16,6 +16,7 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '~/server/db';
 import { enrollments } from '~/server/db/schema';
 import { registrarMatriculas } from '~/server/lib/enrollment-log';
+import { matricularEnCurso } from '~/server/lib/grupos-matricula';
 
 const autorizar = async () => {
   const { userId, sessionClaims } = await auth();
@@ -41,27 +42,8 @@ export async function POST(
   }
 
   try {
-    const existe = await db
-      .select({ id: enrollments.id })
-      .from(enrollments)
-      .where(
-        and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId))
-      )
-      .limit(1);
-
-    if (existe.length === 0) {
-      await db.insert(enrollments).values({
-        userId,
-        courseId,
-        enrolledAt: new Date(),
-        completed: false,
-      });
-      await registrarMatriculas(
-        'matricula',
-        [{ userId, courseId }],
-        'grupo: matricular persona'
-      );
-    }
+    // Matricula (o, si estaba completado al 100 %, lo devuelve a actuales).
+    await matricularEnCurso(courseId, [userId], 'grupo: matricular persona');
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('[GRUPOS] matricular persona:', error);

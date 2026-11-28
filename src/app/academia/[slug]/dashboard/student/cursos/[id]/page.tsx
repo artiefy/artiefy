@@ -17,8 +17,9 @@ export default function DetalleCursoEstudiantePage({ params }: Props) {
     <Suspense>
       <PanelEstudiante
         params={params}
-        render={({ academia, cuenta }) => (
+        render={({ academia, cuenta, previa }) => (
           <Detalle
+            previa={previa}
             academyId={academia.id}
             userId={cuenta.userId}
             params={params}
@@ -30,17 +31,19 @@ export default function DetalleCursoEstudiantePage({ params }: Props) {
 }
 
 async function Detalle({
+  previa,
   academyId,
   userId,
   params,
 }: {
+  previa: boolean;
   academyId: number;
   userId: string;
   params: Props['params'];
 }) {
   const id = Number((await params).id);
   if (!Number.isInteger(id)) notFound();
-  const datos = await cursoEstudiante(academyId, userId, id);
+  const datos = await cursoEstudiante(academyId, userId, id, previa);
   if (!datos) notFound();
   return <CursoAula datos={datos} />;
 }

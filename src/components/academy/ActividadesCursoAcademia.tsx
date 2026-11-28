@@ -8,6 +8,7 @@ import {
   type ActividadAcademia,
   ModalActividadAcademia,
 } from './ModalActividadAcademia';
+import { usePanelAcademia } from './usePanelAcademia';
 
 import type { Route } from 'next';
 
@@ -36,6 +37,7 @@ export function ActividadesCursoAcademia({
   cargando: boolean;
   onCambio: () => Promise<unknown>;
 }) {
+  const panel = usePanelAcademia();
   // undefined: cerrado; null: crear; actividad: editar.
   const [editando, setEditando] = useState<ActividadCurso | null>();
 
@@ -143,7 +145,7 @@ export function ActividadesCursoAcademia({
                       <div className="flex shrink-0 flex-wrap gap-2">
                         <Link
                           href={
-                            `/dashboard/super-admin/cursos/${courseId}/${act.lessonId}` as Route
+                            `${panel.curso(courseId)}/${act.lessonId}` as Route
                           }
                           className="rounded-lg border border-[var(--ac-borde)] bg-[var(--ac-superficie)] px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-80"
                         >

@@ -62,7 +62,9 @@ async function progresoDe(userId: string, lessonIds: number[]) {
 async function clasesConEstado(
   academyId: number,
   courseId: number,
-  userId: string
+  userId: string,
+  // Vista previa del personal: todas abiertas.
+  previa = false
 ): Promise<ClaseEnCurso[]> {
   const lecciones = await withRetry(() =>
     db
@@ -102,7 +104,7 @@ async function clasesConEstado(
       actividades: actividades.filter((a) => a.lessonId === l.id).length,
       progreso: p?.progreso ?? 0,
       completada: p?.completada ?? false,
-      desbloqueada: anteriorCompleta,
+      desbloqueada: previa || anteriorCompleta,
     };
     anteriorCompleta = clase.completada;
     return clase;
@@ -135,7 +137,12 @@ async function estaMatriculado(
  * Inicio del estudiante: sus cursos (con progreso y la clase para continuar)
  * y el resto del catálogo visible de la academia.
  */
-export async function inicioEstudiante(academyId: number, userId: string) {
+export async function inicioEstudiante(
+  academyId: number,
+  userId: string,
+  // Vista previa (super-admin / educador): ve como suyos todos los cursos.
+  previa = false
+) {
   const [cursos, matriculas] = await Promise.all([
     listarCursos(academyId),
     db
@@ -149,14 +156,18 @@ export async function inicioEstudiante(academyId: number, userId: string) {
       )
       .catch(() => []),
   ]);
-  const mios = new Set(matriculas.map((m) => m.courseId));
+  const mios = new Set(
+    previa
+      ? cursos.filter((c) => c.visibility && c.isActive).map((c) => c.id)
+      : matriculas.map((m) => m.courseId)
+  );
   const visibles = cursos.filter((c) => c.visibility && c.isActive);
 
   const misCursos = await Promise.all(
     cursos
       .filter((c) => mios.has(c.id) && c.isActive)
       .map(async (c) => {
-        const clases = await clasesConEstado(academyId, c.id, userId);
+        const clases = await clasesConEstado(academyId, c.id, userId, previa);
         const hechas = clases.filter((x) => x.completada).length;
         const siguiente =
           clases.find((x) => x.desbloqueada && !x.completada) ?? null;
@@ -187,14 +198,16 @@ export type InicioEstudiante = Awaited<ReturnType<typeof inicioEstudiante>>;
 export async function cursoEstudiante(
   academyId: number,
   userId: string,
-  courseId: number
+  courseId: number,
+  previa = false
 ) {
   const curso = await obtenerCurso(academyId, courseId);
   if (!curso?.isActive) return null;
-  const matriculado = await estaMatriculado(academyId, courseId, userId);
+  const matriculado =
+    previa || (await estaMatriculado(academyId, courseId, userId));
   if (!matriculado && !curso.visibility) return null;
 
-  const clases = await clasesConEstado(academyId, courseId, userId);
+  const clases = await clasesConEstado(academyId, courseId, userId, previa);
   const ahora = new Date();
   const [enVivo, notas] = matriculado
     ? await Promise.all([
@@ -279,14 +292,23 @@ async function notasDelCurso(
 export async function claseEstudiante(
   academyId: number,
   userId: string,
-  lessonId: number
+  lessonId: number,
+  previa = false
 ) {
   const leccion = await obtenerLeccion(academyId, lessonId);
   if (!leccion) return null;
-  if (!(await estaMatriculado(academyId, leccion.courseId, userId))) {
+  if (
+    !previa &&
+    !(await estaMatriculado(academyId, leccion.courseId, userId))
+  ) {
     throw new ErrorAcademia('No estás matriculado en este curso.', 403);
   }
-  const clases = await clasesConEstado(academyId, leccion.courseId, userId);
+  const clases = await clasesConEstado(
+    academyId,
+    leccion.courseId,
+    userId,
+    previa
+  );
   const i = clases.findIndex((c) => c.id === lessonId);
   const actual = clases[i];
   if (!actual?.desbloqueada) {

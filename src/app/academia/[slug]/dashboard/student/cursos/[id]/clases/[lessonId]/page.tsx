@@ -25,8 +25,9 @@ export default function ClaseEstudiantePage({ params }: Props) {
     <Suspense>
       <PanelEstudiante
         params={params}
-        render={({ academia, cuenta }) => (
+        render={({ academia, cuenta, previa }) => (
           <Clase
+            previa={previa}
             academyId={academia.id}
             slug={academia.slug}
             userId={cuenta.userId}
@@ -39,11 +40,13 @@ export default function ClaseEstudiantePage({ params }: Props) {
 }
 
 async function Clase({
+  previa,
   academyId,
   slug,
   userId,
   params,
 }: {
+  previa: boolean;
   academyId: number;
   slug: string;
   userId: string;
@@ -53,7 +56,12 @@ async function Clase({
   const leccionId = Number(lessonId);
   if (!Number.isInteger(leccionId)) notFound();
   // El error (no matriculado / clase bloqueada) se resuelve antes del JSX.
-  const resultado = await claseEstudiante(academyId, userId, leccionId).then(
+  const resultado = await claseEstudiante(
+    academyId,
+    userId,
+    leccionId,
+    previa
+  ).then(
     (datos) => ({ datos, error: null }),
     (error: unknown) => {
       if (error instanceof ErrorAcademia) return { datos: null, error };
@@ -78,5 +86,5 @@ async function Clase({
   }
   const { datos } = resultado;
   if (!datos || datos.leccion.courseId !== Number(id)) notFound();
-  return <ClaseAula slug={slug} datos={datos} />;
+  return <ClaseAula slug={slug} datos={datos} previa={previa} />;
 }

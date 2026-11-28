@@ -12,21 +12,20 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, eq, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import { db } from '~/server/db';
 import {
   credentialsDeliveryLogs,
-  enrollments,
   grupoCursos,
   grupoEstudiantes,
   grupoEstudiantesPendientes,
   grupos,
   users,
 } from '~/server/db/schema';
-import { registrarMatriculas } from '~/server/lib/enrollment-log';
 import { rechazarSiHojaArchivada } from '~/server/lib/grupo-hoja-archivada';
+import { matricularEnCurso } from '~/server/lib/grupos-matricula';
 import { sincronizarEstudiantesAgregados } from '~/server/lib/grupos-programas-sync';
 import { createUser } from '~/server/queries/queries';
 
@@ -119,31 +118,10 @@ export async function POST(
     ),
   ];
 
+  // Matricula (o devuelve a "actuales" si estaba completado) en los cursos.
   const matricularCursos = async (userId: string) => {
     for (const courseId of courseIds) {
-      const existe = await db
-        .select({ id: enrollments.id })
-        .from(enrollments)
-        .where(
-          and(
-            eq(enrollments.userId, userId),
-            eq(enrollments.courseId, courseId)
-          )
-        )
-        .limit(1);
-      if (existe.length === 0) {
-        await db.insert(enrollments).values({
-          userId,
-          courseId,
-          enrolledAt: new Date(),
-          completed: false,
-        });
-        await registrarMatriculas(
-          'matricula',
-          [{ userId, courseId }],
-          'grupo: alta masiva'
-        );
-      }
+      await matricularEnCurso(courseId, [userId], 'grupo: alta masiva');
     }
   };
 

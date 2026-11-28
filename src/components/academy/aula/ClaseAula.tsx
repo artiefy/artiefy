@@ -57,9 +57,12 @@ const fecha = (iso: string) =>
 export function ClaseAula({
   slug,
   datos,
+  previa = false,
 }: {
   slug: string;
   datos: ClaseEstudiante;
+  // Personal viendo el área del estudiante: no guarda avance ni entregas.
+  previa?: boolean;
 }) {
   const router = useRouter();
   const { leccion, clases, anterior, siguiente } = datos;
@@ -82,6 +85,7 @@ export function ClaseAula({
     !videoS3 && leccion.videoUrl ? embebido(leccion.videoUrl) : null;
 
   const guardar = async (valor: number, completar = false) => {
+    if (previa) return;
     try {
       const res = await fetch(`/api/academia/${slug}/aula/progreso`, {
         method: 'POST',
@@ -253,7 +257,8 @@ export function ClaseAula({
           ) : (
             // Sin video propio (o con video externo, que no se puede
             // medir) se completa con el botón, como en Artiefy.
-            !videoS3 && (
+            !videoS3 &&
+            !previa && (
               <button
                 type="button"
                 onClick={() => void completarManual()}
@@ -333,7 +338,12 @@ export function ClaseAula({
           ) : (
             <div className="space-y-4">
               {leccion.actividades.map((a) => (
-                <TarjetaActividad key={a.id} slug={slug} actividad={a} />
+                <TarjetaActividad
+                  key={a.id}
+                  slug={slug}
+                  actividad={a}
+                  previa={previa}
+                />
               ))}
             </div>
           )}
@@ -413,9 +423,11 @@ export function ClaseAula({
 function TarjetaActividad({
   slug,
   actividad,
+  previa,
 }: {
   slug: string;
   actividad: Actividad;
+  previa: boolean;
 }) {
   const [entrega, setEntrega] = useState(actividad.entrega);
   const [editando, setEditando] = useState(!actividad.entrega);
@@ -562,7 +574,12 @@ function TarjetaActividad({
       )}
 
       {editando &&
-        (vencida ? (
+        (previa ? (
+          <p className="mt-4 text-sm text-amber-300/80">
+            Vista previa: aquí el estudiante escribe su respuesta, pega un
+            enlace o adjunta un archivo.
+          </p>
+        ) : vencida ? (
           <p className="mt-4 text-sm text-red-400">
             La fecha límite ya pasó; no se puede entregar.
           </p>

@@ -30,6 +30,7 @@ import {
   type ActividadAcademia,
   ModalActividadAcademia,
 } from './ModalActividadAcademia';
+import { usePanelAcademia } from './usePanelAcademia';
 
 import type { Route } from 'next';
 
@@ -94,6 +95,7 @@ export function DetalleClaseAcademia({
   slug: string;
   lessonId: number;
 }) {
+  const panel = usePanelAcademia();
   const router = useRouter();
   const api = `/api/academia/${slug}/lecciones/${lessonId}`;
   const { data, error, isLoading, sqlPendiente, mutate } = useDatosAcademia<{
@@ -117,7 +119,7 @@ export function DetalleClaseAcademia({
 
   const l = data.leccion;
   const video = l.videoUrl ? embebido(l.videoUrl) : null;
-  const volverCurso = `/dashboard/super-admin/cursos/${l.courseId}` as Route;
+  const volverCurso = panel.curso(l.courseId) as Route;
   // Como Artiefy: si hay video subido ('none' = sin video) se muestra; si no,
   // el enlace de video (YouTube/Vimeo) y, si tampoco, la portada.
   const s3 = process.env.NEXT_PUBLIC_AWS_S3_URL;
@@ -179,14 +181,14 @@ export function DetalleClaseAcademia({
     <div className="space-y-6">
       <nav className="flex flex-wrap items-center gap-2 text-sm">
         <Link
-          href="/dashboard/super-admin"
+          href={panel.inicio as Route}
           className="text-[var(--ac-primario)] hover:opacity-80"
         >
           Inicio
         </Link>
         <ChevronRight className="size-4 text-white/40" />
         <Link
-          href="/dashboard/super-admin/cursos"
+          href={panel.cursos as Route}
           className="text-[var(--ac-primario)] hover:opacity-80"
         >
           Cursos

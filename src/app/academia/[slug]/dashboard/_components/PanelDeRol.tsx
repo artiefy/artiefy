@@ -6,6 +6,7 @@ import {
   FiBookOpen,
   FiClipboard,
   FiCreditCard,
+  FiEye,
   FiFileText,
   FiHome,
   FiLayers,
@@ -137,6 +138,13 @@ const MENU: Record<AcademyRole, ItemMenu[]> = {
       title: 'Finanzas',
       link: '/dashboard/super-admin/finanzas',
     },
+    {
+      kind: 'link',
+      id: 'vista-estudiante',
+      icon: <FiEye size={18} />,
+      title: 'Ver como estudiante',
+      link: '/dashboard/student',
+    },
   ],
   educador: [
     {
@@ -152,6 +160,13 @@ const MENU: Record<AcademyRole, ItemMenu[]> = {
       icon: <FiBookOpen size={18} />,
       title: 'Mis cursos',
       link: '/dashboard/educator#cursos',
+    },
+    {
+      kind: 'link',
+      id: 'vista-estudiante',
+      icon: <FiEye size={18} />,
+      title: 'Ver como estudiante',
+      link: '/dashboard/student',
     },
   ],
   estudiante: [

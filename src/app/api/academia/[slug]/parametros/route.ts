@@ -19,6 +19,7 @@ export async function GET(_request: NextRequest, { params }: Ctx) {
   try {
     const { academia } = await cuentaDeAcademia((await params).slug, [
       'super-admin',
+      'educador',
     ]);
     return NextResponse.json(await listarParametrosAcademia(academia.id));
   } catch (error) {

@@ -15,8 +15,9 @@ export default function EstudianteAcademiaPage({ params }: Props) {
     <Suspense>
       <PanelEstudiante
         params={params}
-        render={({ academia, cuenta }) => (
+        render={({ academia, cuenta, previa }) => (
           <Inicio
+            previa={previa}
             academyId={academia.id}
             academia={academia.nombre}
             userId={cuenta.userId}
@@ -29,16 +30,18 @@ export default function EstudianteAcademiaPage({ params }: Props) {
 }
 
 async function Inicio({
+  previa,
   academyId,
   academia,
   userId,
   nombre,
 }: {
+  previa: boolean;
   academyId: number;
   academia: string;
   userId: string;
   nombre: string;
 }) {
-  const datos = await inicioEstudiante(academyId, userId);
+  const datos = await inicioEstudiante(academyId, userId, previa);
   return <InicioAula nombre={nombre} academia={academia} datos={datos} />;
 }

@@ -6,7 +6,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  cuentaDeAcademia,
+  cuentaDelCurso,
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import { eliminarSesion } from '~/server/academy/contenido';
@@ -17,7 +17,9 @@ type Ctx = { params: Promise<{ slug: string; sesionId: string }> };
 export async function DELETE(_request: NextRequest, { params }: Ctx) {
   try {
     const { slug, sesionId } = await params;
-    const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+    const { academia } = await cuentaDelCurso(slug, {
+      sesion: Number(sesionId),
+    });
     const titulo = await eliminarSesion(academia.id, Number(sesionId));
     await registrarLog(academia.id, 'Clase virtual eliminada', titulo);
     return NextResponse.json({ ok: true });

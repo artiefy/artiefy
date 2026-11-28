@@ -8,7 +8,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  cuentaDeAcademia,
+  cuentaDelCurso,
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import {
@@ -22,7 +22,9 @@ type Ctx = { params: Promise<{ slug: string; activityId: string }> };
 export async function PATCH(request: NextRequest, { params }: Ctx) {
   try {
     const { slug, activityId } = await params;
-    const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+    const { academia } = await cuentaDelCurso(slug, {
+      actividad: Number(activityId),
+    });
     const body = (await request.json().catch(() => ({}))) as Record<
       string,
       unknown
@@ -42,7 +44,9 @@ export async function PATCH(request: NextRequest, { params }: Ctx) {
 export async function DELETE(_request: NextRequest, { params }: Ctx) {
   try {
     const { slug, activityId } = await params;
-    const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+    const { academia } = await cuentaDelCurso(slug, {
+      actividad: Number(activityId),
+    });
     const titulo = await eliminarActividad(academia.id, Number(activityId));
     await registrarLog(academia.id, 'Actividad eliminada', titulo);
     return NextResponse.json({ ok: true });

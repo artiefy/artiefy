@@ -9,7 +9,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
-  cuentaDeAcademia,
+  cuentaDelCurso,
   respuestaDeError,
 } from '~/server/academy/autorizacion';
 import { crearSesion, listarSesiones } from '~/server/academy/contenido';
@@ -20,7 +20,7 @@ type Ctx = { params: Promise<{ slug: string; id: string }> };
 export async function GET(_request: NextRequest, { params }: Ctx) {
   try {
     const { slug, id } = await params;
-    const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+    const { academia } = await cuentaDelCurso(slug, { curso: Number(id) });
     return NextResponse.json({
       sesiones: await listarSesiones(academia.id, Number(id)),
     });
@@ -32,7 +32,7 @@ export async function GET(_request: NextRequest, { params }: Ctx) {
 export async function POST(request: NextRequest, { params }: Ctx) {
   try {
     const { slug, id } = await params;
-    const { academia } = await cuentaDeAcademia(slug, ['super-admin']);
+    const { academia } = await cuentaDelCurso(slug, { curso: Number(id) });
     const body = (await request.json().catch(() => ({}))) as Record<
       string,
       unknown
