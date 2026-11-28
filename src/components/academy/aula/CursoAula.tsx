@@ -13,11 +13,13 @@ import {
   ChevronUp,
   ClipboardList,
   Clock,
+  FolderKanban,
   GraduationCap,
   Home,
   Layers,
   Lock,
   MapPin,
+  MessagesSquare,
   Navigation,
   Signal,
   Star,
@@ -28,6 +30,7 @@ import { cn } from '~/lib/utils';
 import { type CursoEstudiante } from '~/server/academy/aula';
 
 import { OpinionesCurso } from './ComentariosAula';
+import { ForoCurso, ProyectosCurso } from './ForoProyectosAula';
 
 import type { Route } from 'next';
 
@@ -36,7 +39,7 @@ import type { Route } from 'next';
 // (Curso, Clases en vivo, Calificaciones), clases desbloqueadas en orden y la
 // tarjeta lateral con portada, progreso y "Continuar".
 
-type Pestana = 'curso' | 'vivo' | 'notas';
+type Pestana = 'curso' | 'vivo' | 'notas' | 'foro' | 'proyectos';
 
 const chip =
   'inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/80';
@@ -78,6 +81,8 @@ export function CursoAula({
       ? ([
           { id: 'vivo', label: 'Clases en vivo', icon: Video },
           { id: 'notas', label: 'Calificaciones', icon: ClipboardList },
+          { id: 'foro', label: 'Foro', icon: MessagesSquare },
+          { id: 'proyectos', label: 'Proyectos', icon: FolderKanban },
         ] as const)
       : []),
   ];
@@ -334,6 +339,19 @@ export function CursoAula({
                   ))
                 )}
               </div>
+            )}
+
+            {pestana === 'foro' && (
+              <ForoCurso
+                slug={slug}
+                courseId={curso.id}
+                userId={userId}
+                esPersonal={previa}
+              />
+            )}
+
+            {pestana === 'proyectos' && (
+              <ProyectosCurso slug={slug} courseId={curso.id} previa={previa} />
             )}
 
             {pestana === 'notas' && (

@@ -3894,6 +3894,30 @@ export const academyLessonComments = pgTable(
   (t) => [index('academy_lesson_comments_lesson_idx').on(t.lessonId)]
 );
 
+// Foro de cada curso (como el foro de curso de Artiefy): temas y
+// respuestas. SQL: scripts/academy_foro.sql.
+export const academyCourseForum = pgTable(
+  'academy_course_forum',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    // null: tema; con valor: respuesta a ese tema.
+    parentId: integer('parent_id'),
+    titulo: text('titulo'),
+    contenido: text('contenido').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_course_forum_course_idx').on(t.courseId)]
+);
+
 export const academyCourseReviews = pgTable(
   'academy_course_reviews',
   {
