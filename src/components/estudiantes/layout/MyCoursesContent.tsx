@@ -8,6 +8,8 @@ import { ArrowRight, Award, BookOpen, Clock, Play } from 'lucide-react';
 
 import { Badge } from '~/components/estudiantes/ui/badge';
 
+import type { Route } from 'next';
+
 export interface Program {
   id: number;
   title: string;
@@ -33,9 +35,26 @@ export interface Course {
   continueLessonTitle?: string | null;
 }
 
+// Rutas de las tarjetas. Por defecto las de Artiefy; una academia pasa las
+// de su área del estudiante (<slug>.artiefy.com/dashboard/student/...).
+export interface RutasMisCursos {
+  curso: (courseId: number) => string;
+  clase: (courseId: number, lessonId: number) => string;
+  programa: (programId: number) => string;
+  catalogo: string;
+}
+
+const RUTAS_ARTIEFY: RutasMisCursos = {
+  curso: (id) => `/estudiantes/cursos/${id}`,
+  clase: (_courseId, lessonId) => `/estudiantes/clases/${lessonId}`,
+  programa: (id) => `/estudiantes/programas/${id}`,
+  catalogo: '/estudiantes',
+};
+
 interface MyCoursesContentProps {
   courses: Course[];
   programs: Program[];
+  rutas?: RutasMisCursos;
 }
 
 const getImageUrl = (coverImageKey: string | null): string => {
@@ -53,6 +72,7 @@ const getImageUrl = (coverImageKey: string | null): string => {
 export default function MyCoursesContent({
   courses,
   programs,
+  rutas = RUTAS_ARTIEFY,
 }: MyCoursesContentProps) {
   return (
     <Tabs.Root defaultValue="cursos">
@@ -117,7 +137,7 @@ export default function MyCoursesContent({
               Aún no tienes cursos inscritos.
             </p>
             <Link
-              href="/estudiantes"
+              href={rutas.catalogo as Route}
               className="
                 mt-4 inline-flex items-center justify-center rounded-md
                 bg-primary/10 px-4 py-2 text-sm font-medium text-primary
@@ -132,10 +152,12 @@ export default function MyCoursesContent({
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {courses.map((course) => {
               const progress = Math.max(0, Math.min(100, course.progress ?? 0));
-              const continueHref = course.continueLessonId
-                ? `/estudiantes/clases/${course.continueLessonId}`
-                : `/estudiantes/cursos/${course.id}`;
-              const courseHref = `/estudiantes/cursos/${course.id}`;
+              const continueHref = (
+                course.continueLessonId
+                  ? rutas.clase(course.id, course.continueLessonId)
+                  : rutas.curso(course.id)
+              ) as Route;
+              const courseHref = rutas.curso(course.id) as Route;
               const lessonLabel =
                 course.continueLessonNumber && course.continueLessonTitle
                   ? `Clase ${course.continueLessonNumber}: ${course.continueLessonTitle}`
@@ -300,7 +322,7 @@ export default function MyCoursesContent({
               Aún no tienes programas inscritos.
             </p>
             <Link
-              href="/estudiantes"
+              href={rutas.catalogo as Route}
               className="
                 mt-4 inline-flex items-center justify-center rounded-md
                 bg-primary/10 px-4 py-2 text-sm font-medium text-primary
@@ -316,7 +338,7 @@ export default function MyCoursesContent({
             {programs.map((program) => (
               <Link
                 key={program.id}
-                href={`/estudiantes/programas/${program.id}`}
+                href={rutas.programa(program.id) as Route}
                 prefetch={false}
                 className="
                   group relative overflow-hidden rounded-2xl border

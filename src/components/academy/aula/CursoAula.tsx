@@ -81,7 +81,7 @@ export function CursoAula({ datos }: { datos: CursoEstudiante }) {
         </Link>
         <ChevronRight className="size-4 text-white/30" />
         <Link
-          href={'/dashboard/student#mis-cursos' as Route}
+          href={'/dashboard/student/mi-aprendizaje' as Route}
           className="inline-flex items-center gap-1 hover:text-primary"
         >
           <BookOpen className="size-4" /> Cursos

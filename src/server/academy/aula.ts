@@ -570,3 +570,83 @@ export async function entregarActividad(
     });
   return { ...datos, entregadaAt: datos.entregadaAt.toISOString() };
 }
+
+// -------------------------------------------------------- Mi aprendizaje ---
+
+/**
+ * "Mi aprendizaje" (como /estudiantes/myaccount de Artiefy): sus cursos con
+ * progreso y la clase para continuar, y los programas de la academia que
+ * incluyen alguno de sus cursos. Con la forma de MyCoursesContent.
+ */
+export async function miAprendizaje(
+  academyId: number,
+  userId: string,
+  previa = false
+) {
+  const [cursos, matriculas] = await Promise.all([
+    listarCursos(academyId),
+    db
+      .select({ courseId: academyEnrollments.courseId })
+      .from(academyEnrollments)
+      .where(
+        and(
+          eq(academyEnrollments.academyId, academyId),
+          eq(academyEnrollments.userId, userId)
+        )
+      )
+      .catch(() => []),
+  ]);
+  const mios = new Set(
+    previa
+      ? cursos.filter((c) => c.visibility && c.isActive).map((c) => c.id)
+      : matriculas.map((m) => m.courseId)
+  );
+  const lista = cursos.filter((c) => mios.has(c.id) && c.isActive);
+
+  const courses = await Promise.all(
+    lista.map(async (c) => {
+      const clases = await clasesConEstado(academyId, c.id, userId, previa);
+      const hechas = clases.filter((x) => x.completada).length;
+      const i = clases.findIndex((x) => x.desbloqueada && !x.completada);
+      const siguiente = i >= 0 ? clases[i] : null;
+      return {
+        id: c.id,
+        title: c.title,
+        coverImageKey: c.coverImageKey,
+        instructorName: c.instructorName ?? 'Educador',
+        progress: clases.length
+          ? Math.round((hechas / clases.length) * 100)
+          : 0,
+        rating: c.rating,
+        category: c.categoryName ? { name: c.categoryName } : null,
+        continueLessonId: siguiente?.id ?? null,
+        continueLessonNumber: siguiente ? i + 1 : null,
+        continueLessonTitle: siguiente?.title ?? null,
+      };
+    })
+  );
+
+  const programas = new Map<
+    number,
+    { id: number; title: string; coverImageKey: string | null }
+  >();
+  for (const c of lista) {
+    for (const p of c.programas) {
+      if (!programas.has(p.id)) {
+        programas.set(p.id, {
+          id: p.id,
+          title: p.title,
+          coverImageKey: c.coverImageKey,
+        });
+      }
+    }
+  }
+  return {
+    courses,
+    programs: [...programas.values()].map((p) => ({
+      ...p,
+      category: null,
+      rating: 0,
+    })),
+  };
+}

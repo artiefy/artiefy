@@ -18,7 +18,7 @@ import type { Route } from 'next';
 const NAV: { href: string; label: string; icon: typeof Home }[] = [
   { href: '/dashboard/student', label: 'Inicio', icon: Home },
   {
-    href: '/dashboard/student#mis-cursos',
+    href: '/dashboard/student/mi-aprendizaje',
     label: 'Mis cursos',
     icon: BookOpen,
   },
@@ -52,7 +52,8 @@ export function EncabezadoAula() {
             const activo =
               href === '/dashboard/student'
                 ? pathname === href
-                : pathname.startsWith('/dashboard/student/cursos');
+                : pathname.startsWith('/dashboard/student/mi-aprendizaje') ||
+                  pathname.startsWith('/dashboard/student/cursos');
             return (
               <Link
                 key={href}

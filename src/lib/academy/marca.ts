@@ -75,6 +75,18 @@ export function variablesDeMarca(
     // Modo claro: el "blanco" del tema (text-white, text-white/60, bg-white/5…)
     // pasa a ser el color de texto oscuro, así todo el texto sigue legible.
     '--color-white': claro ? TEXTO_MODO_CLARO : '#FFFFFF',
+    // Texto del tema (text-foreground / text-muted-foreground de los
+    // componentes de Artiefy): oscuro en modo claro, los de Artiefy si no.
+    '--color-foreground': claro
+      ? TEXTO_MODO_CLARO
+      : 'oklch(0.9842 0.003 247.86)',
+    '--color-card-foreground': claro
+      ? TEXTO_MODO_CLARO
+      : 'oklch(0.9842 0.003 247.86)',
+    '--color-muted-foreground': claro
+      ? '#475569'
+      : 'oklch(0.7107 0.0351 256.79)',
+    '--color-primary-foreground': textoSobre(colorPrimario),
     // Tokens del tema de Artiefy.
     '--color-primary': colorPrimario,
     '--color-background': colorFondo,

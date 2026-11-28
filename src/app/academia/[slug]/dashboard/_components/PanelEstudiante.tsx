@@ -42,7 +42,7 @@ export async function PanelEstudiante({
     <div className="min-h-dvh bg-background text-white">
       <EncabezadoAula />
       {previa && (
-        <div className="border-b border-amber-500/30 bg-amber-500/10 px-4 py-2 text-center text-sm text-amber-200">
+        <div className="border-b border-amber-500/30 bg-amber-500/15 px-4 py-2 text-center text-sm font-medium text-amber-600">
           Vista previa del estudiante: ves todos los cursos con las clases
           abiertas. No se guarda avance ni entregas.{' '}
           <Link
