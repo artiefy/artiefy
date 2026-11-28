@@ -32,6 +32,8 @@ import { subirArchivo } from '~/lib/academy/subir-logo';
 import { cn } from '~/lib/utils';
 import { type ClaseEstudiante } from '~/server/academy/aula';
 
+import { ComentariosClase } from './ComentariosAula';
+
 import type { Route } from 'next';
 
 // Vista de una clase para el estudiante de una academia, como la de Artiefy:
@@ -57,10 +59,12 @@ const fecha = (iso: string) =>
 export function ClaseAula({
   slug,
   datos,
+  userId,
   previa = false,
 }: {
   slug: string;
   datos: ClaseEstudiante;
+  userId: string;
   // Personal viendo el área del estudiante: no guarda avance ni entregas.
   previa?: boolean;
 }) {
@@ -377,6 +381,15 @@ export function ClaseAula({
                 <Lock className="size-4" /> Siguiente clase
               </span>
             ))}
+        </div>
+
+        <div className="mt-8">
+          <ComentariosClase
+            slug={slug}
+            lessonId={leccion.id}
+            userId={userId}
+            esPersonal={previa}
+          />
         </div>
 
         {/* En móvil, la lista de clases va abajo */}

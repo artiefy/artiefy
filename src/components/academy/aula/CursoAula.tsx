@@ -27,6 +27,8 @@ import {
 import { cn } from '~/lib/utils';
 import { type CursoEstudiante } from '~/server/academy/aula';
 
+import { OpinionesCurso } from './ComentariosAula';
+
 import type { Route } from 'next';
 
 // Detalle del curso para el estudiante de una academia, con el diseño del
@@ -48,7 +50,17 @@ const fecha = (iso: string) =>
     minute: '2-digit',
   });
 
-export function CursoAula({ datos }: { datos: CursoEstudiante }) {
+export function CursoAula({
+  datos,
+  slug,
+  userId,
+  previa = false,
+}: {
+  datos: CursoEstudiante;
+  slug: string;
+  userId: string;
+  previa?: boolean;
+}) {
   const { curso, matriculado, clases, porcentaje, continuar, enVivo, notas } =
     datos;
   const [pestana, setPestana] = useState<Pestana>('curso');
@@ -371,6 +383,17 @@ export function CursoAula({ datos }: { datos: CursoEstudiante }) {
               </div>
             )}
           </div>
+          <OpinionesCurso
+            slug={slug}
+            courseId={curso.id}
+            userId={userId}
+            puedeOpinar={matriculado && !previa}
+            motivo={
+              previa
+                ? 'Vista previa: aquí el estudiante deja su opinión del curso.'
+                : 'Debes estar inscrito en el curso para dejar un comentario.'
+            }
+          />
         </section>
 
         {/* Tarjeta lateral */}

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { UserButton } from '@clerk/nextjs';
-import { BookOpen, Home } from 'lucide-react';
+import { BookOpen, Home, UserRound } from 'lucide-react';
 
 import { CambiarVistaAcademia } from '~/components/academy/CambiarVistaAcademia';
 import { useMarca } from '~/components/marca/MarcaProvider';
@@ -22,6 +22,7 @@ const NAV: { href: string; label: string; icon: typeof Home }[] = [
     label: 'Mis cursos',
     icon: BookOpen,
   },
+  { href: '/dashboard/student/perfil', label: 'Perfil', icon: UserRound },
 ];
 
 export function EncabezadoAula() {
@@ -52,8 +53,11 @@ export function EncabezadoAula() {
             const activo =
               href === '/dashboard/student'
                 ? pathname === href
-                : pathname.startsWith('/dashboard/student/mi-aprendizaje') ||
-                  pathname.startsWith('/dashboard/student/cursos');
+                : href === '/dashboard/student/mi-aprendizaje'
+                  ? pathname.startsWith(href) ||
+                    pathname.startsWith('/dashboard/student/cursos') ||
+                    pathname.startsWith('/dashboard/student/certificados')
+                  : pathname.startsWith(href);
             return (
               <Link
                 key={href}

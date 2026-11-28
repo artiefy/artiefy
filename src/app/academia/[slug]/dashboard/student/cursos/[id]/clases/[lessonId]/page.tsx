@@ -86,5 +86,7 @@ async function Clase({
   }
   const { datos } = resultado;
   if (!datos || datos.leccion.courseId !== Number(id)) notFound();
-  return <ClaseAula slug={slug} datos={datos} previa={previa} />;
+  return (
+    <ClaseAula slug={slug} datos={datos} userId={userId} previa={previa} />
+  );
 }

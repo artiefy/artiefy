@@ -3871,6 +3871,49 @@ export const academyActivitySubmissions = pgTable(
   ]
 );
 
+// Comentarios por clase y opiniones del curso (como LessonComments y
+// CourseComments de Artiefy). SQL: scripts/academy_comentarios_aula.sql.
+export const academyLessonComments = pgTable(
+  'academy_lesson_comments',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    lessonId: integer('lesson_id')
+      .references(() => academyLessons.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    // Respuesta a otro comentario (un nivel).
+    parentId: integer('parent_id'),
+    contenido: text('contenido').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index('academy_lesson_comments_lesson_idx').on(t.lessonId)]
+);
+
+export const academyCourseReviews = pgTable(
+  'academy_course_reviews',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    courseId: integer('course_id')
+      .references(() => academyCourses.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    estrellas: integer('estrellas').notNull(),
+    contenido: text('contenido'),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [unique('academy_course_reviews_unica').on(t.courseId, t.userId)]
+);
+
 // Instructores adicionales de un curso de la academia (el principal sigue en
 // academy_courses.instructor), como course_instructors de Artiefy.
 // SQL: scripts/academy_cursos_detalle.sql.

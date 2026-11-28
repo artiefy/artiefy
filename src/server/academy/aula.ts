@@ -113,7 +113,7 @@ async function clasesConEstado(
   });
 }
 
-async function estaMatriculado(
+export async function estaMatriculado(
   academyId: number,
   courseId: number,
   userId: string
