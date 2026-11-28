@@ -317,12 +317,12 @@ export function InicioAula({
                             <div className="absolute inset-x-0 bottom-0">
                               <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
                                 <h2
-                                  className="line-clamp-2 min-h-[1.8rem] text-[13px] leading-snug font-semibold text-white sm:text-[15px]"
+                                  className="line-clamp-2 min-h-[1.8rem] text-[13px] leading-snug font-semibold text-[#FFFFFF] sm:text-[15px]"
                                   title={c.title}
                                 >
                                   {c.title}
                                 </h2>
-                                <p className="mb-1 text-[13px] text-gray-200">
+                                <p className="mb-1 text-[13px] text-[#E5E7EB]">
                                   {c.instructorName ?? 'Educador'}
                                 </p>
                               </div>

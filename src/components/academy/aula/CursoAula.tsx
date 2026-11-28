@@ -420,9 +420,19 @@ export function CursoAula({ datos }: { datos: CursoEstudiante }) {
                       : 'Continuar'}
                   </Link>
                 ) : clases.length > 0 ? (
-                  <p className="rounded-full bg-green-500/15 py-3 text-center font-semibold text-green-400">
-                    ¡Curso completado! 🎉
-                  </p>
+                  <div className="space-y-2">
+                    <p className="rounded-full bg-green-500/15 py-3 text-center font-semibold text-green-500">
+                      ¡Curso completado! 🎉
+                    </p>
+                    <Link
+                      href={
+                        `/dashboard/student/certificados/${curso.id}` as Route
+                      }
+                      className="block w-full rounded-full border border-primary/40 py-3 text-center font-semibold text-primary transition hover:bg-primary hover:text-[var(--ac-primario-texto)]"
+                    >
+                      Ver constancia
+                    </Link>
+                  </div>
                 ) : null}
               </>
             ) : (

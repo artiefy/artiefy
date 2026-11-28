@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, min } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, max, min } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -648,5 +648,51 @@ export async function miAprendizaje(
       category: null,
       rating: 0,
     })),
+  };
+}
+
+// ---------------------------------------------------------- Certificado ---
+
+/**
+ * Constancia de un curso terminado (todas sus clases completadas), como el
+ * certificado de Artiefy. Fecha: la de la última clase completada. En vista
+ * previa se muestra con la fecha de hoy.
+ */
+export async function certificadoEstudiante(
+  academyId: number,
+  userId: string,
+  courseId: number,
+  previa = false
+) {
+  const curso = await obtenerCurso(academyId, courseId);
+  if (!curso) return null;
+  if (!previa && !(await estaMatriculado(academyId, courseId, userId))) {
+    return null;
+  }
+  const clases = await clasesConEstado(academyId, courseId, userId, previa);
+  const terminado = clases.length > 0 && clases.every((c) => c.completada);
+  if (!terminado && !previa) {
+    throw new ErrorAcademia(
+      'Completa todas las clases del curso para obtener tu constancia.',
+      403
+    );
+  }
+  const ids = clases.map((c) => c.id);
+  const [ultima] = ids.length
+    ? await db
+        .select({ fecha: max(academyLessonProgress.updatedAt) })
+        .from(academyLessonProgress)
+        .where(
+          and(
+            eq(academyLessonProgress.userId, userId),
+            inArray(academyLessonProgress.lessonId, ids)
+          )
+        )
+        .catch(() => [])
+    : [];
+  return {
+    curso: { id: curso.id, title: curso.title },
+    educador: curso.instructorName,
+    fecha: (ultima?.fecha ?? new Date()).toISOString(),
   };
 }
