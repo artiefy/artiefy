@@ -19,7 +19,6 @@ export default function EstudianteAcademiaPage({ params }: Props) {
           <Inicio
             previa={previa}
             academyId={academia.id}
-            academia={academia.nombre}
             userId={cuenta.userId}
             nombre={cuenta.name?.split(' ')[0] ?? 'bienvenido'}
           />
@@ -32,16 +31,14 @@ export default function EstudianteAcademiaPage({ params }: Props) {
 async function Inicio({
   previa,
   academyId,
-  academia,
   userId,
   nombre,
 }: {
   previa: boolean;
   academyId: number;
-  academia: string;
   userId: string;
   nombre: string;
 }) {
   const datos = await inicioEstudiante(academyId, userId, previa);
-  return <InicioAula nombre={nombre} academia={academia} datos={datos} />;
+  return <InicioAula nombre={nombre} datos={datos} />;
 }

@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, min } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -10,6 +10,8 @@ import {
   academyEnrollments,
   academyLessonProgress,
   academyLessons,
+  academyModalidades,
+  academyNiveles,
 } from '~/server/db/schema';
 import { withRetry } from '~/server/db/withRetry';
 
@@ -184,9 +186,62 @@ export async function inicioEstudiante(
         };
       })
   );
+  // Nombres de modalidad y nivel y la próxima clase en vivo de cada curso
+  // (para las tarjetas, como las de "Cursos Artie").
+  const ids = visibles.map((c) => c.id);
+  const [modalidades, niveles, proximas] = await Promise.all([
+    db
+      .select({ id: academyModalidades.id, name: academyModalidades.name })
+      .from(academyModalidades)
+      .where(eq(academyModalidades.academyId, academyId))
+      .catch(() => []),
+    db
+      .select({ id: academyNiveles.id, name: academyNiveles.name })
+      .from(academyNiveles)
+      .where(eq(academyNiveles.academyId, academyId))
+      .catch(() => []),
+    ids.length
+      ? db
+          .select({
+            courseId: academyClases.courseId,
+            inicio: min(academyClases.inicio),
+          })
+          .from(academyClases)
+          .where(
+            and(
+              inArray(academyClases.courseId, ids),
+              gt(academyClases.inicio, new Date())
+            )
+          )
+          .groupBy(academyClases.courseId)
+          .catch(() => [])
+      : Promise.resolve([]),
+  ]);
+  const todos = visibles.map((c) => ({
+    id: c.id,
+    title: c.title,
+    coverImageKey: c.coverImageKey,
+    categoryName: c.categoryName,
+    instructorName: c.instructorName,
+    rating: c.rating,
+    modalidad: modalidades.find((m) => m.id === c.modalidadesid)?.name ?? null,
+    nivel: niveles.find((n) => n.id === c.nivelid)?.name ?? null,
+    proximaClase:
+      proximas.find((p) => p.courseId === c.id)?.inicio?.toISOString() ?? null,
+    matriculado: mios.has(c.id),
+    createdAt: c.createdAt.toISOString(),
+  }));
+
   return {
-    misCursos,
-    catalogo: visibles.filter((c) => !mios.has(c.id)),
+    misCursos: misCursos.map((c) => ({
+      id: c.id,
+      title: c.title,
+      coverImageKey: c.coverImageKey,
+      categoryName: c.categoryName,
+      porcentaje: c.porcentaje,
+      continuar: c.continuar,
+    })),
+    todos,
   };
 }
 
