@@ -2,24 +2,27 @@ import { Suspense } from 'react';
 
 import { notFound } from 'next/navigation';
 
-import { DetalleCursoAcademia } from '~/components/academy/DetalleCursoAcademia';
-import { obtenerCurso } from '~/server/academy/cursos';
+import { CursoAula } from '~/components/academy/aula/CursoAula';
+import { cursoEstudiante } from '~/server/academy/aula';
 
-import { PanelDeRol } from '../../../_components/PanelDeRol';
+import { PanelEstudiante } from '../../../_components/PanelEstudiante';
 
-// <slug>.artiefy.com/dashboard/student/cursos/[id] — cursos visibles y activos.
+// <slug>.artiefy.com/dashboard/student/cursos/[id] — detalle del curso para
+// el estudiante (como /estudiantes/cursos/[id] de Artiefy).
 
 type Props = { params: Promise<{ slug: string; id: string }> };
 
 export default function DetalleCursoEstudiantePage({ params }: Props) {
   return (
     <Suspense>
-      <PanelDeRol
+      <PanelEstudiante
         params={params}
-        rol="estudiante"
-        saludo={false}
-        render={({ academia }) => (
-          <Detalle academyId={academia.id} params={params} />
+        render={({ academia, cuenta }) => (
+          <Detalle
+            academyId={academia.id}
+            userId={cuenta.userId}
+            params={params}
+          />
         )}
       />
     </Suspense>
@@ -28,18 +31,16 @@ export default function DetalleCursoEstudiantePage({ params }: Props) {
 
 async function Detalle({
   academyId,
+  userId,
   params,
 }: {
   academyId: number;
+  userId: string;
   params: Props['params'];
 }) {
-  const curso = await obtenerCurso(academyId, Number((await params).id));
-  if (!curso?.visibility || !curso.isActive) notFound();
-  return (
-    <DetalleCursoAcademia
-      curso={curso}
-      volver="/dashboard/student"
-      etiquetaVolver="Cursos"
-    />
-  );
+  const id = Number((await params).id);
+  if (!Number.isInteger(id)) notFound();
+  const datos = await cursoEstudiante(academyId, userId, id);
+  if (!datos) notFound();
+  return <CursoAula datos={datos} />;
 }

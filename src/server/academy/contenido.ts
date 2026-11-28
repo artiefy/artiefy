@@ -5,6 +5,7 @@ import {
   ACADEMY_ACTIVIDAD_TIPOS,
   academyActivities,
   academyActivityGrades,
+  academyActivitySubmissions,
   academyCategorias,
   academyClases,
   academyCourses,
@@ -507,7 +508,7 @@ export async function eliminarSesion(academyId: number, id: number) {
  */
 export async function estudiantesDelCurso(academyId: number, courseId: number) {
   await cursoDeAcademia(academyId, courseId);
-  const [matriculados, actividades, notas] = await Promise.all([
+  const [matriculados, actividades, notas, entregas] = await Promise.all([
     withRetry(() =>
       db
         .select({
@@ -572,6 +573,28 @@ export async function estudiantesDelCurso(academyId: number, courseId: number) {
         )
         .where(eq(academyLessons.courseId, courseId))
     ),
+    // Entregas del aula del estudiante (academy_aula.sql); vacías sin ella.
+    db
+      .select({
+        activityId: academyActivitySubmissions.activityId,
+        userId: academyActivitySubmissions.userId,
+        texto: academyActivitySubmissions.texto,
+        enlace: academyActivitySubmissions.enlace,
+        archivoKey: academyActivitySubmissions.archivoKey,
+        archivoNombre: academyActivitySubmissions.archivoNombre,
+        entregadaAt: academyActivitySubmissions.entregadaAt,
+      })
+      .from(academyActivitySubmissions)
+      .innerJoin(
+        academyActivities,
+        eq(academyActivities.id, academyActivitySubmissions.activityId)
+      )
+      .innerJoin(
+        academyLessons,
+        eq(academyLessons.id, academyActivities.lessonId)
+      )
+      .where(eq(academyLessons.courseId, courseId))
+      .catch(() => []),
   ]);
   return {
     actividades,
@@ -582,6 +605,20 @@ export async function estudiantesDelCurso(academyId: number, courseId: number) {
           .filter((n) => n.userId === m.userId)
           .map((n) => [n.activityId, n.nota])
       ) as Record<number, number>,
+      entregas: Object.fromEntries(
+        entregas
+          .filter((x) => x.userId === m.userId)
+          .map((x) => [
+            x.activityId,
+            {
+              texto: x.texto,
+              enlace: x.enlace,
+              archivoKey: x.archivoKey,
+              archivoNombre: x.archivoNombre,
+              entregadaAt: x.entregadaAt.toISOString(),
+            },
+          ])
+      ),
     })),
   };
 }

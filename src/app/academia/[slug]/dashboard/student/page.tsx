@@ -1,40 +1,44 @@
 import { Suspense } from 'react';
 
-import { TarjetasCursos } from '~/components/academy/TarjetasCursos';
-import { listarCursos } from '~/server/academy/cursos';
+import { InicioAula } from '~/components/academy/aula/InicioAula';
+import { inicioEstudiante } from '~/server/academy/aula';
 
-import { PanelDeRol } from '../_components/PanelDeRol';
+import { PanelEstudiante } from '../_components/PanelEstudiante';
 
-// <slug>.artiefy.com/dashboard/student — los cursos de la academia.
-// Aún no hay matrículas por academia: el estudiante ve los cursos visibles y
-// activos (cuando existan, se filtrarán por los suyos).
+// <slug>.artiefy.com/dashboard/student — inicio del estudiante (como
+// /estudiantes de Artiefy): sus cursos con progreso y el catálogo.
 
 type Props = { params: Promise<{ slug: string }> };
 
 export default function EstudianteAcademiaPage({ params }: Props) {
   return (
     <Suspense>
-      <PanelDeRol
+      <PanelEstudiante
         params={params}
-        rol="estudiante"
-        render={({ academia }) => <Cursos academyId={academia.id} />}
+        render={({ academia, cuenta }) => (
+          <Inicio
+            academyId={academia.id}
+            academia={academia.nombre}
+            userId={cuenta.userId}
+            nombre={cuenta.name?.split(' ')[0] ?? 'bienvenido'}
+          />
+        )}
       />
     </Suspense>
   );
 }
 
-async function Cursos({ academyId }: { academyId: number }) {
-  const cursos = (await listarCursos(academyId)).filter(
-    (c) => c.visibility && c.isActive
-  );
-  return (
-    <section id="cursos" className="space-y-4">
-      <h2 className="text-xl font-bold text-white">Cursos</h2>
-      <TarjetasCursos
-        cursos={cursos}
-        hrefBase="/dashboard/student/cursos"
-        vacio="Todavía no hay cursos disponibles en la academia."
-      />
-    </section>
-  );
+async function Inicio({
+  academyId,
+  academia,
+  userId,
+  nombre,
+}: {
+  academyId: number;
+  academia: string;
+  userId: string;
+  nombre: string;
+}) {
+  const datos = await inicioEstudiante(academyId, userId);
+  return <InicioAula nombre={nombre} academia={academia} datos={datos} />;
 }

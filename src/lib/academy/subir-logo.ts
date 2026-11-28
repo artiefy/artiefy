@@ -17,19 +17,34 @@ export async function subirLogo(file: File): Promise<string> {
     throw new Error('El logo debe ser PNG, JPG, WEBP o SVG.');
   }
   if (file.size > MAX_BYTES) throw new Error('El logo no puede pasar de 2 MB.');
+  return subirA_S3(file);
+}
 
+const MAX_ARCHIVO = 20 * 1024 * 1024;
+
+/** Sube cualquier archivo (entregas de actividades, hasta 20 MB). */
+export async function subirArchivo(file: File): Promise<string> {
+  if (file.size > MAX_ARCHIVO) {
+    throw new Error('El archivo no puede pasar de 20 MB.');
+  }
+  return subirA_S3(file);
+}
+
+async function subirA_S3(file: File): Promise<string> {
   const res = await fetch('/api/upload', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      contentType: file.type,
+      contentType: file.type || 'application/octet-stream',
       fileSize: file.size,
       fileName: file.name,
     }),
   });
   const datos = (await res.json()) as RespuestaUpload;
   if (!res.ok || !datos.key) {
-    throw new Error(datos.error ?? 'No se pudo preparar la subida del logo.');
+    throw new Error(
+      datos.error ?? 'No se pudo preparar la subida del archivo.'
+    );
   }
 
   if (datos.uploadType === 'simple') {
@@ -37,14 +52,14 @@ export async function subirLogo(file: File): Promise<string> {
     Object.entries(datos.fields ?? {}).forEach(([k, v]) => form.append(k, v));
     form.append('file', file);
     const subida = await fetch(datos.url, { method: 'POST', body: form });
-    if (!subida.ok) throw new Error('No se pudo subir el logo.');
+    if (!subida.ok) throw new Error('No se pudo subir el archivo.');
   } else {
     const subida = await fetch(datos.url, {
       method: 'PUT',
-      headers: { 'Content-Type': file.type },
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
       body: file,
     });
-    if (!subida.ok) throw new Error('No se pudo subir el logo.');
+    if (!subida.ok) throw new Error('No se pudo subir el archivo.');
   }
   return datos.key;
 }

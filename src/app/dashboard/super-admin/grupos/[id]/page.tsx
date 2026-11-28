@@ -3178,9 +3178,10 @@ export default function GrupoDetallePage({
       {cursoModal && (
         <ModalAgregarCurso
           programa={programasHojaTitulos.join(', ')}
-          cursos={data.cursosDisponibles.filter((c) =>
+          cursosPrograma={data.cursosDisponibles.filter((c) =>
             c.programas.some((p) => programasHojaTitulos.includes(p))
           )}
+          todos={data.cursosDisponibles}
           onCerrar={() => setCursoModal(false)}
           onAgregar={(cid) => void agregarCurso(cid)}
         />
@@ -3970,15 +3971,21 @@ function ModalEnlacesClases({
 
 function ModalAgregarCurso({
   programa,
-  cursos,
+  cursosPrograma,
+  todos,
   onCerrar,
   onAgregar,
 }: {
   programa: string;
-  cursos: { id: number; title: string }[];
+  cursosPrograma: { id: number; title: string }[];
+  todos: { id: number; title: string; programas: string[] }[];
   onCerrar: () => void;
   onAgregar: (courseId: number) => void;
 }) {
+  // Sin programa (o sin cursos en él) se ven todos los cursos; con programa,
+  // primero los suyos y un interruptor para ver cualquier curso.
+  const [verTodos, setVerTodos] = useState(cursosPrograma.length === 0);
+  const cursos = verTodos ? todos : cursosPrograma;
   const [busqueda, setBusqueda] = useState('');
   const q = busqueda.trim().toLowerCase();
   const visibles = q
@@ -4004,6 +4011,29 @@ function ModalAgregarCurso({
             <X className="size-5" />
           </button>
         </div>
+        {cursosPrograma.length > 0 && (
+          <div className="flex gap-1 border-b border-white/10 px-4 py-2 text-xs">
+            {(
+              [
+                [false, `Del programa (${cursosPrograma.length})`],
+                [true, `Todos los cursos (${todos.length})`],
+              ] as const
+            ).map(([valor, texto]) => (
+              <button
+                key={String(valor)}
+                type="button"
+                onClick={() => setVerTodos(valor)}
+                className={`rounded-full px-3 py-1.5 font-semibold ${
+                  verTodos === valor
+                    ? 'bg-[#22C4D3]/20 text-[#22C4D3]'
+                    : 'text-white/50 hover:text-white'
+                }`}
+              >
+                {texto}
+              </button>
+            ))}
+          </div>
+        )}
         {cursos.length > 0 && (
           <div className="border-b border-white/10 px-4 py-2">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-[#021832] px-3">
@@ -4021,9 +4051,9 @@ function ModalAgregarCurso({
         <div className="max-h-[60vh] overflow-y-auto p-3">
           {cursos.length === 0 ? (
             <p className="py-6 text-center text-sm text-white/40">
-              {programa
+              {programa && !verTodos
                 ? `No hay cursos de: ${programa}.`
-                : 'Asigna primero uno o más programas a la hoja.'}
+                : 'No hay cursos.'}
             </p>
           ) : visibles.length === 0 ? (
             <p className="py-6 text-center text-sm text-white/40">

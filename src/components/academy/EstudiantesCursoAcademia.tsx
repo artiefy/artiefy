@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-import { Loader2, Trash2, UserMinus, UserPlus } from 'lucide-react';
+import { Loader2, Paperclip, Trash2, UserMinus, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import {
@@ -38,6 +38,16 @@ interface Estudiante {
   completed: boolean;
   enrolledAt: string;
   notas: Record<number, number>;
+  // Entregas del estudiante en el aula (por actividad).
+  entregas?: Record<number, Entrega>;
+}
+
+interface Entrega {
+  texto: string | null;
+  enlace: string | null;
+  archivoKey: string | null;
+  archivoNombre: string | null;
+  entregadaAt: string;
 }
 
 const th =
@@ -60,6 +70,12 @@ export function EstudiantesCursoAcademia({
   }>(api);
   const todos = useEstudiantesAcademia(slug);
   const [pestana, setPestana] = useState<'actuales' | 'completos'>('actuales');
+  // Entrega abierta (botón del clip junto a la nota).
+  const [verEntrega, setVerEntrega] = useState<{
+    estudiante: string;
+    actividad: string;
+    entrega: Entrega;
+  } | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [seleccion, setSeleccion] = useState<string[]>([]);
   const [matriculando, setMatriculando] = useState(false);
@@ -397,6 +413,22 @@ export function EstudiantesCursoAcademia({
                                   aria-label={`Nota de ${e.name ?? e.email} en ${a.title}`}
                                   className="w-16 rounded-lg bg-white/10 p-1 text-center text-white placeholder:text-white/40 focus:ring-2 focus:ring-[var(--ac-primario)]/40 focus:outline-none"
                                 />
+                                {e.entregas?.[a.id] && (
+                                  <button
+                                    type="button"
+                                    title="Ver entrega"
+                                    onClick={() =>
+                                      setVerEntrega({
+                                        estudiante: e.name ?? e.email ?? '',
+                                        actividad: a.title,
+                                        entrega: e.entregas![a.id]!,
+                                      })
+                                    }
+                                    className="ml-1 inline-flex size-6 items-center justify-center rounded-md bg-[var(--ac-primario)]/15 align-middle text-[var(--ac-primario)] hover:bg-[var(--ac-primario)]/30"
+                                  >
+                                    <Paperclip className="size-3.5" />
+                                  </button>
+                                )}
                               </td>
                             ))
                           )}
@@ -445,6 +477,45 @@ export function EstudiantesCursoAcademia({
             await mutate();
           }}
         />
+      )}
+      {verEntrega && (
+        <Modal
+          titulo={`Entrega de ${verEntrega.estudiante}`}
+          onClose={() => setVerEntrega(null)}
+        >
+          <div className="space-y-3 p-5 text-sm">
+            <p className="text-white/60">
+              {verEntrega.actividad} ·{' '}
+              {fmtFecha(verEntrega.entrega.entregadaAt)}
+            </p>
+            {verEntrega.entrega.texto && (
+              <p className="whitespace-pre-line text-white">
+                {verEntrega.entrega.texto}
+              </p>
+            )}
+            {verEntrega.entrega.enlace && (
+              <a
+                href={verEntrega.entrega.enlace}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block break-all text-[var(--ac-primario)] hover:underline"
+              >
+                {verEntrega.entrega.enlace}
+              </a>
+            )}
+            {verEntrega.entrega.archivoKey && (
+              <a
+                href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${verEntrega.entrega.archivoKey}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[var(--ac-primario)] hover:underline"
+              >
+                <Paperclip className="size-4" />
+                {verEntrega.entrega.archivoNombre ?? 'Archivo adjunto'}
+              </a>
+            )}
+          </div>
+        </Modal>
       )}
       {quitando && (
         <ConfirmarEliminar

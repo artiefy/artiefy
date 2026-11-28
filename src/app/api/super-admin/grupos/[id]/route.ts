@@ -237,8 +237,10 @@ export async function GET(
           programa: programas.title,
         })
         .from(courses)
-        .innerJoin(materias, eq(materias.courseid, courses.id))
-        .innerJoin(programas, eq(programas.id, materias.programaId))
+        // leftJoin: también los cursos que no están en ningún programa (la
+        // hoja puede tener curso sin programa).
+        .leftJoin(materias, eq(materias.courseid, courses.id))
+        .leftJoin(programas, eq(programas.id, materias.programaId))
         .orderBy(asc(courses.title)),
       db
         .select({ id: programas.id, title: programas.title })
@@ -510,12 +512,15 @@ export async function GET(
     >();
     for (const c of cursosDisponibles) {
       const actual = cursosPorId.get(c.id);
-      if (actual) actual.programas.push(c.programa);
-      else
+      if (actual) {
+        if (c.programa && !actual.programas.includes(c.programa)) {
+          actual.programas.push(c.programa);
+        }
+      } else
         cursosPorId.set(c.id, {
           id: c.id,
           title: c.title,
-          programas: [c.programa],
+          programas: c.programa ? [c.programa] : [],
         });
     }
 

@@ -67,6 +67,12 @@ const rolDesdeArtiefy = (rol: string | undefined): AcademyRole =>
       ? 'educador'
       : 'estudiante';
 
+const RANGO: Record<AcademyRole, number> = {
+  estudiante: 0,
+  educador: 1,
+  'super-admin': 2,
+};
+
 /**
  * Cuenta de la sesión en la academia. En una academia "de Artiefy", una
  * cuenta de Artiefy que aún no está se registra sola (vinculada, con el rol
@@ -79,7 +85,25 @@ export async function membresiaConArtiefy(
   metadata: { role?: string; academySlug?: string } | undefined
 ): Promise<UsuarioAcademia | null> {
   const fila = await membresia(academia.id, userId);
-  if (fila || !academia.esArtiefy) return fila;
+  if (!academia.esArtiefy) return fila;
+  if (fila) {
+    // Ya estaba (p. ej. lo enviaron como estudiante): si su rol en Artiefy es
+    // más alto, se sube (un super-admin de Artiefy siempre es super-admin
+    // aquí). Nunca se baja ni se reactiva una cuenta desactivada.
+    const deArtiefy = rolDesdeArtiefy(metadata?.role);
+    if (
+      metadata?.role &&
+      !fila.cuentaPropia &&
+      RANGO[deArtiefy] > RANGO[fila.role]
+    ) {
+      await db
+        .update(academyUsers)
+        .set({ role: deArtiefy })
+        .where(eq(academyUsers.id, fila.id));
+      return { ...fila, role: deArtiefy };
+    }
+    return fila;
+  }
   const deOtraAcademia = Boolean(metadata?.academySlug) && !metadata?.role;
   if (deOtraAcademia) return null;
 

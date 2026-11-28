@@ -68,7 +68,7 @@ const TIPOS: Record<Actividad['tipo'], { label: string; className: string }> = {
 };
 
 /** URL embebible de YouTube/Vimeo, o null si el enlace no lo es. */
-function embebido(url: string): string | null {
+export function embebido(url: string): string | null {
   try {
     const u = new URL(url);
     if (u.hostname.includes('youtube.com')) {
@@ -424,7 +424,7 @@ export function DetalleClaseAcademia({
  * recursos se guardan separados por comas; los que empiezan por http son
  * enlaces y el resto, archivos en S3.
  */
-function RecursosClase({
+export function RecursosClase({
   claves,
   nombres,
   videoUrl,

@@ -3820,6 +3820,57 @@ export const academyActivityGrades = pgTable(
   ]
 );
 
+// Aula del estudiante (como en Artiefy): progreso por clase y entregas de
+// actividades. SQL: scripts/academy_aula.sql.
+export const academyLessonProgress = pgTable(
+  'academy_lesson_progress',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    lessonId: integer('lesson_id')
+      .references(() => academyLessons.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    // 0..100 (lo visto del video o 100 al marcarla como completada).
+    progreso: integer('progreso').default(0).notNull(),
+    completada: boolean('completada').default(false).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    unique('academy_lesson_progress_unica').on(t.lessonId, t.userId),
+    index('academy_lesson_progress_user_idx').on(t.academyId, t.userId),
+  ]
+);
+
+export const academyActivitySubmissions = pgTable(
+  'academy_activity_submissions',
+  {
+    id: serial('id').primaryKey(),
+    academyId: integer('academy_id')
+      .references(() => academies.id, { onDelete: 'cascade' })
+      .notNull(),
+    activityId: integer('activity_id')
+      .references(() => academyActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id').notNull(),
+    texto: text('texto'),
+    enlace: text('enlace'),
+    archivoKey: text('archivo_key'),
+    archivoNombre: text('archivo_nombre'),
+    entregadaAt: timestamp('entregada_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    unique('academy_activity_submissions_unica').on(t.activityId, t.userId),
+    index('academy_activity_submissions_user_idx').on(t.academyId, t.userId),
+  ]
+);
+
 // Instructores adicionales de un curso de la academia (el principal sigue en
 // academy_courses.instructor), como course_instructors de Artiefy.
 // SQL: scripts/academy_cursos_detalle.sql.
