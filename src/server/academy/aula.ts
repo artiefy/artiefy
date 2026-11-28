@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, max, min } from 'drizzle-orm';
+import { and, asc, eq, gt, inArray, max, min, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -12,6 +12,7 @@ import {
   academyLessons,
   academyModalidades,
   academyNiveles,
+  academyProgramas,
 } from '~/server/db/schema';
 import { withRetry } from '~/server/db/withRetry';
 
@@ -696,3 +697,138 @@ export async function certificadoEstudiante(
     fecha: (ultima?.fecha ?? new Date()).toISOString(),
   };
 }
+
+// ------------------------------------------------------------ Programas ---
+
+/** Programas activos de la academia con sus cursos visibles. */
+async function programasConCursos(academyId: number) {
+  const [programas, cursos] = await Promise.all([
+    db
+      .select({
+        id: academyProgramas.id,
+        title: academyProgramas.title,
+        description: academyProgramas.description,
+        isActive: academyProgramas.isActive,
+      })
+      .from(academyProgramas)
+      .where(eq(academyProgramas.academyId, academyId))
+      .orderBy(asc(academyProgramas.title))
+      .catch(() => []),
+    listarCursos(academyId),
+  ]);
+  return programas
+    .filter((p) => p.isActive)
+    .map((p) => ({
+      ...p,
+      cursos: cursos.filter(
+        (c) =>
+          c.visibility && c.isActive && c.programas.some((x) => x.id === p.id)
+      ),
+    }));
+}
+
+/** Minutos de contenido por curso (suma de la duración de sus clases). */
+async function minutosPorCurso(courseIds: number[]) {
+  if (courseIds.length === 0) return new Map<number, number>();
+  const filas = await db
+    .select({
+      courseId: academyLessons.courseId,
+      minutos: sum(academyLessons.duracionMin),
+    })
+    .from(academyLessons)
+    .where(inArray(academyLessons.courseId, courseIds))
+    .groupBy(academyLessons.courseId)
+    .catch(() => []);
+  return new Map(filas.map((f) => [f.courseId, Number(f.minutos ?? 0)]));
+}
+
+/** Tarjetas de programa del inicio (como StudentProgram de Artiefy). */
+export async function programasEstudiante(academyId: number) {
+  const programas = await programasConCursos(academyId);
+  const minutos = await minutosPorCurso(
+    programas.flatMap((p) => p.cursos.map((c) => c.id))
+  );
+  return programas.map((p) => ({
+    id: p.id,
+    title: p.title,
+    description: p.description,
+    coverImageKey: p.cursos.find((c) => c.coverImageKey)?.coverImageKey ?? null,
+    cursos: p.cursos.length,
+    horas: Math.round(
+      p.cursos.reduce((t, c) => t + (minutos.get(c.id) ?? 0), 0) / 60
+    ),
+    rating: p.cursos.length
+      ? p.cursos.reduce((t, c) => t + c.rating, 0) / p.cursos.length
+      : 0,
+  }));
+}
+
+/** Detalle de un programa: sus cursos con el avance del estudiante. */
+export async function programaEstudiante(
+  academyId: number,
+  userId: string,
+  programaId: number,
+  previa = false
+) {
+  const programa = (await programasConCursos(academyId)).find(
+    (p) => p.id === programaId
+  );
+  if (!programa) return null;
+  const matriculas = new Set(
+    (
+      await db
+        .select({ courseId: academyEnrollments.courseId })
+        .from(academyEnrollments)
+        .where(
+          and(
+            eq(academyEnrollments.academyId, academyId),
+            eq(academyEnrollments.userId, userId)
+          )
+        )
+        .catch(() => [])
+    ).map((m) => m.courseId)
+  );
+  const minutos = await minutosPorCurso(programa.cursos.map((c) => c.id));
+  const cursos = await Promise.all(
+    programa.cursos.map(async (c) => {
+      const matriculado = previa || matriculas.has(c.id);
+      const clases = matriculado
+        ? await clasesConEstado(academyId, c.id, userId, previa)
+        : [];
+      const hechas = clases.filter((x) => x.completada).length;
+      return {
+        id: c.id,
+        title: c.title,
+        description: c.description,
+        coverImageKey: c.coverImageKey,
+        categoryName: c.categoryName,
+        instructorName: c.instructorName,
+        minutos: minutos.get(c.id) ?? 0,
+        matriculado,
+        porcentaje: clases.length
+          ? Math.round((hechas / clases.length) * 100)
+          : 0,
+      };
+    })
+  );
+  const mios = cursos.filter((c) => c.matriculado);
+  return {
+    id: programa.id,
+    title: programa.title,
+    description: programa.description,
+    coverImageKey: cursos.find((c) => c.coverImageKey)?.coverImageKey ?? null,
+    cursos,
+    horas: Math.round(cursos.reduce((t, c) => t + c.minutos, 0) / 60),
+    porcentaje: mios.length
+      ? Math.round(mios.reduce((t, c) => t + c.porcentaje, 0) / mios.length)
+      : 0,
+    matriculado: mios.length > 0,
+  };
+}
+
+export type ProgramaEstudiante = NonNullable<
+  Awaited<ReturnType<typeof programaEstudiante>>
+>;
+export type TarjetaPrograma = Awaited<
+  ReturnType<typeof programasEstudiante>
+>[number];

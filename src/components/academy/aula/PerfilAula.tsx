@@ -31,7 +31,7 @@ const RUTAS = {
   curso: (id: number) => `/dashboard/student/cursos/${id}`,
   clase: (courseId: number, lessonId: number) =>
     `/dashboard/student/cursos/${courseId}/clases/${lessonId}`,
-  programa: () => '/dashboard/student/mi-aprendizaje',
+  programa: (id: number) => `/dashboard/student/programas/${id}`,
   catalogo: '/dashboard/student',
 };
 

@@ -5,7 +5,13 @@ import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { CalendarDays, Layers } from 'lucide-react';
+import {
+  BookOpen,
+  CalendarDays,
+  Clock,
+  Layers,
+  PanelsTopLeft,
+} from 'lucide-react';
 import { FaStar } from 'react-icons/fa';
 import { FaArrowTrendUp } from 'react-icons/fa6';
 import { GrOverview } from 'react-icons/gr';
@@ -23,7 +29,10 @@ import {
 import { RevealStagger } from '~/components/estudiantes/ui/RevealStagger';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { normalizeSearch } from '~/lib/utils';
-import { type InicioEstudiante } from '~/server/academy/aula';
+import {
+  type InicioEstudiante,
+  type TarjetaPrograma,
+} from '~/server/academy/aula';
 
 import type { Route } from 'next';
 
@@ -40,12 +49,12 @@ const DEGRADADO = [
   'var(--ac-primario)',
 ];
 
-const imagen = (key: string | null) =>
+const imagen = (key: string | null, relleno = 'Curso') =>
   key
     ? `/api/image-proxy?url=${encodeURIComponent(
         `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`
       )}`
-    : 'https://placehold.co/600x400/01142B/3AF4EF?text=Curso&font=MONTSERRAT';
+    : `https://placehold.co/600x400/01142B/3AF4EF?text=${relleno}&font=MONTSERRAT`;
 
 const fechaCorta = (iso: string) =>
   new Date(iso).toLocaleString('es-CO', {
@@ -60,9 +69,11 @@ const urlCurso = (id: number) => `/dashboard/student/cursos/${id}` as Route;
 export function InicioAula({
   nombre,
   datos,
+  programas,
 }: {
   nombre: string;
   datos: InicioEstudiante;
+  programas: TarjetaPrograma[];
 }) {
   const { misCursos, todos } = datos;
   const [busqueda, setBusqueda] = useState('');
@@ -80,6 +91,9 @@ export function InicioAula({
   const filtros = [
     { key: 'todos', label: 'Todos', icon: Layers },
     { key: 'mios', label: 'Mis cursos', icon: IoLibrarySharp },
+    ...(programas.length > 0
+      ? [{ key: 'programas', label: 'Programas', icon: PanelsTopLeft }]
+      : []),
     ...categorias.map((c) => ({ key: `cat:${c}`, label: c, icon: HiLibrary })),
   ];
 
@@ -95,6 +109,10 @@ export function InicioAula({
         (filtro.startsWith('cat:') && c.categoryName === filtro.slice(4)))
   );
   const inicio = filtro === 'todos' && !q;
+  const programasVisibles = programas.filter(
+    (p) =>
+      !q || normalizeSearch(`${p.title} ${p.description ?? ''}`).includes(q)
+  );
   const top = [...todos]
     .sort((a, b) => b.rating - a.rating || (a.createdAt < b.createdAt ? 1 : -1))
     .slice(0, 10);
@@ -339,115 +357,205 @@ export function InicioAula({
             </div>
           )}
 
-          {/* Cursos (grilla de "Cursos Artie") */}
-          <div>
-            <div className="mt-8 mb-3 flex px-8 lg:px-26">
-              <div className="flex shrink-0 items-center gap-2">
-                <HiLibrary className="text-xl text-foreground" />
-                <StudentGradientText
-                  colors={DEGRADADO}
-                  className="text-2xl sm:text-3xl"
-                >
-                  {filtro === 'mios'
-                    ? 'Mis cursos'
-                    : filtro.startsWith('cat:')
-                      ? filtro.slice(4)
-                      : 'Cursos'}
-                </StudentGradientText>
-              </div>
-            </div>
-            {visibles.length === 0 ? (
-              <p className="mx-8 rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground lg:mx-26">
-                {filtro === 'mios'
-                  ? 'Aún no estás matriculado en ningún curso.'
-                  : 'No hay cursos que coincidan.'}
-              </p>
-            ) : (
-              <RevealStagger className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
-                {visibles.map((c) => (
-                  <div key={c.id} className="relative">
-                    <Link
-                      href={urlCurso(c.id)}
-                      className="group block h-full rounded-2xl no-underline hover:no-underline focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:outline-none"
+          {/* Programas (tarjeta de StudentProgram) */}
+          {(inicio || filtro === 'programas') &&
+            programasVisibles.length > 0 && (
+              <div className="animate-zoom-in">
+                <div className="mt-2 mb-3 flex px-8 lg:px-26">
+                  <div className="flex shrink-0 items-center gap-2">
+                    <PanelsTopLeft className="size-5 text-foreground" />
+                    <StudentGradientText
+                      colors={DEGRADADO}
+                      className="text-2xl sm:text-3xl"
                     >
-                      <div className="relative isolate flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_color-mix(in_srgb,var(--ac-primario)_15%,transparent)]">
-                        <div className="relative h-40 overflow-hidden bg-card">
-                          <Image
-                            src={imagen(c.coverImageKey)}
-                            alt={c.title}
-                            fill
-                            unoptimized
-                            placeholder="blur"
-                            blurDataURL={blurDataURL}
-                            className="size-full transform-gpu object-cover transition-transform duration-500 group-hover:scale-110"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          />
-                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
-                          {c.matriculado && (
-                            <span className="absolute top-3 right-3 z-10 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
-                              Matriculado
-                            </span>
-                          )}
-                          {c.categoryName && (
-                            <span className="absolute bottom-3 left-3 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
-                              {c.categoryName}
-                            </span>
-                          )}
+                      Programas
+                    </StudentGradientText>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
+                  {programasVisibles.map((p) => (
+                    <Link
+                      key={p.id}
+                      href={`/dashboard/student/programas/${p.id}` as Route}
+                      // Como Artiefy: sin cursos, "Muy pronto" y no se abre.
+                      aria-disabled={p.cursos === 0}
+                      onClick={(e) => {
+                        if (p.cursos === 0) e.preventDefault();
+                      }}
+                      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 ${
+                        p.cursos === 0
+                          ? 'cursor-not-allowed opacity-75'
+                          : 'hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_color-mix(in_srgb,var(--ac-primario)_15%,transparent)]'
+                      }`}
+                    >
+                      <div className="relative h-40 overflow-hidden bg-card">
+                        {p.cursos === 0 && (
+                          <span className="absolute top-3 left-3 z-10 rounded-full border border-amber-300/30 bg-amber-400 px-3 py-1 text-[11px] font-semibold text-slate-950 shadow-sm">
+                            Muy pronto
+                          </span>
+                        )}
+                        <Image
+                          src={imagen(p.coverImageKey, 'Programa')}
+                          alt={p.title}
+                          fill
+                          unoptimized
+                          placeholder="blur"
+                          blurDataURL={blurDataURL}
+                          className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
+                        <span className="absolute bottom-3 left-3 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
+                          Programa
+                        </span>
+                      </div>
+                      <div className="relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4">
+                        <h2
+                          className="line-clamp-2 text-base leading-snug font-bold text-foreground transition-colors duration-200 group-hover:text-primary"
+                          title={p.title}
+                        >
+                          {p.title}
+                        </h2>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <BookOpen className="size-3.5 text-primary/60" />
+                            {p.cursos} cursos
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="size-3.5 text-primary/60" />
+                            {p.horas}h
+                          </span>
                         </div>
-                        <div className="relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4">
-                          <h2 className="line-clamp-2 text-base leading-snug font-bold text-foreground transition-colors duration-200 group-hover:text-primary">
-                            {c.title}
-                          </h2>
-                          <p className="min-w-0 truncate text-xs text-muted-foreground">
-                            Por{' '}
-                            <span className="font-medium text-foreground/80">
-                              {c.instructorName ?? 'Educador'}
+                        <p className="line-clamp-2 min-h-10 text-sm text-muted-foreground">
+                          {p.description ??
+                            'Explora este programa y descubre su ruta de aprendizaje.'}
+                        </p>
+                        {p.rating > 0 && (
+                          <div className="mt-auto flex justify-end pt-3 text-xs">
+                            <span className="flex items-center gap-1 font-semibold text-[hsl(45,100%,60%)]">
+                              <FaStar className="size-3.5" />
+                              {p.rating.toFixed(1)}
                             </span>
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {c.modalidad && (
-                              <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
-                                {c.modalidad}
-                              </span>
-                            )}
-                            {c.nivel && (
-                              <span className="rounded-full border border-foreground/10 bg-foreground/5 px-2.5 py-0.5 text-[10px] font-medium text-foreground/90">
-                                {c.nivel}
-                              </span>
-                            )}
                           </div>
-                          <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
-                            {c.proximaClase ? (
-                              <span className="flex items-center gap-1">
-                                <span className="relative mr-0.5 flex size-2 items-center justify-center">
-                                  <span className="absolute inline-flex size-3 animate-ping rounded-full bg-red-500/45 blur-[1px]" />
-                                  <span className="relative inline-flex size-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)]" />
-                                </span>
-                                <CalendarDays className="size-3.5 text-primary/60" />
-                                <span className="font-medium text-foreground/85">
-                                  {fechaCorta(c.proximaClase)}
-                                </span>
-                              </span>
-                            ) : (
-                              <span aria-hidden="true" />
-                            )}
-                            {c.rating > 0 ? (
-                              <span className="flex items-center gap-1 font-semibold text-[hsl(45,100%,60%)]">
-                                <FaStar className="size-3.5" />
-                                {c.rating.toFixed(1)}
-                              </span>
-                            ) : (
-                              <span aria-hidden="true" />
-                            )}
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </Link>
-                  </div>
-                ))}
-              </RevealStagger>
+                  ))}
+                </div>
+              </div>
             )}
-          </div>
+
+          {/* Cursos (grilla de "Cursos Artie") */}
+          {filtro !== 'programas' && (
+            <div>
+              <div className="mt-8 mb-3 flex px-8 lg:px-26">
+                <div className="flex shrink-0 items-center gap-2">
+                  <HiLibrary className="text-xl text-foreground" />
+                  <StudentGradientText
+                    colors={DEGRADADO}
+                    className="text-2xl sm:text-3xl"
+                  >
+                    {filtro === 'mios'
+                      ? 'Mis cursos'
+                      : filtro.startsWith('cat:')
+                        ? filtro.slice(4)
+                        : 'Cursos'}
+                  </StudentGradientText>
+                </div>
+              </div>
+              {visibles.length === 0 ? (
+                <p className="mx-8 rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground lg:mx-26">
+                  {filtro === 'mios'
+                    ? 'Aún no estás matriculado en ningún curso.'
+                    : 'No hay cursos que coincidan.'}
+                </p>
+              ) : (
+                <RevealStagger className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
+                  {visibles.map((c) => (
+                    <div key={c.id} className="relative">
+                      <Link
+                        href={urlCurso(c.id)}
+                        className="group block h-full rounded-2xl no-underline hover:no-underline focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:outline-none"
+                      >
+                        <div className="relative isolate flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border/50 bg-card text-foreground transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_color-mix(in_srgb,var(--ac-primario)_15%,transparent)]">
+                          <div className="relative h-40 overflow-hidden bg-card">
+                            <Image
+                              src={imagen(c.coverImageKey)}
+                              alt={c.title}
+                              fill
+                              unoptimized
+                              placeholder="blur"
+                              blurDataURL={blurDataURL}
+                              className="size-full transform-gpu object-cover transition-transform duration-500 group-hover:scale-110"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
+                            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
+                            {c.matriculado && (
+                              <span className="absolute top-3 right-3 z-10 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
+                                Matriculado
+                              </span>
+                            )}
+                            {c.categoryName && (
+                              <span className="absolute bottom-3 left-3 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
+                                {c.categoryName}
+                              </span>
+                            )}
+                          </div>
+                          <div className="relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4">
+                            <h2 className="line-clamp-2 text-base leading-snug font-bold text-foreground transition-colors duration-200 group-hover:text-primary">
+                              {c.title}
+                            </h2>
+                            <p className="min-w-0 truncate text-xs text-muted-foreground">
+                              Por{' '}
+                              <span className="font-medium text-foreground/80">
+                                {c.instructorName ?? 'Educador'}
+                              </span>
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {c.modalidad && (
+                                <span className="rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-medium text-primary">
+                                  {c.modalidad}
+                                </span>
+                              )}
+                              {c.nivel && (
+                                <span className="rounded-full border border-foreground/10 bg-foreground/5 px-2.5 py-0.5 text-[10px] font-medium text-foreground/90">
+                                  {c.nivel}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-auto flex items-center justify-between pt-2 text-xs text-muted-foreground">
+                              {c.proximaClase ? (
+                                <span className="flex items-center gap-1">
+                                  <span className="relative mr-0.5 flex size-2 items-center justify-center">
+                                    <span className="absolute inline-flex size-3 animate-ping rounded-full bg-red-500/45 blur-[1px]" />
+                                    <span className="relative inline-flex size-2 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)]" />
+                                  </span>
+                                  <CalendarDays className="size-3.5 text-primary/60" />
+                                  <span className="font-medium text-foreground/85">
+                                    {fechaCorta(c.proximaClase)}
+                                  </span>
+                                </span>
+                              ) : (
+                                <span aria-hidden="true" />
+                              )}
+                              {c.rating > 0 ? (
+                                <span className="flex items-center gap-1 font-semibold text-[hsl(45,100%,60%)]">
+                                  <FaStar className="size-3.5" />
+                                  {c.rating.toFixed(1)}
+                                </span>
+                              ) : (
+                                <span aria-hidden="true" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </div>
+                  ))}
+                </RevealStagger>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

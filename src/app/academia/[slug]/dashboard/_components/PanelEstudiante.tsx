@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { sesionEnAcademia } from '~/app/academia/_cache/academia';
 import { EncabezadoAula } from '~/components/academy/aula/EncabezadoAula';
 import { SinAcceso } from '~/components/academy/SinAcceso';
+import Footer from '~/components/estudiantes/layout/Footer';
+import { GRISES_MODO_OSCURO } from '~/lib/academy/marca';
 import { type Academia } from '~/server/academy/academias';
 import {
   RUTA_DASHBOARD,
@@ -54,6 +56,19 @@ export async function PanelEstudiante({
         </div>
       )}
       {render({ academia, cuenta, previa })}
+      {/* Mismo pie de página de Artiefy (ya usa la marca de la academia).
+          Su fondo es oscuro siempre: con los grises y el blanco originales
+          aunque la academia esté en modo claro. */}
+      <div
+        style={
+          {
+            ...GRISES_MODO_OSCURO,
+            '--color-white': '#FFFFFF',
+          } as React.CSSProperties
+        }
+      >
+        <Footer />
+      </div>
     </div>
   );
 }

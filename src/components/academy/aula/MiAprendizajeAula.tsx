@@ -13,8 +13,7 @@ const RUTAS: RutasMisCursos = {
   curso: (id) => `/dashboard/student/cursos/${id}`,
   clase: (courseId, lessonId) =>
     `/dashboard/student/cursos/${courseId}/clases/${lessonId}`,
-  // Las academias aún no tienen página de programa: lleva a sus cursos.
-  programa: () => '/dashboard/student/mi-aprendizaje',
+  programa: (id: number) => `/dashboard/student/programas/${id}`,
   catalogo: '/dashboard/student',
 };
 

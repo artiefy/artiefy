@@ -112,7 +112,7 @@ export function variablesDeMarca(
 }
 
 // Grises por defecto de Tailwind (los del tema oscuro de Artiefy).
-const GRISES_MODO_OSCURO = {
+export const GRISES_MODO_OSCURO = {
   '--color-gray-100': '#f3f4f6',
   '--color-gray-200': '#e5e7eb',
   '--color-gray-300': '#d1d5db',

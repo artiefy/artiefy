@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 
 import { InicioAula } from '~/components/academy/aula/InicioAula';
-import { inicioEstudiante } from '~/server/academy/aula';
+import { inicioEstudiante, programasEstudiante } from '~/server/academy/aula';
 
 import { PanelEstudiante } from '../_components/PanelEstudiante';
 
@@ -39,6 +39,9 @@ async function Inicio({
   userId: string;
   nombre: string;
 }) {
-  const datos = await inicioEstudiante(academyId, userId, previa);
-  return <InicioAula nombre={nombre} datos={datos} />;
+  const [datos, programas] = await Promise.all([
+    inicioEstudiante(academyId, userId, previa),
+    programasEstudiante(academyId),
+  ]);
+  return <InicioAula nombre={nombre} datos={datos} programas={programas} />;
 }
